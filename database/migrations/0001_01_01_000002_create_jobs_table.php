@@ -13,35 +13,35 @@ return new class extends Migration
     {
         Schema::create('jobs', function (Blueprint $table) {
             $table->id();
-            $table->string('queue')->index();
-            $table->longText('payload');
             $table->unsignedSmallInteger('attempts');
-            $table->unsignedInteger('reserved_at')->nullable();
             $table->unsignedInteger('available_at');
             $table->unsignedInteger('created_at');
+            $table->longText('payload');
+            $table->string('queue')->index();
+            $table->unsignedInteger('reserved_at')->nullable();
         });
 
         Schema::create('job_batches', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('name');
-            $table->integer('total_jobs');
-            $table->integer('pending_jobs');
-            $table->integer('failed_jobs');
-            $table->longText('failed_job_ids');
-            $table->mediumText('options')->nullable();
             $table->integer('cancelled_at')->nullable();
             $table->integer('created_at');
+            $table->integer('failed_jobs');
+            $table->longText('failed_job_ids');
             $table->integer('finished_at')->nullable();
+            $table->string('name');
+            $table->mediumText('options')->nullable();
+            $table->integer('pending_jobs');
+            $table->integer('total_jobs');
         });
 
         Schema::create('failed_jobs', function (Blueprint $table) {
             $table->id();
-            $table->string('uuid')->unique();
             $table->string('connection');
-            $table->string('queue');
-            $table->longText('payload');
             $table->longText('exception');
             $table->timestamp('failed_at')->useCurrent();
+            $table->longText('payload');
+            $table->string('queue');
+            $table->string('uuid')->unique();
 
             $table->index(['connection', 'queue', 'failed_at']);
         });
