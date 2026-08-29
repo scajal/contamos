@@ -4,6 +4,7 @@ namespace App\Modules\Core\Models;
 
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -32,6 +33,8 @@ class Currency extends Model
 
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Models\CurrencyFactory> */
     use HasFactory;
+
+    use HasUlids;
 
     /**
      * Boot the model.

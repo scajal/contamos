@@ -1,4 +1,5 @@
 import "react";
+import { User } from "./app/modules/core/models/user";
 
 declare module "react" {
     interface InputHTMLAttributes<T> {
@@ -9,6 +10,7 @@ declare module "react" {
 declare module "@inertiajs/core" {
     export interface InertiaConfig {
         sharedPageProps: {
+            user: User | null;
             [key: string]: unknown;
         };
     }

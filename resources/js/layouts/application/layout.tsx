@@ -1,3 +1,4 @@
+import { usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ChevronsUpDownIcon, LayoutDashboardIcon, LogOutIcon } from "lucide-react";
 
@@ -56,6 +57,11 @@ const Sidebar = () => {
      */
     const isMobile = useIsMobile();
 
+    /**
+     * The page's props.
+     */
+    const { user } = usePage().props;
+
     return (
         <SidebarComponent collapsible="icon">
             <SidebarHeader>Logo</SidebarHeader>
@@ -81,7 +87,7 @@ const Sidebar = () => {
                                 <Avatar>
                                     <AvatarFallback>CP</AvatarFallback>
                                 </Avatar>
-                                <span className="truncate font-medium">correo@prueba.com</span>
+                                <span className="truncate font-medium">{user?.email}</span>
                                 <ChevronsUpDownIcon className="ml-auto size-4" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent side={isMobile ? "bottom" : "right"} align="end" sideOffset={4}>
