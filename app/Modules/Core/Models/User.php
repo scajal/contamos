@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Core\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -34,6 +36,9 @@ use Illuminate\Notifications\Notifiable;
 #[Hidden(['external_id', 'remember_token'])]
 class User extends Authenticatable
 {
+    /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
+    use DefinesKeyType;
+
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Models\UserFactory> */
     use HasFactory;
 

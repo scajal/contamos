@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Support;
+namespace App\Modules\Authentication\Support;
 
 use App\Modules\Core\Models\User;
 use Carbon\CarbonImmutable;

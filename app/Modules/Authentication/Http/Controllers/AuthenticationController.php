@@ -2,7 +2,7 @@
 
 namespace App\Modules\Authentication\Http\Controllers;
 
-use App\Modules\Support\AuthKitAuthentication;
+use App\Modules\Authentication\Support\AuthKitAuthentication;
 use Laravel\WorkOS\Http\Requests\AuthKitAuthenticationRequest;
 use Laravel\WorkOS\Http\Requests\AuthKitLoginRequest;
 use Laravel\WorkOS\Http\Requests\AuthKitLogoutRequest;

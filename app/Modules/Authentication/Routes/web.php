@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
