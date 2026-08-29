@@ -3,6 +3,7 @@
 namespace App\Modules\Support\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -35,8 +36,14 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        /** @var \App\Models\User|null $user */
+        $user = $request->user();
+
         return [
             ...parent::share($request),
+
+            // The authenticated user.
+            'user' => Inertia::always($user),
         ];
     }
 }

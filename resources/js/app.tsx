@@ -1,8 +1,11 @@
 import { createInertiaApp } from "@inertiajs/react";
 import type { PageProps as ModalPageProps } from "@inertiaui/modal-react";
 import { renderApp } from "@inertiaui/modal-react";
+import { LaravelReactI18nProvider as I18nProvider } from "laravel-react-i18n";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+
+import { TooltipProvider } from "./components/ui/tooltip";
 
 /**
  * The name of the application.
@@ -27,10 +30,15 @@ void createInertiaApp({
     setup({ el, App, props }) {
         createRoot(el!).render(
             <StrictMode>
-                {renderApp(
-                    App as unknown as Parameters<typeof renderApp>[0],
-                    props as ModalPageProps,
-                )}
+                <I18nProvider
+                    locale={(document?.documentElement?.getAttribute?.("lang") as string) || "en"}
+                    fallbackLocale="en"
+                    files={import.meta.glob("/lang/*.json")}
+                >
+                    <TooltipProvider>
+                        {renderApp(App as unknown as Parameters<typeof renderApp>[0], props as ModalPageProps)}
+                    </TooltipProvider>
+                </I18nProvider>
             </StrictMode>,
         );
     },

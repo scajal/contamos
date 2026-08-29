@@ -112,17 +112,5 @@
         },
         "jsx": "react-jsx"
     },
-    "include": [
-        "resources/js/**/*.ts",
-        "resources/js/**/*.d.ts",
-        "resources/js/**/*.tsx"
-    ],
-    "exclude": [
-        "resources/js/actions/**/*.ts",
-        "resources/js/actions/**/*.d.ts",
-        "resources/js/routes/**/*.ts",
-        "resources/js/routes/**/*.d.ts",
-        "resources/js/wayfinder/**/*.ts",
-        "resources/js/wayfinder/**/*.d.ts"
-    ]
+    "include": ["resources/js/**/*.ts", "resources/js/**/*.d.ts", "resources/js/**/*.tsx"]
 }

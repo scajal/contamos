@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => Auth::check() ? 'it works!' : to_route('login'));
+Route::get('/', fn () => Auth::check() ? inertia('welcome') : to_route('login'));
 
 /*
 |--------------------------------------------------------------------------

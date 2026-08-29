@@ -14,17 +14,13 @@ export default defineConfig({
      */
     fmt: {
         sortImports: true,
-        printWidth: 80,
+        printWidth: 120,
         tabWidth: 4,
         singleQuote: false,
         semi: true,
         singleAttributePerLine: false,
         htmlWhitespaceSensitivity: "css",
-        ignorePatterns: [
-            ".github/**",
-            "composer.json",
-            "resources/views/mail/*",
-        ],
+        ignorePatterns: [".github/**", "composer.json", "resources/views/mail/*"],
         sortTailwindcss: {
             functions: ["clsx", "cn", "cva"],
             entryPoint: "resources/css/app.css",
@@ -64,15 +60,10 @@ export default defineConfig({
             presets: [reactCompilerPreset()],
         }),
         inertia(),
-        laravel({
-            input: ["resources/css/app.css", "resources/js/app.tsx"],
-            refresh: true,
-        }),
+        laravel({ input: ["resources/css/app.css", "resources/js/app.tsx"], refresh: true }),
         react(),
         tailwindcss(),
-        wayfinder({
-            formVariants: true,
-        }),
+        wayfinder({ formVariants: true }),
     ]),
 
     /**
@@ -82,13 +73,7 @@ export default defineConfig({
      */
     server: {
         watch: {
-            ignored: [
-                "**/.agents/**",
-                "**/.claude/**",
-                "**/.cursor/**",
-                "**/.junie/**",
-                "**/vendor/**",
-            ],
+            ignored: ["**/.agents/**", "**/.claude/**", "**/.cursor/**", "**/.junie/**", "**/vendor/**"],
         },
     },
 });
