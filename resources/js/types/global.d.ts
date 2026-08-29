@@ -1,4 +1,4 @@
-import type { Auth } from "@/types/auth";
+import "react";
 
 declare module "react" {
     interface InputHTMLAttributes<T> {
@@ -9,9 +9,6 @@ declare module "react" {
 declare module "@inertiajs/core" {
     export interface InertiaConfig {
         sharedPageProps: {
-            name: string;
-            auth: Auth;
-            sidebarOpen: boolean;
             [key: string]: unknown;
         };
     }

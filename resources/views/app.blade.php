@@ -8,7 +8,7 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-        @fonts
+        <link href="https://api.fontshare.com/v2/css?f[]=switzer@1,2&display=swap" rel="stylesheet" />
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
@@ -17,6 +17,6 @@
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">
-        <x-inertia::app />
+        @inertia
     </body>
 </html>

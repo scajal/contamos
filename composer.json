@@ -6,7 +6,9 @@
     "license": "UNLICENSED",
     "require": {
         "php": "^8.3",
+        "brick/money": "^0.14.2",
         "inertiajs/inertia-laravel": "^3.0",
+        "inertiaui/modal": "^3.1",
         "laravel-lang/common": "^6.8",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",

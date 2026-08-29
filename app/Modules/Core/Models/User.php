@@ -16,6 +16,7 @@ use Illuminate\Notifications\Notifiable;
 
 /**
  * @property string $id
+ * @property string|null $avatar
  * @property string $email
  * @property \Carbon\CarbonImmutable|null $email_verified_at
  * @property string $external_id

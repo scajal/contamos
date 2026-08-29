@@ -4,7 +4,6 @@ import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import laravel from "laravel-vite-plugin";
-import { bunny } from "laravel-vite-plugin/fonts";
 import { defineConfig, lazyPlugins } from "vite-plus";
 
 export default defineConfig({
