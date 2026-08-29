@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories\Modules\Core\Models;
+namespace Database\Factories\Modules\Core\Identity\Models;
 
-use App\Modules\Core\Models\User;
+use App\Modules\Core\Identity\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Modules\Core\Models\User>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Modules\Core\Identity\Models\User>
  */
 class UserFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\App\Modules\Core\Models\User>
+     * @var class-string<\App\Modules\Core\Identity\Models\User>
      */
     protected $model = User::class;
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Authentication\Support;
 
-use App\Modules\Core\Models\User;
+use App\Modules\Core\Identity\Models\User;
 use Carbon\CarbonImmutable;
 use Laravel\WorkOS\User as WorkOSUser;
 
