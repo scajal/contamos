@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "reserv/core",
+    "name": "qube/vault",
     "type": "project",
-    "description": "The core module for the Reserv application.",
+    "description": "The Vault application, your money tracker.",
     "license": "UNLICENSED",
     "require": {
         "php": "^8.3",

@@ -1,8 +1,8 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
-    "name": "@reserv/core",
+    "name": "@qube/vault",
     "private": true,
-    "description": "The core module for the Reserv application.",
+    "description": "The Vault application, your money tracker.",
     "type": "module",
     "scripts": {
         "build": "vp build",
