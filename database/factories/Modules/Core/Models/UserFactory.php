@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories\Modules\Core\Models;
 
 use App\Modules\Core\Models\User;

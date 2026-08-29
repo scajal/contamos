@@ -10,7 +10,7 @@ return Application::configure(basePath: dirname(__DIR__))
         fn (Exceptions $exceptions): Exceptions => $exceptions
             ->dontTruncateRequestExceptions()
             ->shouldRenderJsonWhen(
-                fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+                fn (Request $request): bool => $request->is('api/*') || $request->expectsJson(),
             )
     )
     ->withMiddleware(
@@ -22,5 +22,5 @@ return Application::configure(basePath: dirname(__DIR__))
                 \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
             ])
     )
-    ->withRouting(health: '/up', web: __DIR__.'/../routes/web.php')
+    ->withRouting(web: __DIR__.'/../routes/web.php', health: '/up')
     ->create();

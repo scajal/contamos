@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Core\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -10,6 +12,24 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property string $id
+ * @property string $email
+ * @property \Carbon\CarbonImmutable|null $email_verified_at
+ * @property string $external_id
+ * @property string $name
+ * @property string|null $remember_token
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
+ *
+ * @method static \Database\Factories\Modules\Core\Models\UserFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Models\User newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Models\User newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Models\User query()
+ *
+ * @mixin \Eloquent
+ */
 #[Fillable(['email', 'external_id', 'name'])]
 #[Hidden(['external_id', 'remember_token'])]
 class User extends Authenticatable

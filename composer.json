@@ -43,42 +43,37 @@
         }
     },
     "scripts": {
-        "setup": [
-            "composer install",
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
-            "@php artisan migrate --force",
-            "npm install",
-            "npm run build"
-        ],
-        "dev": [
-            "Composer\\Config::disableProcessTimeout",
-            "@php artisan dev"
-        ],
-        "lint": [
-            "pint --parallel"
-        ],
-        "lint:check": [
-            "pint --parallel --test"
-        ],
         "ci:check": [
             "Composer\\Config::disableProcessTimeout",
             "npm run check",
             "npm run types:check",
             "@test"
         ],
-        "types:check": [
-            "phpstan analyse"
+        "dev": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php artisan dev"
         ],
-        "test": [
-            "@php artisan config:clear --ansi",
-            "@lint:check",
-            "@types:check",
-            "@php artisan test"
+        "lint": [
+            "@rector",
+            "@pint",
+            "@types"
+        ],
+        "lint:check": [
+            "@rector --dry-run",
+            "@types",
+            "@pint --test"
+        ],
+        "pint": [
+            "pint --parallel"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate --graceful --ansi"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
@@ -87,13 +82,26 @@
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
         ],
-        "post-create-project-cmd": [
-            "@php artisan key:generate --ansi",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
-        ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "rector": [
+            "rector"
+        ],
+        "test": [
+            "@php artisan config:clear --ansi",
+            "@lint:check",
+            "@types:check",
+            "@php artisan test"
+        ],
+        "test:coverage": [
+            "@php vendor/bin/pest --coverage --min=100 --parallel"
+        ],
+        "test:types": [
+            "@php vendor/bin/pest --type-coverage --min=100 --parallel"
+        ],
+        "types": [
+            "phpstan analyse --memory-limit=1G"
         ]
     },
     "extra": {

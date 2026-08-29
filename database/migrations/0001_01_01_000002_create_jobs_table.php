@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jobs', function (Blueprint $table) {
+        Schema::create('jobs', function (Blueprint $table): void {
             $table->id();
             $table->unsignedSmallInteger('attempts');
             $table->unsignedInteger('available_at');
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->unsignedInteger('reserved_at')->nullable();
         });
 
-        Schema::create('job_batches', function (Blueprint $table) {
+        Schema::create('job_batches', function (Blueprint $table): void {
             $table->string('id')->primary();
             $table->integer('cancelled_at')->nullable();
             $table->integer('created_at');
@@ -34,7 +34,7 @@ return new class extends Migration
             $table->integer('total_jobs');
         });
 
-        Schema::create('failed_jobs', function (Blueprint $table) {
+        Schema::create('failed_jobs', function (Blueprint $table): void {
             $table->id();
             $table->string('connection');
             $table->longText('exception');
