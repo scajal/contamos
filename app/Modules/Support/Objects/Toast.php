@@ -7,6 +7,9 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\ResponseFactory;
 
+/**
+ * @implements \Illuminate\Contracts\Support\Arrayable<string, string>
+ */
 class Toast implements Arrayable
 {
     /**
