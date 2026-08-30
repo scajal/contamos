@@ -1,5 +1,6 @@
 import "react";
-import { User } from "./app/modules/core/models/user";
+import { User } from "./app/modules/core/identity/models/user";
+import { Toast } from "./app/modules/support/objects/toast";
 
 declare module "react" {
     interface InputHTMLAttributes<T> {
@@ -12,6 +13,9 @@ declare module "@inertiajs/core" {
         sharedPageProps: {
             user: User | null;
             [key: string]: unknown;
+        };
+        flashDataType: {
+            toast?: Toast;
         };
     }
 }

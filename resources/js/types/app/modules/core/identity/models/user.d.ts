@@ -1,5 +1,5 @@
 /**
- * JSON shape of App\Modules\Core\Models\User when serialized for Inertia.
+ * JSON shape of App\Modules\Core\Identity\Models\User when serialized for Inertia.
  * Hidden attributes (`external_id`, `remember_token`) are omitted.
  */
 export interface User {

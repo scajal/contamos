@@ -1,6 +1,6 @@
-import { usePage } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ChevronsUpDownIcon, LayoutDashboardIcon, LogOutIcon } from "lucide-react";
+import { ChevronsUpDownIcon, CircleDollarSignIcon, LayoutDashboardIcon, LogOutIcon } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -15,6 +15,7 @@ import {
     SidebarContent,
     SidebarFooter,
     SidebarGroup,
+    SidebarGroupLabel,
     SidebarHeader,
     SidebarInset,
     SidebarMenu,
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
+import currencies from "@/routes/catalog/currencies";
 
 export const ApplicationLayout = ({ children }: { children: React.ReactNode }) => {
     return (
@@ -35,11 +37,15 @@ export const ApplicationLayout = ({ children }: { children: React.ReactNode }) =
             {/** Wrapper */}
             <SidebarInset>
                 {/** Header */}
-                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                    <SidebarTrigger />
+                <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+                    <div className="px-4">
+                        <SidebarTrigger className="-ml-1" />
+                    </div>
                 </header>
                 {/** Content */}
-                <main>{children}</main>
+                <main className="flex flex-1 p-4 md:p-10">
+                    <div className="mx-auto flex w-full max-w-5xl flex-col">{children}</div>
+                </main>
             </SidebarInset>
         </SidebarProvider>
     );
@@ -69,9 +75,20 @@ const Sidebar = () => {
                 <SidebarGroup>
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <SidebarMenuButton>
+                            <SidebarMenuButton render={<Link href="/" />}>
                                 <LayoutDashboardIcon />
                                 <span>{t("Overview")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroup>
+                <SidebarGroup>
+                    <SidebarGroupLabel>{t("Administration")}</SidebarGroupLabel>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton render={<Link href={currencies.index.url()} />}>
+                                <CircleDollarSignIcon />
+                                <span>{t("Currencies")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>

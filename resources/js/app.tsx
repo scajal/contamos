@@ -1,11 +1,24 @@
-import { createInertiaApp } from "@inertiajs/react";
+import { createInertiaApp, router } from "@inertiajs/react";
 import type { PageProps as ModalPageProps } from "@inertiaui/modal-react";
 import { renderApp } from "@inertiaui/modal-react";
 import { LaravelReactI18nProvider as I18nProvider } from "laravel-react-i18n";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { toast, Toaster } from "./components/ui/toast";
 import { TooltipProvider } from "./components/ui/tooltip";
+
+/**
+ * Executed whenever a flash message is provided from
+ * the server.
+ */
+router.on("flash", (event) => {
+    if (event.detail.flash.toast) {
+        toast.add({
+            description: event.detail.flash.toast.message,
+        });
+    }
+});
 
 /**
  * The name of the application.
@@ -37,6 +50,7 @@ void createInertiaApp({
                 >
                     <TooltipProvider>
                         {renderApp(App as unknown as Parameters<typeof renderApp>[0], props as ModalPageProps)}
+                        <Toaster />
                     </TooltipProvider>
                 </I18nProvider>
             </StrictMode>,
