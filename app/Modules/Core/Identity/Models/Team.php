@@ -2,12 +2,14 @@
 
 namespace App\Modules\Core\Identity\Models;
 
+use App\Modules\Finance\Models\Account;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 /**
@@ -35,6 +37,16 @@ class Team extends Model
     use HasFactory;
 
     use HasUlids;
+
+    /**
+     * Get the accounts of the team.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Finance\Models\Account, $this>
+     */
+    public function accounts(): HasMany
+    {
+        return $this->hasMany(Account::class);
+    }
 
     /**
      * Boot the model.
