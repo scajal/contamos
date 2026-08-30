@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Finance\Http\Controllers;
+namespace App\Modules\Core\Finance\Http\Controllers;
 
 use Inertia\Inertia;
 use Inertia\Response;

@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Database\Factories\Modules\Finance\Models;
 
-use App\Modules\Finance\Enums\Account\AccountType;
-use App\Modules\Finance\Models\Account;
+use App\Modules\Core\Finance\Enums\Account\AccountType;
+use App\Modules\Core\Finance\Models\Account;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Modules\Finance\Models\Account>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Modules\Core\Finance\Models\Account>
  */
 class AccountFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
-     * @var class-string<\App\Modules\Finance\Models\Account>
+     * @var class-string<\App\Modules\Core\Finance\Models\Account>
      */
     protected $model = Account::class;
 

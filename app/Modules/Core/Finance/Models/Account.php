@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Finance\Models;
+namespace App\Modules\Core\Finance\Models;
 
+use App\Modules\Core\Finance\Enums\Account\AccountType;
 use App\Modules\Core\Identity\Models\Team;
-use App\Modules\Finance\Enums\Account\AccountType;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;

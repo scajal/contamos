@@ -21,3 +21,14 @@ require __DIR__.'/../app/Modules/Authentication/Routes/web.php';
 */
 
 require __DIR__.'/../app/Modules/Core/Catalog/Routes/web.php';
+
+/*
+|--------------------------------------------------------------------------
+| Finance routes
+|--------------------------------------------------------------------------
+|
+| This file contains the routes for the finance module.
+|
+*/
+
+require __DIR__.'/../app/Modules/Core/Finance/Routes/web.php';

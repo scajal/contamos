@@ -11,13 +11,16 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\URL;
 
 /**
  * @property string $id
  * @property string|null $avatar
+ * @property string|null $current_team_id
  * @property string $email
  * @property \Carbon\CarbonImmutable|null $email_verified_at
  * @property string $external_id
@@ -25,6 +28,7 @@ use Illuminate\Notifications\Notifiable;
  * @property string|null $remember_token
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Modules\Core\Identity\Models\Team|null $currentTeam
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
  * @property-read \App\Modules\Core\Identity\Models\Membership|null $membership
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team> $teams
@@ -36,7 +40,7 @@ use Illuminate\Notifications\Notifiable;
  *
  * @mixin \Eloquent
  */
-#[Fillable(['email', 'external_id', 'name'])]
+#[Fillable(['avatar', 'email', 'external_id', 'name'])]
 #[Hidden(['external_id', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -50,6 +54,17 @@ class User extends Authenticatable
     use Notifiable;
 
     /**
+     * Indicate if the user belongs to the given team.
+     */
+    public function belongsToTeam(Team $team): bool
+    {
+        return $this->teams()->wherePivot(
+            $this->teams()->getForeignPivotKeyName(),
+            $team->getKey()
+        )->exists();
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -59,6 +74,36 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the current team of the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\Team, $this>
+     */
+    public function currentTeam(): BelongsTo
+    {
+        return $this->belongsTo(Team::class, 'current_team_id');
+    }
+
+    /**
+     * Switch the user to a different team.
+     */
+    public function switchTeam(Team $team): bool
+    {
+        if (! $this->belongsToTeam($team)) {
+            return false;
+        }
+
+        // Associate the team with the user.
+        $this->currentTeam()
+            ->associate($team)
+            ->save();
+
+        // Set the team as default in the URL.
+        URL::defaults(['team' => $team->getKey()]);
+
+        return true;
     }
 
     /**
