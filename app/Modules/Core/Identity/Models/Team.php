@@ -2,7 +2,7 @@
 
 namespace App\Modules\Core\Identity\Models;
 
-use App\Modules\Core\Finance\Models\Account;
+use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
  * @property string $slug
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Account> $accounts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Account> $accounts
  * @property-read \App\Modules\Core\Identity\Models\Membership|null $membership
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\User> $users
  *
@@ -42,7 +42,7 @@ class Team extends Model
     /**
      * Get the accounts of the team.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Account, $this>
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\Account, $this>
      */
     public function accounts(): HasMany
     {

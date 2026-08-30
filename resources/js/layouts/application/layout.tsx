@@ -1,6 +1,6 @@
 import { Link, usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ChevronsUpDownIcon, CircleDollarSignIcon, LayoutDashboardIcon, LogOutIcon } from "lucide-react";
+import { BanknoteIcon, ChevronsUpDownIcon, CircleDollarSignIcon, LayoutDashboardIcon, LogOutIcon } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -28,6 +28,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
 import currencies from "@/routes/catalog/currencies";
+import accounts from "@/routes/finance/teams/accounts";
 
 export const ApplicationLayout = ({ children }: { children: React.ReactNode }) => {
     return (
@@ -78,6 +79,14 @@ const Sidebar = () => {
                             <SidebarMenuButton render={<Link href="/" />}>
                                 <LayoutDashboardIcon />
                                 <span>{t("Overview")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                render={<Link href={accounts.index.url({ team: user?.current_team_id ?? "" })} />}
+                            >
+                                <BanknoteIcon />
+                                <span>{t("Accounts")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders\Team;
 
-use App\Modules\Core\Finance\Models\Account;
+use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Models\Team;
 use Illuminate\Database\Seeder;
 

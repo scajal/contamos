@@ -35,6 +35,6 @@ class TeamController
         Toast::make(trans('Saved'))
             ->flash();
 
-        return to_route('finance.dashboard.index', ['team' => $team->getKey()]);
+        return to_route('finance.teams.dashboard.index', ['team' => $team->getKey()]);
     }
 }

@@ -16,7 +16,7 @@ use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
 |
 */
 
-Route::as('finance.')
+Route::as('finance.teams.')
     ->prefix('teams/{team}')
     ->middleware([Authenticate::class, ValidateSessionWithWorkOS::class, EnsureTeamMembership::class])
     ->group(function (): void {
@@ -29,7 +29,19 @@ Route::as('finance.')
         |
         */
 
-        Route::get('/', [\App\Modules\Core\Finance\Http\Controllers\DashboardController::class, 'index'])
+        Route::get('/', [\App\Modules\Core\Finance\Http\Controllers\Team\DashboardController::class, 'index'])
             ->name('dashboard.index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Account routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the account management.
+        |
+        */
+
+        Route::get('/accounts', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'index'])
+            ->name('accounts.index');
 
     });

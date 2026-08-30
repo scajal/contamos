@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Core\Finance\Models;
+namespace App\Modules\Core\Finance\Models\Team;
 
 use App\Modules\Core\Finance\Enums\Account\AccountType;
 use App\Modules\Core\Identity\Models\Team;
@@ -20,10 +20,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Modules\Core\Identity\Models\Team $team
  *
- * @method static \Database\Factories\Modules\Core\Finance\Models\AccountFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Account newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Account newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Account query()
+ * @method static \Database\Factories\Modules\Core\Finance\Models\Team\AccountFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account query()
  *
  * @mixin \Eloquent
  */
@@ -33,7 +33,7 @@ class Account extends Model
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
-    /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Finance\Models\AccountFactory> */
+    /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Finance\Models\Team\AccountFactory> */
     use HasFactory;
 
     use HasUlids;
