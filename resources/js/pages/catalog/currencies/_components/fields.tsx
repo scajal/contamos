@@ -10,9 +10,19 @@ import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 
 type FormProps = Partial<Currency>;
 
-type Props = FormComponentSlotProps<FormProps>;
+type Props = FormComponentSlotProps<FormProps> & {
+    defaultValues?: FormProps;
+};
 
-export const Fields = ({ errors, invalid, touched, valid, validate: realTimeValidate, validating }: Props) => {
+export const Fields = ({
+    defaultValues,
+    errors,
+    invalid,
+    touched,
+    valid,
+    validate: realTimeValidate,
+    validating,
+}: Props) => {
     /**
      * Translate the provided string
      * to the current locale.
@@ -40,6 +50,7 @@ export const Fields = ({ errors, invalid, touched, valid, validate: realTimeVali
                         <InputGroupInput
                             autoFocus
                             aria-invalid={invalid("code")}
+                            defaultValue={defaultValues?.code}
                             name="code"
                             onChange={() => validate("code")}
                             placeholder={t("Enter a code")}
@@ -61,6 +72,7 @@ export const Fields = ({ errors, invalid, touched, valid, validate: realTimeVali
                         </InputGroupAddon>
                         <InputGroupInput
                             aria-invalid={invalid("symbol")}
+                            defaultValue={defaultValues?.symbol}
                             name="symbol"
                             placeholder={t("Enter a symbol")}
                         />
@@ -76,7 +88,12 @@ export const Fields = ({ errors, invalid, touched, valid, validate: realTimeVali
                     <InputGroupAddon>
                         <TypeIcon />
                     </InputGroupAddon>
-                    <InputGroupInput aria-invalid={invalid("name")} name="name" placeholder={t("Enter a name")} />
+                    <InputGroupInput
+                        aria-invalid={invalid("name")}
+                        defaultValue={defaultValues?.name}
+                        name="name"
+                        placeholder={t("Enter a name")}
+                    />
                 </InputGroup>
                 {invalid("name") && <FieldError>{errors.name}</FieldError>}
             </Field>
@@ -90,6 +107,7 @@ export const Fields = ({ errors, invalid, touched, valid, validate: realTimeVali
                     </InputGroupAddon>
                     <InputGroupInput
                         aria-invalid={invalid("decimal_places")}
+                        defaultValue={defaultValues?.decimal_places}
                         name="decimal_places"
                         placeholder={t("Enter the number of decimal places")}
                         step={1}

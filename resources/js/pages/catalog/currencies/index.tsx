@@ -1,7 +1,7 @@
-import { usePage } from "@inertiajs/react";
+import { Link } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { MoreHorizontalIcon, PencilIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, SearchIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Pagination, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import routes from "@/routes/catalog/currencies";
@@ -21,17 +22,12 @@ type PageProps = {
     currencies: LengthAwarePaginator<Currency>;
 };
 
-const Index = () => {
+const Index = ({ currencies }: PageProps) => {
     /**
      * Translate the provided string
      * to the current locale.
      */
     const t = useLaravelReactI18n().t;
-
-    /**
-     * The page's props.
-     */
-    const { currencies } = usePage<PageProps>().props;
 
     return (
         <div className="flex flex-col gap-4">
@@ -65,7 +61,7 @@ const Index = () => {
             {/** Content */}
             <div>
                 {/** Currencies */}
-                <div className="grid [&>div]:rounded-sm [&>div]:border">
+                <div className="flex flex-col gap-4 [&>div]:rounded-sm [&>div]:border">
                     <Table>
                         <TableBody>
                             {currencies?.data?.map((currency) => (
@@ -83,10 +79,14 @@ const Index = () => {
                                                 <span className="sr-only">{t("Actions")}</span>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem>
-                                                    <PencilIcon />
-                                                    <span>{t("Edit")}</span>
-                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    render={
+                                                        <ModalLink href={routes.edit.url(currency.id)}>
+                                                            <PencilIcon />
+                                                            <span>{t("Edit")}</span>
+                                                        </ModalLink>
+                                                    }
+                                                />
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -94,6 +94,34 @@ const Index = () => {
                             ))}
                         </TableBody>
                     </Table>
+
+                    {/** Pagination */}
+                    <Pagination>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <Button
+                                    disabled={!currencies?.prev_page_url}
+                                    nativeButton={false}
+                                    render={<Link href={currencies?.prev_page_url ?? undefined} />}
+                                    variant="ghost"
+                                >
+                                    <ChevronLeftIcon />
+                                    <span>{t("Previous")}</span>
+                                </Button>
+                            </PaginationItem>
+                            <PaginationItem>
+                                <Button
+                                    disabled={!currencies?.next_page_url}
+                                    nativeButton={false}
+                                    render={<Link href={currencies?.next_page_url ?? undefined} />}
+                                    variant="ghost"
+                                >
+                                    <span>{t("Next")}</span>
+                                    <ChevronRightIcon />
+                                </Button>
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
                 </div>
             </div>
         </div>

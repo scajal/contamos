@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Catalog\Http\Controllers;
 
 use App\Modules\Core\Catalog\Http\Requests\Currency\StoreRequest;
+use App\Modules\Core\Catalog\Http\Requests\Currency\UpdateRequest;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Http\RedirectResponse;
@@ -45,6 +46,31 @@ class CurrencyController
     {
         // Store the currency with the validated data.
         Currency::query()->create($request->validated());
+
+        // Show a message to the user.
+        Toast::make(trans('Saved'))
+            ->flash();
+
+        return back();
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Currency $currency): Modal
+    {
+        return Inertia::modal('catalog/currencies/edit', [
+            'currency' => $currency,
+        ])->baseRoute('catalog.currencies.index');
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateRequest $request, Currency $currency): RedirectResponse
+    {
+        // Update the currency with the validated data.
+        $currency->update($request->validated());
 
         // Show a message to the user.
         Toast::make(trans('Saved'))

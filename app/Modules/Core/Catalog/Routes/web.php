@@ -38,4 +38,11 @@ Route::as('catalog.')->middleware([
     Route::post('currencies', [\App\Modules\Core\Catalog\Http\Controllers\CurrencyController::class, 'store'])
         ->middleware(HandlePrecognitiveRequests::class)
         ->name('currencies.store');
+
+    Route::get('currencies/{currency}/edit', [\App\Modules\Core\Catalog\Http\Controllers\CurrencyController::class, 'edit'])
+        ->name('currencies.edit');
+
+    Route::put('currencies/{currency}', [\App\Modules\Core\Catalog\Http\Controllers\CurrencyController::class, 'update'])
+        ->middleware(HandlePrecognitiveRequests::class)
+        ->name('currencies.update');
 });
