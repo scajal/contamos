@@ -21,6 +21,12 @@ class EnsureTeamMembership
         /** @var \App\Modules\Core\Identity\Models\User|null $user */
         $user = $request->user();
 
+        // If the user doesn't have a team, redirect to the
+        // team creation page.
+        if ($user->teams->isEmpty()) {
+            return redirect()->route('identity.teams.create');
+        }
+
         // Get the current team.
         $team = $this->team($request->route('team'));
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Authentication\Actions\ResolveAuthenticationRedirect;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         fn (Middleware $middleware): Middleware => $middleware
             ->encryptCookies()
             ->preventRequestForgery()
+            ->redirectUsersTo(fn (Request $request): string => app(ResolveAuthenticationRedirect::class)->fromRequest($request))
             ->web(append: [
                 \App\Modules\Support\Http\Middleware\HandleInertiaRequests::class,
                 \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,

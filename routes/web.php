@@ -32,3 +32,14 @@ require __DIR__.'/../app/Modules/Core/Catalog/Routes/web.php';
 */
 
 require __DIR__.'/../app/Modules/Core/Finance/Routes/web.php';
+
+/*
+|--------------------------------------------------------------------------
+| Identity routes
+|--------------------------------------------------------------------------
+|
+| This file contains the routes for the identity module.
+|
+*/
+
+require __DIR__.'/../app/Modules/Core/Identity/Routes/web.php';

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories\Modules\Finance\Models;
+namespace Database\Factories\Modules\Core\Finance\Models;
 
 use App\Modules\Core\Finance\Enums\Account\AccountType;
 use App\Modules\Core\Finance\Models\Account;

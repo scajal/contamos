@@ -2,6 +2,7 @@
 
 namespace App\Modules\Authentication\Http\Controllers;
 
+use App\Modules\Authentication\Actions\ResolveAuthenticationRedirect;
 use App\Modules\Authentication\Support\AuthKitAuthentication;
 use Laravel\WorkOS\Http\Requests\AuthKitAuthenticationRequest;
 use Laravel\WorkOS\Http\Requests\AuthKitLoginRequest;
@@ -23,11 +24,13 @@ class AuthenticationController
      * Handle the callback from the WorkOS
      * authentication flow.
      */
-    public function authenticate(AuthKitAuthenticationRequest $request, AuthKitAuthentication $authKit): Response
+    public function authenticate(AuthKitAuthenticationRequest $request, AuthKitAuthentication $authKit, ResolveAuthenticationRedirect $resolveAuthenticationRedirect): Response
     {
         $request->authenticate($authKit->findUsing(...), $authKit->createUsing(...));
 
-        return redirect()->intended();
+        dd($resolveAuthenticationRedirect->fromRequest($request));
+
+        return redirect()->to($resolveAuthenticationRedirect->fromRequest($request));
     }
 
     /**

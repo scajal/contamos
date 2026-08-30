@@ -17,7 +17,7 @@ class Account extends Model
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
-    /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Finance\Models\AccountFactory> */
+    /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Finance\Models\AccountFactory> */
     use HasFactory;
 
     use HasUlids;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Identity\Models;
 
 use App\Modules\Support\Concerns\DefinesKeyType;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  *
  * @mixin \Eloquent
  */
+#[Table('team_members')]
 class Membership extends Pivot
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */

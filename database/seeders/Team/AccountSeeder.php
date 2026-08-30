@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders\Team;
 
 use App\Modules\Core\Finance\Models\Account;
+use App\Modules\Core\Identity\Models\Team;
 use Illuminate\Database\Seeder;
 
 class AccountSeeder extends Seeder
@@ -14,6 +15,8 @@ class AccountSeeder extends Seeder
      */
     public function run(): void
     {
-        Account::factory(10)->create();
+        Account::factory(10)
+            ->for(Team::query()->first(), 'team')
+            ->create();
     }
 }
