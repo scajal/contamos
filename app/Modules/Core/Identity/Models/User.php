@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\URL;
 /**
  * @property string $id
  * @property string|null $avatar
- * @property string|null $current_team_id
  * @property string $email
  * @property \Carbon\CarbonImmutable|null $email_verified_at
  * @property string $external_id
@@ -28,6 +27,7 @@ use Illuminate\Support\Facades\URL;
  * @property string|null $remember_token
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property string|null $current_team_id
  * @property-read \App\Modules\Core\Identity\Models\Team|null $currentTeam
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
  * @property-read \App\Modules\Core\Identity\Models\Membership|null $membership

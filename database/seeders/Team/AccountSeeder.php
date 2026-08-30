@@ -16,7 +16,7 @@ class AccountSeeder extends Seeder
     public function run(): void
     {
         Account::factory(10)
-            ->for(Team::query()->first(), 'team')
+            ->for(Team::query()->first(), 'team') // @phpstan-ignore-line argument.type
             ->create();
     }
 }

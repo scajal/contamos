@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
+ * @property int $id
+ * @property string $team_id
+ * @property string $user_id
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Modules\Core\Identity\Models\Team $team
  * @property-read \App\Modules\Core\Identity\Models\User $user
  *

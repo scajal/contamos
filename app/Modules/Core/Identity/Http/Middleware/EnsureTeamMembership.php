@@ -21,17 +21,17 @@ class EnsureTeamMembership
         /** @var \App\Modules\Core\Identity\Models\User|null $user */
         $user = $request->user();
 
-        // If the user doesn't have a team, redirect to the
-        // team creation page.
-        if ($user->teams->isEmpty()) {
-            return redirect()->route('identity.teams.create');
-        }
-
         // Get the current team.
         $team = $this->team($request->route('team'));
 
         if (! $team || ! $user) {
             abort(Response::HTTP_NOT_FOUND);
+        }
+
+        // If the user doesn't have a team, redirect to the
+        // team creation page.
+        if ($user->teams->isEmpty()) {
+            return redirect()->route('identity.teams.create');
         }
 
         // If the user is not a member of the team, return a 403 response.
@@ -55,11 +55,12 @@ class EnsureTeamMembership
     protected function team(#[RouteParameter('team')] mixed $team): ?Team
     {
         if (is_string($team)) {
-            $team = Team::query()
+            return Team::query()
                 ->where(new Team()->getRouteKeyName(), $team)
                 ->first();
         }
 
+        /** @var \App\Modules\Core\Identity\Models\Team|null $team */
         return $team;
     }
 }
