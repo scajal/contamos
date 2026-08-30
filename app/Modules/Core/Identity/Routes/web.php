@@ -29,4 +29,7 @@ Route::as('identity.')
 
         Route::get('teams/create', [\App\Modules\Core\Identity\Http\Controllers\User\TeamController::class, 'create'])
             ->name('teams.create');
+
+        Route::post('teams', [\App\Modules\Core\Identity\Http\Controllers\User\TeamController::class, 'store'])
+            ->name('teams.store');
     });

@@ -30,10 +30,14 @@ const Index = ({ currencies }: PageProps) => {
     const t = useLaravelReactI18n().t;
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-8">
             {/** Header */}
-            <header className="flex flex-col gap-8">
+            <header>
                 <h1 className="text-2xl font-medium">{t("Currencies")}</h1>
+            </header>
+
+            {/** Content */}
+            <div className="flex flex-col gap-4">
                 {/** Filters and actions */}
                 <div className="flex items-center justify-between">
                     <div className="flex-2">
@@ -56,10 +60,7 @@ const Index = ({ currencies }: PageProps) => {
                         />
                     </div>
                 </div>
-            </header>
 
-            {/** Content */}
-            <div>
                 {/** Currencies */}
                 <div className="flex flex-col gap-4 [&>div]:rounded-sm [&>div]:border">
                     <Table>

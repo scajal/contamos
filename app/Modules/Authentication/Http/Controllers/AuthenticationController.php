@@ -28,8 +28,6 @@ class AuthenticationController
     {
         $request->authenticate($authKit->findUsing(...), $authKit->createUsing(...));
 
-        dd($resolveAuthenticationRedirect->fromRequest($request));
-
         return redirect()->to($resolveAuthenticationRedirect->fromRequest($request));
     }
 

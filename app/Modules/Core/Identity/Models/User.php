@@ -58,8 +58,8 @@ class User extends Authenticatable
      */
     public function belongsToTeam(Team $team): bool
     {
-        return $this->teams()->wherePivot(
-            $this->teams()->getForeignPivotKeyName(),
+        return $this->teams()->where(
+            "{$team->getTable()}.{$team->getKeyName()}",
             $team->getKey()
         )->exists();
     }

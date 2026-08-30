@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignIdFor(Team::class)
+            $table->foreignIdFor(Team::class, 'current_team_id')
                 ->after('avatar')
                 ->nullable()
                 ->constrained()

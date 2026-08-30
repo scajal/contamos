@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Http\Controllers\User;
 
+use App\Modules\Core\Identity\Actions\User\CreateTeam;
+use App\Modules\Core\Identity\Http\Requests\User\Team\StoreRequest;
+use App\Modules\Core\Identity\Models\User;
+use App\Modules\Support\Objects\Toast;
+use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,5 +21,20 @@ class TeamController
     public function create(): Response
     {
         return Inertia::render('identity/users/teams/create');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreRequest $request, #[CurrentUser] User $user, CreateTeam $createTeam): RedirectResponse
+    {
+        // Store the currency with the validated data.
+        $team = $createTeam->using($user, $request->validated());
+
+        // Show a message to the user.
+        Toast::make(trans('Saved'))
+            ->flash();
+
+        return to_route('finance.dashboard.index', ['team' => $team->getKey()]);
     }
 }

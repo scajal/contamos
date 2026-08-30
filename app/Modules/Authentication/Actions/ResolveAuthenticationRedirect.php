@@ -24,6 +24,6 @@ class ResolveAuthenticationRedirect
         }
 
         // Otherwise, redirect to the dashboard.
-        return route('finance.dashboard.index');
+        return route('finance.dashboard.index', ['team' => $user->teams->first()->getKey()]);
     }
 }

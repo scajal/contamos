@@ -1,5 +1,24 @@
 <?php
 
+/**
+ * Fallback
+ */
+
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', fn () => to_route('login'));
+
+/*
+|--------------------------------------------------------------------------
+| Identity routes
+|--------------------------------------------------------------------------
+|
+| This file contains the routes for the identity module.
+|
+*/
+
+require __DIR__.'/../app/Modules/Core/Identity/Routes/web.php';
+
 /*
 |--------------------------------------------------------------------------
 | Authentication routes
@@ -32,14 +51,3 @@ require __DIR__.'/../app/Modules/Core/Catalog/Routes/web.php';
 */
 
 require __DIR__.'/../app/Modules/Core/Finance/Routes/web.php';
-
-/*
-|--------------------------------------------------------------------------
-| Identity routes
-|--------------------------------------------------------------------------
-|
-| This file contains the routes for the identity module.
-|
-*/
-
-require __DIR__.'/../app/Modules/Core/Identity/Routes/web.php';

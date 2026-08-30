@@ -17,7 +17,7 @@ use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
 */
 
 Route::as('finance.')
-    ->prefix('{team}')
+    ->prefix('teams/{team}')
     ->middleware([Authenticate::class, ValidateSessionWithWorkOS::class, EnsureTeamMembership::class])
     ->group(function (): void {
         /*
