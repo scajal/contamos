@@ -44,7 +44,7 @@ class Transaction extends Model
     /**
      * Get the account for the transaction.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Finance\Models\Team\Account>
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Finance\Models\Team\Account, $this>
      */
     public function account(): BelongsTo
     {
@@ -82,7 +82,7 @@ class Transaction extends Model
     /**
      * Get the team for the transaction.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\Team>
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\Team, $this>
      */
     public function team(): BelongsTo
     {
@@ -92,7 +92,7 @@ class Transaction extends Model
     /**
      * Get the user for the transaction.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\User>
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\User, $this>
      */
     public function user(): BelongsTo
     {

@@ -18,6 +18,8 @@ return new class extends Migration
             $table->foreignIdFor(Account::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(Currency::class)->constrained()->cascadeOnDelete();
             $table->timestamps();
+
+            $table->unique([new Account()->getForeignKey(), new Currency()->getForeignKey()]);
         });
     }
 

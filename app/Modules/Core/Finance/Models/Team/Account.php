@@ -59,7 +59,7 @@ class Account extends Model
     /**
      * Get the currencies for the account.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Modules\Core\Catalog\Models\Currency>
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Modules\Core\Catalog\Models\Currency, $this, \App\Modules\Core\Finance\Models\Team\AccountCurrency, 'pivot'>
      */
     public function currencies(): BelongsToMany
     {
@@ -81,7 +81,7 @@ class Account extends Model
     /**
      * Get the transactions for the account.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\Transaction>
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\Transaction, $this>
      */
     public function transactions(): HasMany
     {

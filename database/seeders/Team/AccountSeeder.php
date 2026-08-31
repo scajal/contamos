@@ -17,6 +17,6 @@ class AccountSeeder extends Seeder
     {
         Account::factory(10)
             ->for(Team::query()->first(), 'team') // @phpstan-ignore-line argument.type
-            ->create(); // @phpstan-ignore-line method.nonObject
+            ->create();
     }
 }
