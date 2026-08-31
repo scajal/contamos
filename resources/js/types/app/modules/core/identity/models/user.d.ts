@@ -2,6 +2,7 @@
  * JSON shape of App\Modules\Core\Identity\Models\User when serialized for Inertia.
  * Hidden attributes (`external_id`, `remember_token`) are omitted.
  */
+import type { Membership } from "./membership";
 import type { Team } from "./team";
 
 export interface User {
@@ -14,4 +15,6 @@ export interface User {
     name: string;
     created_at: string | null;
     updated_at: string | null;
+    membership?: Membership | null;
+    teams?: Team[];
 }

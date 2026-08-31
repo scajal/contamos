@@ -17,11 +17,9 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Modules\Core\Identity\Models\Team $team
  * @property-read \App\Modules\Core\Identity\Models\User $user
- *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\Membership newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\Membership newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\Membership query()
- *
  * @mixin \Eloquent
  */
 #[Table('team_members')]

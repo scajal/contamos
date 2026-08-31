@@ -49,7 +49,7 @@ export default function Edit({ currency }: PageProps) {
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
                                             {formProps.processing && <Spinner />}
-                                            {t("Create")}
+                                            {t("Save")}
                                         </Button>
                                     </SheetFooter>
                                 </Fragment>

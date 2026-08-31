@@ -44,4 +44,14 @@ Route::as('finance.teams.')
         Route::get('/accounts', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'index'])
             ->name('accounts.index');
 
+        Route::get('/accounts/create', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'create'])
+            ->name('accounts.create');
+
+        Route::post('/accounts', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'store'])
+            ->name('accounts.store');
+
+        Route::get('/accounts/{account}/edit', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'edit'])
+            ->name('accounts.edit')
+            ->scopeBindings();
+
     });

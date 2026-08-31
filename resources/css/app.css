@@ -134,6 +134,6 @@
         @apply bg-background text-foreground;
     }
     html {
-        @apply font-sans;
+        @apply scrollbar-gutter-stable font-sans;
     }
 }
