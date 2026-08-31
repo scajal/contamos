@@ -2,6 +2,7 @@
 
 namespace App\Modules\Core\Finance\Models\Team;
 
+use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\Account\AccountType;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Support\Concerns\DefinesKeyType;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property string $id
@@ -50,6 +53,18 @@ class Account extends Model
     }
 
     /**
+     * Get the currencies for the account.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Modules\Core\Catalog\Models\Currency>
+     */
+    public function currencies(): BelongsToMany
+    {
+        return $this->belongsToMany(Currency::class)
+            ->using(AccountCurrency::class)
+            ->withTimestamps();
+    }
+
+    /**
      * Get the team that owns the account.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\Team, $this>
@@ -57,5 +72,15 @@ class Account extends Model
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * Get the transactions for the account.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\Transaction>
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
     }
 }
