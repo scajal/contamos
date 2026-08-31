@@ -10,6 +10,27 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $account_id
+ * @property int $amount
+ * @property string|null $description
+ * @property \Carbon\CarbonImmutable $occurred_at
+ * @property string $team_id
+ * @property string|null $user_id
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Modules\Core\Finance\Models\Team\Account $account
+ * @property-read \App\Modules\Core\Identity\Models\Team $team
+ * @property-read \App\Modules\Core\Identity\Models\User|null $user
+ *
+ * @method static \Database\Factories\Modules\Core\Finance\Models\Team\TransactionFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction query()
+ *
+ * @mixin \Eloquent
+ */
 class Transaction extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
@@ -38,7 +59,7 @@ class Transaction extends Model
         parent::boot();
 
         // Callback executed when a transaction is being created.
-        static::creating(function (Transaction $transaction) {
+        static::creating(function (Transaction $transaction): void {
             $transaction->{$transaction->team()->getForeignKeyName()} ??= Account::query()
                 ->whereKey($transaction->getAttribute($transaction->account()->getForeignKeyName()))
                 ->value($transaction->team()->getForeignKeyName());

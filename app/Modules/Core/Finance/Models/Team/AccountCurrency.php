@@ -7,6 +7,16 @@ use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
+/**
+ * @property-read \App\Modules\Core\Finance\Models\Team\Account $account
+ * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\AccountCurrency newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\AccountCurrency newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\AccountCurrency query()
+ *
+ * @mixin \Eloquent
+ */
 class AccountCurrency extends Pivot
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<int> */
