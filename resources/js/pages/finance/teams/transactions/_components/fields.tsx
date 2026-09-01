@@ -1,8 +1,11 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
+import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ListIcon } from "lucide-react";
+import { CalendarIcon, ListIcon } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
     Combobox,
     ComboboxContent,
@@ -14,6 +17,7 @@ import {
 } from "@/components/ui/combobox";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
@@ -25,6 +29,22 @@ type Props = FormComponentSlotProps<FormProps> & {
     accounts: Array<Account>;
     defaultValues?: FormProps;
 };
+
+function parseOccurredAt(value?: string): Date {
+    if (value === undefined) {
+        return new Date();
+    }
+
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+
+    if (match !== null) {
+        return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    }
+
+    const parsed = new Date(value);
+
+    return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+}
 
 export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
     /**
@@ -53,6 +73,17 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
     );
 
     /**
+     * The selected date, submitted as YYYY-MM-DD
+     * through the hidden occurred_at input.
+     */
+    const [occurredAt, setOccurredAt] = useState<Date>(() => parseOccurredAt(defaultValues?.occurred_at));
+
+    /**
+     * Whether the date picker popover is open.
+     */
+    const [dateOpen, setDateOpen] = useState(false);
+
+    /**
      * The step for the amount input, based on the selected currency.
      */
     const amountStep = currency === null ? "any" : 10 ** -currency.decimal_places;
@@ -73,7 +104,7 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                     }}
                     value={account}
                 >
-                    <ComboboxInput aria-invalid={invalid("account_id")} placeholder={t("Select an account")}>
+                    <ComboboxInput aria-invalid={invalid("account_id")} autoFocus placeholder={t("Select an account")}>
                         <InputGroupAddon>
                             <ListIcon />
                         </InputGroupAddon>
@@ -139,11 +170,48 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                 {invalid("currency_id") && <FieldError>{errors.currency_id}</FieldError>}
             </Field>
 
+            {/** Date */}
+            <Field>
+                <FieldLabel>{t("Date")}</FieldLabel>
+                <Popover
+                    open={dateOpen}
+                    onOpenChange={(open) => {
+                        setDateOpen(open);
+                    }}
+                >
+                    <PopoverTrigger
+                        render={
+                            <Button
+                                aria-invalid={invalid("occurred_at")}
+                                className="w-full justify-start font-normal"
+                                type="button"
+                                variant="outline"
+                            />
+                        }
+                    >
+                        <CalendarIcon />
+                        {format(occurredAt, "PPP")}
+                    </PopoverTrigger>
+                    <input name="occurred_at" type="hidden" value={format(occurredAt, "yyyy-MM-dd")} />
+                    <PopoverContent align="start" className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            required
+                            selected={occurredAt}
+                            onSelect={(next) => {
+                                setOccurredAt(next);
+                                setDateOpen(false);
+                            }}
+                        />
+                    </PopoverContent>
+                </Popover>
+                {invalid("occurred_at") && <FieldError>{errors.occurred_at}</FieldError>}
+            </Field>
+
             {/** Description */}
             <Field>
                 <FieldLabel>{t("Description")}</FieldLabel>
                 <Textarea
-                    autoFocus
                     aria-invalid={invalid("description")}
                     defaultValue={defaultValues?.description ?? undefined}
                     name="description"

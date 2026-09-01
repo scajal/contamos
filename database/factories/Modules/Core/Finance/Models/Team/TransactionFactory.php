@@ -33,7 +33,7 @@ class TransactionFactory extends Factory
             'account_id' => Account::factory(),
             'amount' => fake()->numberBetween(-1000000, 1000000),
             'description' => fake()->sentence(),
-            'occurred_at' => fake()->dateTime(),
+            'occurred_at' => fake()->date(),
             'team_id' => Team::factory(),
             'user_id' => User::factory(),
         ];

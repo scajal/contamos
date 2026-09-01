@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
+import transactions from "@/routes/finance/teams/transactions";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 
 import { Fields } from "./_components/fields";
@@ -32,6 +33,7 @@ export default function Create({ accounts }: PageProps) {
                 <Sheet {...rootProps}>
                     <SheetContent>
                         <Form
+                            {...transactions.store.form({ team: user?.current_team_id ?? "" })}
                             className="contents"
                             disableWhileProcessing
                             onSuccess={() => {
@@ -44,7 +46,7 @@ export default function Create({ accounts }: PageProps) {
                                 <Fragment>
                                     <SheetHeader>
                                         <SheetTitle>{t("Create :name", { name: t("transaction") })}</SheetTitle>
-                                        <SheetDescription>{t("Add a new account to the team.")}</SheetDescription>
+                                        <SheetDescription>{t("Add a new transaction.")}</SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-4">
                                         <Fields accounts={accounts} {...formProps} />

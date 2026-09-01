@@ -79,7 +79,7 @@ class Transaction extends Model
     {
         return [
             'amount' => 'integer',
-            'occurred_at' => 'datetime',
+            'occurred_at' => 'date',
         ];
     }
 

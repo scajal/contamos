@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Http\Controllers\Team;
 
+use App\Modules\Core\Finance\Http\Requests\Team\Transaction\StoreRequest;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Http\RedirectResponse;
@@ -43,9 +44,10 @@ class TransactionController
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Team $team): RedirectResponse
+    public function store(Team $team, StoreRequest $request): RedirectResponse
     {
-        //
+        // Create the transaction.
+        $team->transactions()->create($request->validated());
 
         // Flash a success message to the session.
         Toast::make(trans('Saved'))

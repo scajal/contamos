@@ -21,7 +21,7 @@ return new class extends Migration
             $table->bigInteger('amount');
             $table->foreignIdFor(Currency::class)->constrained()->cascadeOnDelete();
             $table->text('description')->nullable();
-            $table->dateTime('occurred_at')->useCurrent();
+            $table->date('occurred_at')->useCurrent();
             $table->foreignIdFor(Team::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(User::class)->nullable()->constrained()->nullOnDelete();
             $table->timestamps();

@@ -73,4 +73,6 @@ Route::as('finance.teams.')
         Route::get('/transactions/create', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'create'])
             ->name('transactions.create');
 
+        Route::post('/transactions', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'store'])
+            ->name('transactions.store');
     });
