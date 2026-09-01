@@ -43,7 +43,7 @@ export default function Edit({ currency }: PageProps) {
                                         <SheetTitle>{t("Edit :name", { name: t("currency") })}</SheetTitle>
                                         <SheetDescription>{t("Edit the currency details.")}</SheetDescription>
                                     </SheetHeader>
-                                    <div className="px-4">
+                                    <div className="min-h-0 flex-1 overflow-y-auto px-4">
                                         <Fields {...formProps} defaultValues={currency} />
                                     </div>
                                     <SheetFooter>

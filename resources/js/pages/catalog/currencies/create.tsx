@@ -40,7 +40,7 @@ export default function Create() {
                                             {t("Add a new currency to the application.")}
                                         </SheetDescription>
                                     </SheetHeader>
-                                    <div className="px-4">
+                                    <div className="min-h-0 flex-1 overflow-y-auto px-4">
                                         <Fields {...formProps} />
                                     </div>
                                     <SheetFooter>

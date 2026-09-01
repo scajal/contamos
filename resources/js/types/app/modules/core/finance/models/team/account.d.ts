@@ -1,11 +1,13 @@
 /**
  * JSON shape of App\Modules\Core\Finance\Models\Team\Account when serialized for Inertia.
  */
-import type { AccountType } from "../../enums/account/account-type";
+import { Currency } from "../../../catalog/models/currency";
 import type { Team } from "../../../identity/models/team";
+import type { AccountType } from "../../enums/account/account-type";
 
 export interface Account {
     id: string;
+    currencies?: Array<Currency>;
     name: string;
     team_id: string;
     type: AccountType;

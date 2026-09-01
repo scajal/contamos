@@ -63,7 +63,7 @@ class Account extends Model
      */
     public function currencies(): BelongsToMany
     {
-        return $this->belongsToMany(Currency::class)
+        return $this->belongsToMany(Currency::class, new AccountCurrency()->getTable(), $this->getForeignKey(), new Currency()->getForeignKey())
             ->using(AccountCurrency::class)
             ->withTimestamps();
     }

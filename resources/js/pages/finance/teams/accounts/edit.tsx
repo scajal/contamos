@@ -7,17 +7,19 @@ import { Modal } from "@/components/ui/modal";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import accounts from "@/routes/finance/teams/accounts";
+import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { AccountType } from "@/types/app/modules/core/finance/enums/account/account-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 
 import { Fields } from "./_components/fields";
 
 type PageProps = {
-    account: Account;
+    account: Partial<Omit<Account, "team"> & { currency_ids: Array<string> }>;
+    currencies: Array<Currency>;
     types: Array<AccountType>;
 };
 
-export default function Edit({ account, types }: PageProps) {
+export default function Edit({ account, currencies, types }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -35,7 +37,7 @@ export default function Edit({ account, types }: PageProps) {
                 <Sheet {...rootProps}>
                     <SheetContent>
                         <Form
-                            {...accounts.store.form({ team: user?.current_team_id ?? "" })}
+                            {...accounts.update.form({ team: user?.current_team_id ?? "", account: account.id ?? "" })}
                             className="contents"
                             disableWhileProcessing
                             onSuccess={() => {
@@ -50,8 +52,16 @@ export default function Edit({ account, types }: PageProps) {
                                         <SheetTitle>{t("Edit :name", { name: t("account") })}</SheetTitle>
                                         <SheetDescription>{t("Edit the account.")}</SheetDescription>
                                     </SheetHeader>
-                                    <div className="px-4">
-                                        <Fields defaultValues={account} types={types} {...formProps} />
+                                    <div className="min-h-0 flex-1 overflow-y-auto px-4">
+                                        <Fields
+                                            currencies={currencies}
+                                            defaultValues={{
+                                                ...account,
+                                                currency_ids: account.currencies?.map((currency) => currency.id) ?? [],
+                                            }}
+                                            types={types}
+                                            {...formProps}
+                                        />
                                     </div>
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">

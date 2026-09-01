@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Http\Requests\Team\Account;
 
+use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\Account\AccountType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -28,6 +29,15 @@ class StoreRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'currency_ids' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+            'currency_ids.*' => [
+                'required',
+                Rule::exists(Currency::class, new Currency()->getKeyName()),
+            ],
             'name' => [
                 'required',
                 'string',

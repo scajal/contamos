@@ -7,15 +7,17 @@ import { Modal } from "@/components/ui/modal";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import accounts from "@/routes/finance/teams/accounts";
+import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { AccountType } from "@/types/app/modules/core/finance/enums/account/account-type";
 
 import { Fields } from "./_components/fields";
 
 type PageProps = {
+    currencies: Array<Currency>;
     types: Array<AccountType>;
 };
 
-export default function Create({ types }: PageProps) {
+export default function Create({ currencies, types }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -48,8 +50,8 @@ export default function Create({ types }: PageProps) {
                                         <SheetTitle>{t("Create :name", { name: t("account") })}</SheetTitle>
                                         <SheetDescription>{t("Add a new account to the team.")}</SheetDescription>
                                     </SheetHeader>
-                                    <div className="px-4">
-                                        <Fields types={types} {...formProps} />
+                                    <div className="min-h-0 flex-1 overflow-y-auto px-4">
+                                        <Fields currencies={currencies} types={types} {...formProps} />
                                     </div>
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">

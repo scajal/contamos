@@ -54,4 +54,8 @@ Route::as('finance.teams.')
             ->name('accounts.edit')
             ->scopeBindings();
 
+        Route::put('/accounts/{account}', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'update'])
+            ->name('accounts.update')
+            ->scopeBindings();
+
     });

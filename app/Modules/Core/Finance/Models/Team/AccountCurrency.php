@@ -4,6 +4,7 @@ namespace App\Modules\Core\Finance\Models\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Support\Concerns\DefinesKeyType;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  *
  * @mixin \Eloquent
  */
+#[Table('account_currencies')]
 class AccountCurrency extends Pivot
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<int> */
