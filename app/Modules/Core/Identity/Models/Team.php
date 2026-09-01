@@ -3,6 +3,7 @@
 namespace App\Modules\Core\Identity\Models;
 
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -99,6 +100,16 @@ class Team extends Model
             ->max();
 
         return $existing->isEmpty() ? $default : "{$default}-".($suffix + 1);
+    }
+
+    /**
+     * Get the transactions of the team.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\Transaction, $this>
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
     }
 
     /**

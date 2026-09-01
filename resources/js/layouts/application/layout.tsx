@@ -1,8 +1,17 @@
 import { Link, usePage } from "@inertiajs/react";
+import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { BanknoteIcon, ChevronsUpDownIcon, CircleDollarSignIcon, LayoutDashboardIcon, LogOutIcon } from "lucide-react";
+import {
+    BanknoteIcon,
+    ChevronsUpDownIcon,
+    CircleDollarSignIcon,
+    LayoutDashboardIcon,
+    LogOutIcon,
+    PlusIcon,
+} from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -29,8 +38,20 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
 import currencies from "@/routes/catalog/currencies";
 import accounts from "@/routes/finance/teams/accounts";
+import transactions from "@/routes/finance/teams/transactions";
 
 export const ApplicationLayout = ({ children }: { children: React.ReactNode }) => {
+    /**
+     * Translate the provided string to the
+     * current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { user } = usePage().props;
+
     return (
         <SidebarProvider>
             {/** Sidebar */}
@@ -39,8 +60,19 @@ export const ApplicationLayout = ({ children }: { children: React.ReactNode }) =
             <SidebarInset>
                 {/** Header */}
                 <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                    <div className="px-4">
+                    <div className="flex w-full items-center justify-between px-4">
                         <SidebarTrigger className="-ml-1" />
+                        {user?.current_team_id && (
+                            <Button
+                                nativeButton={false}
+                                render={
+                                    <ModalLink href={transactions.create.url({ team: user?.current_team_id ?? "" })}>
+                                        <PlusIcon />
+                                        <span>{t("Create :name", { name: t("transaction") })}</span>
+                                    </ModalLink>
+                                }
+                            />
+                        )}
                     </div>
                 </header>
                 {/** Content */}

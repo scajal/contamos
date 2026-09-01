@@ -4,6 +4,7 @@
 import { Currency } from "../../../catalog/models/currency";
 import type { Team } from "../../../identity/models/team";
 import type { AccountType } from "../../enums/account/account-type";
+import type { Transaction } from "./transaction";
 
 export interface Account {
     id: string;
@@ -14,4 +15,5 @@ export interface Account {
     created_at: string | null;
     updated_at: string | null;
     team?: Team;
+    transactions?: Array<Transaction>;
 }

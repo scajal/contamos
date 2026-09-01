@@ -58,4 +58,19 @@ Route::as('finance.teams.')
             ->name('accounts.update')
             ->scopeBindings();
 
+        /*
+        |--------------------------------------------------------------------------
+        | Transaction routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the transaction management.
+        |
+        */
+
+        Route::get('/transactions', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'index'])
+            ->name('transactions.index');
+
+        Route::get('/transactions/create', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'create'])
+            ->name('transactions.create');
+
     });
