@@ -29,7 +29,9 @@ class TeamController
     public function store(StoreRequest $request, #[CurrentUser] User $user, CreateTeam $createTeam): RedirectResponse
     {
         // Store the currency with the validated data.
-        $team = $createTeam->using($user, $request->validated());
+        $team = $createTeam
+            ->for($user)
+            ->using($request->validated());
 
         // Show a message to the user.
         Toast::make(trans('Saved'))

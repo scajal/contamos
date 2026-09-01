@@ -2,6 +2,7 @@ import { Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
+    ArrowLeftRightIcon,
     BanknoteIcon,
     ChevronsUpDownIcon,
     CircleDollarSignIcon,
@@ -115,6 +116,14 @@ const Sidebar = () => {
                         </SidebarMenuItem>
                         <SidebarMenuItem>
                             <SidebarMenuButton
+                                render={<Link href={transactions.index.url({ team: user?.current_team_id ?? "" })} />}
+                            >
+                                <ArrowLeftRightIcon />
+                                <span>{t("Transactions")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
                                 render={<Link href={accounts.index.url({ team: user?.current_team_id ?? "" })} />}
                             >
                                 <BanknoteIcon />
@@ -145,7 +154,10 @@ const Sidebar = () => {
                                 <Avatar>
                                     <AvatarFallback>CP</AvatarFallback>
                                 </Avatar>
-                                <span className="truncate font-medium">{user?.email}</span>
+                                <div className="flex flex-col">
+                                    <span className="truncate font-medium">{user?.name}</span>
+                                    <span className="text-muted-foreground truncate text-sm">{user?.email}</span>
+                                </div>
                                 <ChevronsUpDownIcon className="ml-auto size-4" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent side={isMobile ? "bottom" : "right"} align="end" sideOffset={4}>

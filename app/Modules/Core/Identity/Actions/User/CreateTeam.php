@@ -11,19 +11,36 @@ use Illuminate\Support\Facades\DB;
 class CreateTeam
 {
     /**
+     * The user for which the team will be created.
+     */
+    public ?User $user = null;
+
+    /**
+     * Set the user for which the team will be created.
+     */
+    public function for(User $user): self
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    /**
      * Create a new team for the provided user and
      * associate it to it.
      *
      * @param  array<string, mixed>  $attributes
      */
-    public function using(User $user, array $attributes): Team
+    public function using(array $attributes): Team
     {
-        return DB::transaction(function () use ($attributes, $user): Team {
+        return DB::transaction(function () use ($attributes): Team {
             // Create the team.
             $team = Team::query()->create($attributes);
 
             // Associate the team to the user.
-            $user->teams()->attach($team);
+            if ($this->user) {
+                $this->user->teams()->attach($team);
+            }
 
             // Return the team.
             return $team;

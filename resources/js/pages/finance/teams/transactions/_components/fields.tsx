@@ -15,7 +15,7 @@ import {
     ComboboxTrigger,
     ComboboxValue,
 } from "@/components/ui/combobox";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
@@ -150,6 +150,7 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                         <InputGroupInput
                             aria-invalid={invalid("amount")}
                             defaultValue={defaultValues?.amount}
+                            disabled={!account}
                             name="amount"
                             placeholder={t("Enter an amount")}
                             step={amountStep}
@@ -166,6 +167,9 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                         </ComboboxList>
                     </ComboboxContent>
                 </Combobox>
+                <FieldDescription>
+                    {t("Enter a positive amount for an income or a negative amount for an expense.")}
+                </FieldDescription>
                 {invalid("amount") && <FieldError>{errors.amount}</FieldError>}
                 {invalid("currency_id") && <FieldError>{errors.currency_id}</FieldError>}
             </Field>

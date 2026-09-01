@@ -50,11 +50,9 @@ class AccountController
     public function store(Team $team, StoreRequest $request, CreateAccount $createAccount): RedirectResponse
     {
         // Create the account with the validated data.
-        $createAccount->using(
-            $team,
-            $request->safe()->only(['name', 'type']), // @phpstan-ignore-line argument.type
-            $request->validated('currency_ids') // @phpstan-ignore-line argument.type
-        );
+        $createAccount
+            ->for($team)
+            ->using($request->safe()->only(['name', 'type']), $request->validated('currency_ids')); // @phpstan-ignore-line argument.type
 
         // Flash a success message to the session.
         Toast::make(trans('Saved'))
@@ -81,11 +79,9 @@ class AccountController
     public function update(Team $team, Account $account, UpdateRequest $request, UpdateAccount $updateAccount): RedirectResponse
     {
         // Update the account with the validated data.
-        $updateAccount->using(
-            $account,
-            $request->safe()->only(['name', 'type']), // @phpstan-ignore-line argument.type
-            $request->validated('currency_ids') // @phpstan-ignore-line argument.type
-        );
+        $updateAccount
+            ->for($account)
+            ->using($request->safe()->only(['name', 'type']), $request->validated('currency_ids')); // @phpstan-ignore-line argument.type
 
         // Flash a success message to the session.
         Toast::make(trans('Saved'))

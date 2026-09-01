@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Http\Controllers\Team;
 
+use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\StoreRequest;
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Objects\Toast;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
@@ -23,7 +26,7 @@ class TransactionController
         return Inertia::render('finance/teams/transactions/index', [
             'transactions' => Inertia::defer(
                 fn (): LengthAwarePaginator => $team->transactions()
-                    ->with('account', 'currency')
+                    ->with('account', 'currency', 'user')
                     ->paginate(10),
             ),
         ]);
@@ -44,10 +47,13 @@ class TransactionController
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Team $team, StoreRequest $request): RedirectResponse
+    public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateTransaction $createTransaction): RedirectResponse
     {
         // Create the transaction.
-        $team->transactions()->create($request->validated());
+        $createTransaction
+            ->for($team)
+            ->by($user)
+            ->using($request->validated());
 
         // Flash a success message to the session.
         Toast::make(trans('Saved'))
