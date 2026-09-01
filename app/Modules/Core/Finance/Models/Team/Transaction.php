@@ -2,9 +2,11 @@
 
 namespace App\Modules\Core\Finance\Models\Team;
 
+use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Concerns\DefinesKeyType;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Modules\Core\Finance\Models\Team\Account $account
+ * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
  * @property-read \App\Modules\Core\Identity\Models\Team $team
  * @property-read \App\Modules\Core\Identity\Models\User|null $user
  *
@@ -31,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @mixin \Eloquent
  */
+#[Fillable('amount', 'description', 'occurred_at')]
 class Transaction extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
@@ -77,6 +81,16 @@ class Transaction extends Model
             'amount' => 'integer',
             'occurred_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Get the currency for the transaction.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Catalog\Models\Currency, $this>
+     */
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
     }
 
     /**

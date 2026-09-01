@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
@@ -18,6 +19,7 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->foreignIdFor(Account::class)->constrained()->cascadeOnDelete();
             $table->bigInteger('amount');
+            $table->foreignIdFor(Currency::class)->constrained()->cascadeOnDelete();
             $table->text('description')->nullable();
             $table->dateTime('occurred_at')->useCurrent();
             $table->foreignIdFor(Team::class)->constrained()->cascadeOnDelete();
