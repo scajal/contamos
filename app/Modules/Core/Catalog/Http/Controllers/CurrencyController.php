@@ -80,4 +80,34 @@ class CurrencyController
 
         return back();
     }
+
+    /**
+     * Activate the specified resource.
+     */
+    public function activate(Currency $currency): RedirectResponse
+    {
+        // Activate the currency.
+        $currency->update(['is_active' => true]);
+
+        // Show a message to the user.
+        Toast::make(trans('Saved'))
+            ->flash();
+
+        return back();
+    }
+
+    /**
+     * Deactivate the specified resource.
+     */
+    public function deactivate(Currency $currency): RedirectResponse
+    {
+        // Deactivate the currency.
+        $currency->update(['is_active' => false]);
+
+        // Show a message to the user.
+        Toast::make(trans('Saved'))
+            ->flash();
+
+        return back();
+    }
 }

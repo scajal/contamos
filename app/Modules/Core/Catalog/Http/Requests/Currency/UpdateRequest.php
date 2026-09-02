@@ -8,7 +8,6 @@ use App\Modules\Core\Catalog\Models\Currency;
 use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateRequest extends FormRequest
 {
@@ -29,19 +28,6 @@ class UpdateRequest extends FormRequest
     public function rules(#[RouteParameter('currency')] Currency $currency): array
     {
         return [
-            'code' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique(Currency::class)
-                    ->ignore($currency),
-            ],
-            'decimal_places' => [
-                'required',
-                'integer',
-                'min:0',
-                'max:18',
-            ],
             'name' => [
                 'required',
                 'string',

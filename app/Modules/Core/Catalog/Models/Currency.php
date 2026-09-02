@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
  * @property string $id
  * @property string $code
  * @property int $decimal_places
+ * @property bool $is_active
  * @property string $name
  * @property string $symbol
  * @property \App\Modules\Core\Catalog\Enums\Currency\CurrencyType $type
@@ -30,7 +31,7 @@ use Illuminate\Support\Str;
  *
  * @mixin \Eloquent
  */
-#[Fillable('code', 'decimal_places', 'name', 'symbol', 'type')]
+#[Fillable('code', 'decimal_places', 'is_active', 'name', 'symbol', 'type')]
 class Currency extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
@@ -70,6 +71,7 @@ class Currency extends Model
     {
         return [
             'decimal_places' => 'integer',
+            'is_active' => 'boolean',
             'type' => CurrencyType::class,
         ];
     }

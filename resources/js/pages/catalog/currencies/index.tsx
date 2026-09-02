@@ -2,6 +2,7 @@ import { Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
+    CheckIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
     CircleDashedIcon,
@@ -9,6 +10,7 @@ import {
     PencilIcon,
     PlusIcon,
     SearchIcon,
+    XIcon,
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
@@ -170,6 +172,10 @@ const Table = () => {
                                                       </ModalLink>
                                                   }
                                               />
+                                              <DropdownMenuItem>
+                                                  {currency.is_active ? <XIcon /> : <CheckIcon />}
+                                                  <span>{currency.is_active ? t("Deactivate") : t("Activate")}</span>
+                                              </DropdownMenuItem>
                                           </DropdownMenuContent>
                                       </DropdownMenu>
                                   </TableCell>

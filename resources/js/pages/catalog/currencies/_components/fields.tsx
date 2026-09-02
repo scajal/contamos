@@ -6,12 +6,15 @@ import { useCallback, useMemo } from "react";
 
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CurrencyType } from "@/types/app/modules/core/catalog/enums/currency/currency-type";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 
 type FormProps = Partial<Currency>;
 
 type Props = FormComponentSlotProps<FormProps> & {
     defaultValues?: FormProps;
+    types: Array<CurrencyType>;
     locked?: ReadonlyArray<keyof FormProps>;
 };
 
@@ -21,6 +24,7 @@ export const Fields = ({
     invalid,
     locked,
     touched,
+    types,
     valid,
     validate: realTimeValidate,
     validating,
@@ -46,6 +50,28 @@ export const Fields = ({
 
     return (
         <div className="space-y-6">
+            {/** Type */}
+            <Field>
+                <FieldLabel>{t("Type")}</FieldLabel>
+                <Select defaultValue={defaultValues?.type} name="type">
+                    <SelectTrigger aria-invalid={invalid("type")}>
+                        <SelectValue>
+                            {(value: CurrencyType | null) => (value ? t(`enums.${value}`) : t("Select a type"))}
+                        </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            {types.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                    {t(`enums.${type}`)}
+                                </SelectItem>
+                            ))}
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                {invalid("type") && <FieldError>{errors.type}</FieldError>}
+            </Field>
+
             <div className="grid gap-6 sm:grid-cols-2">
                 {/** Code */}
                 <Field>

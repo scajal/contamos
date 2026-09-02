@@ -46,6 +46,9 @@ Route::as('catalog.')->middleware([
         ->middleware(HandlePrecognitiveRequests::class)
         ->name('currencies.update');
 
-    Route::delete('currencies/{currency}', [\App\Modules\Core\Catalog\Http\Controllers\CurrencyController::class, 'destroy'])
-        ->name('currencies.destroy');
+    Route::patch('currencies/{currency}/activate', [\App\Modules\Core\Catalog\Http\Controllers\CurrencyController::class, 'activate'])
+        ->name('currencies.activate');
+
+    Route::patch('currencies/{currency}/deactivate', [\App\Modules\Core\Catalog\Http\Controllers\CurrencyController::class, 'deactivate'])
+        ->name('currencies.deactivate');
 });
