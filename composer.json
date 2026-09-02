@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "qube/vault",
+    "name": "qube/hormiga",
     "type": "project",
-    "description": "The Vault application, your money tracker.",
+    "description": "Hormiga, your personal finance manager.",
     "license": "UNLICENSED",
     "require": {
         "php": "^8.3",
