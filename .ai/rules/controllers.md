@@ -21,9 +21,13 @@ After Form Request validation, read input with `$request->validated()` or `$requ
 
 Use plain multi-method controller classes with resource-style method names when CRUD-like. Wire them with explicit verb routes. Do not use invokable `__invoke` controllers, `Route::resource` / `apiResource`, or a shared base `Controller`.
 
+## Method-inject collaborators
+
+Method-inject Actions and other collaborators. Use `#[CurrentUser]` when the container should resolve the user. Do not call `app()`, `resolve()`, or `App::make()` in module code.
+
 ## Actions with using() for multi-step writes
 
-Put multi-step or transactional domain writes in module Action classes. Method-inject the Action and call `using(...)` with validated arrays. Wrap multiple writes in `DB::transaction`. Keep simple single-model Eloquent create/update in the controller. Do not use `handle`, `execute`, or `__invoke`.
+Put multi-step or transactional domain writes in module Action classes. Method-inject the Action, set context with `for($model)` and `by($user)` when needed, then call `using(...)` with validated arrays. Wrap multiple writes in `DB::transaction`. Keep simple single-model Eloquent create/update in the controller. Do not use `handle`, `execute`, or `__invoke`.
 
 ## Flash Toast and return back() after modal writes
 
@@ -31,7 +35,7 @@ After successful store/update from an Inertia modal, flash with `Toast::make(tra
 
 ## Defer paginated index listings
 
-For Inertia index pages, pass the listing as `Inertia::defer()` and paginate with `paginate(10)` (length-aware). Do not use `simplePaginate` or `cursorPaginate` for these listings.
+For Inertia index pages, pass the listing as `Inertia::defer()` and paginate with `paginate(10)` (length-aware). Do not use `simplePaginate` or `cursorPaginate` for these listings. Use `Inertia::scroll(...)->defer()` only for infinite-scroll index pages.
 
 ## Chain baseRoute on Inertia modals
 
