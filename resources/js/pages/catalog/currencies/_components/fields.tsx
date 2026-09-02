@@ -2,7 +2,7 @@ import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { debounce } from "lodash";
 import { CheckIcon, DecimalsArrowRightIcon, DollarSignIcon, TypeIcon, XIcon } from "lucide-react";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
@@ -12,12 +12,14 @@ type FormProps = Partial<Currency>;
 
 type Props = FormComponentSlotProps<FormProps> & {
     defaultValues?: FormProps;
+    locked?: ReadonlyArray<keyof FormProps>;
 };
 
 export const Fields = ({
     defaultValues,
     errors,
     invalid,
+    locked,
     touched,
     valid,
     validate: realTimeValidate,
@@ -37,6 +39,11 @@ export const Fields = ({
         [realTimeValidate],
     );
 
+    /**
+     * Check if the field is locked.
+     */
+    const isLocked = useCallback((field: keyof FormProps): boolean => locked?.includes(field) ?? false, [locked]);
+
     return (
         <div className="space-y-6">
             <div className="grid gap-6 sm:grid-cols-2">
@@ -51,6 +58,7 @@ export const Fields = ({
                             autoFocus
                             aria-invalid={invalid("code")}
                             defaultValue={defaultValues?.code}
+                            disabled={isLocked("code")}
                             name="code"
                             onChange={() => validate("code")}
                             placeholder={t("Enter a code")}
@@ -73,6 +81,7 @@ export const Fields = ({
                         <InputGroupInput
                             aria-invalid={invalid("symbol")}
                             defaultValue={defaultValues?.symbol}
+                            disabled={isLocked("symbol")}
                             name="symbol"
                             placeholder={t("Enter a symbol")}
                         />
@@ -91,6 +100,7 @@ export const Fields = ({
                     <InputGroupInput
                         aria-invalid={invalid("name")}
                         defaultValue={defaultValues?.name}
+                        disabled={isLocked("name")}
                         name="name"
                         placeholder={t("Enter a name")}
                     />
@@ -108,6 +118,7 @@ export const Fields = ({
                     <InputGroupInput
                         aria-invalid={invalid("decimal_places")}
                         defaultValue={defaultValues?.decimal_places}
+                        disabled={isLocked("decimal_places")}
                         name="decimal_places"
                         placeholder={t("Enter the number of decimal places")}
                         step={1}

@@ -44,7 +44,11 @@ export default function Edit({ currency }: PageProps) {
                                         <SheetDescription>{t("Edit the currency details.")}</SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-4">
-                                        <Fields {...formProps} defaultValues={currency} />
+                                        <Fields
+                                            {...formProps}
+                                            defaultValues={currency}
+                                            locked={["code", "decimal_places"]}
+                                        />
                                     </div>
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
