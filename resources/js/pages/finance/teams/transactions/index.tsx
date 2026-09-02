@@ -174,16 +174,8 @@ const Table = () => {
                                                 <TableCell className="w-16">
                                                     {format(new Date(transaction.occurred_at), "HH:mm")}
                                                 </TableCell>
-                                                <TableCell>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm text-gray-500">
-                                                            {transaction.account?.name ?? "-"}
-                                                        </span>
-                                                        <span className="font-medium">
-                                                            {transaction.description ?? "-"}
-                                                        </span>
-                                                    </div>
-                                                </TableCell>
+                                                <TableCell>{transaction.account?.name ?? "-"}</TableCell>
+                                                <TableCell>{transaction.description ?? ""}</TableCell>
                                                 <TableCell className="text-right">
                                                     <span
                                                         className={cn(

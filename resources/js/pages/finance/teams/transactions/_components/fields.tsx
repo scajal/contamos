@@ -49,19 +49,25 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
      * which currencies the combobox may offer.
      */
     const [account, setAccount] = useState<Account | null>(
-        () => accounts.find((candidate) => candidate.id === defaultValues?.account_id) ?? null,
+        () =>
+            accounts.find((candidate) => candidate.id === defaultValues?.account_id) ??
+            (accounts.length === 1 ? accounts[0] : null),
     );
 
     /**
      * The currently selected currency, used to set the
      * amount input step and show its code in the trigger.
      */
-    const [currency, setCurrency] = useState<Currency | null>(
-        () =>
-            accounts
-                .find((candidate) => candidate.id === defaultValues?.account_id)
-                ?.currencies?.find((candidate) => candidate.id === defaultValues?.currency_id) ?? null,
-    );
+    const [currency, setCurrency] = useState<Currency | null>(() => {
+        const selected =
+            accounts.find((candidate) => candidate.id === defaultValues?.account_id) ??
+            (accounts.length === 1 ? accounts[0] : null);
+        const currencies = selected?.currencies ?? [];
+        return (
+            currencies.find((candidate) => candidate.id === defaultValues?.currency_id) ??
+            (currencies.length === 1 ? currencies[0] : null)
+        );
+    });
 
     /**
      * The step for the amount input, based on the selected currency.
@@ -83,7 +89,8 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                     name="account_id"
                     onValueChange={(value) => {
                         setAccount(value);
-                        setCurrency(null);
+                        const currencies = value?.currencies ?? [];
+                        setCurrency(currencies.length === 1 ? currencies[0] : null);
                     }}
                     value={account}
                 >
