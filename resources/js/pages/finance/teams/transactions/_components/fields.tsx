@@ -55,8 +55,8 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
     );
 
     /**
-     * The currently selected currency, used to set the
-     * amount input step and show its code in the trigger.
+     * The currently selected currency, used to show its
+     * code in the trigger.
      */
     const [currency, setCurrency] = useState<Currency | null>(() => {
         const selected =
@@ -68,11 +68,6 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
             (currencies.length === 1 ? currencies[0] : null)
         );
     });
-
-    /**
-     * The step for the amount input, based on the selected currency.
-     */
-    const amountStep = currency === null ? "any" : 10 ** -currency.decimal_places;
 
     return (
         <div className="space-y-6">
@@ -139,12 +134,14 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                         </InputGroupAddon>
                         <InputGroupInput
                             aria-invalid={invalid("amount")}
+                            autoComplete="off"
                             defaultValue={defaultValues?.amount}
                             disabled={!account}
+                            inputMode="decimal"
                             name="amount"
                             placeholder={t("Enter an amount")}
-                            step={amountStep}
-                            type="number"
+                            spellCheck={false}
+                            type="text"
                         />
                     </InputGroup>
                     <ComboboxContent>
