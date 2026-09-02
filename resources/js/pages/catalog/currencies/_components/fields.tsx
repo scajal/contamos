@@ -2,7 +2,7 @@ import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { debounce } from "lodash";
 import { CheckIcon, DecimalsArrowRightIcon, DollarSignIcon, TypeIcon, XIcon } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
@@ -51,12 +51,32 @@ export const Fields = ({
      */
     const isLocked = useCallback((field: keyof FormProps): boolean => locked?.includes(field) ?? false, [locked]);
 
+    /**
+     * The ref. for the type field.
+     */
+    const typeInputRef = useRef<HTMLInputElement>(null);
+
+    /**
+     * The ref. for the exchange rate source field.
+     */
+    const exchangeRateSourceInputRef = useRef<HTMLInputElement>(null);
+
     return (
         <div className="space-y-6">
             {/** Type */}
             <Field>
                 <FieldLabel>{t("Type")}</FieldLabel>
-                <Select defaultValue={defaultValues?.type} disabled={isLocked("type")} name="type">
+                <Select
+                    defaultValue={defaultValues?.type}
+                    disabled={isLocked("type")}
+                    inputRef={typeInputRef}
+                    name="type"
+                    onValueChange={() =>
+                        requestAnimationFrame(() =>
+                            typeInputRef.current?.dispatchEvent(new Event("input", { bubbles: true })),
+                        )
+                    }
+                >
                     <SelectTrigger aria-invalid={invalid("type")}>
                         <SelectValue>
                             {(value: CurrencyType | null) => (value ? t(`enums.${value}`) : t("Select a type"))}
@@ -163,7 +183,13 @@ export const Fields = ({
                 <Select
                     defaultValue={defaultValues?.exchange_rate_source}
                     disabled={isLocked("exchange_rate_source")}
+                    inputRef={exchangeRateSourceInputRef}
                     name="exchange_rate_source"
+                    onValueChange={() =>
+                        requestAnimationFrame(() =>
+                            exchangeRateSourceInputRef.current?.dispatchEvent(new Event("input", { bubbles: true })),
+                        )
+                    }
                 >
                     <SelectTrigger aria-invalid={invalid("exchange_rate_source")}>
                         <SelectValue>

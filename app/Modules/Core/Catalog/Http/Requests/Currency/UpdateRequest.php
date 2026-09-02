@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Catalog\Http\Requests\Currency;
 
-use App\Modules\Core\Catalog\Models\Currency;
-use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -25,7 +23,7 @@ class UpdateRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    public function rules(#[RouteParameter('currency')] Currency $currency): array
+    public function rules(): array
     {
         return [
             'name' => [
