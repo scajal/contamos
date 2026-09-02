@@ -15,8 +15,10 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->string('code')->unique();
             $table->unsignedTinyInteger('decimal_places')->default(2);
+            $table->string('exchange_rate_source');
             $table->string('name');
             $table->string('symbol');
+            $table->string('type')->index();
             $table->timestamps();
         });
     }

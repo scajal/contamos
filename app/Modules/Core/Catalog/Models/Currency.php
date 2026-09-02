@@ -2,6 +2,7 @@
 
 namespace App\Modules\Core\Catalog\Models;
 
+use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
 use App\Modules\Core\Catalog\Models\Currency\ExchangeRate;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -17,6 +18,7 @@ use Illuminate\Support\Str;
  * @property int $decimal_places
  * @property string $name
  * @property string $symbol
+ * @property \App\Modules\Core\Catalog\Enums\Currency\CurrencyType $type
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<\App\Modules\Core\Catalog\Models\Currency\ExchangeRate> $exchangeRates
@@ -28,7 +30,7 @@ use Illuminate\Support\Str;
  *
  * @mixin \Eloquent
  */
-#[Fillable('code', 'decimal_places', 'name', 'symbol')]
+#[Fillable('code', 'decimal_places', 'name', 'symbol', 'type')]
 class Currency extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
@@ -68,6 +70,7 @@ class Currency extends Model
     {
         return [
             'decimal_places' => 'integer',
+            'type' => CurrencyType::class,
         ];
     }
 

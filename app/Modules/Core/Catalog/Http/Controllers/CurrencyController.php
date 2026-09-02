@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Catalog\Http\Controllers;
 
+use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
 use App\Modules\Core\Catalog\Http\Requests\Currency\StoreRequest;
 use App\Modules\Core\Catalog\Http\Requests\Currency\UpdateRequest;
 use App\Modules\Core\Catalog\Models\Currency;
@@ -35,8 +36,9 @@ class CurrencyController
      */
     public function create(): Modal
     {
-        return Inertia::modal('catalog/currencies/create')
-            ->baseRoute('catalog.currencies.index');
+        return Inertia::modal('catalog/currencies/create', [
+            'types' => CurrencyType::cases(),
+        ])->baseRoute('catalog.currencies.index');
     }
 
     /**

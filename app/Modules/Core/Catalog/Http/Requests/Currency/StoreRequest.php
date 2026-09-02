@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Catalog\Http\Requests\Currency;
 
+use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
 use App\Modules\Core\Catalog\Models\Currency;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -49,6 +50,11 @@ class StoreRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
+            ],
+            'type' => [
+                'required',
+                'string',
+                Rule::enum(CurrencyType::class),
             ],
         ];
     }

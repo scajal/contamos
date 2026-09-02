@@ -19,6 +19,7 @@ return new class extends Migration
             $table->dateTime('observed_at');
             $table->decimal('rate', 36, 18);
             $table->foreignIdFor(User::class, 'recorded_by')->nullable()->constrained()->nullOnDelete();
+            $table->string('source')->index();
             $table->timestamps();
         });
     }
