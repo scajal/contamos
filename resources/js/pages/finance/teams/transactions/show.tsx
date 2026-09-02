@@ -36,7 +36,10 @@ export default function Show({ transaction }: PageProps) {
                         </SheetHeader>
                         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4">
                             {/** Amount */}
-                            <Item className="min-h-24" variant="muted">
+                            <Item
+                                className={cn("min-h-24", transaction.type === "income" ? "bg-green-50" : "bg-red-50")}
+                                variant="muted"
+                            >
                                 <ItemHeader className="justify-center">
                                     <ItemTitle
                                         className={cn(
