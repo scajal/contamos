@@ -1,4 +1,4 @@
-import { Form, router } from "@inertiajs/react";
+import { Form, router, usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { Fragment } from "react/jsx-runtime";
 
@@ -7,8 +7,13 @@ import { Modal } from "@/components/ui/modal";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import currencies from "@/routes/catalog/currencies";
+import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 
 import { Fields } from "./_components/fields";
+
+type PageProps = {
+    currency: Currency;
+};
 
 export default function Create() {
     /**
@@ -16,6 +21,11 @@ export default function Create() {
      * to the current locale.
      */
     const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { currency } = usePage<PageProps>().props;
 
     return (
         <Modal>
@@ -28,16 +38,16 @@ export default function Create() {
                             disableWhileProcessing
                             onSuccess={() => {
                                 rootProps.onOpenChange(false);
-                                router.reload({ only: ["currencies"] });
+                                router.reload({ only: ["exchangeRates"] });
                             }}
                             options={{ only: ["errors"] }}
                         >
                             {(formProps) => (
                                 <Fragment>
                                     <SheetHeader>
-                                        <SheetTitle>{t("Create :name", { name: t("currency") })}</SheetTitle>
+                                        <SheetTitle>{t("Create :name", { name: t("exchange rate") })}</SheetTitle>
                                         <SheetDescription>
-                                            {t("Add a new currency to the application.")}
+                                            {t("Add a new exchange rate for :name.", { name: currency.name })}
                                         </SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-4">

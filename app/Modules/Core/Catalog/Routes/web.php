@@ -51,4 +51,21 @@ Route::as('catalog.')->middleware([
 
     Route::patch('currencies/{currency}/deactivate', [\App\Modules\Core\Catalog\Http\Controllers\CurrencyController::class, 'deactivate'])
         ->name('currencies.deactivate');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Exchange rate routes
+    |--------------------------------------------------------------------------
+    |
+    | These routes correspond to the exchange rate management.
+    |
+    */
+
+    Route::get('currencies/{currency}/exchange-rates', [\App\Modules\Core\Catalog\Http\Controllers\Currency\ExchangeRateController::class, 'index'])
+        ->name('currencies.exchange-rates.index')
+        ->scopeBindings();
+
+    Route::get('currencies/{currency}/exchange-rates/create', [\App\Modules\Core\Catalog\Http\Controllers\Currency\ExchangeRateController::class, 'create'])
+        ->name('currencies.exchange-rates.create')
+        ->scopeBindings();
 });

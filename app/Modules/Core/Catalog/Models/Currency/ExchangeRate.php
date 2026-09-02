@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property string $currency_id
  * @property \Carbon\CarbonImmutable $observed_at
- * @property numeric $rate
+ * @property string $rate
  * @property string|null $recorded_by
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at

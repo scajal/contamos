@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Catalog\Http\Controllers;
+namespace App\Modules\Core\Catalog\Http\Controllers\Currency;
 
 use App\Modules\Core\Catalog\Http\Requests\Currency\StoreRequest;
 use App\Modules\Core\Catalog\Http\Requests\Currency\UpdateRequest;
@@ -34,10 +34,10 @@ class ExchangeRateController
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): Modal
+    public function create(Currency $currency): Modal
     {
-        return Inertia::modal('catalog/currencies/create')
-            ->baseRoute('catalog.currencies.index');
+        return Inertia::modal('catalog/currencies/exchange-rates/create')
+            ->baseRoute('catalog.currencies.exchange-rates.index', ['currency' => $currency->getKey()]);
     }
 
     /**

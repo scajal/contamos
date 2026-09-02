@@ -1,19 +1,31 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { debounce } from "lodash";
-import { CheckIcon, DecimalsArrowRightIcon, DollarSignIcon, TypeIcon, XIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
+import { FieldDescription } from "@/components/ui/field";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { Currency } from "@/types/app/modules/core/catalog/models/currency";
+import { ExchangeRate } from "@/types/app/modules/core/catalog/models/currency/exchange-rate";
 
-type FormProps = Partial<Currency>;
+type FormProps = Partial<Omit<ExchangeRate, "currency" | "recorder">>;
 
 type Props = FormComponentSlotProps<FormProps> & {
     defaultValues?: FormProps;
     locked?: ReadonlyArray<keyof FormProps>;
 };
+
+/**
+ * Format a Date as a datetime-local input value (YYYY-MM-DDTHH:mm).
+ */
+function toDateTimeLocalValue(value?: string): string {
+    const date = value === undefined ? new Date() : new Date(value);
+    const resolved = Number.isNaN(date.getTime()) ? new Date() : date;
+    const pad = (part: number) => String(part).padStart(2, "0");
+
+    return `${resolved.getFullYear()}-${pad(resolved.getMonth() + 1)}-${pad(resolved.getDate())}T${pad(resolved.getHours())}:${pad(resolved.getMinutes())}`;
+}
 
 export const Fields = ({
     defaultValues,
@@ -46,86 +58,22 @@ export const Fields = ({
 
     return (
         <div className="space-y-6">
-            <div className="grid gap-6 sm:grid-cols-2">
-                {/** Code */}
-                <Field>
-                    <FieldLabel>{t("Code")}</FieldLabel>
-                    <InputGroup>
-                        <InputGroupAddon>
-                            <TypeIcon />
-                        </InputGroupAddon>
-                        <InputGroupInput
-                            autoFocus
-                            aria-invalid={invalid("code")}
-                            defaultValue={defaultValues?.code}
-                            disabled={isLocked("code")}
-                            name="code"
-                            onChange={() => validate("code")}
-                            placeholder={t("Enter a code")}
-                        />
-                        <InputGroupAddon align="inline-end">
-                            {!validating && valid("code") && touched("code") && <CheckIcon className="text-lime-500" />}
-                            {!validating && invalid("code") && touched("code") && <XIcon className="text-red-500" />}
-                        </InputGroupAddon>
-                    </InputGroup>
-                    {invalid("code") && <FieldError>{errors.code}</FieldError>}
-                </Field>
-
-                {/** Symbol */}
-                <Field>
-                    <FieldLabel>{t("Symbol")}</FieldLabel>
-                    <InputGroup>
-                        <InputGroupAddon>
-                            <DollarSignIcon />
-                        </InputGroupAddon>
-                        <InputGroupInput
-                            aria-invalid={invalid("symbol")}
-                            defaultValue={defaultValues?.symbol}
-                            disabled={isLocked("symbol")}
-                            name="symbol"
-                            placeholder={t("Enter a symbol")}
-                        />
-                    </InputGroup>
-                    {invalid("symbol") && <FieldError>{errors.symbol}</FieldError>}
-                </Field>
-            </div>
-
-            {/** Name */}
+            {/** Date */}
             <Field>
-                <FieldLabel>{t("Name")}</FieldLabel>
+                <FieldLabel>{t("Date")}</FieldLabel>
                 <InputGroup>
                     <InputGroupAddon>
-                        <TypeIcon />
+                        <CalendarIcon />
                     </InputGroupAddon>
                     <InputGroupInput
-                        aria-invalid={invalid("name")}
-                        defaultValue={defaultValues?.name}
-                        disabled={isLocked("name")}
-                        name="name"
-                        placeholder={t("Enter a name")}
+                        aria-invalid={invalid("observed_at")}
+                        defaultValue={toDateTimeLocalValue(defaultValues?.observed_at)}
+                        name="observed_at"
+                        type="datetime-local"
                     />
                 </InputGroup>
-                {invalid("name") && <FieldError>{errors.name}</FieldError>}
-            </Field>
-
-            {/** Decimal Places */}
-            <Field>
-                <FieldLabel>{t("Decimal places")}</FieldLabel>
-                <InputGroup>
-                    <InputGroupAddon>
-                        <DecimalsArrowRightIcon />
-                    </InputGroupAddon>
-                    <InputGroupInput
-                        aria-invalid={invalid("decimal_places")}
-                        defaultValue={defaultValues?.decimal_places}
-                        disabled={isLocked("decimal_places")}
-                        name="decimal_places"
-                        placeholder={t("Enter the number of decimal places")}
-                        step={1}
-                        type="number"
-                    />
-                </InputGroup>
-                {invalid("decimal_places") && <FieldError>{errors.decimal_places}</FieldError>}
+                <FieldDescription>{t("The date from which the quote is available.")}</FieldDescription>
+                {invalid("observed_at") && <FieldError>{errors.observed_at}</FieldError>}
             </Field>
         </div>
     );

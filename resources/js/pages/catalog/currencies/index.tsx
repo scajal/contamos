@@ -2,6 +2,7 @@ import { Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
+    ArrowRightLeftIcon,
     CheckIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
@@ -20,7 +21,9 @@ import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
@@ -171,35 +174,54 @@ const Table = () => {
                                               <MoreHorizontalIcon />
                                               <span className="sr-only">{t("Actions")}</span>
                                           </DropdownMenuTrigger>
-                                          <DropdownMenuContent align="end">
-                                              <DropdownMenuItem
-                                                  nativeButton={false}
-                                                  render={
-                                                      <ModalLink href={routes.edit.url(currency.id)}>
-                                                          <PencilIcon />
-                                                          <span>{t("Edit")}</span>
-                                                      </ModalLink>
-                                                  }
-                                              />
-                                              <DropdownMenuItem
-                                                  nativeButton
-                                                  render={
-                                                      <Link
-                                                          className="w-full"
-                                                          href={
-                                                              currency.is_active
-                                                                  ? routes.deactivate.url({ currency: currency.id })
-                                                                  : routes.activate.url({ currency: currency.id })
-                                                          }
-                                                          method="patch"
-                                                      >
-                                                          {currency.is_active ? <XIcon /> : <CheckIcon />}
-                                                          <span>
-                                                              {currency.is_active ? t("Deactivate") : t("Activate")}
-                                                          </span>
-                                                      </Link>
-                                                  }
-                                              />
+                                          <DropdownMenuContent align="end" className="w-auto min-w-(--anchor-width)">
+                                              <DropdownMenuGroup>
+                                                  <DropdownMenuItem
+                                                      nativeButton={false}
+                                                      render={
+                                                          <ModalLink href={routes.edit.url(currency.id)}>
+                                                              <PencilIcon />
+                                                              <span>{t("Edit")}</span>
+                                                          </ModalLink>
+                                                      }
+                                                  />
+                                                  <DropdownMenuItem
+                                                      nativeButton
+                                                      render={
+                                                          <Link
+                                                              className="w-full"
+                                                              href={
+                                                                  currency.is_active
+                                                                      ? routes.deactivate.url({ currency: currency.id })
+                                                                      : routes.activate.url({ currency: currency.id })
+                                                              }
+                                                              method="patch"
+                                                          >
+                                                              {currency.is_active ? <XIcon /> : <CheckIcon />}
+                                                              <span>
+                                                                  {currency.is_active ? t("Deactivate") : t("Activate")}
+                                                              </span>
+                                                          </Link>
+                                                      }
+                                                  />
+                                              </DropdownMenuGroup>
+                                              <DropdownMenuSeparator />
+                                              <DropdownMenuGroup>
+                                                  <DropdownMenuItem
+                                                      nativeButton
+                                                      render={
+                                                          <Link
+                                                              className="w-full"
+                                                              href={routes.exchangeRates.index.url({
+                                                                  currency: currency.id,
+                                                              })}
+                                                          >
+                                                              <ArrowRightLeftIcon />
+                                                              <span>{t("Exchange rates")}</span>
+                                                          </Link>
+                                                      }
+                                                  />
+                                              </DropdownMenuGroup>
                                           </DropdownMenuContent>
                                       </DropdownMenu>
                                   </TableCell>

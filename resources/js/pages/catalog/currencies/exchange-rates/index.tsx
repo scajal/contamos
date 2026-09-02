@@ -1,7 +1,7 @@
 import { Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ChevronLeftIcon, ChevronRightIcon, CircleDashedIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon, CircleDashedIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
@@ -61,8 +61,12 @@ const Header = () => {
     const { currency } = usePage<PageProps>().props;
 
     return (
-        <header>
-            <h1 className="text-2xl font-medium">{t("Exchange rates for :currency", { currency: currency.name })}</h1>
+        <header className="space-y-4">
+            <Button className="-ml-3" render={<Link href={routes.index.url()} />} variant="ghost">
+                <ArrowLeftIcon />
+                {t("Back")}
+            </Button>
+            <h1 className="text-2xl font-medium">{t("Exchange rates of :currency", { currency: currency.name })}</h1>
         </header>
     );
 };
@@ -91,11 +95,16 @@ const Actions = () => {
      */
     const t = useLaravelReactI18n().t;
 
+    /**
+     * The page's props.
+     */
+    const { currency } = usePage<PageProps>().props;
+
     return (
         <Button
             nativeButton={false}
             render={
-                <ModalLink href={routes.create.url()}>
+                <ModalLink href={routes.exchangeRates.create.url({ currency: currency.id })}>
                     <PlusIcon />
                     <span>{t("Create")}</span>
                 </ModalLink>
