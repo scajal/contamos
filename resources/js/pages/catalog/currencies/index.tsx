@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
+import { BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -226,6 +227,24 @@ const Pagination = () => {
     );
 };
 
-Index.layout = (page: React.ReactNode) => <ApplicationLayout>{page}</ApplicationLayout>;
+const Breadcrumb = () => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    return (
+        <Fragment>
+            <BreadcrumbItem>
+                <BreadcrumbLink render={<Link href={routes.index.url()} />}>
+                    <span>{t("Currencies")}</span>
+                </BreadcrumbLink>
+            </BreadcrumbItem>
+        </Fragment>
+    );
+};
+
+Index.layout = (page: React.ReactNode) => <ApplicationLayout breadcrumb={<Breadcrumb />}>{page}</ApplicationLayout>;
 
 export default Index;

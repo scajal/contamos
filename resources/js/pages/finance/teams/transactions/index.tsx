@@ -1,10 +1,11 @@
-import { Deferred, InfiniteScroll, usePage } from "@inertiajs/react";
+import { Deferred, InfiniteScroll, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { CircleDashedIcon, EyeIcon, MoreHorizontalIcon, SearchIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
+import { BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -207,6 +208,29 @@ const Table = () => {
     );
 };
 
-Index.layout = (page: React.ReactNode) => <ApplicationLayout>{page}</ApplicationLayout>;
+const Breadcrumb = () => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { user } = usePage<PageProps>().props;
+
+    return (
+        <Fragment>
+            <BreadcrumbItem>
+                <BreadcrumbLink render={<Link href={routes.index.url({ team: user?.current_team_id ?? "" })} />}>
+                    <span>{t("Transactions")}</span>
+                </BreadcrumbLink>
+            </BreadcrumbItem>
+        </Fragment>
+    );
+};
+
+Index.layout = (page: React.ReactNode) => <ApplicationLayout breadcrumb={<Breadcrumb />}>{page}</ApplicationLayout>;
 
 export default Index;

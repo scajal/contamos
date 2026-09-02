@@ -2,11 +2,13 @@
 
 namespace App\Modules\Core\Catalog\Models;
 
+use App\Modules\Core\Catalog\Models\Currency\ExchangeRate;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 /**
@@ -17,6 +19,7 @@ use Illuminate\Support\Str;
  * @property string $symbol
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<\App\Modules\Core\Catalog\Models\Currency\ExchangeRate> $exchangeRates
  *
  * @method static \Database\Factories\Modules\Core\Catalog\Models\CurrencyFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency newModelQuery()
@@ -66,5 +69,15 @@ class Currency extends Model
         return [
             'decimal_places' => 'integer',
         ];
+    }
+
+    /**
+     * Get the exchange rates for the currency.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Catalog\Models\Currency\ExchangeRate>
+     */
+    public function exchangeRates(): HasMany
+    {
+        return $this->hasMany(ExchangeRate::class);
     }
 }

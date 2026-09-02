@@ -12,8 +12,10 @@ import {
     LayoutDashboardIcon,
     LogOutIcon,
 } from "lucide-react";
+import { Fragment } from "react/jsx-runtime";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Breadcrumb, BreadcrumbList } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -22,6 +24,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import {
     Sidebar as SidebarComponent,
     SidebarContent,
@@ -43,7 +46,13 @@ import currencies from "@/routes/catalog/currencies";
 import accounts from "@/routes/finance/teams/accounts";
 import transactions from "@/routes/finance/teams/transactions";
 
-export const ApplicationLayout = ({ children }: { children: React.ReactNode }) => {
+export const ApplicationLayout = ({
+    breadcrumb,
+    children,
+}: {
+    breadcrumb?: React.ReactNode;
+    children: React.ReactNode;
+}) => {
     /**
      * Translate the provided string to the
      * current locale.
@@ -64,7 +73,17 @@ export const ApplicationLayout = ({ children }: { children: React.ReactNode }) =
                 {/** Header */}
                 <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
                     <div className="flex w-full items-center justify-between px-4">
-                        <SidebarTrigger className="-ml-1" />
+                        <div className="flex items-center gap-2">
+                            <SidebarTrigger className="-ml-1" />
+                            {breadcrumb && (
+                                <Fragment>
+                                    <Separator className="hidden md:block" orientation="vertical" />
+                                    <Breadcrumb className="hidden md:block">
+                                        <BreadcrumbList>{breadcrumb}</BreadcrumbList>
+                                    </Breadcrumb>
+                                </Fragment>
+                            )}
+                        </div>
                         {user?.current_team_id && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger render={<Button />}>
