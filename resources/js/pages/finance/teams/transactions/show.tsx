@@ -2,6 +2,7 @@ import { Link } from "@inertiajs/react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
+import { ConfirmAction } from "@/components/confirm-action";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
@@ -64,8 +65,11 @@ export default function Show({ transaction }: PageProps) {
                             </Field>
                         </div>
                         <SheetFooter>
-                            <Button
-                                render={
+                            <ConfirmAction
+                                title={t("Are you sure you want to delete the transaction?")}
+                                description={t("This action cannot be undone.")}
+                                confirmLabel={t("Delete")}
+                                action={
                                     <Link
                                         href={transactions.destroy.url({
                                             team: transaction.team_id,
@@ -75,10 +79,9 @@ export default function Show({ transaction }: PageProps) {
                                         onSuccess={() => rootProps.onOpenChange?.(false)}
                                     />
                                 }
-                                variant="destructive"
                             >
-                                {t("Delete")}
-                            </Button>
+                                <Button variant="destructive">{t("Delete")}</Button>
+                            </ConfirmAction>
                         </SheetFooter>
                     </SheetContent>
                 </Sheet>
