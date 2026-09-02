@@ -59,6 +59,7 @@ export default function Edit({ account, currencies, types }: PageProps) {
                                                 ...account,
                                                 currency_ids: account.currencies?.map((currency) => currency.id) ?? [],
                                             }}
+                                            locked={["type"]}
                                             types={types}
                                             {...formProps}
                                         />

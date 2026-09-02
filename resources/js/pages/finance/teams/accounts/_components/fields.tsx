@@ -1,8 +1,10 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { TypeIcon } from "lucide-react";
+import { useCallback, useState } from "react";
 
 import { Checkbox } from "@/components/ui/checkbox";
+import { Empty, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,15 +18,38 @@ type FormProps = Partial<Omit<Account, "team"> & { currency_ids: Array<string> }
 type Props = FormComponentSlotProps<FormProps> & {
     currencies: Array<Currency>;
     defaultValues?: FormProps;
+    locked?: ReadonlyArray<keyof FormProps>;
     types: Array<AccountType>;
 };
 
-export const Fields = ({ currencies, defaultValues, errors, invalid, types }: Props) => {
+export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, invalid, locked, types }: Props) => {
     /**
      * Translate the provided string
      * to the current locale.
      */
     const t = useLaravelReactI18n().t;
+
+    /**
+     * The type of the account.
+     */
+    const [type, setType] = useState<AccountType | undefined>(defaultValues?.type);
+
+    /**
+     * The list of selectable currencies based on the
+     * type of the account.
+     */
+    const currencies = listOfCurrencies.filter((currency) =>
+        type === "crypto"
+            ? currency.type === "cryptocurrency"
+            : type === undefined
+              ? false
+              : currency.type !== "cryptocurrency",
+    );
+
+    /**
+     * Check if the field is locked.
+     */
+    const isLocked = useCallback((field: keyof FormProps): boolean => locked?.includes(field) ?? false, [locked]);
 
     return (
         <div className="space-y-6">
@@ -39,6 +64,7 @@ export const Fields = ({ currencies, defaultValues, errors, invalid, types }: Pr
                         autoFocus
                         aria-invalid={invalid("name")}
                         defaultValue={defaultValues?.name}
+                        disabled={isLocked("name")}
                         name="name"
                         placeholder={t("Enter a name")}
                     />
@@ -49,7 +75,12 @@ export const Fields = ({ currencies, defaultValues, errors, invalid, types }: Pr
             {/** Type */}
             <Field>
                 <FieldLabel>{t("Type")}</FieldLabel>
-                <Select defaultValue={defaultValues?.type} name="type">
+                <Select
+                    defaultValue={defaultValues?.type}
+                    disabled={isLocked("type")}
+                    name="type"
+                    onValueChange={(value) => setType(value as AccountType)}
+                >
                     <SelectTrigger aria-invalid={invalid("type")}>
                         <SelectValue>
                             {(value: AccountType | null) => (value ? t(`enums.${value}`) : t("Select a type"))}
@@ -74,12 +105,22 @@ export const Fields = ({ currencies, defaultValues, errors, invalid, types }: Pr
                 <div className="overflow-hidden rounded-sm border">
                     <Table>
                         <TableBody>
+                            {!currencies.length && (
+                                <TableRow>
+                                    <TableCell colSpan={2} className="text-center">
+                                        <Empty>
+                                            <EmptyTitle>{t("No currencies found")}</EmptyTitle>
+                                        </Empty>
+                                    </TableCell>
+                                </TableRow>
+                            )}
                             {currencies.map((currency) => (
                                 <TableRow key={currency.id} className="has-data-checked:bg-muted">
                                     <TableCell className="w-8">
                                         <Checkbox
                                             aria-invalid={invalid("currency_ids")}
                                             defaultChecked={defaultValues?.currency_ids?.includes(currency.id)}
+                                            disabled={isLocked("currency_ids")}
                                             id={`currency-${currency.id}`}
                                             name="currency_ids[]"
                                             value={currency.id}

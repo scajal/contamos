@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Http\Requests\Team\Account;
 
+use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\Account\AccountType;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -36,7 +38,8 @@ class UpdateRequest extends FormRequest
             ],
             'currency_ids.*' => [
                 'required',
-                Rule::exists(Currency::class, new Currency()->getKeyName()),
+                Rule::exists(Currency::class, new Currency()->getKeyName())
+                    ->where(fn (Builder $query): Builder => $this->accountType() === AccountType::Crypto ? $query->where('type', CurrencyType::Cryptocurrency) : $query->where('type', '!=', CurrencyType::Cryptocurrency)),
             ],
             'name' => [
                 'required',
@@ -49,5 +52,13 @@ class UpdateRequest extends FormRequest
                 Rule::enum(AccountType::class),
             ],
         ];
+    }
+
+    /**
+     * The selected account type.
+     */
+    protected function accountType(): ?AccountType
+    {
+        return AccountType::tryFrom($this->string('type')->toString());
     }
 }
