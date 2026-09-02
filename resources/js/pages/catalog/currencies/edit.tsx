@@ -8,18 +8,18 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Spinner } from "@/components/ui/spinner";
 import currencies from "@/routes/catalog/currencies";
 import { CurrencyType } from "@/types/app/modules/core/catalog/enums/currency/currency-type";
-import { ExchangeRateSource } from "@/types/app/modules/core/catalog/enums/currency/exchange-rate/exchange-rate-source";
+import { QuoteSource } from "@/types/app/modules/core/catalog/enums/currency/quote/quote-source";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 
 import { Fields } from "./_components/fields";
 
 type PageProps = {
     currency: Currency;
-    exchangeRateSources: Array<ExchangeRateSource>;
+    quoteSources: Array<QuoteSource>;
     types: Array<CurrencyType>;
 };
 
-export default function Edit({ currency, exchangeRateSources, types }: PageProps) {
+export default function Edit({ currency, quoteSources, types }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -51,8 +51,8 @@ export default function Edit({ currency, exchangeRateSources, types }: PageProps
                                         <Fields
                                             {...formProps}
                                             defaultValues={currency}
-                                            exchangeRateSources={exchangeRateSources}
                                             locked={["code", "decimal_places", "type"]}
+                                            quoteSources={quoteSources}
                                             types={types}
                                         />
                                     </div>

@@ -5,6 +5,10 @@ paths:
 
 # Models
 
+## Fillable is documentation, not a guard
+
+`nunomaduro/essentials` unguards Eloquent models, so every column is mass-assignable. Keep `#[Fillable]` as a reminder of the model's own attributes. Do not list foreign keys, timestamps, or the primary key, and do not treat a missing fillable entry as a mass-assignment restriction.
+
 ## ULID primary keys on domain models
 
 Use HasUlids and the DefinesKeyType concern on module domain models.

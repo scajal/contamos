@@ -8,16 +8,16 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Spinner } from "@/components/ui/spinner";
 import currencies from "@/routes/catalog/currencies";
 import { CurrencyType } from "@/types/app/modules/core/catalog/enums/currency/currency-type";
-import { ExchangeRateSource } from "@/types/app/modules/core/catalog/enums/currency/exchange-rate/exchange-rate-source";
+import { QuoteSource } from "@/types/app/modules/core/catalog/enums/currency/quote/quote-source";
 
 import { Fields } from "./_components/fields";
 
 type PageProps = {
-    exchangeRateSources: Array<ExchangeRateSource>;
+    quoteSources: Array<QuoteSource>;
     types: Array<CurrencyType>;
 };
 
-export default function Create({ exchangeRateSources, types }: PageProps) {
+export default function Create({ quoteSources, types }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -48,11 +48,7 @@ export default function Create({ exchangeRateSources, types }: PageProps) {
                                         </SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-4">
-                                        <Fields
-                                            {...formProps}
-                                            exchangeRateSources={exchangeRateSources}
-                                            types={types}
-                                        />
+                                        <Fields {...formProps} quoteSources={quoteSources} types={types} />
                                     </div>
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">

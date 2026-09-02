@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Catalog\Http\Requests\Currency;
 
 use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
-use App\Modules\Core\Catalog\Enums\Currency\ExchangeRate\ExchangeRateSource;
+use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
 use App\Modules\Core\Catalog\Models\Currency;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -42,15 +42,15 @@ class StoreRequest extends FormRequest
                 'min:0',
                 'max:18',
             ],
-            'exchange_rate_source' => [
-                'required',
-                'string',
-                Rule::enum(ExchangeRateSource::class),
-            ],
             'name' => [
                 'required',
                 'string',
                 'max:255',
+            ],
+            'quote_source' => [
+                'required',
+                'string',
+                Rule::enum(QuoteSource::class),
             ],
             'symbol' => [
                 'required',

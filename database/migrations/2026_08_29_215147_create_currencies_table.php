@@ -15,9 +15,9 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->string('code')->unique();
             $table->unsignedTinyInteger('decimal_places')->default(2);
-            $table->string('exchange_rate_source');
             $table->boolean('is_active')->default(true);
             $table->string('name');
+            $table->string('quote_source');
             $table->string('symbol');
             $table->string('type')->index();
             $table->timestamps();

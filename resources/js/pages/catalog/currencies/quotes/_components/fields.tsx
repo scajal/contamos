@@ -1,15 +1,14 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { debounce } from "lodash";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, DollarSignIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
-import { FieldDescription } from "@/components/ui/field";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { ExchangeRate } from "@/types/app/modules/core/catalog/models/currency/exchange-rate";
+import { Quote } from "@/types/app/modules/core/catalog/models/currency/quote";
 
-type FormProps = Partial<Omit<ExchangeRate, "currency" | "recorder">>;
+type FormProps = Partial<Omit<Quote, "currency" | "recorder">>;
 
 type Props = FormComponentSlotProps<FormProps> & {
     defaultValues?: FormProps;
@@ -74,6 +73,27 @@ export const Fields = ({
                 </InputGroup>
                 <FieldDescription>{t("The date from which the quote is available.")}</FieldDescription>
                 {invalid("observed_at") && <FieldError>{errors.observed_at}</FieldError>}
+            </Field>
+
+            {/** Rate */}
+            <Field>
+                <FieldLabel>{t("Rate")}</FieldLabel>
+                <InputGroup>
+                    <InputGroupAddon>
+                        <DollarSignIcon />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                        aria-invalid={invalid("rate")}
+                        autoComplete="off"
+                        defaultValue={defaultValues?.rate}
+                        inputMode="decimal"
+                        name="rate"
+                        placeholder={t("Enter a rate")}
+                        spellCheck={false}
+                        type="text"
+                    />
+                </InputGroup>
+                {invalid("rate") && <FieldError>{errors.rate}</FieldError>}
             </Field>
         </div>
     );

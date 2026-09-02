@@ -8,14 +8,14 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CurrencyType } from "@/types/app/modules/core/catalog/enums/currency/currency-type";
-import { ExchangeRateSource } from "@/types/app/modules/core/catalog/enums/currency/exchange-rate/exchange-rate-source";
+import { QuoteSource } from "@/types/app/modules/core/catalog/enums/currency/quote/quote-source";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 
 type FormProps = Partial<Currency>;
 
 type Props = FormComponentSlotProps<FormProps> & {
     defaultValues?: FormProps;
-    exchangeRateSources: Array<ExchangeRateSource>;
+    quoteSources: Array<QuoteSource>;
     types: Array<CurrencyType>;
     locked?: ReadonlyArray<keyof FormProps>;
 };
@@ -23,7 +23,7 @@ type Props = FormComponentSlotProps<FormProps> & {
 export const Fields = ({
     defaultValues,
     errors,
-    exchangeRateSources,
+    quoteSources,
     invalid,
     locked,
     touched,
@@ -57,9 +57,9 @@ export const Fields = ({
     const typeInputRef = useRef<HTMLInputElement>(null);
 
     /**
-     * The ref. for the exchange rate source field.
+     * The ref. for the quote source field.
      */
-    const exchangeRateSourceInputRef = useRef<HTMLInputElement>(null);
+    const quoteSourceInputRef = useRef<HTMLInputElement>(null);
 
     return (
         <div className="space-y-6">
@@ -177,30 +177,28 @@ export const Fields = ({
                 {invalid("decimal_places") && <FieldError>{errors.decimal_places}</FieldError>}
             </Field>
 
-            {/** Exchange rate source */}
+            {/** Quote source */}
             <Field>
-                <FieldLabel>{t("Exchange rate source")}</FieldLabel>
+                <FieldLabel>{t("Quote source")}</FieldLabel>
                 <Select
-                    defaultValue={defaultValues?.exchange_rate_source}
-                    disabled={isLocked("exchange_rate_source")}
-                    inputRef={exchangeRateSourceInputRef}
-                    name="exchange_rate_source"
+                    defaultValue={defaultValues?.quote_source}
+                    disabled={isLocked("quote_source")}
+                    inputRef={quoteSourceInputRef}
+                    name="quote_source"
                     onValueChange={() =>
                         requestAnimationFrame(() =>
-                            exchangeRateSourceInputRef.current?.dispatchEvent(new Event("input", { bubbles: true })),
+                            quoteSourceInputRef.current?.dispatchEvent(new Event("input", { bubbles: true })),
                         )
                     }
                 >
-                    <SelectTrigger aria-invalid={invalid("exchange_rate_source")}>
+                    <SelectTrigger aria-invalid={invalid("quote_source")}>
                         <SelectValue>
-                            {(value: ExchangeRateSource | null) =>
-                                value ? t(`enums.${value}`) : t("Select a exchange rate source")
-                            }
+                            {(value: QuoteSource | null) => (value ? t(`enums.${value}`) : t("Select a quote source"))}
                         </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                         <SelectGroup>
-                            {exchangeRateSources.map((source) => (
+                            {quoteSources.map((source) => (
                                 <SelectItem key={source} value={source}>
                                     {t(`enums.${source}`)}
                                 </SelectItem>
@@ -208,7 +206,7 @@ export const Fields = ({
                         </SelectGroup>
                     </SelectContent>
                 </Select>
-                {invalid("exchange_rate_source") && <FieldError>{errors.exchange_rate_source}</FieldError>}
+                {invalid("quote_source") && <FieldError>{errors.quote_source}</FieldError>}
             </Field>
         </div>
     );

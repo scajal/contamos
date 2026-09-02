@@ -13,12 +13,12 @@ import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/compo
 import { ApplicationLayout } from "@/layouts/application/layout";
 import routes from "@/routes/catalog/currencies";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
-import { ExchangeRate } from "@/types/app/modules/core/catalog/models/currency/exchange-rate";
+import { Quote } from "@/types/app/modules/core/catalog/models/currency/quote";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 
 type PageProps = {
     currency: Currency;
-    exchangeRates: LengthAwarePaginator<ExchangeRate>;
+    quotes: LengthAwarePaginator<Quote>;
 };
 
 const Index = () => {
@@ -66,7 +66,7 @@ const Header = () => {
                 <ArrowLeftIcon />
                 {t("Back")}
             </Button>
-            <h1 className="text-2xl font-medium">{t("Exchange rates of :currency", { currency: currency.name })}</h1>
+            <h1 className="text-2xl font-medium">{t("Quotes of :currency", { currency: currency.name })}</h1>
         </header>
     );
 };
@@ -104,7 +104,7 @@ const Actions = () => {
         <Button
             nativeButton={false}
             render={
-                <ModalLink href={routes.exchangeRates.create.url({ currency: currency.id })}>
+                <ModalLink href={routes.quotes.create.url({ currency: currency.id })}>
                     <PlusIcon />
                     <span>{t("Create")}</span>
                 </ModalLink>
@@ -123,14 +123,14 @@ const Table = () => {
     /**
      * The page's props.
      */
-    const { exchangeRates } = usePage<PageProps>().props;
+    const { quotes } = usePage<PageProps>().props;
 
     return (
         <Fragment>
             <TableComponent>
                 <TableBody>
                     {/** Empty state */}
-                    {exchangeRates?.data?.length < 1 && (
+                    {quotes?.data?.length < 1 && (
                         <TableRow>
                             <TableCell colSpan={2}>
                                 <Empty>
@@ -138,9 +138,9 @@ const Table = () => {
                                         <EmptyMedia variant="icon">
                                             <CircleDashedIcon />
                                         </EmptyMedia>
-                                        <EmptyTitle>{t("No :name yet", { name: t("exchange rates") })}</EmptyTitle>
+                                        <EmptyTitle>{t("No :name yet", { name: t("quotes") })}</EmptyTitle>
                                         <EmptyDescription>
-                                            {t("Add a new :name to get started.", { name: t("exchange rate") })}
+                                            {t("Add a new :name to get started.", { name: t("quote") })}
                                         </EmptyDescription>
                                     </EmptyHeader>
                                 </Empty>
@@ -148,13 +148,13 @@ const Table = () => {
                         </TableRow>
                     )}
                     {/** Data */}
-                    {exchangeRates?.data?.length
-                        ? exchangeRates?.data?.map((exchangeRate) => (
-                              <TableRow key={exchangeRate.id}>
+                    {quotes?.data?.length
+                        ? quotes?.data?.map((quote) => (
+                              <TableRow key={quote.id}>
                                   <TableCell>
                                       <div className="flex flex-col gap-1">
-                                          <span className="font-medium">{exchangeRate.observed_at}</span>
-                                          <span className="text-sm text-gray-500">{exchangeRate.rate}</span>
+                                          <span className="font-medium">{quote.observed_at}</span>
+                                          <span className="text-sm text-gray-500">{quote.rate}</span>
                                       </div>
                                   </TableCell>
                               </TableRow>
@@ -164,7 +164,7 @@ const Table = () => {
             </TableComponent>
 
             {/** Pagination */}
-            {exchangeRates?.data?.length ? <Pagination /> : null}
+            {quotes?.data?.length ? <Pagination /> : null}
         </Fragment>
     );
 };
@@ -179,16 +179,16 @@ const Pagination = () => {
     /**
      * The page's props.
      */
-    const { exchangeRates } = usePage<PageProps>().props;
+    const { quotes } = usePage<PageProps>().props;
 
     return (
         <PaginationComponent>
             <PaginationContent>
                 <PaginationItem>
                     <Button
-                        disabled={!exchangeRates?.prev_page_url}
+                        disabled={!quotes?.prev_page_url}
                         nativeButton={false}
-                        render={<Link href={exchangeRates?.prev_page_url ?? undefined} />}
+                        render={<Link href={quotes?.prev_page_url ?? undefined} />}
                         variant="ghost"
                     >
                         <ChevronLeftIcon />
@@ -197,9 +197,9 @@ const Pagination = () => {
                 </PaginationItem>
                 <PaginationItem>
                     <Button
-                        disabled={!exchangeRates?.next_page_url}
+                        disabled={!quotes?.next_page_url}
                         nativeButton={false}
-                        render={<Link href={exchangeRates?.next_page_url ?? undefined} />}
+                        render={<Link href={quotes?.next_page_url ?? undefined} />}
                         variant="ghost"
                     >
                         <span>{t("Next")}</span>

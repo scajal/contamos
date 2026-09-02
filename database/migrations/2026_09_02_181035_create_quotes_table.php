@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('exchange_rates', function (Blueprint $table) {
+        Schema::create('quotes', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignIdFor(Currency::class)->constrained()->cascadeOnDelete();
             $table->dateTime('observed_at');
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('exchange_rates');
+        Schema::dropIfExists('quotes');
     }
 };

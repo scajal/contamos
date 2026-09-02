@@ -54,18 +54,23 @@ Route::as('catalog.')->middleware([
 
     /*
     |--------------------------------------------------------------------------
-    | Exchange rate routes
+    | Quote routes
     |--------------------------------------------------------------------------
     |
-    | These routes correspond to the exchange rate management.
+    | These routes correspond to the quote management.
     |
     */
 
-    Route::get('currencies/{currency}/exchange-rates', [\App\Modules\Core\Catalog\Http\Controllers\Currency\ExchangeRateController::class, 'index'])
-        ->name('currencies.exchange-rates.index')
+    Route::get('currencies/{currency}/quotes', [\App\Modules\Core\Catalog\Http\Controllers\Currency\QuoteController::class, 'index'])
+        ->name('currencies.quotes.index')
         ->scopeBindings();
 
-    Route::get('currencies/{currency}/exchange-rates/create', [\App\Modules\Core\Catalog\Http\Controllers\Currency\ExchangeRateController::class, 'create'])
-        ->name('currencies.exchange-rates.create')
+    Route::get('currencies/{currency}/quotes/create', [\App\Modules\Core\Catalog\Http\Controllers\Currency\QuoteController::class, 'create'])
+        ->name('currencies.quotes.create')
+        ->scopeBindings();
+
+    Route::post('currencies/{currency}/quotes', [\App\Modules\Core\Catalog\Http\Controllers\Currency\QuoteController::class, 'store'])
+        ->middleware(HandlePrecognitiveRequests::class)
+        ->name('currencies.quotes.store')
         ->scopeBindings();
 });

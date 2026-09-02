@@ -22,19 +22,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
  * @property-read \App\Modules\Core\Identity\Models\User|null $recorder
  *
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\ExchangeRate newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\ExchangeRate newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\ExchangeRate query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\Quote newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\Quote newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\Quote query()
  *
  * @mixin \Eloquent
  */
-#[Fillable('observed_at', 'rate')]
-class ExchangeRate extends Model
+#[Fillable('observed_at', 'rate', 'source')]
+class Quote extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
-    /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Catalog\Models\Currency\ExchangeRateFactory> */
+    /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Catalog\Models\Currency\QuoteFactory> */
     use HasFactory;
 
     use HasUlids;
@@ -53,7 +53,7 @@ class ExchangeRate extends Model
     }
 
     /**
-     * Get the currency that the exchange rate is for.
+     * Get the currency that the quote is for.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Catalog\Models\Currency, $this>
      */
@@ -63,7 +63,7 @@ class ExchangeRate extends Model
     }
 
     /**
-     * Get the user that recorded the exchange rate.
+     * Get the user that recorded the quote.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\User, $this>
      */

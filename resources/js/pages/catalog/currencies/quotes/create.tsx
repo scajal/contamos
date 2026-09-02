@@ -33,21 +33,21 @@ export default function Create() {
                 <Sheet {...rootProps}>
                     <SheetContent>
                         <Form
-                            {...currencies.store.form()}
+                            {...currencies.quotes.store.form({ currency: currency.id })}
                             className="contents"
                             disableWhileProcessing
                             onSuccess={() => {
                                 rootProps.onOpenChange(false);
-                                router.reload({ only: ["exchangeRates"] });
+                                router.reload({ only: ["quotes"] });
                             }}
                             options={{ only: ["errors"] }}
                         >
                             {(formProps) => (
                                 <Fragment>
                                     <SheetHeader>
-                                        <SheetTitle>{t("Create :name", { name: t("exchange rate") })}</SheetTitle>
+                                        <SheetTitle>{t("Create :name", { name: t("quote") })}</SheetTitle>
                                         <SheetDescription>
-                                            {t("Add a new exchange rate for :name.", { name: currency.name })}
+                                            {t("Add a new quote for :name.", { name: currency.name })}
                                         </SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-4">

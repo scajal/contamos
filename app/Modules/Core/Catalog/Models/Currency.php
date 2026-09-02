@@ -3,7 +3,8 @@
 namespace App\Modules\Core\Catalog\Models;
 
 use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
-use App\Modules\Core\Catalog\Models\Currency\ExchangeRate;
+use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
+use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -18,11 +19,12 @@ use Illuminate\Support\Str;
  * @property int $decimal_places
  * @property bool $is_active
  * @property string $name
+ * @property \App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource $quote_source
  * @property string $symbol
  * @property \App\Modules\Core\Catalog\Enums\Currency\CurrencyType $type
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<\App\Modules\Core\Catalog\Models\Currency\ExchangeRate> $exchangeRates
+ * @property-read \Illuminate\Database\Eloquent\Collection<\App\Modules\Core\Catalog\Models\Currency\Quote> $quotes
  *
  * @method static \Database\Factories\Modules\Core\Catalog\Models\CurrencyFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency newModelQuery()
@@ -31,7 +33,7 @@ use Illuminate\Support\Str;
  *
  * @mixin \Eloquent
  */
-#[Fillable('code', 'decimal_places', 'is_active', 'name', 'symbol', 'type')]
+#[Fillable('code', 'decimal_places', 'is_active', 'name', 'quote_source', 'symbol', 'type')]
 class Currency extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
@@ -72,17 +74,18 @@ class Currency extends Model
         return [
             'decimal_places' => 'integer',
             'is_active' => 'boolean',
+            'quote_source' => QuoteSource::class,
             'type' => CurrencyType::class,
         ];
     }
 
     /**
-     * Get the exchange rates for the currency.
+     * Get the quotes for the currency.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Catalog\Models\Currency\ExchangeRate>
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Catalog\Models\Currency\Quote>
      */
-    public function exchangeRates(): HasMany
+    public function quotes(): HasMany
     {
-        return $this->hasMany(ExchangeRate::class);
+        return $this->hasMany(Quote::class);
     }
 }

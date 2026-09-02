@@ -212,12 +212,12 @@ const Table = () => {
                                                       render={
                                                           <Link
                                                               className="w-full"
-                                                              href={routes.exchangeRates.index.url({
+                                                              href={routes.quotes.index.url({
                                                                   currency: currency.id,
                                                               })}
                                                           >
                                                               <ArrowRightLeftIcon />
-                                                              <span>{t("Exchange rates")}</span>
+                                                              <span>{t("Quotes")}</span>
                                                           </Link>
                                                       }
                                                   />

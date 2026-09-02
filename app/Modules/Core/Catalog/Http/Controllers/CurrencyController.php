@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Catalog\Http\Controllers;
 
 use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
-use App\Modules\Core\Catalog\Enums\Currency\ExchangeRate\ExchangeRateSource;
+use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
 use App\Modules\Core\Catalog\Http\Requests\Currency\StoreRequest;
 use App\Modules\Core\Catalog\Http\Requests\Currency\UpdateRequest;
 use App\Modules\Core\Catalog\Models\Currency;
@@ -38,7 +38,7 @@ class CurrencyController
     public function create(): Modal
     {
         return Inertia::modal('catalog/currencies/create', [
-            'exchangeRateSources' => ExchangeRateSource::cases(),
+            'quoteSources' => QuoteSource::cases(),
             'types' => CurrencyType::cases(),
         ])->baseRoute('catalog.currencies.index');
     }
@@ -65,7 +65,7 @@ class CurrencyController
     {
         return Inertia::modal('catalog/currencies/edit', [
             'currency' => $currency,
-            'exchangeRateSources' => ExchangeRateSource::cases(),
+            'quoteSources' => QuoteSource::cases(),
             'types' => CurrencyType::cases(),
         ])->baseRoute('catalog.currencies.index');
     }

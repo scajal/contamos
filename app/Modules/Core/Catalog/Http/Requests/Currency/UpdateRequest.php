@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Catalog\Http\Requests\Currency;
 
+use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateRequest extends FormRequest
 {
@@ -30,6 +32,11 @@ class UpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
+            ],
+            'quote_source' => [
+                'required',
+                'string',
+                Rule::enum(QuoteSource::class),
             ],
             'symbol' => [
                 'required',
