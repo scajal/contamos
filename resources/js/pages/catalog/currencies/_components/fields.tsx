@@ -100,7 +100,7 @@ export const Fields = ({
 
             {/** Decimal Places */}
             <Field>
-                <FieldLabel>{t("Decimal Places")}</FieldLabel>
+                <FieldLabel>{t("Decimal places")}</FieldLabel>
                 <InputGroup>
                     <InputGroupAddon>
                         <DecimalsArrowRightIcon />

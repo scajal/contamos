@@ -1,15 +1,8 @@
-import { Deferred, InfiniteScroll, Link, usePage } from "@inertiajs/react";
+import { Deferred, InfiniteScroll, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import {
-    ChevronLeftIcon,
-    ChevronRightIcon,
-    CircleDashedIcon,
-    EyeIcon,
-    MoreHorizontalIcon,
-    SearchIcon,
-} from "lucide-react";
+import { CircleDashedIcon, EyeIcon, MoreHorizontalIcon, SearchIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
@@ -22,7 +15,6 @@ import {
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
-import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { cn, formatAmount } from "@/lib/utils";
@@ -93,17 +85,6 @@ const Filters = () => {
 };
 
 const Actions = () => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    /**
-     * The page's props.
-     */
-    const { user } = usePage().props;
-
     return <Fragment></Fragment>;
 };
 
@@ -161,7 +142,7 @@ const Table = () => {
                     {/** Data */}
                     {[...grouped].map(([date, items]) => (
                         <Fragment key={date}>
-                            <Item className="px-0">
+                            <Item className="p-0 pb-4 not-first:mt-4">
                                 <ItemHeader>
                                     <ItemTitle>{format(new Date(date), "MMMM d, yyyy")}</ItemTitle>
                                 </ItemHeader>
@@ -223,48 +204,6 @@ const Table = () => {
                 </InfiniteScroll>
             </Deferred>
         </Fragment>
-    );
-};
-
-const Pagination = () => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    /**
-     * The page's props.
-     */
-    const { transactions } = usePage<PageProps>().props;
-
-    return (
-        <PaginationComponent>
-            <PaginationContent>
-                <PaginationItem>
-                    <Button
-                        disabled={!transactions?.prev_page_url}
-                        nativeButton={false}
-                        render={<Link href={transactions?.prev_page_url ?? undefined} />}
-                        variant="ghost"
-                    >
-                        <ChevronLeftIcon />
-                        <span>{t("Previous")}</span>
-                    </Button>
-                </PaginationItem>
-                <PaginationItem>
-                    <Button
-                        disabled={!transactions?.next_page_url}
-                        nativeButton={false}
-                        render={<Link href={transactions?.next_page_url ?? undefined} />}
-                        variant="ghost"
-                    >
-                        <span>{t("Next")}</span>
-                        <ChevronRightIcon />
-                    </Button>
-                </PaginationItem>
-            </PaginationContent>
-        </PaginationComponent>
     );
 };
 

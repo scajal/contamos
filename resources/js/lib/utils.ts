@@ -23,7 +23,7 @@ export function toMajorAmount(amount: number, decimalPlaces: number): number {
 /**
  * Format a minor-unit amount for display (grouping + currency decimals + catalog symbol).
  */
-export function formatAmount(amount: number, locale: string, currency?: AmountCurrency | undefined): string {
+export function formatAmount(amount: number, locale: string, currency?: AmountCurrency): string {
     const formatted = new Intl.NumberFormat(locale, {
         minimumFractionDigits: currency?.decimal_places ?? 0,
         maximumFractionDigits: currency?.decimal_places ?? 0,

@@ -1,4 +1,3 @@
-import { usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { LogOutIcon } from "lucide-react";
 
@@ -11,7 +10,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
 
 export const WizardLayout = ({ children }: { children: React.ReactNode }) => {
@@ -20,16 +18,6 @@ export const WizardLayout = ({ children }: { children: React.ReactNode }) => {
      * current locale.
      */
     const t = useLaravelReactI18n().t;
-
-    /**
-     * Check if the screen is mobile.
-     */
-    const isMobile = useIsMobile();
-
-    /**
-     * The page's props.
-     */
-    const { user } = usePage().props;
 
     return (
         <SidebarProvider>
