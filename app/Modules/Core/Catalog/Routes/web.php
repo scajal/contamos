@@ -42,7 +42,10 @@ Route::as('catalog.')->middleware([
     Route::get('currencies/{currency}/edit', [\App\Modules\Core\Catalog\Http\Controllers\CurrencyController::class, 'edit'])
         ->name('currencies.edit');
 
-    Route::put('currencies/{currency}', [\App\Modules\Core\Catalog\Http\Controllers\CurrencyController::class, 'update'])
+    Route::patch('currencies/{currency}', [\App\Modules\Core\Catalog\Http\Controllers\CurrencyController::class, 'update'])
         ->middleware(HandlePrecognitiveRequests::class)
         ->name('currencies.update');
+
+    Route::delete('currencies/{currency}', [\App\Modules\Core\Catalog\Http\Controllers\CurrencyController::class, 'destroy'])
+        ->name('currencies.destroy');
 });
