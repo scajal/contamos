@@ -15,15 +15,4 @@ enum TransactionType: string
      * Represents an income.
      */
     case Income = 'income';
-
-    /**
-     * Infer the transaction type based on the
-     * provided amount.
-     */
-    public static function infer(int $amount): self
-    {
-        return $amount > 0
-            ? self::Income
-            : self::Expense;
-    }
 }

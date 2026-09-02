@@ -54,7 +54,7 @@ class StoreRequest extends FormRequest
             ],
             'amount' => [
                 'required',
-                ($currency = $this->currency()) ? "decimal:0,{$currency->decimal_places}" : 'integer',
+                ($currency = $this->currency()) ? "decimal:0,{$currency->decimal_places}" : 'decimal:0,18',
                 'gt:0',
             ],
             new Transaction()->currency()->getForeignKeyName() => [

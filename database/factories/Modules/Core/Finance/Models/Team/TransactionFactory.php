@@ -31,7 +31,7 @@ class TransactionFactory extends Factory
     {
         return [
             'account_id' => Account::factory(),
-            'amount' => fake()->numberBetween(0, 999999),
+            'amount' => (string) fake()->randomFloat(18, 0, 999999999999999999),
             'description' => fake()->sentence(),
             'occurred_at' => fake()->dateTime(),
             'team_id' => Team::factory(),

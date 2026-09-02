@@ -29,7 +29,7 @@ class CurrencyFactory extends Factory
     {
         return [
             'code' => Str::upper(fake()->unique()->currencyCode()),
-            'decimal_places' => fake()->numberBetween(0, 10),
+            'decimal_places' => fake()->numberBetween(0, 18),
             'name' => fake()->word(),
             'symbol' => fake()->randomLetter(),
         ];

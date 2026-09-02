@@ -18,7 +18,7 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table): void {
             $table->ulid('id')->primary();
             $table->foreignIdFor(Account::class)->constrained()->cascadeOnDelete();
-            $table->unsignedBigInteger('amount');
+            $table->decimal('amount', 36, 18);
             $table->foreignIdFor(Currency::class)->constrained()->cascadeOnDelete();
             $table->text('description')->nullable();
             $table->dateTime('occurred_at')->useCurrent();

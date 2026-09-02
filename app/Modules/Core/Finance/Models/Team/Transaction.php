@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property string $id
  * @property string $account_id
- * @property int $amount
+ * @property string $amount
  * @property string|null $description
  * @property \Carbon\CarbonImmutable $occurred_at
  * @property string $team_id
@@ -80,7 +80,7 @@ class Transaction extends Model
     protected function casts(): array
     {
         return [
-            'amount' => 'integer',
+            'amount' => 'decimal:18',
             'occurred_at' => 'datetime',
             'type' => TransactionType::class,
         ];

@@ -10,7 +10,7 @@ import type { Account } from "./account";
 export interface Transaction {
     id: string;
     account_id: string;
-    amount: number;
+    amount: string;
     currency_id: string;
     description: string | null;
     occurred_at: string;

@@ -38,7 +38,7 @@ class StoreRequest extends FormRequest
                 'required',
                 'integer',
                 'min:0',
-                'max:8',
+                'max:18',
             ],
             'name' => [
                 'required',
