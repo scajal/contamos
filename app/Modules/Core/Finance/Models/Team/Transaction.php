@@ -16,10 +16,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property string $id
  * @property string $account_id
- * @property string $amount
+ * @property numeric $amount
+ * @property string $currency_id
  * @property int $decimal_places
  * @property string|null $description
- * @property string $exchange_rate
+ * @property numeric $exchange_rate
  * @property \Carbon\CarbonImmutable $occurred_at
  * @property string $team_id
  * @property \App\Modules\Core\Finance\Enums\Transaction\TransactionType $type

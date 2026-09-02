@@ -11,6 +11,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $currency_id
+ * @property \Carbon\CarbonImmutable $observed_at
+ * @property numeric $rate
+ * @property string|null $recorded_by
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
+ * @property-read \App\Modules\Core\Identity\Models\User|null $recorder
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\ExchangeRate newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\ExchangeRate newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\ExchangeRate query()
+ *
+ * @mixin \Eloquent
+ */
 #[Fillable('observed_at', 'rate')]
 class ExchangeRate extends Model
 {
