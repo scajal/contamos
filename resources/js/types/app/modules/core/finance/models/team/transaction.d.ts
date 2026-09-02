@@ -12,6 +12,7 @@ export interface Transaction {
     account_id: string;
     amount: string;
     currency_id: string;
+    decimal_places: number;
     description: string | null;
     occurred_at: string;
     team_id: string;

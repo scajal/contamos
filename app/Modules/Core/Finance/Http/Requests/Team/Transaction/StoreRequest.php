@@ -18,6 +18,19 @@ use Illuminate\Validation\Rule;
 class StoreRequest extends FormRequest
 {
     /**
+     * Get the account for the transaction.
+     */
+    protected function account(Team $team): ?Account
+    {
+        /** @var \App\Modules\Core\Finance\Models\Team\Account|null $account */
+        $account = Account::query()
+            ->where(new Account()->team()->getForeignKeyName(), $team->getKey())
+            ->find($this->input(new Transaction()->account()->getForeignKeyName()));
+
+        return $account;
+    }
+
+    /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
@@ -61,7 +74,7 @@ class StoreRequest extends FormRequest
                 'required',
                 'string',
                 Rule::exists(Currency::class, new Currency()->getKeyName()),
-                Rule::in(Account::query()->find($this->input(new Transaction()->account()->getForeignKeyName()))?->first()?->currencies->pluck(new Currency()->getKeyName())), // @phpstan-ignore-line argument.type
+                Rule::in($this->account($team)?->currencies->pluck(new Currency()->getKeyName()) ?? []),
             ],
             'description' => [
                 'sometimes',

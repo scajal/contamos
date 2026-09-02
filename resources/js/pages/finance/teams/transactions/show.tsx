@@ -44,7 +44,7 @@ export default function Show({ transaction }: PageProps) {
                                     <ItemTitle
                                         className={cn(
                                             transaction.type === "income" ? "text-green-500" : "text-red-500",
-                                            "text-4xl",
+                                            "text-2xl",
                                         )}
                                     >
                                         {`${transaction.type === "income" ? "+" : "-"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}

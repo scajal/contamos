@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignIdFor(Account::class)->constrained()->cascadeOnDelete();
             $table->decimal('amount', 36, 18);
             $table->foreignIdFor(Currency::class)->constrained()->cascadeOnDelete();
+            $table->unsignedTinyInteger('decimal_places')->default(2);
             $table->text('description')->nullable();
             $table->dateTime('occurred_at')->useCurrent();
             $table->foreignIdFor(Team::class)->constrained()->cascadeOnDelete();

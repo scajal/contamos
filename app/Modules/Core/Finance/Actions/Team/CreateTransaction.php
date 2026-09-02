@@ -2,6 +2,7 @@
 
 namespace App\Modules\Core\Finance\Actions\Team;
 
+use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
@@ -55,9 +56,19 @@ class CreateTransaction
         }
 
         return DB::transaction(function () use ($attributes): Transaction {
+            // Get the currency for the transaction.
+            /** @var \App\Modules\Core\Catalog\Models\Currency $currency */
+            $currency = Currency::query()
+                ->whereKey($attributes['currency_id'])
+                ->first();
+
             // Create the account for the team.
             /** @var \App\Modules\Core\Finance\Models\Team\Transaction $transaction */
-            $transaction = $this->team?->transactions()->create($attributes);
+            $transaction = $this->team?->transactions()->create([
+                ...$attributes,
+                // Set the decimal places for the transaction.
+                'decimal_places' => $currency->decimal_places,
+            ]);
 
             // If the user is provided, associate it with the transaction.
             if ($this->user) {
