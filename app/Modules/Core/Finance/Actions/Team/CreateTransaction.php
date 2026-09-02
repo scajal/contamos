@@ -57,18 +57,20 @@ class CreateTransaction
 
         return DB::transaction(function () use ($attributes): Transaction {
             // Get the selected currency.
+            /** @var \App\Modules\Core\Catalog\Models\Currency $currency */
             $currency = Currency::query()
                 ->find($attributes[new Transaction()->currency()->getForeignKeyName()]);
 
             // Update the amount to a minor unit before
             // saving it.
             $attributes['amount'] = (int) round(
-                (float) $attributes['amount'] * (10 ** $currency->decimal_places)
+                (float) $attributes['amount'] * (10 ** $currency->decimal_places) // @phpstan-ignore-line cast.double Amount is always int.
             );
 
             // Create the account for the team, excluding
             // the currencies.I
-            $transaction = $this->team->transactions()->create($attributes);
+            /** @var \App\Modules\Core\Finance\Models\Team\Transaction $transaction */
+            $transaction = $this->team?->transactions()->create($attributes);
 
             // If the user is provided, associate it with the transaction.
             if ($this->user) {

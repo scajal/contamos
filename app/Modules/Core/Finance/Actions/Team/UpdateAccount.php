@@ -39,15 +39,18 @@ class UpdateAccount
         }
 
         return DB::transaction(function () use ($attributes, $currencyIds): Account {
+            /** @var \App\Modules\Core\Finance\Models\Team\Account $account */
+            $account = $this->account;
+
             // Create the account for the team, excluding
             // the currencies.I
-            $this->account->update($attributes);
+            $account->update($attributes);
 
             // Sync the currencies for the account.
-            $this->account->currencies()->sync($currencyIds);
+            $account->currencies()->sync($currencyIds);
 
             // Return the account.
-            return $this->account;
+            return $account;
         });
     }
 }

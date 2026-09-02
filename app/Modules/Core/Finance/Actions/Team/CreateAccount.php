@@ -41,7 +41,8 @@ class CreateAccount
         return DB::transaction(function () use ($attributes, $currencyIds): Account {
             // Create the account for the team, excluding
             // the currencies.I
-            $account = $this->team->accounts()->create($attributes);
+            /** @var \App\Modules\Core\Finance\Models\Team\Account $account */
+            $account = $this->team?->accounts()->create($attributes);
 
             // Sync the currencies for the account.
             $account->currencies()->sync($currencyIds);

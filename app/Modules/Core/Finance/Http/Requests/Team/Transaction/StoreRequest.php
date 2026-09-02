@@ -31,8 +31,11 @@ class StoreRequest extends FormRequest
      */
     protected function currency(): ?Currency
     {
-        return Currency::query()
+        /** @var \App\Modules\Core\Catalog\Models\Currency|null $currency */
+        $currency = Currency::query()
             ->find($this->input(new Transaction()->currency()->getForeignKeyName()));
+
+        return $currency;
     }
 
     /**
@@ -58,7 +61,7 @@ class StoreRequest extends FormRequest
                 'required',
                 'string',
                 Rule::exists(Currency::class, new Currency()->getKeyName()),
-                Rule::in(Account::query()->find($this->input(new Transaction()->account()->getForeignKeyName()))->currencies->pluck(new Currency()->getKeyName())),
+                Rule::in(Account::query()->find($this->input(new Transaction()->account()->getForeignKeyName()))?->first()?->currencies->pluck(new Currency()->getKeyName())), // @phpstan-ignore-line argument.type
             ],
             'description' => [
                 'sometimes',
