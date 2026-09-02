@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $amount
  * @property int $decimal_places
  * @property string|null $description
+ * @property string $exchange_rate
  * @property \Carbon\CarbonImmutable $occurred_at
  * @property string $team_id
  * @property \App\Modules\Core\Finance\Enums\Transaction\TransactionType $type
@@ -37,7 +38,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @mixin \Eloquent
  */
-#[Fillable('amount', 'decimal_places', 'description', 'occurred_at', 'type')]
+#[Fillable('amount', 'decimal_places', 'description', 'exchange_rate', 'occurred_at', 'type')]
 class Transaction extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
@@ -83,6 +84,7 @@ class Transaction extends Model
         return [
             'amount' => 'decimal:18',
             'decimal_places' => 'integer',
+            'exchange_rate' => 'decimal:18',
             'occurred_at' => 'datetime',
             'type' => TransactionType::class,
         ];
