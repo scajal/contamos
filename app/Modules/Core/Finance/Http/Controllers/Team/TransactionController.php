@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Http\Controllers\Team;
 
 use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
+use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\StoreRequest;
+use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Objects\Toast;
@@ -24,23 +26,25 @@ class TransactionController
     public function index(Team $team): Response
     {
         return Inertia::render('finance/teams/transactions/index', [
-            'transactions' => Inertia::defer(
+            'transactions' => Inertia::scroll(
                 fn (): LengthAwarePaginator => $team->transactions()
                     ->with('account', 'currency', 'user')
+                    ->orderBy('occurred_at', 'desc')
                     ->paginate(10),
-            ),
+            )->defer(),
         ]);
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create(Team $team): Modal
+    public function create(Team $team, TransactionType $type): Modal
     {
         return Inertia::modal('finance/teams/transactions/create', [
             'accounts' => $team->accounts()
                 ->with('currencies')
                 ->get(),
+            'type' => $type,
         ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getKey()]);
     }
 
@@ -57,6 +61,30 @@ class TransactionController
 
         // Flash a success message to the session.
         Toast::make(trans('Saved'))
+            ->flash();
+
+        return back();
+    }
+
+    /**
+     * Show the specified resource.
+     */
+    public function show(Team $team, Transaction $transaction): Modal
+    {
+        return Inertia::modal('finance/teams/transactions/show', [
+            'transaction' => $transaction->load('account', 'currency', 'user'),
+        ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getKey()]);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Team $team, Transaction $transaction): RedirectResponse
+    {
+        $transaction->delete();
+
+        // Flash a success message to the session.
+        Toast::make(trans('Deleted'))
             ->flash();
 
         return back();

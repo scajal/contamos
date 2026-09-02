@@ -2,13 +2,15 @@ import { Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
+    ArrowDownIcon,
     ArrowLeftRightIcon,
+    ArrowUpIcon,
     BanknoteIcon,
+    ChevronDownIcon,
     ChevronsUpDownIcon,
     CircleDollarSignIcon,
     LayoutDashboardIcon,
     LogOutIcon,
-    PlusIcon,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -64,15 +66,42 @@ export const ApplicationLayout = ({ children }: { children: React.ReactNode }) =
                     <div className="flex w-full items-center justify-between px-4">
                         <SidebarTrigger className="-ml-1" />
                         {user?.current_team_id && (
-                            <Button
-                                nativeButton={false}
-                                render={
-                                    <ModalLink href={transactions.create.url({ team: user?.current_team_id ?? "" })}>
-                                        <PlusIcon />
-                                        <span>{t("Create :name", { name: t("transaction") })}</span>
-                                    </ModalLink>
-                                }
-                            />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger render={<Button />}>
+                                    <span>{t("Create :name", { name: t("transaction") })}</span>
+                                    <ChevronDownIcon className="transition-transform in-data-popup-open:rotate-180" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-auto min-w-(--anchor-width)">
+                                    <DropdownMenuGroup>
+                                        <DropdownMenuItem
+                                            render={
+                                                <ModalLink
+                                                    href={transactions.create.url({
+                                                        team: user?.current_team_id ?? "",
+                                                        type: "income",
+                                                    })}
+                                                >
+                                                    <ArrowDownIcon />
+                                                    <span>{t("Register an :name", { name: t("income") })}</span>
+                                                </ModalLink>
+                                            }
+                                        />
+                                        <DropdownMenuItem
+                                            render={
+                                                <ModalLink
+                                                    href={transactions.create.url({
+                                                        team: user?.current_team_id ?? "",
+                                                        type: "expense",
+                                                    })}
+                                                >
+                                                    <ArrowUpIcon />
+                                                    <span>{t("Register an :name", { name: t("expense") })}</span>
+                                                </ModalLink>
+                                            }
+                                        />
+                                    </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         )}
                     </div>
                 </header>

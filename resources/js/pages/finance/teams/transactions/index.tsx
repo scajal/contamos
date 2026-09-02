@@ -1,19 +1,17 @@
-import { Deferred, Link, usePage } from "@inertiajs/react";
+import { Deferred, InfiniteScroll, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
+import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
-    ArrowUpIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
     CircleDashedIcon,
+    EyeIcon,
     MoreHorizontalIcon,
-    PencilIcon,
-    PlusIcon,
     SearchIcon,
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -23,9 +21,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
 import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { cn } from "@/lib/utils";
 import routes from "@/routes/finance/teams/transactions";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
@@ -52,8 +52,8 @@ const Index = () => {
                     </div>
                 </div>
 
-                {/** Accounts */}
-                <div className="flex flex-col gap-4 [&>div]:rounded-sm [&>div]:border">
+                {/** Transactions */}
+                <div className="flex flex-col">
                     <Table />
                 </div>
             </div>
@@ -104,17 +104,7 @@ const Actions = () => {
      */
     const { user } = usePage().props;
 
-    return (
-        <Button
-            nativeButton={false}
-            render={
-                <ModalLink href={routes.create.url({ team: { id: user?.current_team_id ?? "" } })}>
-                    <PlusIcon />
-                    <span>{t("Create")}</span>
-                </ModalLink>
-            }
-        />
-    );
+    return <Fragment></Fragment>;
 };
 
 const Table = () => {
@@ -129,73 +119,117 @@ const Table = () => {
      */
     const { transactions } = usePage<PageProps>().props;
 
+    /**
+     * Grouped transactions by date.
+     */
+    const grouped = Map.groupBy(transactions?.data ?? [], (transaction) =>
+        format(new Date(transaction.occurred_at), "yyyy-MM-dd"),
+    );
+
     return (
         <Fragment>
-            <TableComponent>
-                <TableBody>
-                    <Deferred data="transactions" fallback={<></>}>
-                        {/** Empty state */}
-                        {transactions?.data?.length < 1 && (
-                            <TableRow>
-                                <TableCell colSpan={2}>
-                                    <Empty>
-                                        <EmptyHeader>
-                                            <EmptyMedia variant="icon">
-                                                <CircleDashedIcon />
-                                            </EmptyMedia>
-                                            <EmptyTitle>{t("No :name yet", { name: t("transactions") })}</EmptyTitle>
-                                            <EmptyDescription>
-                                                {t("Add a new :name to get started.", { name: t("transaction") })}
-                                            </EmptyDescription>
-                                        </EmptyHeader>
-                                    </Empty>
-                                </TableCell>
-                            </TableRow>
-                        )}
-                        {/** Data */}
-                        {transactions?.data?.length
-                            ? transactions?.data?.map((transaction) => (
-                                  <TableRow key={transaction.id}>
-                                      <TableCell>
-                                          <div className="flex items-center gap-2">
-                                              <Avatar>
-                                                  <AvatarFallback>
-                                                      <ArrowUpIcon />
-                                                  </AvatarFallback>
-                                              </Avatar>
-                                              <div className="flex flex-col">
-                                                  <span className="text-sm text-gray-500">hi</span>
-                                                  <span className="font-medium">{transaction.description}</span>
-                                              </div>
-                                          </div>
-                                      </TableCell>
-                                      <TableCell className="text-right">
-                                          <DropdownMenu>
-                                              <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
-                                                  <MoreHorizontalIcon />
-                                                  <span className="sr-only">{t("Actions")}</span>
-                                              </DropdownMenuTrigger>
-                                              <DropdownMenuContent align="end">
-                                                  <DropdownMenuItem
-                                                      render={
-                                                          <ModalLink href="/">
-                                                              <PencilIcon />
-                                                              <span>{t("Edit")}</span>
-                                                          </ModalLink>
-                                                      }
-                                                  />
-                                              </DropdownMenuContent>
-                                          </DropdownMenu>
-                                      </TableCell>
-                                  </TableRow>
-                              ))
-                            : null}
-                    </Deferred>
-                </TableBody>
-            </TableComponent>
-
-            {/** Pagination */}
-            {transactions?.data?.length ? <Pagination /> : null}
+            <Deferred data="transactions" fallback={<></>}>
+                <InfiniteScroll data="transactions" onlyNext>
+                    {/** Empty state */}
+                    {transactions?.data?.length < 1 && (
+                        <div className="overflow-hidden rounded-sm border">
+                            <TableComponent>
+                                <TableBody>
+                                    <TableRow>
+                                        <TableCell colSpan={2}>
+                                            <Empty>
+                                                <EmptyHeader>
+                                                    <EmptyMedia variant="icon">
+                                                        <CircleDashedIcon />
+                                                    </EmptyMedia>
+                                                    <EmptyTitle>
+                                                        {t("No :name yet", { name: t("transactions") })}
+                                                    </EmptyTitle>
+                                                    <EmptyDescription>
+                                                        {t("Add a new :name to get started.", {
+                                                            name: t("transaction"),
+                                                        })}
+                                                    </EmptyDescription>
+                                                </EmptyHeader>
+                                            </Empty>
+                                        </TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </TableComponent>
+                        </div>
+                    )}
+                    {/** Data */}
+                    {[...grouped].map(([date, items]) => (
+                        <Fragment key={date}>
+                            <Item>
+                                <ItemHeader>
+                                    <ItemTitle>{format(new Date(date), "MMMM d, yyyy")}</ItemTitle>
+                                </ItemHeader>
+                            </Item>
+                            <div className="overflow-hidden rounded-sm border">
+                                <TableComponent className="table-fixed">
+                                    <TableBody>
+                                        {items.map((transaction) => (
+                                            <TableRow key={transaction.id}>
+                                                <TableCell className="w-16">
+                                                    {format(new Date(transaction.occurred_at), "HH:mm")}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm text-gray-500">
+                                                            {transaction.account?.name ?? "-"}
+                                                        </span>
+                                                        <span className="font-medium">
+                                                            {transaction.description ?? "-"}
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <span
+                                                        className={cn(
+                                                            "font-medium",
+                                                            transaction.type === "income"
+                                                                ? "text-green-500"
+                                                                : "text-red-500",
+                                                        )}
+                                                    >
+                                                        {`${transaction.type === "income" ? "+" : "-"} ${transaction.currency?.symbol} ${transaction.amount}`}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="w-12 text-right">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger
+                                                            render={<Button size="icon" variant="ghost" />}
+                                                        >
+                                                            <MoreHorizontalIcon />
+                                                            <span className="sr-only">{t("Actions")}</span>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuItem
+                                                                render={
+                                                                    <ModalLink
+                                                                        href={routes.show.url({
+                                                                            team: transaction.team_id,
+                                                                            transaction: transaction.id,
+                                                                        })}
+                                                                    >
+                                                                        <EyeIcon />
+                                                                        <span>{t("View")}</span>
+                                                                    </ModalLink>
+                                                                }
+                                                            />
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </TableComponent>
+                            </div>
+                        </Fragment>
+                    ))}
+                </InfiniteScroll>
+            </Deferred>
         </Fragment>
     );
 };

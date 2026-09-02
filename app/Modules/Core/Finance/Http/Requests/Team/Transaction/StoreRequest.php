@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Http\Requests\Team\Transaction;
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
@@ -42,6 +43,7 @@ class StoreRequest extends FormRequest
             'amount' => [
                 'required',
                 'integer',
+                'gt:0',
             ],
             new Transaction()->currency()->getForeignKeyName() => [
                 'required',
@@ -57,6 +59,12 @@ class StoreRequest extends FormRequest
             'occurred_at' => [
                 'required',
                 'date',
+            ],
+            'type' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::enum(TransactionType::class),
             ],
         ];
     }

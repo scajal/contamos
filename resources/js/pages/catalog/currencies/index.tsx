@@ -1,7 +1,15 @@
 import { Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, PencilIcon, PlusIcon, SearchIcon } from "lucide-react";
+import {
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    CircleDashedIcon,
+    MoreHorizontalIcon,
+    PencilIcon,
+    PlusIcon,
+    SearchIcon,
+} from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +19,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
@@ -117,34 +126,55 @@ const Table = () => {
         <Fragment>
             <TableComponent>
                 <TableBody>
-                    {currencies?.data?.map((currency) => (
-                        <TableRow key={currency.id}>
-                            <TableCell>
-                                <div className="flex flex-col gap-1">
-                                    <span className="font-medium">{currency.name}</span>
-                                    <span className="text-sm text-gray-500">{currency.code}</span>
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
-                                        <MoreHorizontalIcon />
-                                        <span className="sr-only">{t("Actions")}</span>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem
-                                            render={
-                                                <ModalLink href={routes.edit.url(currency.id)}>
-                                                    <PencilIcon />
-                                                    <span>{t("Edit")}</span>
-                                                </ModalLink>
-                                            }
-                                        />
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                    {/** Empty state */}
+                    {currencies?.data?.length < 1 && (
+                        <TableRow>
+                            <TableCell colSpan={2}>
+                                <Empty>
+                                    <EmptyHeader>
+                                        <EmptyMedia variant="icon">
+                                            <CircleDashedIcon />
+                                        </EmptyMedia>
+                                        <EmptyTitle>{t("No :name yet", { name: t("currencies") })}</EmptyTitle>
+                                        <EmptyDescription>
+                                            {t("Add a new :name to get started.", { name: t("currency") })}
+                                        </EmptyDescription>
+                                    </EmptyHeader>
+                                </Empty>
                             </TableCell>
                         </TableRow>
-                    ))}
+                    )}
+                    {/** Data */}
+                    {currencies?.data?.length
+                        ? currencies?.data?.map((currency) => (
+                              <TableRow key={currency.id}>
+                                  <TableCell>
+                                      <div className="flex flex-col gap-1">
+                                          <span className="font-medium">{currency.name}</span>
+                                          <span className="text-sm text-gray-500">{currency.code}</span>
+                                      </div>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                      <DropdownMenu>
+                                          <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
+                                              <MoreHorizontalIcon />
+                                              <span className="sr-only">{t("Actions")}</span>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                              <DropdownMenuItem
+                                                  render={
+                                                      <ModalLink href={routes.edit.url(currency.id)}>
+                                                          <PencilIcon />
+                                                          <span>{t("Edit")}</span>
+                                                      </ModalLink>
+                                                  }
+                                              />
+                                          </DropdownMenuContent>
+                                      </DropdownMenu>
+                                  </TableCell>
+                              </TableRow>
+                          ))
+                        : null}
                 </TableBody>
             </TableComponent>
 

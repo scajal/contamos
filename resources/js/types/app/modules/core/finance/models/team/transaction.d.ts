@@ -4,6 +4,7 @@
 import type { Currency } from "../../../catalog/models/currency";
 import type { Team } from "../../../identity/models/team";
 import type { User } from "../../../identity/models/user";
+import { TransactionType } from "../../enums/transaction/transaction-type";
 import type { Account } from "./account";
 
 export interface Transaction {
@@ -14,6 +15,7 @@ export interface Transaction {
     description: string | null;
     occurred_at: string;
     team_id: string;
+    type: TransactionType;
     user_id: string | null;
     created_at: string | null;
     updated_at: string | null;

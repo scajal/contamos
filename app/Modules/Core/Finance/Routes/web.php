@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Identity\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
@@ -70,9 +71,18 @@ Route::as('finance.teams.')
         Route::get('/transactions', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'index'])
             ->name('transactions.index');
 
-        Route::get('/transactions/create', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'create'])
+        Route::get('/transactions/create/{type}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'create'])
+            ->whereIn('type', TransactionType::cases())
             ->name('transactions.create');
 
         Route::post('/transactions', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'store'])
             ->name('transactions.store');
+
+        Route::get('/transactions/{transaction}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'show'])
+            ->name('transactions.show')
+            ->scopeBindings();
+
+        Route::delete('/transactions/{transaction}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'destroy'])
+            ->name('transactions.destroy')
+            ->scopeBindings();
     });

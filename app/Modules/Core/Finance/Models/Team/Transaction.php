@@ -3,6 +3,7 @@
 namespace App\Modules\Core\Finance\Models\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Concerns\DefinesKeyType;
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $description
  * @property \Carbon\CarbonImmutable $occurred_at
  * @property string $team_id
+ * @property \App\Modules\Core\Finance\Enums\Transaction\TransactionType $type
  * @property string|null $user_id
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
@@ -79,7 +81,8 @@ class Transaction extends Model
     {
         return [
             'amount' => 'integer',
-            'occurred_at' => 'date',
+            'occurred_at' => 'datetime',
+            'type' => TransactionType::class,
         ];
     }
 
