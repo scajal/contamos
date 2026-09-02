@@ -6,6 +6,7 @@ namespace App\Modules\Core\Catalog\Http\Controllers\Currency;
 
 use App\Modules\Core\Catalog\Http\Requests\Currency\Quote\StoreRequest;
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -47,6 +48,21 @@ class QuoteController
     {
         // Store the currency with the validated data.
         $currency->quotes()->create($request->validated());
+
+        // Show a message to the user.
+        Toast::make(trans('Saved'))
+            ->flash();
+
+        return back();
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Currency $currency, Quote $quote): RedirectResponse
+    {
+        // Delete the quote.
+        $quote->delete();
 
         // Show a message to the user.
         Toast::make(trans('Saved'))

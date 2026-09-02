@@ -73,4 +73,8 @@ Route::as('catalog.')->middleware([
         ->middleware(HandlePrecognitiveRequests::class)
         ->name('currencies.quotes.store')
         ->scopeBindings();
+
+    Route::delete('currencies/{currency}/quotes/{quote}', [\App\Modules\Core\Catalog\Http\Controllers\Currency\QuoteController::class, 'destroy'])
+        ->name('currencies.quotes.destroy')
+        ->scopeBindings();
 });

@@ -1,16 +1,34 @@
 import { Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
+import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon, CircleDashedIcon, PlusIcon, SearchIcon } from "lucide-react";
+import {
+    ArrowLeftIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    CircleDashedIcon,
+    MoreHorizontalIcon,
+    PlusIcon,
+    SearchIcon,
+    TrashIcon,
+} from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
+import { ConfirmAction } from "@/components/confirm-action";
 import { BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { formatAmount } from "@/lib/utils";
 import routes from "@/routes/catalog/currencies";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Quote } from "@/types/app/modules/core/catalog/models/currency/quote";
@@ -118,12 +136,12 @@ const Table = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * The page's props.
      */
-    const { quotes } = usePage<PageProps>().props;
+    const { currency, quotes } = usePage<PageProps>().props;
 
     return (
         <Fragment>
@@ -153,9 +171,43 @@ const Table = () => {
                               <TableRow key={quote.id}>
                                   <TableCell>
                                       <div className="flex flex-col gap-1">
-                                          <span className="font-medium">{quote.observed_at}</span>
-                                          <span className="text-sm text-gray-500">{quote.rate}</span>
+                                          <span className="font-medium">
+                                              {formatAmount(quote.rate, currentLocale(), currency)}
+                                          </span>
+                                          <span className="text-sm text-gray-500">
+                                              {format(new Date(quote.observed_at), "MMMM d, yyyy HH:mm")}
+                                          </span>
                                       </div>
+                                  </TableCell>
+                                  <TableCell className="w-12 text-right">
+                                      <DropdownMenu>
+                                          <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
+                                              <MoreHorizontalIcon />
+                                              <span className="sr-only">{t("Actions")}</span>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                              <ConfirmAction
+                                                  className="w-full"
+                                                  title={t("Are you sure you want to delete the quote?")}
+                                                  description={t("This action cannot be undone.")}
+                                                  confirmLabel={t("Delete")}
+                                                  action={
+                                                      <Link
+                                                          href={routes.quotes.destroy.url({
+                                                              currency: currency.id,
+                                                              quote: quote.id,
+                                                          })}
+                                                          method="delete"
+                                                      />
+                                                  }
+                                              >
+                                                  <DropdownMenuItem closeOnClick={false} variant="destructive">
+                                                      <TrashIcon />
+                                                      <span>{t("Delete")}</span>
+                                                  </DropdownMenuItem>
+                                              </ConfirmAction>
+                                          </DropdownMenuContent>
+                                      </DropdownMenu>
                                   </TableCell>
                               </TableRow>
                           ))

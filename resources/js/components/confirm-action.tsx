@@ -20,9 +20,10 @@ type Props = {
     cancelLabel?: string;
     action: ReactElement;
     children: ReactElement;
+    className?: string;
 };
 
-export function ConfirmAction({ title, description, confirmLabel, cancelLabel, action, children }: Props) {
+export function ConfirmAction({ title, description, confirmLabel, cancelLabel, action, children, className }: Props) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -31,7 +32,7 @@ export function ConfirmAction({ title, description, confirmLabel, cancelLabel, a
 
     return (
         <AlertDialog>
-            <AlertDialogTrigger render={children} />
+            <AlertDialogTrigger nativeButton={false} render={children} />
             <AlertDialogContent size="sm">
                 <AlertDialogHeader>
                     <AlertDialogTitle>{title}</AlertDialogTitle>
