@@ -8,7 +8,7 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
 import { Modal } from "@/components/ui/modal";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import transactions from "@/routes/finance/teams/transactions";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 
@@ -21,7 +21,7 @@ export default function Show({ transaction }: PageProps) {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     return (
         <Modal>
@@ -44,7 +44,7 @@ export default function Show({ transaction }: PageProps) {
                                             "text-4xl",
                                         )}
                                     >
-                                        {`${transaction.type === "income" ? "+" : "-"} ${transaction.currency?.symbol} ${transaction.amount}`}
+                                        {`${transaction.type === "income" ? "+" : "-"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
                                     </ItemTitle>
                                 </ItemHeader>
                             </Item>

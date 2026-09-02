@@ -12,7 +12,7 @@ import {
     ComboboxTrigger,
     ComboboxValue,
 } from "@/components/ui/combobox";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
@@ -150,9 +150,6 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                         </ComboboxList>
                     </ComboboxContent>
                 </Combobox>
-                <FieldDescription>
-                    {t("Enter a positive amount for an income or a negative amount for an expense.")}
-                </FieldDescription>
                 {invalid("amount") && <FieldError>{errors.amount}</FieldError>}
                 {invalid("currency_id") && <FieldError>{errors.currency_id}</FieldError>}
             </Field>

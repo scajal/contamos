@@ -40,7 +40,7 @@ export default function Create({ accounts, type }: PageProps) {
                             disableWhileProcessing
                             onSuccess={() => {
                                 rootProps.onOpenChange(false);
-                                router.reload({ only: ["transactions"] });
+                                router.reload({ reset: ["transactions"] });
                             }}
                             options={{ only: ["errors"] }}
                         >

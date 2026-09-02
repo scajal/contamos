@@ -2,6 +2,7 @@
 
 namespace App\Modules\Core\Finance\Actions\Team;
 
+use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
@@ -55,6 +56,16 @@ class CreateTransaction
         }
 
         return DB::transaction(function () use ($attributes): Transaction {
+            // Get the selected currency.
+            $currency = Currency::query()
+                ->find($attributes[new Transaction()->currency()->getForeignKeyName()]);
+
+            // Update the amount to a minor unit before
+            // saving it.
+            $attributes['amount'] = (int) round(
+                (float) $attributes['amount'] * (10 ** $currency->decimal_places)
+            );
+
             // Create the account for the team, excluding
             // the currencies.I
             $transaction = $this->team->transactions()->create($attributes);

@@ -25,7 +25,7 @@ import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
 import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import { cn } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import routes from "@/routes/finance/teams/transactions";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
@@ -112,7 +112,7 @@ const Table = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * The page's props.
@@ -161,7 +161,7 @@ const Table = () => {
                     {/** Data */}
                     {[...grouped].map(([date, items]) => (
                         <Fragment key={date}>
-                            <Item>
+                            <Item className="px-0">
                                 <ItemHeader>
                                     <ItemTitle>{format(new Date(date), "MMMM d, yyyy")}</ItemTitle>
                                 </ItemHeader>
@@ -193,7 +193,7 @@ const Table = () => {
                                                                 : "text-red-500",
                                                         )}
                                                     >
-                                                        {`${transaction.type === "income" ? "+" : "-"} ${transaction.currency?.symbol} ${transaction.amount}`}
+                                                        {`${transaction.type === "income" ? "+" : "-"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
                                                     </span>
                                                 </TableCell>
                                                 <TableCell className="w-12 text-right">

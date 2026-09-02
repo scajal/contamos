@@ -27,6 +27,15 @@ class StoreRequest extends FormRequest
     }
 
     /**
+     * Get the selected currency, if any.
+     */
+    protected function currency(): ?Currency
+    {
+        return Currency::query()
+            ->find($this->input(new Transaction()->currency()->getForeignKeyName()));
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
@@ -42,7 +51,7 @@ class StoreRequest extends FormRequest
             ],
             'amount' => [
                 'required',
-                'integer',
+                ($currency = $this->currency()) ? "decimal:0,{$currency->decimal_places}" : 'integer',
                 'gt:0',
             ],
             new Transaction()->currency()->getForeignKeyName() => [
