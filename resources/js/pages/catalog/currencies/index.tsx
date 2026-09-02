@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
+import { Badge } from "@/components/ui/badge";
 import { BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
@@ -157,6 +158,13 @@ const Table = () => {
                                           <span className="text-sm text-gray-500">{currency.code}</span>
                                       </div>
                                   </TableCell>
+                                  <TableCell>
+                                      {currency.is_active ? (
+                                          <Badge variant="ghost">{t("Active")}</Badge>
+                                      ) : (
+                                          <Badge variant="destructive">{t("Inactive")}</Badge>
+                                      )}
+                                  </TableCell>
                                   <TableCell className="text-right">
                                       <DropdownMenu>
                                           <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
@@ -165,6 +173,7 @@ const Table = () => {
                                           </DropdownMenuTrigger>
                                           <DropdownMenuContent align="end">
                                               <DropdownMenuItem
+                                                  nativeButton={false}
                                                   render={
                                                       <ModalLink href={routes.edit.url(currency.id)}>
                                                           <PencilIcon />
@@ -172,10 +181,25 @@ const Table = () => {
                                                       </ModalLink>
                                                   }
                                               />
-                                              <DropdownMenuItem>
-                                                  {currency.is_active ? <XIcon /> : <CheckIcon />}
-                                                  <span>{currency.is_active ? t("Deactivate") : t("Activate")}</span>
-                                              </DropdownMenuItem>
+                                              <DropdownMenuItem
+                                                  nativeButton
+                                                  render={
+                                                      <Link
+                                                          className="w-full"
+                                                          href={
+                                                              currency.is_active
+                                                                  ? routes.deactivate.url({ currency: currency.id })
+                                                                  : routes.activate.url({ currency: currency.id })
+                                                          }
+                                                          method="patch"
+                                                      >
+                                                          {currency.is_active ? <XIcon /> : <CheckIcon />}
+                                                          <span>
+                                                              {currency.is_active ? t("Deactivate") : t("Activate")}
+                                                          </span>
+                                                      </Link>
+                                                  }
+                                              />
                                           </DropdownMenuContent>
                                       </DropdownMenu>
                                   </TableCell>

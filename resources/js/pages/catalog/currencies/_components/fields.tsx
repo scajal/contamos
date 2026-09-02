@@ -8,12 +8,14 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CurrencyType } from "@/types/app/modules/core/catalog/enums/currency/currency-type";
+import { ExchangeRateSource } from "@/types/app/modules/core/catalog/enums/currency/exchange-rate/exchange-rate-source";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 
 type FormProps = Partial<Currency>;
 
 type Props = FormComponentSlotProps<FormProps> & {
     defaultValues?: FormProps;
+    exchangeRateSources: Array<ExchangeRateSource>;
     types: Array<CurrencyType>;
     locked?: ReadonlyArray<keyof FormProps>;
 };
@@ -21,6 +23,7 @@ type Props = FormComponentSlotProps<FormProps> & {
 export const Fields = ({
     defaultValues,
     errors,
+    exchangeRateSources,
     invalid,
     locked,
     touched,
@@ -53,7 +56,7 @@ export const Fields = ({
             {/** Type */}
             <Field>
                 <FieldLabel>{t("Type")}</FieldLabel>
-                <Select defaultValue={defaultValues?.type} name="type">
+                <Select defaultValue={defaultValues?.type} disabled={isLocked("type")} name="type">
                     <SelectTrigger aria-invalid={invalid("type")}>
                         <SelectValue>
                             {(value: CurrencyType | null) => (value ? t(`enums.${value}`) : t("Select a type"))}
@@ -152,6 +155,34 @@ export const Fields = ({
                     />
                 </InputGroup>
                 {invalid("decimal_places") && <FieldError>{errors.decimal_places}</FieldError>}
+            </Field>
+
+            {/** Exchange rate source */}
+            <Field>
+                <FieldLabel>{t("Exchange rate source")}</FieldLabel>
+                <Select
+                    defaultValue={defaultValues?.exchange_rate_source}
+                    disabled={isLocked("exchange_rate_source")}
+                    name="exchange_rate_source"
+                >
+                    <SelectTrigger aria-invalid={invalid("exchange_rate_source")}>
+                        <SelectValue>
+                            {(value: ExchangeRateSource | null) =>
+                                value ? t(`enums.${value}`) : t("Select a exchange rate source")
+                            }
+                        </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            {exchangeRateSources.map((source) => (
+                                <SelectItem key={source} value={source}>
+                                    {t(`enums.${source}`)}
+                                </SelectItem>
+                            ))}
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                {invalid("exchange_rate_source") && <FieldError>{errors.exchange_rate_source}</FieldError>}
             </Field>
         </div>
     );

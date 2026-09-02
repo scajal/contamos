@@ -7,15 +7,19 @@ import { Modal } from "@/components/ui/modal";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import currencies from "@/routes/catalog/currencies";
+import { CurrencyType } from "@/types/app/modules/core/catalog/enums/currency/currency-type";
+import { ExchangeRateSource } from "@/types/app/modules/core/catalog/enums/currency/exchange-rate/exchange-rate-source";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 
 import { Fields } from "./_components/fields";
 
 type PageProps = {
     currency: Currency;
+    exchangeRateSources: Array<ExchangeRateSource>;
+    types: Array<CurrencyType>;
 };
 
-export default function Edit({ currency }: PageProps) {
+export default function Edit({ currency, exchangeRateSources, types }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -47,7 +51,9 @@ export default function Edit({ currency }: PageProps) {
                                         <Fields
                                             {...formProps}
                                             defaultValues={currency}
-                                            locked={["code", "decimal_places"]}
+                                            exchangeRateSources={exchangeRateSources}
+                                            locked={["code", "decimal_places", "type"]}
+                                            types={types}
                                         />
                                     </div>
                                     <SheetFooter>

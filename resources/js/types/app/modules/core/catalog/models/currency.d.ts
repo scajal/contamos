@@ -2,12 +2,14 @@
  * JSON shape of App\Modules\Core\Catalog\Models\Currency when serialized for Inertia.
  */
 import { CurrencyType } from "../enums/currency/currency-type";
+import { ExchangeRateSource } from "../enums/currency/exchange-rate/exchange-rate-source";
 import type { ExchangeRate } from "./currency/exchange-rate";
 
 export interface Currency {
     id: string;
     code: string;
     decimal_places: number;
+    exchange_rate_source: ExchangeRateSource;
     is_active: boolean;
     name: string;
     symbol: string;
