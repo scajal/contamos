@@ -31,10 +31,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable('observed_at', 'rate')]
 class ExchangeRate extends Model
 {
-    /** @use \App\Modules\Support\Concerns\DefinesKeyType<ExchangeRate> */
+    /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
-    /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\App\Modules\Core\Catalog\Models\Currency\ExchangeRate> $factory */
+    /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Catalog\Models\Currency\ExchangeRateFactory> */
     use HasFactory;
 
     use HasUlids;
@@ -55,7 +55,7 @@ class ExchangeRate extends Model
     /**
      * Get the currency that the exchange rate is for.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Catalog\Models\Currency, \App\Modules\Core\Catalog\Models\Currency\ExchangeRate>
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Catalog\Models\Currency, $this>
      */
     public function currency(): BelongsTo
     {
@@ -65,7 +65,7 @@ class ExchangeRate extends Model
     /**
      * Get the user that recorded the exchange rate.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\User, \App\Modules\Core\Catalog\Models\Currency\ExchangeRate>
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\User, $this>
      */
     public function recorder(): BelongsTo
     {

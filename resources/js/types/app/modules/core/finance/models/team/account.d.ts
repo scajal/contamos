@@ -4,11 +4,12 @@
 import { Currency } from "../../../catalog/models/currency";
 import type { Team } from "../../../identity/models/team";
 import type { AccountType } from "../../enums/account/account-type";
+import type { AccountCurrency } from "./account-currency";
 import type { Transaction } from "./transaction";
 
 export interface Account {
     id: string;
-    currencies?: Array<Currency>;
+    currencies?: Array<Currency & { pivot?: AccountCurrency }>;
     name: string;
     team_id: string;
     type: AccountType;

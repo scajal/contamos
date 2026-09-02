@@ -14,6 +14,7 @@ export interface Transaction {
     currency_id: string;
     decimal_places: number;
     description: string | null;
+    exchange_rate: string;
     occurred_at: string;
     team_id: string;
     type: TransactionType;

@@ -22,6 +22,7 @@ class ExchangeRateController
     public function index(Currency $currency): Response
     {
         return Inertia::render('catalog/currencies/exchange-rates/index', [
+            'currency' => $currency,
             'exchangeRates' => Inertia::defer(
                 fn (): LengthAwarePaginator => $currency->exchangeRates()
                     ->orderBy('created_at', 'desc')

@@ -1,0 +1,17 @@
+/**
+ * JSON shape of App\Modules\Core\Catalog\Models\Currency\ExchangeRate when serialized for Inertia.
+ */
+import type { User } from "../../../identity/models/user";
+import type { Currency } from "../currency";
+
+export interface ExchangeRate {
+    id: string;
+    currency_id: string;
+    observed_at: string;
+    rate: string;
+    recorded_by: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+    currency?: Currency;
+    recorder?: User | null;
+}
