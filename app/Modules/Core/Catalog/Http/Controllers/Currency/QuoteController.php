@@ -65,7 +65,7 @@ class QuoteController
         $quote->delete();
 
         // Show a message to the user.
-        Toast::make(trans('Saved'))
+        Toast::make(trans('Deleted'))
             ->flash();
 
         return back();

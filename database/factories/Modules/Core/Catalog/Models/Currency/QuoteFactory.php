@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\Modules\Core\Catalog\Models\Currency;
 
+use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -32,6 +33,7 @@ class QuoteFactory extends Factory
             'observed_at' => fake()->dateTime(),
             'rate' => fake()->randomFloat(2, 0, 100),
             'recorded_by' => null,
+            'source' => fake()->randomElement(QuoteSource::cases()),
         ];
     }
 }
