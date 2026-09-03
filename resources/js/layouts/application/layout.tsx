@@ -162,6 +162,11 @@ const Sidebar = () => {
                                 <span>{t("Overview")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroup>
+                <SidebarGroup>
+                    <SidebarGroupLabel>{t('Team')}</SidebarGroupLabel>
+                    <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 render={<Link href={transactions.index.url({ team: user?.current_team_id ?? "" })} />}

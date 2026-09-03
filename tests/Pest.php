@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Facades\Exceptions;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Tests\TestCase;
+
+use function Pest\Laravel\actingAs;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,21 +24,14 @@ use Tests\TestCase;
 */
 
 pest()->extend(TestCase::class)
-    ->use(RefreshDatabase::class)
-    ->in('Feature');
+    ->use(LazilyRefreshDatabase::class)
+    ->in('Feature', 'Unit');
 
-/*
-|--------------------------------------------------------------------------
-| Expectations
-|--------------------------------------------------------------------------
-|
-| When you're writing tests, you often need to check that values meet certain conditions. The
-| "expect()" function gives you access to a set of "expectations" methods that you can use
-| to assert different things. Of course, you may extend the Expectation API at any time.
-|
-*/
-
-expect()->extend('toBeOne', fn () => $this->toBe(1));
+pest()->beforeEach(function (): void {
+    Http::preventStrayRequests();
+    Sleep::fake(syncWithCarbon: true);
+    Exceptions::fake();
+})->in('Feature');
 
 /*
 |--------------------------------------------------------------------------
@@ -47,7 +45,10 @@ expect()->extend('toBeOne', fn () => $this->toBe(1));
 */
 
 /**
- * @return array{0: User, 1: Team}
+ * Create a \App\Modules\Core\Identity\Models\User that belongs to a
+ * \App\Modules\Core\Identity\Models\Team and switch to that team.
+ *
+ * @return array{0: \App\Modules\Core\Identity\Models\User, 1: \App\Modules\Core\Identity\Models\Team}
  */
 function memberWithTeam(): array
 {
@@ -57,4 +58,46 @@ function memberWithTeam(): array
     $user->switchTeam($team);
 
     return [$user, $team];
+}
+
+/**
+ * Create a \App\Modules\Core\Identity\Models\User that belongs to a
+ * \App\Modules\Core\Identity\Models\Team and authenticate as that user.
+ *
+ * @return array{0: \App\Modules\Core\Identity\Models\User, 1: \App\Modules\Core\Identity\Models\Team}
+ */
+function actingMember(): array
+{
+    [$user, $team] = memberWithTeam();
+
+    actingAs($user);
+
+    return [$user, $team];
+}
+
+/**
+ * HTTP headers that load an \InertiaUI\Modal\Modal as a modal XHR
+ * instead of the dual-request base-page visit.
+ *
+ * @return array<string, string>
+ */
+function inertiaModalHeaders(): array
+{
+    return [\InertiaUI\Modal\Modal::HEADER_MODAL => '1'];
+}
+
+/**
+ * Assert that the session contains an Inertia toast with the given message.
+ */
+function assertFlashedToast(string $message): void
+{
+    $flash = session()->get(\Inertia\Support\SessionKey::FLASH_DATA, []);
+
+    if (! is_array($flash) || ! isset($flash['toast']) || ! is_array($flash['toast'])) {
+        throw new InvalidArgumentException('Expected an Inertia toast flash payload.');
+    }
+
+    expect($flash['toast'])
+        ->toHaveKeys(['id', 'message'])
+        ->and($flash['toast']['message'])->toBe($message);
 }

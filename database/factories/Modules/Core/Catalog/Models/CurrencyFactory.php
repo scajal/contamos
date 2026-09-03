@@ -39,4 +39,57 @@ class CurrencyFactory extends Factory
             'type' => fake()->randomElement(CurrencyType::cases()),
         ];
     }
+
+    /**
+     * Indicate that the currency is active.
+     */
+    public function active(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'is_active' => true,
+        ]);
+    }
+
+    /**
+     * Indicate that the currency type is
+     * \App\Modules\Core\Catalog\Enums\Currency\CurrencyType::Cryptocurrency.
+     */
+    public function crypto(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => CurrencyType::Cryptocurrency,
+        ]);
+    }
+
+    /**
+     * Indicate that the currency type is
+     * \App\Modules\Core\Catalog\Enums\Currency\CurrencyType::Fiat.
+     */
+    public function fiat(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => CurrencyType::Fiat,
+        ]);
+    }
+
+    /**
+     * Indicate that the currency is inactive.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'is_active' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the currency type is
+     * \App\Modules\Core\Catalog\Enums\Currency\CurrencyType::Virtual.
+     */
+    public function virtual(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => CurrencyType::Virtual,
+        ]);
+    }
 }
