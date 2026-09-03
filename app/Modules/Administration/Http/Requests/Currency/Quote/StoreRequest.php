@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Catalog\Http\Requests\Currency\Quote;
+namespace App\Modules\Administration\Http\Requests\Currency\Quote;
 
 use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
 use Illuminate\Contracts\Validation\ValidationRule;

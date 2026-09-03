@@ -38,7 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import routes from "@/routes/catalog/currencies";
+import routes from "@/routes/administration/currencies";
 import { CurrencyType } from "@/types/app/modules/core/catalog/enums/currency/currency-type";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";

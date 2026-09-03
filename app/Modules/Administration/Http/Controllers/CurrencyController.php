@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Catalog\Http\Controllers;
+namespace App\Modules\Administration\Http\Controllers;
 
+use App\Modules\Administration\Http\Requests\Currency\IndexRequest;
+use App\Modules\Administration\Http\Requests\Currency\StoreRequest;
+use App\Modules\Administration\Http\Requests\Currency\UpdateRequest;
 use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
 use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
-use App\Modules\Core\Catalog\Http\Requests\Currency\IndexRequest;
-use App\Modules\Core\Catalog\Http\Requests\Currency\StoreRequest;
-use App\Modules\Core\Catalog\Http\Requests\Currency\UpdateRequest;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Http\RedirectResponse;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Catalog\Http\Requests\Currency\Quote;
+namespace App\Modules\Administration\Http\Requests\Currency;
 
-use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
+use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -30,8 +30,9 @@ class IndexRequest extends FormRequest
     public function filters(): array
     {
         return [
-            AllowedFilter::exact('source'),
-            AllowedFilter::partial('search', 'observed_at'),
+            AllowedFilter::exact('type'),
+            AllowedFilter::groupOr('search', [AllowedFilter::partial('name'), AllowedFilter::partial('code')]),
+            AllowedFilter::scope('is_active'),
         ];
     }
 
@@ -47,17 +48,22 @@ class IndexRequest extends FormRequest
                 'sometimes',
                 'array',
             ],
+            'filter.is_active' => [
+                'sometimes',
+                'nullable',
+                Rule::in(['true', 'false']),
+            ],
             'filter.search' => [
                 'sometimes',
                 'nullable',
                 'string',
                 'max:100',
             ],
-            'filter.source' => [
+            'filter.type' => [
                 'sometimes',
                 'nullable',
                 'string',
-                Rule::enum(QuoteSource::class),
+                Rule::enum(CurrencyType::class),
             ],
         ];
     }

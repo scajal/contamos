@@ -29,7 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import routes from "@/routes/catalog/currencies";
+import routes from "@/routes/administration/currencies";
 import { User } from "@/types/app/modules/core/identity/models/user";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 

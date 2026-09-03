@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
-import currencies from "@/routes/catalog/currencies";
+import currencies from "@/routes/administration/currencies";
 import accounts from "@/routes/finance/teams/accounts";
 import transactions from "@/routes/finance/teams/transactions";
 import users from "@/routes/identity/users";

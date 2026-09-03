@@ -37,7 +37,7 @@ import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/compo
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { formatAmount } from "@/lib/utils";
-import routes from "@/routes/catalog/currencies";
+import routes from "@/routes/administration/currencies";
 import { QuoteSource } from "@/types/app/modules/core/catalog/enums/currency/quote/quote-source";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Quote } from "@/types/app/modules/core/catalog/models/currency/quote";

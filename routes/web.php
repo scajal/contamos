@@ -31,14 +31,14 @@ require __DIR__.'/../app/Modules/Authentication/Routes/web.php';
 
 /*
 |--------------------------------------------------------------------------
-| Catalog routes
+| Administration routes
 |--------------------------------------------------------------------------
 |
-| This file contains the routes for the catalog module.
+| This file contains the routes for the administration module.
 |
 */
 
-require __DIR__.'/../app/Modules/Core/Catalog/Routes/web.php';
+require __DIR__.'/../app/Modules/Administration/Routes/web.php';
 
 /*
 |--------------------------------------------------------------------------

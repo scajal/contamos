@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Catalog\Http\Controllers\Currency;
+namespace App\Modules\Administration\Http\Controllers\Currency;
 
+use App\Modules\Administration\Http\Requests\Currency\Quote\IndexRequest;
+use App\Modules\Administration\Http\Requests\Currency\Quote\StoreRequest;
 use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
-use App\Modules\Core\Catalog\Http\Requests\Currency\Quote\IndexRequest;
-use App\Modules\Core\Catalog\Http\Requests\Currency\Quote\StoreRequest;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Support\Objects\Toast;

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
-import currencies from "@/routes/catalog/currencies";
+import currencies from "@/routes/administration/currencies";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 
 import { Fields } from "./_components/fields";
