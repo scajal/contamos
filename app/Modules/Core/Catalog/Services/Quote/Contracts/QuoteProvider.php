@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Catalog\Contracts\Currency;
+namespace App\Modules\Core\Catalog\Services\Quote\Contracts;
 
-use App\Modules\Core\Catalog\QuoteProviders\AggregateQuoteProvider;
+use App\Modules\Core\Catalog\Services\Quote\AggregateQuoteProvider;
 use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\Bind;
 use Illuminate\Support\Collection;

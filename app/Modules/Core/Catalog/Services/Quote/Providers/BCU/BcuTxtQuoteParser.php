@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Catalog\QuoteProviders;
+namespace App\Modules\Core\Catalog\Services\Quote\Providers\BCU;
 
-use App\Modules\Core\Catalog\Exceptions\QuoteProviderException;
+use App\Modules\Core\Catalog\Services\Quote\Exceptions\QuoteProviderException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 

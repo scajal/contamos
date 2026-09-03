@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Catalog\QuoteProviders;
+namespace App\Modules\Core\Catalog\Services\Quote\Providers\BCU;
 
-use App\Modules\Core\Catalog\Contracts\Currency\QuoteProvider;
-use App\Modules\Core\Catalog\Exceptions\QuoteProviderException;
+use App\Modules\Core\Catalog\Services\Quote\Contracts\QuoteProvider;
+use App\Modules\Core\Catalog\Services\Quote\Exceptions\QuoteProviderException;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;

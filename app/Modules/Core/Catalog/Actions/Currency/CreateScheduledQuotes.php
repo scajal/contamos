@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Catalog\Actions\Currency;
 
-use App\Modules\Core\Catalog\Contracts\Currency\QuoteProvider;
 use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Catalog\Services\Quote\Contracts\QuoteProvider;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 

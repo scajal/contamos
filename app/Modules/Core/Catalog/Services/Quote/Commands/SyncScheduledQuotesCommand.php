@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Catalog\Console\Commands;
+namespace App\Modules\Core\Catalog\Services\Quote\Commands;
 
 use App\Modules\Core\Catalog\Actions\Currency\CreateScheduledQuotes;
 use Carbon\CarbonImmutable;

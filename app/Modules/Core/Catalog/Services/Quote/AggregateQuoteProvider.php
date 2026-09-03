@@ -2,21 +2,25 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Catalog\QuoteProviders;
+namespace App\Modules\Core\Catalog\Services\Quote;
 
-use App\Modules\Core\Catalog\Contracts\Currency\QuoteProvider;
+use App\Modules\Core\Catalog\Services\Quote\Contracts\QuoteProvider;
+use App\Modules\Core\Catalog\Services\Quote\Providers\BCU\BcuTxtQuoteProvider;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
-class AggregateQuoteProvider implements QuoteProvider
+class AggregateQuoteProvider implements Contracts\QuoteProvider
 {
     /**
      * Registered quote providers, in precedence order.
      *
-     * @var list<\App\Modules\Core\Catalog\Contracts\Currency\QuoteProvider>
+     * @var list<\App\Modules\Core\Catalog\Services\Quote\Contracts\QuoteProvider>
      */
     private array $providers;
 
+    /**
+     * Initialize the aggregate quote provider with the given quote providers.
+     */
     public function __construct(BcuTxtQuoteProvider $bcu)
     {
         $this->providers = [$bcu];
