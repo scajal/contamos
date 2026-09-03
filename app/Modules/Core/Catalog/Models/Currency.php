@@ -26,7 +26,7 @@ use Illuminate\Support\Str;
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Modules\Core\Catalog\Models\Currency\Quote|null $currentQuote
- * @property-read \Illuminate\Database\Eloquent\Collection<\App\Modules\Core\Catalog\Models\Currency\Quote> $quotes
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Catalog\Models\Currency\Quote> $quotes
  *
  * @method static \Database\Factories\Modules\Core\Catalog\Models\CurrencyFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency newModelQuery()
@@ -84,7 +84,7 @@ class Currency extends Model
     /**
      * Get the current quote for the currency.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne<\App\Modules\Core\Catalog\Models\Currency\Quote>
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne<\App\Modules\Core\Catalog\Models\Currency\Quote, $this>
      */
     public function currentQuote(): HasOne
     {
@@ -95,7 +95,7 @@ class Currency extends Model
     /**
      * Get the quotes for the currency.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Catalog\Models\Currency\Quote>
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Catalog\Models\Currency\Quote, $this>
      */
     public function quotes(): HasMany
     {

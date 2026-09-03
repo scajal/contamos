@@ -24,7 +24,7 @@ class EnsureTeamMembership
         // Get the current team.
         $team = $this->team($request->route('team'));
 
-        if (! $team || ! $user) {
+        if (! $team instanceof \App\Modules\Core\Identity\Models\Team || ! $user) {
             abort(Response::HTTP_NOT_FOUND);
         }
 

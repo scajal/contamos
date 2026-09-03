@@ -34,7 +34,7 @@ class UpdateAccount
     public function using(array $attributes, array $currencyIds): Account
     {
         // If the account is not set, throw an exception.
-        if (! $this->account) {
+        if (! $this->account instanceof \App\Modules\Core\Finance\Models\Team\Account) {
             throw new Exception('An account was not set for the update.');
         }
 

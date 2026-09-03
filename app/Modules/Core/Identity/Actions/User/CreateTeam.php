@@ -38,7 +38,7 @@ class CreateTeam
             $team = Team::query()->create($attributes);
 
             // Associate the team to the user.
-            if ($this->user) {
+            if ($this->user instanceof \App\Modules\Core\Identity\Models\User) {
                 $this->user->teams()->attach($team);
             }
 

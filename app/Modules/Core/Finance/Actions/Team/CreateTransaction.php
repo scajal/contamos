@@ -51,7 +51,7 @@ class CreateTransaction
     public function using(array $attributes): Transaction
     {
         // If the team is not set, throw an exception.
-        if (! $this->team) {
+        if (! $this->team instanceof \App\Modules\Core\Identity\Models\Team) {
             throw new Exception('A transaction cannot be created without a team.');
         }
 
@@ -71,7 +71,7 @@ class CreateTransaction
             ]);
 
             // If the user is provided, associate it with the transaction.
-            if ($this->user) {
+            if ($this->user instanceof \App\Modules\Core\Identity\Models\User) {
                 $transaction->user()->associate($this->user)->save();
             }
 

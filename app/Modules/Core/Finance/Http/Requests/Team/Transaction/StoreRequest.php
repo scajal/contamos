@@ -58,7 +58,7 @@ class StoreRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'quote' => $this->currency()?->currentQuote?->rate ?? throw new Exception('Currency has no current quote'),
+            'quote' => $this->currency()?->currentQuote->rate ?? throw new Exception('Currency has no current quote'),
         ]);
     }
 
@@ -78,7 +78,7 @@ class StoreRequest extends FormRequest
             ],
             'amount' => [
                 'required',
-                ($currency = $this->currency()) ? "decimal:0,{$currency->decimal_places}" : 'decimal:0,18',
+                (($currency = $this->currency()) instanceof \App\Modules\Core\Catalog\Models\Currency) ? "decimal:0,{$currency->decimal_places}" : 'decimal:0,18',
                 'gt:0',
             ],
             new Transaction()->currency()->getForeignKeyName() => [

@@ -34,7 +34,7 @@ class CreateAccount
     public function using(array $attributes, array $currencyIds): Account
     {
         // If the team is not set, throw an exception.
-        if (! $this->team) {
+        if (! $this->team instanceof \App\Modules\Core\Identity\Models\Team) {
             throw new Exception('An account cannot be created without a team.');
         }
 
