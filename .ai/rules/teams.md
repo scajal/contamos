@@ -9,3 +9,6 @@ paths:
 ## Team middleware and scoped queries
 
 Protect team routes with `EnsureTeamMembership`, use `scopeBindings()` on nested resource routes, and load or create records via `$team->relation()` or validation rules scoped to the route team.
+
+## Money as major-unit decimals
+Persist and pass monetary amounts as major-unit decimal strings (`decimal:18` casts). Do not introduce Brick Money objects or minor-unit integers.
