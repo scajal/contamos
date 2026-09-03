@@ -48,7 +48,7 @@ class SyncScheduledQuotesCommand extends Command
      */
     private function quoteDate(): CarbonImmutable
     {
-        if (! ($value = $this->option('date')) || $value === '') {
+        if (blank($value = $this->option('date'))) {
             return CarbonImmutable::now();
         }
 

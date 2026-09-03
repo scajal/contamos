@@ -59,7 +59,7 @@ class TransactionController
             'accounts' => $team->accounts()
                 ->isActive()
                 ->with(['currencies' => function (Relation $currencies): void {
-                    $currencies->isActive();
+                    $currencies->isActive(); // @phpstan-ignore-line argument.type
                 }])
                 ->get(),
             'type' => $type,

@@ -25,7 +25,7 @@ class IndexRequest extends FormRequest
      * Get the list of allowed filters for the
      * request.
      *
-     * @return array<string, \Spatie\QueryBuilder\AllowedFilter>
+     * @return array<int, \Spatie\QueryBuilder\AllowedFilter>
      */
     public function filters(): array
     {

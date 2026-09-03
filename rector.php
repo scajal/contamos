@@ -10,7 +10,6 @@ return RectorConfig::configure()
         __DIR__.'/bootstrap/app.php',
         __DIR__.'/database',
         __DIR__.'/public',
-        __DIR__.'/tests',
     ])
     ->withPreparedSets(
         deadCode: true,

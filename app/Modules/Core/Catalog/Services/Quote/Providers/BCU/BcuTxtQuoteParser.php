@@ -28,7 +28,7 @@ class BcuTxtQuoteParser
     /**
      * BCU numeric codes in the local section mapped to \App\Modules\Core\Catalog\Models\Currency codes.
      *
-     * @var array<string, string>
+     * @var array<int, string>
      */
     private const array LOCAL_CODES = [
         '2225' => 'UYU',
@@ -44,7 +44,7 @@ class BcuTxtQuoteParser
      * a double asterisk is USD per unit and is inverted so every rate is 1 USD = X.
      * Local rows that are not already present are added from the BCU code map.
      *
-     * @return \Illuminate\Support\Collection<string, string>
+     * @return \Illuminate\Support\Collection<string, non-empty-string|numeric-string>
      */
     public function parse(string $contents): Collection
     {
@@ -88,11 +88,11 @@ class BcuTxtQuoteParser
     /**
      * Parse international FX rows into 1 USD = X rates keyed by ISO code.
      *
-     * @return \Illuminate\Support\Collection<string, string>
+     * @return \Illuminate\Support\Collection<string, non-empty-string|numeric-string>
      */
     private function parseInternational(string $section): Collection
     {
-        $quotes = collect();
+        $quotes = [];
 
         // Loop through each line in the section.
         foreach (Str::of($section)->explode("\n") as $line) {
@@ -104,20 +104,20 @@ class BcuTxtQuoteParser
             }
 
             // Extract the code, convention, and arbitraje from the line.
-            $quotes->put($matches[1], $matches[3] === '**' ? bcdiv('1', $matches[4], 18) : $matches[4]);
+            $quotes[$matches[1]] = $matches[3] === '**' ? bcdiv('1', $matches[4], 18) : $matches[4];
         }
 
-        return $quotes;
+        return collect($quotes);
     }
 
     /**
      * Parse local interbank rows mapped from BCU numeric codes.
      *
-     * @return \Illuminate\Support\Collection<string, string>
+     * @return \Illuminate\Support\Collection<string, non-empty-string>
      */
     private function parseLocal(string $section): Collection
     {
-        $quotes = collect();
+        $quotes = [];
 
         // Loop through each line in the section.
         foreach (Str::of($section)->explode("\n") as $line) {
@@ -129,13 +129,13 @@ class BcuTxtQuoteParser
             }
 
             // Extract the code from the line.
-            if (! is_string($code = self::LOCAL_CODES[$matches[1]] ?? null)) {
+            if (! is_string($code = self::LOCAL_CODES[(int) $matches[1]] ?? null)) {
                 continue;
             }
 
-            $quotes->put($code, $matches[2]);
+            $quotes[$code] = $matches[2];
         }
 
-        return $quotes;
+        return collect($quotes);
     }
 }
