@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Core\Identity\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +46,15 @@ expect()->extend('toBeOne', fn () => $this->toBe(1));
 |
 */
 
-function something(): void
+/**
+ * @return array{0: User, 1: Team}
+ */
+function memberWithTeam(): array
 {
-    // ..
+    $user = User::factory()->create();
+    $team = Team::factory()->create();
+    $user->teams()->attach($team);
+    $user->switchTeam($team);
+
+    return [$user, $team];
 }

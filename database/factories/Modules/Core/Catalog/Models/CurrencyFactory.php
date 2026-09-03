@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Factories\Modules\Core\Catalog\Models;
 
+use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
+use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
 use App\Modules\Core\Catalog\Models\Currency;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -32,7 +34,9 @@ class CurrencyFactory extends Factory
             'decimal_places' => fake()->numberBetween(0, 18),
             'is_active' => fake()->boolean(),
             'name' => fake()->word(),
+            'quote_source' => fake()->randomElement(QuoteSource::cases()),
             'symbol' => fake()->randomLetter(),
+            'type' => fake()->randomElement(CurrencyType::cases()),
         ];
     }
 }

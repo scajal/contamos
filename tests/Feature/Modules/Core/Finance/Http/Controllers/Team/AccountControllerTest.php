@@ -84,19 +84,6 @@ describe('index', function () {
 });
 
 /**
- * @return array{0: User, 1: Team}
- */
-function memberWithTeam(): array
-{
-    $user = User::factory()->create();
-    $team = Team::factory()->create();
-    $user->teams()->attach($team);
-    $user->switchTeam($team);
-
-    return [$user, $team];
-}
-
-/**
  * @return array<string, string>
  */
 function accountsIndexHeaders(): array
