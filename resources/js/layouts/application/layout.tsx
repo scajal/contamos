@@ -11,6 +11,7 @@ import {
     CircleDollarSignIcon,
     LayoutDashboardIcon,
     LogOutIcon,
+    UsersIcon,
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
@@ -45,6 +46,7 @@ import { logout } from "@/routes";
 import currencies from "@/routes/catalog/currencies";
 import accounts from "@/routes/finance/teams/accounts";
 import transactions from "@/routes/finance/teams/transactions";
+import users from "@/routes/identity/users";
 
 export const ApplicationLayout = ({
     breadcrumb,
@@ -165,7 +167,7 @@ const Sidebar = () => {
                     </SidebarMenu>
                 </SidebarGroup>
                 <SidebarGroup>
-                    <SidebarGroupLabel>{t('Team')}</SidebarGroupLabel>
+                    <SidebarGroupLabel>{t("Team")}</SidebarGroupLabel>
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton
@@ -192,6 +194,10 @@ const Sidebar = () => {
                             <SidebarMenuButton render={<Link href={currencies.index.url()} />}>
                                 <CircleDollarSignIcon />
                                 <span>{t("Currencies")}</span>
+                            </SidebarMenuButton>
+                            <SidebarMenuButton render={<Link href={users.index.url()} />}>
+                                <UsersIcon />
+                                <span>{t("Users")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>
