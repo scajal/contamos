@@ -276,6 +276,7 @@
     "Temporary Redirect": "Temporary Redirect",
     "The date from which the quote is available.": "The date from which the quote is available.",
     "The given data was invalid.": "The given data was invalid.",
+    "The quote of the currency at the time of the transaction. Leave blank to use the current rate (if any).": "The quote of the currency at the time of the transaction. Leave blank to use the current rate (if any).",
     "The response is not a streamed response.": "The response is not a streamed response.",
     "The response is not a view.": "The response is not a view.",
     "This action cannot be undone.": "This action cannot be undone.",

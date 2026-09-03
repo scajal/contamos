@@ -31,14 +31,26 @@ it('scopes currencies by the is_active string flag', function (): void {
         ->and(Currency::query()->isActive('false')->pluck('code')->all())->toBe(['BRL']);
 });
 
-it('returns the latest quote by observed_at as the current quote', function (): void {
+it('returns the latest quote observed at or before now as the current quote', function (): void {
+    $this->travelTo('2024-06-15 12:00:00');
+
     $currency = Currency::factory()->create();
     Quote::factory()->for($currency)->create(['observed_at' => '2024-01-01 00:00:00', 'rate' => '1']);
-    $latest = Quote::factory()->for($currency)->create(['observed_at' => '2024-06-01 00:00:00', 'rate' => '2']);
+    $current = Quote::factory()->for($currency)->create(['observed_at' => '2024-06-15 12:00:00', 'rate' => '2']);
+    Quote::factory()->for($currency)->create(['observed_at' => '2024-07-01 00:00:00', 'rate' => '3']);
 
-    expect($currency->currentQuote?->is($latest))->toBeTrue()
-        ->and($latest->currency->is($currency))->toBeTrue()
-        ->and($latest->recorder)->toBeNull();
+    expect($currency->currentQuote?->is($current))->toBeTrue()
+        ->and($current->currency->is($currency))->toBeTrue()
+        ->and($current->recorder)->toBeNull();
+});
+
+it('returns no current quote when every quote is in the future', function (): void {
+    $this->travelTo('2024-06-15 12:00:00');
+
+    $currency = Currency::factory()->create();
+    Quote::factory()->for($currency)->create(['observed_at' => '2024-07-01 00:00:00', 'rate' => '3']);
+
+    expect($currency->currentQuote)->toBeNull();
 });
 
 it('exposes the recorder of a quote', function (): void {

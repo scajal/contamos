@@ -3,7 +3,6 @@
 namespace App\Modules\Core\Finance\Actions\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
-use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;

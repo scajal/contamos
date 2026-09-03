@@ -21,7 +21,4 @@ return RectorConfig::configure()
         earlyReturn: true,
     )
     ->withPhpSets()
-    ->withSkip([
-        \Rector\CodeQuality\Rector\If_\ExplicitBoolCompareRector::class,
-        \Rector\CodeQuality\Rector\Empty_\SimplifyEmptyCheckOnEmptyArrayRector::class,
-    ]);
+    ->withSkip([\Rector\CodeQuality\Rector\Empty_\SimplifyEmptyCheckOnEmptyArrayRector::class]);

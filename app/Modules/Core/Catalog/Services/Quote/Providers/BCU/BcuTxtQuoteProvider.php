@@ -25,7 +25,7 @@ class BcuTxtQuoteProvider implements QuoteProvider
      * Create a new BCU TXT quote provider.
      */
     public function __construct(
-        private BcuTxtQuoteParser $parser
+        private readonly BcuTxtQuoteParser $parser
     ) {}
 
     /**
@@ -36,8 +36,8 @@ class BcuTxtQuoteProvider implements QuoteProvider
      */
     public function quotesOn(CarbonImmutable $date, Collection $currencies): Collection
     {
-        // Get the observed at date in Montevideo timezone.
-        $observedAt = $date->timezone('America/Montevideo')->startOfDay();
+        // Get the observed at date.
+        $observedAt = $date;
 
         // Get the wanted currencies by code.
         $wanted = $currencies->keyBy('code');
@@ -70,11 +70,9 @@ class BcuTxtQuoteProvider implements QuoteProvider
             // *.bcu.gub.uy is issued by Abitab IDdigital and the server
             // omits the intermediate, so public CA stores cannot verify it.
             ->withoutVerifying()
-            ->retry([100, 500, 1000], 0, function (Throwable $exception): bool {
-                return $exception instanceof ConnectionException
-                    || ($exception instanceof RequestException
-                        && ($exception->response->serverError() || $exception->response->status() === 429));
-            })
+            ->retry([100, 500, 1000], 0, fn (Throwable $exception): bool => $exception instanceof ConnectionException
+                || ($exception instanceof RequestException
+                    && ($exception->response->serverError() || $exception->response->status() === 429)))
             ->get(self::URL, [
                 'op' => 'downloadcotizacionestxt',
                 'KeyValuePairs' => $payload,

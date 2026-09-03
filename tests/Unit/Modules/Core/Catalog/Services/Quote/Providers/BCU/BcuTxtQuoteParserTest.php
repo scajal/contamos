@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Modules\Core\Catalog\Exceptions\QuoteProviderException;
-use App\Modules\Core\Catalog\QuoteProviders\BcuTxtQuoteParser;
+use App\Modules\Core\Catalog\Services\Quote\Exceptions\QuoteProviderException;
+use App\Modules\Core\Catalog\Services\Quote\Providers\BCU\BcuTxtQuoteParser;
 
 /**
- * Unit tests for \App\Modules\Core\Catalog\QuoteProviders\BcuTxtQuoteParser.
+ * Unit tests for \App\Modules\Core\Catalog\Services\Quote\Providers\BCU\BcuTxtQuoteParser.
  */
 function bcuCotizacionesFixture(): string
 {

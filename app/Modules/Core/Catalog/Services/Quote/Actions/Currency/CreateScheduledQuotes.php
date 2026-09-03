@@ -16,7 +16,7 @@ class CreateScheduledQuotes
      * Initialize the create scheduled quotes action with the given quote provider.
      */
     public function __construct(
-        private QuoteProvider $provider
+        private readonly QuoteProvider $provider
     ) {}
 
     /**
@@ -46,7 +46,7 @@ class CreateScheduledQuotes
 
                 // Check if the currency has already been recorded for the given date.
                 $alreadyRecorded = $currency->quotes()
-                    ->whereDate('observed_at', $date->timezone('America/Montevideo')->toDateString())
+                    ->whereDate('observed_at', $date->toDateString())
                     ->where('source', QuoteSource::ManualOrScheduled)
                     ->exists();
 

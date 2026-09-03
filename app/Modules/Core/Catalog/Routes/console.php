@@ -15,6 +15,5 @@ use Illuminate\Support\Facades\Schedule;
 */
 
 Schedule::command(SyncScheduledQuotesCommand::class)
-    ->timezone('America/Montevideo')
     ->withoutOverlapping()
-    ->dailyAt('07:00');
+    ->dailyAt('06:00');

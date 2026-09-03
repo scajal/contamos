@@ -22,17 +22,17 @@ class SyncScheduledQuotesCommand extends Command
     public function handle(CreateScheduledQuotes $action): int
     {
         try {
-            // Resolve the quote date in America/Montevideo.
+            // Resolve the quote date.
             $date = $this->quoteDate();
 
             // Create the scheduled quotes.
             $created = $action->using($date);
-        } catch (Throwable $exception) {
+        } catch (Throwable $throwable) {
             // Report the error.
-            report($exception);
+            report($throwable);
 
             // Report the error to the user.
-            $this->error($exception->getMessage());
+            $this->error($throwable->getMessage());
 
             return self::FAILURE;
         }
@@ -44,19 +44,19 @@ class SyncScheduledQuotesCommand extends Command
     }
 
     /**
-     * Resolve the quote date in America/Montevideo.
+     * Resolve the quote date.
      */
     private function quoteDate(): CarbonImmutable
     {
         if (! ($value = $this->option('date')) || $value === '') {
-            return CarbonImmutable::now('America/Montevideo')->startOfDay();
+            return CarbonImmutable::now();
         }
 
-        // Parse the date and return it in America/Montevideo timezone.
+        // Parse the date and return it.
         try {
-            return CarbonImmutable::parse($value, 'America/Montevideo')->startOfDay();
-        } catch (InvalidArgumentException $exception) {
-            throw new InvalidArgumentException("The date [{$value}] is invalid.", previous: $exception);
+            return CarbonImmutable::parse($value);
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            throw new InvalidArgumentException("The date [{$value}] is invalid.", $invalidArgumentException->getCode(), previous: $invalidArgumentException);
         }
     }
 }

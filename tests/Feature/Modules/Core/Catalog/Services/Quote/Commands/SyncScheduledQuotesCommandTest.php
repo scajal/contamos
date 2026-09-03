@@ -3,17 +3,17 @@
 declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
-use App\Modules\Core\Catalog\Exceptions\QuoteProviderException;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
-use App\Modules\Core\Catalog\QuoteProviders\BcuTxtQuoteProvider;
+use App\Modules\Core\Catalog\Services\Quote\Exceptions\QuoteProviderException;
+use App\Modules\Core\Catalog\Services\Quote\Providers\BCU\BcuTxtQuoteProvider;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Feature tests for \App\Modules\Core\Catalog\Console\Commands\SyncScheduledQuotesCommand.
+ * Feature tests for \App\Modules\Core\Catalog\Services\Quote\Commands\SyncScheduledQuotesCommand.
  */
 function fakeBcuCotizaciones(string|int $response = ''): void
 {
@@ -63,26 +63,8 @@ it('creates scheduled quotes for currencies the BCU file includes', function ():
         ->and($uyuQuote->recorded_by)->toBeNull();
 
     expect($arsQuote->observed_at->equalTo(
-        CarbonImmutable::parse('2026-09-02 00:00:00', 'America/Montevideo'),
+        CarbonImmutable::parse('2026-09-02 00:00:00'),
     ))->toBeTrue();
-});
-
-it('stores observed_at on the America/Montevideo calendar day', function (): void {
-    fakeBcuCotizaciones();
-
-    $this->travelTo(CarbonImmutable::parse('2026-09-03 17:35:00', 'America/Montevideo'));
-
-    $ars = Currency::factory()->fiat()->scheduled()->create(['code' => 'ARS']);
-
-    $this->artisan('catalog:sync-scheduled-quotes')
-        ->assertSuccessful();
-
-    $quote = $ars->quotes()->first();
-
-    expect($quote)->not->toBeNull()
-        ->and($quote->observed_at->equalTo(
-            CarbonImmutable::parse('2026-09-03 00:00:00', 'America/Montevideo'),
-        ))->toBeTrue();
 });
 
 it('does not duplicate scheduled quotes for the same day', function (): void {

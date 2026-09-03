@@ -56,8 +56,8 @@ class StoreRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        $this->mergeIfMissing([
-            'quote' => $this->currency()?->currentQuote?->rate,
+        $this->merge([
+            'quote' => ($quote = $this->input('quote')) ? $quote : $this->currency()?->currentQuote?->rate,
         ]);
     }
 

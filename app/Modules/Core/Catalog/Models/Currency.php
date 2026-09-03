@@ -6,6 +6,7 @@ use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
 use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Support\Concerns\DefinesKeyType;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -85,6 +86,18 @@ class Currency extends Model
     }
 
     /**
+     * Get the current quote for the currency.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne<\App\Modules\Core\Catalog\Models\Currency\Quote, $this>
+     */
+    public function currentQuote(): HasOne
+    {
+        return $this
+            ->hasOne(Quote::class)
+            ->ofMany(['observed_at' => 'max'], fn (Builder $query): Builder => $query->where('observed_at', '<=', CarbonImmutable::now()));
+    }
+
+    /**
      * Scope the query to currencies with the given active state.
      *
      * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
@@ -93,17 +106,6 @@ class Currency extends Model
     protected function isActive(Builder $query, bool|string $value = true): void
     {
         $query->where('is_active', filter_var($value, FILTER_VALIDATE_BOOLEAN));
-    }
-
-    /**
-     * Get the current quote for the currency.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne<\App\Modules\Core\Catalog\Models\Currency\Quote, $this>
-     */
-    public function currentQuote(): HasOne
-    {
-        return $this->hasOne(Quote::class)
-            ->latestOfMany('observed_at');
     }
 
     /**

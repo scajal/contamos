@@ -27,5 +27,5 @@ return Application::configure(basePath: dirname(__DIR__))
                 \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
             ])
     )
-    ->withRouting(commands: __DIR__.'/../routes/console.php', health: '/up', web: __DIR__.'/../routes/web.php')
+    ->withRouting(web: __DIR__.'/../routes/web.php', commands: __DIR__.'/../routes/console.php', health: '/up')
     ->create();

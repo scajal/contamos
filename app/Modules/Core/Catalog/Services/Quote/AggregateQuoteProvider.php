@@ -16,7 +16,7 @@ class AggregateQuoteProvider implements Contracts\QuoteProvider
      *
      * @var list<\App\Modules\Core\Catalog\Services\Quote\Contracts\QuoteProvider>
      */
-    private array $providers;
+    private readonly array $providers;
 
     /**
      * Initialize the aggregate quote provider with the given quote providers.
