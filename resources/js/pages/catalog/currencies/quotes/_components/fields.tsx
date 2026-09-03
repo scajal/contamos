@@ -1,8 +1,6 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { debounce } from "lodash";
 import { CalendarIcon, DollarSignIcon } from "lucide-react";
-import { useCallback, useMemo } from "react";
 
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
@@ -26,34 +24,12 @@ function toDateTimeLocalValue(value?: string): string {
     return `${resolved.getFullYear()}-${pad(resolved.getMonth() + 1)}-${pad(resolved.getDate())}T${pad(resolved.getHours())}:${pad(resolved.getMinutes())}`;
 }
 
-export const Fields = ({
-    defaultValues,
-    errors,
-    invalid,
-    locked,
-    touched,
-    valid,
-    validate: realTimeValidate,
-    validating,
-}: Props) => {
+export const Fields = ({ defaultValues, errors, invalid }: Props) => {
     /**
      * Translate the provided string
      * to the current locale.
      */
     const t = useLaravelReactI18n().t;
-
-    /**
-     * Handle the debounced validation action.
-     */
-    const validate = useMemo(
-        () => debounce((field: keyof FormProps) => realTimeValidate(field), 500),
-        [realTimeValidate],
-    );
-
-    /**
-     * Check if the field is locked.
-     */
-    const isLocked = useCallback((field: keyof FormProps): boolean => locked?.includes(field) ?? false, [locked]);
 
     return (
         <div className="space-y-6">

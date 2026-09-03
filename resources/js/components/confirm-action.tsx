@@ -23,7 +23,7 @@ type Props = {
     className?: string;
 };
 
-export function ConfirmAction({ title, description, confirmLabel, cancelLabel, action, children, className }: Props) {
+export function ConfirmAction({ title, description, confirmLabel, cancelLabel, action, children }: Props) {
     /**
      * Translate the provided string
      * to the current locale.
