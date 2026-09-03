@@ -8,6 +8,7 @@ use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Actions\Team\CreateAccount;
 use App\Modules\Core\Finance\Actions\Team\UpdateAccount;
 use App\Modules\Core\Finance\Enums\Account\AccountType;
+use App\Modules\Core\Finance\Http\Requests\Team\Account\IndexRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Account\StoreRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Account\UpdateRequest;
 use App\Modules\Core\Finance\Models\Team\Account;
@@ -18,17 +19,35 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 use InertiaUI\Modal\Modal;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class AccountController
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Team $team): Response
+    public function index(Team $team, IndexRequest $request): Response
     {
         return Inertia::render('finance/teams/accounts/index', [
+            'filters' => $request->validated('filter', []),
+            'currencies' => Currency::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
+            'types' => AccountType::cases(),
             'accounts' => Inertia::defer(
-                fn (): LengthAwarePaginator => $team->accounts()->paginate(10)
+                fn (): LengthAwarePaginator => QueryBuilder::for($team->accounts(), $request)
+                    ->allowedFilters(
+                        AllowedFilter::partial('search', 'name'),
+                        AllowedFilter::exact('type'),
+                        AllowedFilter::exact('is_active'),
+                        AllowedFilter::exact('currency', 'currencies.'.new Currency()->getKeyName()),
+                    )
+                    ->with('currencies')
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(10)
+                    ->withQueryString(),
             ),
         ]);
     }

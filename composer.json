@@ -13,7 +13,8 @@
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
         "laravel/workos": "^0.6.0",
-        "nunomaduro/essentials": "^1.2"
+        "nunomaduro/essentials": "^1.2",
+        "spatie/laravel-query-builder": "^7.3"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.7",

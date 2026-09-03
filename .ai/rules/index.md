@@ -14,6 +14,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | database/migrations/** | .ai/rules/migrations.md |
 | app/Modules/**/Models/** | .ai/rules/models.md |
 | app/Modules/** | .ai/rules/modules.md |
+| resources/js/pages/**/index.tsx | .ai/rules/pages.md |
 | app/Modules/**/Http/Requests/** | .ai/rules/requests.md |
 | app/Modules/*/Routes/** | .ai/rules/routes.md |
 | app/Modules/Core/Finance/**, app/Modules/Core/Identity/** | .ai/rules/teams.md |

@@ -10,6 +10,7 @@ import {
     PencilIcon,
     PlusIcon,
     SearchIcon,
+    SearchXIcon,
     XIcon,
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
@@ -25,14 +26,29 @@ import {
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
+import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import routes from "@/routes/finance/teams/accounts";
+import { Currency } from "@/types/app/modules/core/catalog/models/currency";
+import { AccountType } from "@/types/app/modules/core/finance/enums/account/account-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 
+type PageFilters = {
+    search: string | null;
+    type: AccountType | null;
+    is_active: string | null;
+    currency: string | null;
+};
+
 type PageProps = {
     accounts: LengthAwarePaginator<Account>;
+    currencies: Currency[];
+    filters: Partial<PageFilters>;
+    types: AccountType[];
 };
 
 const Index = () => {
@@ -44,7 +60,7 @@ const Index = () => {
             {/** Content */}
             <div className="flex flex-col gap-4">
                 {/** Filters and actions */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                     <div className="flex-2">
                         <Filters />
                     </div>
@@ -83,13 +99,105 @@ const Filters = () => {
      */
     const t = useLaravelReactI18n().t;
 
+    /**
+     * The page's props.
+     */
+    const { currencies, filters: initial, types, user } = usePage<PageProps>().props;
+
+    /**
+     * The filters synced with the URL.
+     */
+    const { clear, filters, isFiltered, setFilters } = useFilters<PageFilters>({
+        initial: {
+            search: initial?.search ?? null,
+            type: initial?.type ?? null,
+            is_active: initial?.is_active ?? null,
+            currency: initial?.currency ?? null,
+        },
+        url: (query) => routes.index.url({ team: { id: user?.current_team_id ?? "" } }, { query }),
+        only: ["accounts", "filters"],
+    });
+
     return (
-        <InputGroup>
-            <InputGroupAddon>
-                <SearchIcon />
-            </InputGroupAddon>
-            <InputGroupInput placeholder={t("Search by name")} />
-        </InputGroup>
+        <div className="flex flex-wrap items-center gap-2">
+            {/** Search */}
+            <InputGroup className="max-w-xs">
+                <InputGroupAddon>
+                    <SearchIcon />
+                </InputGroupAddon>
+                <InputGroupInput
+                    onChange={(event) => setFilters({ search: event.target.value }, { debounced: true })}
+                    placeholder={t("Search by name")}
+                    value={filters.search ?? ""}
+                />
+            </InputGroup>
+
+            {/** Type */}
+            <Select onValueChange={(value) => setFilters({ type: value })} value={filters.type}>
+                <SelectTrigger>
+                    <SelectValue>
+                        {(value: AccountType | null) => `${t("Type")}: ${value ? t(`enums.${value}`) : t("All")}`}
+                    </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectGroup>
+                        <SelectItem value={null}>{t("All")}</SelectItem>
+                        {types.map((type) => (
+                            <SelectItem key={type} value={type}>
+                                {t(`enums.${type}`)}
+                            </SelectItem>
+                        ))}
+                    </SelectGroup>
+                </SelectContent>
+            </Select>
+
+            {/** Status */}
+            <Select onValueChange={(value) => setFilters({ is_active: value })} value={filters.is_active}>
+                <SelectTrigger>
+                    <SelectValue>
+                        {(value: string | null) =>
+                            `${t("Status")}: ${value === null ? t("All") : value === "true" ? t("Active") : t("Inactive")}`
+                        }
+                    </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectGroup>
+                        <SelectItem value={null}>{t("All")}</SelectItem>
+                        <SelectItem value="true">{t("Active")}</SelectItem>
+                        <SelectItem value="false">{t("Inactive")}</SelectItem>
+                    </SelectGroup>
+                </SelectContent>
+            </Select>
+
+            {/** Currency */}
+            <Select onValueChange={(value) => setFilters({ currency: value })} value={filters.currency}>
+                <SelectTrigger>
+                    <SelectValue>
+                        {(value: string | null) =>
+                            `${t("Currency")}: ${currencies.find((currency) => currency.id === value)?.code ?? t("All")}`
+                        }
+                    </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectGroup>
+                        <SelectItem value={null}>{t("All")}</SelectItem>
+                        {currencies.map((currency) => (
+                            <SelectItem key={currency.id} value={currency.id}>
+                                {`${currency.code} · ${currency.name}`}
+                            </SelectItem>
+                        ))}
+                    </SelectGroup>
+                </SelectContent>
+            </Select>
+
+            {/** Clear */}
+            {isFiltered && (
+                <Button onClick={clear} variant="ghost">
+                    <XIcon />
+                    <span>{t("Clear filters")}</span>
+                </Button>
+            )}
+        </div>
     );
 };
 
@@ -128,25 +236,36 @@ const Table = () => {
     /**
      * The page's props.
      */
-    const { accounts } = usePage<PageProps>().props;
+    const { accounts, filters } = usePage<PageProps>().props;
+
+    /**
+     * Whether the listing is being filtered.
+     */
+    const isFiltered = Object.values(filters ?? {}).some((value) => value !== null && value !== "");
 
     return (
         <Fragment>
             <TableComponent>
                 <TableBody>
-                    <Deferred data="accounts" fallback={<></>}>
+                    <Deferred data="accounts" fallback={<SkeletonRows />}>
                         {/** Empty state */}
                         {accounts?.data?.length < 1 && (
                             <TableRow>
-                                <TableCell colSpan={2}>
+                                <TableCell colSpan={3}>
                                     <Empty>
                                         <EmptyHeader>
                                             <EmptyMedia variant="icon">
-                                                <CircleDashedIcon />
+                                                {isFiltered ? <SearchXIcon /> : <CircleDashedIcon />}
                                             </EmptyMedia>
-                                            <EmptyTitle>{t("No :name yet", { name: t("accounts") })}</EmptyTitle>
+                                            <EmptyTitle>
+                                                {isFiltered
+                                                    ? t("No results for the current filters")
+                                                    : t("No :name yet", { name: t("accounts") })}
+                                            </EmptyTitle>
                                             <EmptyDescription>
-                                                {t("Add a new :name to get started.", { name: t("account") })}
+                                                {isFiltered
+                                                    ? t("Try adjusting or clearing the filters.")
+                                                    : t("Add a new :name to get started.", { name: t("account") })}
                                             </EmptyDescription>
                                         </EmptyHeader>
                                     </Empty>
@@ -229,6 +348,27 @@ const Table = () => {
 
             {/** Pagination */}
             {accounts?.data?.length ? <Pagination /> : null}
+        </Fragment>
+    );
+};
+
+const SkeletonRows = () => {
+    return (
+        <Fragment>
+            {[0, 1, 2].map((row) => (
+                <TableRow key={row}>
+                    <TableCell>
+                        <div className="flex flex-col gap-2">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-3 w-12" />
+                        </div>
+                    </TableCell>
+                    <TableCell>
+                        <Skeleton className="h-5 w-16" />
+                    </TableCell>
+                    <TableCell />
+                </TableRow>
+            ))}
         </Fragment>
     );
 };

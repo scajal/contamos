@@ -16,3 +16,6 @@ Derive table, primary-key, and foreign-key column names from the model or relati
 ## Method-inject route models into rules
 
 When `rules()` needs a route-bound model, method-inject it with `#[RouteParameter('name')]`. Do not pull it from `$this->route()`.
+
+## IndexRequest validates filter values
+Index pages use a Form Request named `IndexRequest` (sibling of StoreRequest/UpdateRequest) with `sometimes|nullable` rules on `filter.*` (Rule::enum, boolean, date_format:Y-m-d, Rule::exists scoped to the team). Query Builder only allow-lists filter keys; the IndexRequest is what keeps bad values (unknown enums, unparsable dates) from 500ing.

@@ -8,6 +8,8 @@ use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -99,6 +101,28 @@ class Transaction extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    /**
+     * Scope the query to transactions that occurred on or after the given date.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<\App\Modules\Core\Finance\Models\Team\Transaction>  $query
+     */
+    #[Scope]
+    protected function occurredFrom(Builder $query, string $date): void
+    {
+        $query->whereDate('occurred_at', '>=', $date);
+    }
+
+    /**
+     * Scope the query to transactions that occurred on or before the given date.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<\App\Modules\Core\Finance\Models\Team\Transaction>  $query
+     */
+    #[Scope]
+    protected function occurredUntil(Builder $query, string $date): void
+    {
+        $query->whereDate('occurred_at', '<=', $date);
     }
 
     /**

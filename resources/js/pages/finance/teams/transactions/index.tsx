@@ -1,12 +1,22 @@
 import { Deferred, InfiniteScroll, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CircleDashedIcon, EyeIcon, MoreHorizontalIcon, SearchIcon } from "lucide-react";
+import {
+    CalendarIcon,
+    CircleDashedIcon,
+    EyeIcon,
+    MoreHorizontalIcon,
+    SearchIcon,
+    SearchXIcon,
+    XIcon,
+} from "lucide-react";
+import { type DateRange } from "react-day-picker";
 import { Fragment } from "react/jsx-runtime";
 
 import { BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,16 +26,46 @@ import {
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
+import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { cn, formatAmount } from "@/lib/utils";
 import routes from "@/routes/finance/teams/transactions";
+import { Currency } from "@/types/app/modules/core/catalog/models/currency";
+import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
+import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 
-type PageProps = {
-    transactions: LengthAwarePaginator<Transaction>;
+type PageFilters = {
+    search: string | null;
+    type: TransactionType | null;
+    account: string | null;
+    currency: string | null;
+    from: string | null;
+    to: string | null;
 };
+
+type PageProps = {
+    accounts: Account[];
+    currencies: Currency[];
+    filters: Partial<PageFilters>;
+    transactions: LengthAwarePaginator<Transaction>;
+    types: TransactionType[];
+};
+
+/**
+ * The date format used in the URL.
+ */
+const DATE_FORMAT = "yyyy-MM-dd";
+
+/**
+ * Parse a URL date into a Date, if any.
+ */
+const toDate = (value: string | null): Date | undefined => (value ? parse(value, DATE_FORMAT, new Date()) : undefined);
 
 const Index = () => {
     return (
@@ -36,7 +76,7 @@ const Index = () => {
             {/** Content */}
             <div className="flex flex-col gap-4">
                 {/** Filters and actions */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                     <div className="flex-2">
                         <Filters />
                     </div>
@@ -75,13 +115,145 @@ const Filters = () => {
      */
     const t = useLaravelReactI18n().t;
 
+    /**
+     * The page's props.
+     */
+    const { accounts, currencies, filters: initial, types, user } = usePage<PageProps>().props;
+
+    /**
+     * The filters synced with the URL.
+     */
+    const { clear, filters, isFiltered, setFilters } = useFilters<PageFilters>({
+        initial: {
+            search: initial?.search ?? null,
+            type: initial?.type ?? null,
+            account: initial?.account ?? null,
+            currency: initial?.currency ?? null,
+            from: initial?.from ?? null,
+            to: initial?.to ?? null,
+        },
+        url: (query) => routes.index.url({ team: { id: user?.current_team_id ?? "" } }, { query }),
+        only: ["transactions", "filters"],
+        reset: ["transactions"],
+    });
+
+    /**
+     * The selected date range.
+     */
+    const range: DateRange = { from: toDate(filters.from), to: toDate(filters.to) };
+
+    /**
+     * The label for the date range trigger.
+     */
+    const rangeLabel = range.from
+        ? `${format(range.from, "MMM d, yyyy")}${range.to ? ` – ${format(range.to, "MMM d, yyyy")}` : ""}`
+        : t("All");
+
     return (
-        <InputGroup>
-            <InputGroupAddon>
-                <SearchIcon />
-            </InputGroupAddon>
-            <InputGroupInput placeholder={t("Search by description")} />
-        </InputGroup>
+        <div className="flex flex-wrap items-center gap-2">
+            {/** Search */}
+            <InputGroup className="max-w-xs">
+                <InputGroupAddon>
+                    <SearchIcon />
+                </InputGroupAddon>
+                <InputGroupInput
+                    onChange={(event) => setFilters({ search: event.target.value }, { debounced: true })}
+                    placeholder={t("Search by description")}
+                    value={filters.search ?? ""}
+                />
+            </InputGroup>
+
+            {/** Type */}
+            <Select onValueChange={(value) => setFilters({ type: value })} value={filters.type}>
+                <SelectTrigger>
+                    <SelectValue>
+                        {(value: TransactionType | null) => `${t("Type")}: ${value ? t(`enums.${value}`) : t("All")}`}
+                    </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectGroup>
+                        <SelectItem value={null}>{t("All")}</SelectItem>
+                        {types.map((type) => (
+                            <SelectItem key={type} value={type}>
+                                {t(`enums.${type}`)}
+                            </SelectItem>
+                        ))}
+                    </SelectGroup>
+                </SelectContent>
+            </Select>
+
+            {/** Account */}
+            <Select onValueChange={(value) => setFilters({ account: value })} value={filters.account}>
+                <SelectTrigger>
+                    <SelectValue>
+                        {(value: string | null) =>
+                            `${t("Account")}: ${accounts.find((account) => account.id === value)?.name ?? t("All")}`
+                        }
+                    </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectGroup>
+                        <SelectItem value={null}>{t("All")}</SelectItem>
+                        {accounts.map((account) => (
+                            <SelectItem key={account.id} value={account.id}>
+                                {account.name}
+                            </SelectItem>
+                        ))}
+                    </SelectGroup>
+                </SelectContent>
+            </Select>
+
+            {/** Currency */}
+            <Select onValueChange={(value) => setFilters({ currency: value })} value={filters.currency}>
+                <SelectTrigger>
+                    <SelectValue>
+                        {(value: string | null) =>
+                            `${t("Currency")}: ${currencies.find((currency) => currency.id === value)?.code ?? t("All")}`
+                        }
+                    </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectGroup>
+                        <SelectItem value={null}>{t("All")}</SelectItem>
+                        {currencies.map((currency) => (
+                            <SelectItem key={currency.id} value={currency.id}>
+                                {`${currency.code} · ${currency.name}`}
+                            </SelectItem>
+                        ))}
+                    </SelectGroup>
+                </SelectContent>
+            </Select>
+
+            {/** Date range */}
+            <Popover>
+                <PopoverTrigger render={<Button variant="outline" />}>
+                    <CalendarIcon />
+                    <span>{`${t("Date")}: ${rangeLabel}`}</span>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-auto p-0">
+                    <Calendar
+                        defaultMonth={range.from}
+                        mode="range"
+                        numberOfMonths={2}
+                        onSelect={(selected) =>
+                            setFilters({
+                                from: selected?.from ? format(selected.from, DATE_FORMAT) : null,
+                                to: selected?.to ? format(selected.to, DATE_FORMAT) : null,
+                            })
+                        }
+                        selected={range}
+                    />
+                </PopoverContent>
+            </Popover>
+
+            {/** Clear */}
+            {isFiltered && (
+                <Button onClick={clear} variant="ghost">
+                    <XIcon />
+                    <span>{t("Clear filters")}</span>
+                </Button>
+            )}
+        </div>
     );
 };
 
@@ -99,7 +271,12 @@ const Table = () => {
     /**
      * The page's props.
      */
-    const { transactions } = usePage<PageProps>().props;
+    const { filters, transactions } = usePage<PageProps>().props;
+
+    /**
+     * Whether the listing is being filtered.
+     */
+    const isFiltered = Object.values(filters ?? {}).some((value) => value !== null && value !== "");
 
     /**
      * Grouped transactions by date.
@@ -110,7 +287,7 @@ const Table = () => {
 
     return (
         <Fragment>
-            <Deferred data="transactions" fallback={<></>}>
+            <Deferred data="transactions" fallback={<SkeletonGroup />}>
                 <InfiniteScroll data="transactions" onlyNext>
                     {/** Empty state */}
                     {transactions?.data?.length < 1 && (
@@ -122,15 +299,19 @@ const Table = () => {
                                             <Empty>
                                                 <EmptyHeader>
                                                     <EmptyMedia variant="icon">
-                                                        <CircleDashedIcon />
+                                                        {isFiltered ? <SearchXIcon /> : <CircleDashedIcon />}
                                                     </EmptyMedia>
                                                     <EmptyTitle>
-                                                        {t("No :name yet", { name: t("transactions") })}
+                                                        {isFiltered
+                                                            ? t("No results for the current filters")
+                                                            : t("No :name yet", { name: t("transactions") })}
                                                     </EmptyTitle>
                                                     <EmptyDescription>
-                                                        {t("Add a new :name to get started.", {
-                                                            name: t("transaction"),
-                                                        })}
+                                                        {isFiltered
+                                                            ? t("Try adjusting or clearing the filters.")
+                                                            : t("Add a new :name to get started.", {
+                                                                  name: t("transaction"),
+                                                              })}
                                                     </EmptyDescription>
                                                 </EmptyHeader>
                                             </Empty>
@@ -204,6 +385,41 @@ const Table = () => {
                     ))}
                 </InfiniteScroll>
             </Deferred>
+        </Fragment>
+    );
+};
+
+const SkeletonGroup = () => {
+    return (
+        <Fragment>
+            <Item className="p-0 pb-4">
+                <ItemHeader>
+                    <Skeleton className="h-4 w-32" />
+                </ItemHeader>
+            </Item>
+            <div className="overflow-hidden rounded-sm border">
+                <TableComponent className="table-fixed">
+                    <TableBody>
+                        {[0, 1, 2].map((row) => (
+                            <TableRow key={row}>
+                                <TableCell className="w-16">
+                                    <Skeleton className="h-4 w-10" />
+                                </TableCell>
+                                <TableCell>
+                                    <Skeleton className="h-4 w-32" />
+                                </TableCell>
+                                <TableCell>
+                                    <Skeleton className="h-4 w-48" />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Skeleton className="ml-auto h-4 w-20" />
+                                </TableCell>
+                                <TableCell className="w-12" />
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </TableComponent>
+            </div>
         </Fragment>
     );
 };

@@ -6,6 +6,7 @@ namespace App\Modules\Core\Catalog\Http\Controllers;
 
 use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
 use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
+use App\Modules\Core\Catalog\Http\Requests\Currency\IndexRequest;
 use App\Modules\Core\Catalog\Http\Requests\Currency\StoreRequest;
 use App\Modules\Core\Catalog\Http\Requests\Currency\UpdateRequest;
 use App\Modules\Core\Catalog\Models\Currency;
@@ -15,19 +16,29 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 use InertiaUI\Modal\Modal;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class CurrencyController
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(): Response
+    public function index(IndexRequest $request): Response
     {
         return Inertia::render('catalog/currencies/index', [
+            'filters' => $request->array('filter'),
+            'types' => CurrencyType::cases(),
             'currencies' => Inertia::defer(
-                fn (): LengthAwarePaginator => Currency::query()
+                fn (): LengthAwarePaginator => QueryBuilder::for(Currency::class, $request)
+                    ->allowedFilters(
+                        AllowedFilter::exact('is_active'),
+                        AllowedFilter::groupOr('search', [AllowedFilter::partial('name'), AllowedFilter::partial('code')]),
+                        AllowedFilter::exact('type'),
+                    )
                     ->orderBy('created_at', 'desc')
-                    ->paginate(10),
+                    ->paginate(10)
+                    ->withQueryString(),
             ),
         ]);
     }

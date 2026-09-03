@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Http\Controllers\Team;
 
+use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
+use App\Modules\Core\Finance\Http\Requests\Team\Transaction\IndexRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\StoreRequest;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
@@ -17,20 +19,40 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 use InertiaUI\Modal\Modal;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class TransactionController
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Team $team): Response
+    public function index(Team $team, IndexRequest $request): Response
     {
         return Inertia::render('finance/teams/transactions/index', [
+            'filters' => $request->validated('filter', []),
+            'accounts' => $team->accounts()
+                ->orderBy('name')
+                ->get(),
+            'currencies' => Currency::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(),
+            'types' => TransactionType::cases(),
             'transactions' => Inertia::scroll(
-                fn (): LengthAwarePaginator => $team->transactions()
+                fn (): LengthAwarePaginator => QueryBuilder::for($team->transactions(), $request)
+                    ->allowedFilters(
+                        AllowedFilter::partial('search', 'description'),
+                        AllowedFilter::exact('type'),
+                        AllowedFilter::exact('account', new Transaction()->account()->getForeignKeyName()),
+                        AllowedFilter::exact('currency', new Transaction()->currency()->getForeignKeyName()),
+                        AllowedFilter::scope('from', 'occurred_from'),
+                        AllowedFilter::scope('to', 'occurred_until'),
+                    )
                     ->with('account', 'currency', 'user')
                     ->orderBy('occurred_at', 'desc')
-                    ->paginate(10),
+                    ->paginate(10)
+                    ->withQueryString(),
             )->defer(),
         ]);
     }
