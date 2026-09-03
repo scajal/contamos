@@ -106,6 +106,32 @@ it('fails when the BCU service is unavailable', function (): void {
     expect(Quote::query()->count())->toBe(0);
 });
 
+it('uses the current time when the date option is omitted', function (): void {
+    fakeBcuCotizaciones();
+
+    $this->travelTo('2026-09-02 15:30:00');
+
+    $usd = Currency::factory()->fiat()->scheduled()->create(['code' => 'USD']);
+
+    $this->artisan('catalog:sync-scheduled-quotes')
+        ->assertSuccessful();
+
+    expect($usd->quotes()->first()?->observed_at->equalTo(
+        CarbonImmutable::parse('2026-09-02 15:30:00'),
+    ))->toBeTrue();
+});
+
+it('fails when the date option is invalid', function (): void {
+    $this->artisan('catalog:sync-scheduled-quotes', ['--date' => 'not-a-date'])
+        ->assertFailed();
+
+    Exceptions::assertReported(
+        fn (InvalidArgumentException $exception): bool => $exception->getMessage() === 'The date [not-a-date] is invalid.',
+    );
+
+    expect(Quote::query()->count())->toBe(0);
+});
+
 it('sends the quote date as Fecha in the BCU query string', function (): void {
     fakeBcuCotizaciones();
 
