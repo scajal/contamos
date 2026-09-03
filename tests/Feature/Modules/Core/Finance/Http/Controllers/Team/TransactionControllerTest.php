@@ -134,8 +134,9 @@ describe('create', function (): void {
     it('renders the create transaction modal for each type', function (TransactionType $type): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create();
+        $inactiveCurrency = Currency::factory()->inactive()->fiat()->create();
         $account = Account::factory()->bank()->active()->for($team)->create();
-        $account->currencies()->attach($currency);
+        $account->currencies()->attach([$currency->getKey(), $inactiveCurrency->getKey()]);
         Account::factory()->bank()->inactive()->for($team)->create();
 
         $this->withHeaders(inertiaModalHeaders())
@@ -147,6 +148,9 @@ describe('create', function (): void {
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('finance/teams/transactions/create')
                 ->has('accounts', 1)
+                ->where('accounts.0.id', $account->getKey())
+                ->has('accounts.0.currencies', 1)
+                ->where('accounts.0.currencies.0.id', $currency->getKey())
                 ->where('type', $type->value));
     })->with(TransactionType::cases());
 

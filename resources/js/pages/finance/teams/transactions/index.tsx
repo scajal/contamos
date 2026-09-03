@@ -152,7 +152,7 @@ const Filters = () => {
                 </InputGroupAddon>
                 <InputGroupInput
                     onChange={(event) => setFilters({ search: event.target.value }, { debounced: true })}
-                    placeholder={t("Search by description")}
+                    placeholder={t("Search by ID or description")}
                     value={filters.search ?? ""}
                 />
             </InputGroup>

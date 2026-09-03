@@ -10,12 +10,15 @@ use App\Modules\Core\Identity\Models\Team;
 /**
  * Unit tests for \App\Modules\Core\Finance\Models\Team\Account.
  */
-it('scopes accounts by the is_active string flag', function (): void {
+it('scopes accounts by the is_active flag', function (): void {
     $team = Team::factory()->create();
     $active = Account::factory()->active()->for($team)->create(['name' => 'Checking']);
     $inactive = Account::factory()->inactive()->for($team)->create(['name' => 'Wallet']);
 
-    expect(Account::query()->isActive('true')->pluck($active->getKeyName())->all())->toBe([$active->getKey()])
+    expect(Account::query()->isActive()->pluck($active->getKeyName())->all())->toBe([$active->getKey()])
+        ->and(Account::query()->isActive(true)->pluck($active->getKeyName())->all())->toBe([$active->getKey()])
+        ->and(Account::query()->isActive('true')->pluck($active->getKeyName())->all())->toBe([$active->getKey()])
+        ->and(Account::query()->isActive(false)->pluck($inactive->getKeyName())->all())->toBe([$inactive->getKey()])
         ->and(Account::query()->isActive('false')->pluck($inactive->getKeyName())->all())->toBe([$inactive->getKey()]);
 });
 

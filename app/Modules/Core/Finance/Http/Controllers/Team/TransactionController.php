@@ -43,7 +43,10 @@ class TransactionController
             'transactions' => Inertia::scroll(
                 fn (): LengthAwarePaginator => QueryBuilder::for($team->transactions(), $request)
                     ->allowedFilters(
-                        AllowedFilter::partial('search', 'description'),
+                        AllowedFilter::groupOr('search', [
+                            AllowedFilter::exact('id'),
+                            AllowedFilter::partial('description'),
+                        ]),
                         AllowedFilter::exact('type'),
                         AllowedFilter::exact('account', new Transaction()->account()->getForeignKeyName()),
                         AllowedFilter::exact('currency', new Transaction()->currency()->getForeignKeyName()),
@@ -65,9 +68,9 @@ class TransactionController
     {
         return Inertia::modal('finance/teams/transactions/create', [
             'accounts' => $team->accounts()
-                ->where('is_active', true)
+                ->isActive()
                 ->with(['currencies' => function (Relation $currencies): void {
-                    $currencies->where((new Currency)->qualifyColumn('is_active'), true);
+                    $currencies->isActive();
                 }])
                 ->get(),
             'type' => $type,

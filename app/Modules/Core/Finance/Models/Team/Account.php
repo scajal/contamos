@@ -30,7 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction> $transactions
  *
  * @method static \Database\Factories\Modules\Core\Finance\Models\Team\AccountFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account isActive(string $value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account isActive(string|bool $value = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account query()
@@ -67,7 +67,7 @@ class Account extends Model
      * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
      */
     #[Scope]
-    protected function isActive(Builder $query, string $value): void
+    protected function isActive(Builder $query, bool|string $value = true): void
     {
         $query->where('is_active', filter_var($value, FILTER_VALIDATE_BOOLEAN));
     }
