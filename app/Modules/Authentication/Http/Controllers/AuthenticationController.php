@@ -28,6 +28,12 @@ class AuthenticationController
     {
         $request->authenticate($authKit->findUsing(...), $authKit->createUsing(...));
 
+        // If the user is not active, logout from
+        // WorkOS and the app.
+        if (! ($request->user()?->is_active)) {
+            return to_route('logout');
+        }
+
         return redirect()->to($resolveAuthenticationRedirect->fromRequest($request));
     }
 

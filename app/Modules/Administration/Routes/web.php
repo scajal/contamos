@@ -91,4 +91,10 @@ Route::as('administration.')
 
         Route::get('identity/users', [\App\Modules\Administration\Http\Controllers\UserController::class, 'index'])
             ->name('identity.users.index');
+
+        Route::patch('identity/users/{user}/activate', [\App\Modules\Administration\Http\Controllers\UserController::class, 'activate'])
+            ->name('identity.users.activate');
+
+        Route::patch('identity/users/{user}/deactivate', [\App\Modules\Administration\Http\Controllers\UserController::class, 'deactivate'])
+            ->name('identity.users.deactivate');
     });

@@ -30,8 +30,9 @@ class UserFactory extends Factory
         return [
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'name' => fake()->name(),
             'external_id' => 'fake-'.fake()->uuid(),
+            'is_active' => fake()->boolean(),
+            'name' => fake()->name(),
             'remember_token' => Str::random(10),
         ];
     }

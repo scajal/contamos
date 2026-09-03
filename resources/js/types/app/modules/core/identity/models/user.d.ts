@@ -12,6 +12,7 @@ export interface User {
     currentTeam: Team | null;
     email: string;
     email_verified_at: string | null;
+    is_active: boolean;
     name: string;
     created_at: string | null;
     updated_at: string | null;

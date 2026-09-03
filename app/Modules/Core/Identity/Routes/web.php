@@ -32,16 +32,4 @@ Route::as('identity.')
 
         Route::post('teams', [\App\Modules\Core\Identity\Http\Controllers\User\TeamController::class, 'store'])
             ->name('teams.store');
-
-        /*
-        |--------------------------------------------------------------------------
-        | User routes
-        |--------------------------------------------------------------------------
-        |
-        | These routes correspond to the user management.
-        |
-        */
-
-        Route::get('users', [\App\Modules\Core\Identity\Http\Controllers\Administration\UserController::class, 'index'])
-            ->name('users.index');
     });

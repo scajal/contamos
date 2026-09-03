@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\URL;
  * @property string $email
  * @property \Carbon\CarbonImmutable|null $email_verified_at
  * @property string $external_id
+ * @property bool $is_active
  * @property string $name
  * @property string|null $remember_token
  * @property \Carbon\CarbonImmutable|null $created_at
@@ -40,7 +41,7 @@ use Illuminate\Support\Facades\URL;
  *
  * @mixin \Eloquent
  */
-#[Fillable(['avatar', 'email', 'external_id', 'name'])]
+#[Fillable(['avatar', 'email', 'external_id', 'is_active', 'name'])]
 #[Hidden(['external_id', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -73,6 +74,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'is_active' => 'boolean',
         ];
     }
 

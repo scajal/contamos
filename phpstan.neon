@@ -4,6 +4,11 @@ includes:
     - vendor/pestphp/pest-plugin-phpstan/extension.neon
 
 parameters:
+    excludePaths:
+        - database/migrations/2026_09_03_223208_create_permission_tables.php
+
+    level: max
+
     paths:
         - app/
         - bootstrap/app.php
@@ -11,4 +16,3 @@ parameters:
         - database/
         - routes/
 
-    level: max

@@ -1,7 +1,7 @@
 import { Deferred, Link, usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
-    ArrowUpRightFromSquareIcon,
+    CheckIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
     CircleDashedIcon,
@@ -13,6 +13,7 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
@@ -137,16 +138,14 @@ const Actions = () => {
 
     return (
         <Button
-            className="max-sm:w-full"
+            className="bg-indigo-500 text-white hover:bg-indigo-500 max-sm:w-full"
             nativeButton={false}
             render={<a href="https://dashboard.workos.com" target="_blank" />}
-            variant="outline"
         >
             <Avatar size="sm">
                 <AvatarImage src="https://images.workoscdn.com/brand/v2/favicon@256x256.png" />
             </Avatar>
             <span>WorkOS</span>
-            <ArrowUpRightFromSquareIcon />
         </Button>
     );
 };
@@ -212,6 +211,13 @@ const Table = () => {
                                               </div>
                                           </div>
                                       </TableCell>
+                                      <TableCell>
+                                          {user.is_active ? (
+                                              <Badge variant="ghost">{t("Active")}</Badge>
+                                          ) : (
+                                              <Badge variant="destructive">{t("Inactive")}</Badge>
+                                          )}
+                                      </TableCell>
                                       <TableCell className="text-right">
                                           <DropdownMenu>
                                               <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
@@ -223,7 +229,29 @@ const Table = () => {
                                                   className="w-auto min-w-(--anchor-width)"
                                               >
                                                   <DropdownMenuGroup>
-                                                      <DropdownMenuItem nativeButton={false} />
+                                                      <DropdownMenuItem
+                                                          nativeButton
+                                                          render={
+                                                              <Link
+                                                                  className="w-full"
+                                                                  href={
+                                                                      user.is_active
+                                                                          ? routes.deactivate.url({
+                                                                                user: user.id,
+                                                                            })
+                                                                          : routes.activate.url({
+                                                                                user: user.id,
+                                                                            })
+                                                                  }
+                                                                  method="patch"
+                                                              >
+                                                                  {user.is_active ? <XIcon /> : <CheckIcon />}
+                                                                  <span>
+                                                                      {user.is_active ? t("Deactivate") : t("Activate")}
+                                                                  </span>
+                                                              </Link>
+                                                          }
+                                                      />
                                                   </DropdownMenuGroup>
                                               </DropdownMenuContent>
                                           </DropdownMenu>
