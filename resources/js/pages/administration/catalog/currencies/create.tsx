@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
-import currencies from "@/routes/administration/currencies";
+import currencies from "@/routes/administration/catalog/currencies";
 import { CurrencyType } from "@/types/app/modules/core/catalog/enums/currency/currency-type";
 import { QuoteSource } from "@/types/app/modules/core/catalog/enums/currency/quote/quote-source";
 

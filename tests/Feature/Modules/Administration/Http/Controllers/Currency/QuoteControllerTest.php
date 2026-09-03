@@ -8,13 +8,13 @@ use App\Modules\Core\Catalog\Models\Currency\Quote;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
- * Feature tests for \App\Modules\Core\Catalog\Http\Controllers\Currency\QuoteController.
+ * Feature tests for \App\Modules\Administration\Http\Controllers\Currency\QuoteController.
  */
 describe('index', function (): void {
     it('redirects guests to login', function (): void {
         $currency = Currency::factory()->create();
 
-        $this->get(route('catalog.currencies.quotes.index', ['currency' => $currency->getKey()]))
+        $this->get(route('administration.currencies.quotes.index', ['currency' => $currency->getKey()]))
             ->assertRedirectToRoute('login');
     });
 
@@ -26,7 +26,7 @@ describe('index', function (): void {
         $older->forceFill(['created_at' => '2024-01-01 00:00:00'])->save();
         $newer->forceFill(['created_at' => '2024-06-01 00:00:00'])->save();
 
-        $this->get(route('catalog.currencies.quotes.index', ['currency' => $currency->getKey()]))
+        $this->get(route('administration.currencies.quotes.index', ['currency' => $currency->getKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('catalog/currencies/quotes/index')
@@ -58,7 +58,7 @@ describe('index', function (): void {
             'source' => QuoteSource::ManualOrScheduled,
         ]);
 
-        $this->get(route('catalog.currencies.quotes.index', [
+        $this->get(route('administration.currencies.quotes.index', [
             'currency' => $currency->getKey(),
             'filter' => [
                 'search' => '2024-06-01',
@@ -78,7 +78,7 @@ describe('index', function (): void {
         actingMember();
         $currency = Currency::factory()->create();
 
-        $this->get(route('catalog.currencies.quotes.index', [
+        $this->get(route('administration.currencies.quotes.index', [
             'currency' => $currency->getKey(),
             'filter' => ['source' => 'not-a-source'],
         ]))
@@ -95,7 +95,7 @@ describe('create', function (): void {
         $currency = Currency::factory()->create();
 
         $this->withHeaders(inertiaModalHeaders())
-            ->get(route('catalog.currencies.quotes.create', ['currency' => $currency->getKey()]))
+            ->get(route('administration.currencies.quotes.create', ['currency' => $currency->getKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('catalog/currencies/quotes/create')
@@ -108,8 +108,8 @@ describe('store', function (): void {
         actingMember();
         $currency = Currency::factory()->create();
 
-        $this->from(route('catalog.currencies.quotes.index', ['currency' => $currency->getKey()]))
-            ->post(route('catalog.currencies.quotes.store', ['currency' => $currency->getKey()]), [
+        $this->from(route('administration.currencies.quotes.index', ['currency' => $currency->getKey()]))
+            ->post(route('administration.currencies.quotes.store', ['currency' => $currency->getKey()]), [
                 'observed_at' => '2024-01-01 12:00:00',
                 'rate' => '1.25',
                 'source' => QuoteSource::Live->value,
@@ -128,8 +128,8 @@ describe('store', function (): void {
         actingMember();
         $currency = Currency::factory()->create();
 
-        $this->from(route('catalog.currencies.quotes.index', ['currency' => $currency->getKey()]))
-            ->post(route('catalog.currencies.quotes.store', ['currency' => $currency->getKey()]), [])
+        $this->from(route('administration.currencies.quotes.index', ['currency' => $currency->getKey()]))
+            ->post(route('administration.currencies.quotes.store', ['currency' => $currency->getKey()]), [])
             ->assertRedirect()
             ->assertInvalid(['observed_at', 'rate']);
     });
@@ -141,8 +141,8 @@ describe('destroy', function (): void {
         $currency = Currency::factory()->create();
         $quote = Quote::factory()->for($currency)->create();
 
-        $this->from(route('catalog.currencies.quotes.index', ['currency' => $currency->getKey()]))
-            ->delete(route('catalog.currencies.quotes.destroy', [
+        $this->from(route('administration.currencies.quotes.index', ['currency' => $currency->getKey()]))
+            ->delete(route('administration.currencies.quotes.destroy', [
                 'currency' => $currency->getKey(),
                 'quote' => $quote->getKey(),
             ]))
@@ -158,7 +158,7 @@ describe('destroy', function (): void {
         $other = Currency::factory()->create();
         $quote = Quote::factory()->for($other)->create();
 
-        $this->delete(route('catalog.currencies.quotes.destroy', [
+        $this->delete(route('administration.currencies.quotes.destroy', [
             'currency' => $currency->getKey(),
             'quote' => $quote->getKey(),
         ]))->assertNotFound();

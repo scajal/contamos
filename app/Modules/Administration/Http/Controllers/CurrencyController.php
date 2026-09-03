@@ -25,7 +25,7 @@ class CurrencyController
      */
     public function index(IndexRequest $request): Response
     {
-        return Inertia::render('catalog/currencies/index', [
+        return Inertia::render('administration/catalog/currencies/index', [
             'currencies' => Inertia::defer(
                 fn (): LengthAwarePaginator => QueryBuilder::for(Currency::class, $request)
                     ->allowedFilters(...$request->filters())
@@ -43,10 +43,10 @@ class CurrencyController
      */
     public function create(): Modal
     {
-        return Inertia::modal('catalog/currencies/create', [
+        return Inertia::modal('administration/catalog/currencies/create', [
             'quoteSources' => QuoteSource::cases(),
             'types' => CurrencyType::cases(),
-        ])->baseRoute('catalog.currencies.index');
+        ])->baseRoute('administration.currencies.index');
     }
 
     /**
@@ -69,11 +69,11 @@ class CurrencyController
      */
     public function edit(Currency $currency): Modal
     {
-        return Inertia::modal('catalog/currencies/edit', [
+        return Inertia::modal('administration/catalog/currencies/edit', [
             'currency' => $currency,
             'quoteSources' => QuoteSource::cases(),
             'types' => CurrencyType::cases(),
-        ])->baseRoute('catalog.currencies.index');
+        ])->baseRoute('administration.currencies.index');
     }
 
     /**

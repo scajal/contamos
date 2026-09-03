@@ -31,28 +31,28 @@ Route::as('administration.')
         |
         */
 
-        Route::get('currencies', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'index'])
-            ->name('currencies.index');
+        Route::get('catalog/currencies', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'index'])
+            ->name('catalog.currencies.index');
 
-        Route::get('currencies/create', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'create'])
-            ->name('currencies.create');
+        Route::get('catalog/currencies/create', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'create'])
+            ->name('catalog.currencies.create');
 
-        Route::post('currencies', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'store'])
+        Route::post('catalog/currencies', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'store'])
             ->middleware(HandlePrecognitiveRequests::class)
-            ->name('currencies.store');
+            ->name('catalog.currencies.store');
 
-        Route::get('currencies/{currency}/edit', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'edit'])
-            ->name('currencies.edit');
+        Route::get('catalog/currencies/{currency}/edit', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'edit'])
+            ->name('catalog.currencies.edit');
 
-        Route::patch('currencies/{currency}', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'update'])
+        Route::patch('catalog/currencies/{currency}', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'update'])
             ->middleware(HandlePrecognitiveRequests::class)
-            ->name('currencies.update');
+            ->name('catalog.currencies.update');
 
-        Route::patch('currencies/{currency}/activate', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'activate'])
-            ->name('currencies.activate');
+        Route::patch('catalog/currencies/{currency}/activate', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'activate'])
+            ->name('catalog.currencies.activate');
 
-        Route::patch('currencies/{currency}/deactivate', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'deactivate'])
-            ->name('currencies.deactivate');
+        Route::patch('catalog/currencies/{currency}/deactivate', [\App\Modules\Administration\Http\Controllers\CurrencyController::class, 'deactivate'])
+            ->name('catalog.currencies.deactivate');
 
         /*
         |--------------------------------------------------------------------------
@@ -63,20 +63,32 @@ Route::as('administration.')
         |
         */
 
-        Route::get('currencies/{currency}/quotes', [\App\Modules\Administration\Http\Controllers\Currency\QuoteController::class, 'index'])
-            ->name('currencies.quotes.index')
+        Route::get('catalog/currencies/{currency}/quotes', [\App\Modules\Administration\Http\Controllers\Currency\QuoteController::class, 'index'])
+            ->name('catalog.currencies.quotes.index')
             ->scopeBindings();
 
-        Route::get('currencies/{currency}/quotes/create', [\App\Modules\Administration\Http\Controllers\Currency\QuoteController::class, 'create'])
-            ->name('currencies.quotes.create')
+        Route::get('catalog/currencies/{currency}/quotes/create', [\App\Modules\Administration\Http\Controllers\Currency\QuoteController::class, 'create'])
+            ->name('catalog.currencies.quotes.create')
             ->scopeBindings();
 
-        Route::post('currencies/{currency}/quotes', [\App\Modules\Administration\Http\Controllers\Currency\QuoteController::class, 'store'])
+        Route::post('catalog/currencies/{currency}/quotes', [\App\Modules\Administration\Http\Controllers\Currency\QuoteController::class, 'store'])
             ->middleware(HandlePrecognitiveRequests::class)
-            ->name('currencies.quotes.store')
+            ->name('catalog.currencies.quotes.store')
             ->scopeBindings();
 
-        Route::delete('currencies/{currency}/quotes/{quote}', [\App\Modules\Administration\Http\Controllers\Currency\QuoteController::class, 'destroy'])
-            ->name('currencies.quotes.destroy')
+        Route::delete('catalog/currencies/{currency}/quotes/{quote}', [\App\Modules\Administration\Http\Controllers\Currency\QuoteController::class, 'destroy'])
+            ->name('catalog.currencies.quotes.destroy')
             ->scopeBindings();
+
+        /*
+        |--------------------------------------------------------------------------
+        | User routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the user management.
+        |
+        */
+
+        Route::get('identity/users', [\App\Modules\Administration\Http\Controllers\UserController::class, 'index'])
+            ->name('identity.users.index');
     });

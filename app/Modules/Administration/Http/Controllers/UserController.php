@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Identity\Http\Controllers\Administration;
+namespace App\Modules\Administration\Http\Controllers;
 
-use App\Modules\Core\Identity\Http\Requests\Administration\User\IndexRequest;
+use App\Modules\Administration\Http\Requests\User\IndexRequest;
 use App\Modules\Core\Identity\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
@@ -18,7 +18,8 @@ class UserController
      */
     public function index(IndexRequest $request): Response
     {
-        return Inertia::render('identity/administration/users/index', [
+        return Inertia::render('administration/identity/users/index', [
+            'filters' => $request->validated('filter', []),
             'users' => Inertia::defer(
                 fn (): LengthAwarePaginator => QueryBuilder::for(User::class, $request)
                     ->allowedFilters(...$request->filters())
@@ -26,7 +27,6 @@ class UserController
                     ->paginate(10)
                     ->withQueryString(),
             ),
-            'filters' => $request->validated('filter', []),
         ]);
     }
 }

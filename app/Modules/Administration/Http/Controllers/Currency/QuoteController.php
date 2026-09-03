@@ -45,7 +45,7 @@ class QuoteController
     {
         return Inertia::modal('catalog/currencies/quotes/create', [
             'currency' => $currency,
-        ])->baseRoute('catalog.currencies.quotes.index', ['currency' => $currency->getKey()]);
+        ])->baseRoute('administration.currencies.quotes.index', ['currency' => $currency->getKey()]);
     }
 
     /**

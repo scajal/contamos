@@ -8,7 +8,7 @@ use App\Modules\Core\Catalog\Models\Currency;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
- * Feature tests for \App\Modules\Core\Catalog\Http\Controllers\CurrencyController.
+ * Feature tests for \App\Modules\Administration\Http\Controllers\CurrencyController.
  */
 
 /**
@@ -32,7 +32,7 @@ function currencyPayload(array $overrides = []): array
 
 describe('index', function (): void {
     it('redirects guests to login', function (): void {
-        $this->get(route('catalog.currencies.index'))
+        $this->get(route('administration.currencies.index'))
             ->assertRedirectToRoute('login');
     });
 
@@ -40,7 +40,7 @@ describe('index', function (): void {
         actingMember();
         Currency::factory()->active()->fiat()->create(['name' => 'Peso', 'code' => 'ARS']);
 
-        $this->get(route('catalog.currencies.index'))
+        $this->get(route('administration.currencies.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('catalog/currencies/index')
@@ -58,7 +58,7 @@ describe('index', function (): void {
         Currency::factory()->inactive()->fiat()->create(['name' => 'Real', 'code' => 'BRL']);
         Currency::factory()->active()->crypto()->create(['name' => 'Bitcoin', 'code' => 'BTC']);
 
-        $this->get(route('catalog.currencies.index', [
+        $this->get(route('administration.currencies.index', [
             'filter' => [
                 'is_active' => 'true',
                 'type' => CurrencyType::Fiat->value,
@@ -78,7 +78,7 @@ describe('index', function (): void {
     it('rejects an invalid type filter', function (): void {
         actingMember();
 
-        $this->get(route('catalog.currencies.index', ['filter' => ['type' => 'not-a-type']]))
+        $this->get(route('administration.currencies.index', ['filter' => ['type' => 'not-a-type']]))
             ->assertRedirect()
             ->assertInvalid([
                 'filter.type' => trans('validation.enum', ['attribute' => 'filter.type']),
@@ -89,7 +89,7 @@ describe('index', function (): void {
         actingMember();
         Currency::factory()->count(11)->create();
 
-        $this->get(route('catalog.currencies.index'))
+        $this->get(route('administration.currencies.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
@@ -103,7 +103,7 @@ describe('create', function (): void {
         actingMember();
 
         $this->withHeaders(inertiaModalHeaders())
-            ->get(route('catalog.currencies.create'))
+            ->get(route('administration.currencies.create'))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('catalog/currencies/create')
@@ -114,15 +114,15 @@ describe('create', function (): void {
 
 describe('store', function (): void {
     it('redirects guests to login', function (): void {
-        $this->post(route('catalog.currencies.store'), currencyPayload())
+        $this->post(route('administration.currencies.store'), currencyPayload())
             ->assertRedirectToRoute('login');
     });
 
     it('creates a currency with an uppercased code', function (): void {
         actingMember();
 
-        $this->from(route('catalog.currencies.index'))
-            ->post(route('catalog.currencies.store'), currencyPayload())
+        $this->from(route('administration.currencies.index'))
+            ->post(route('administration.currencies.store'), currencyPayload())
             ->assertRedirect();
 
         assertFlashedToast(trans('Saved'));
@@ -135,8 +135,8 @@ describe('store', function (): void {
     it('rejects an empty payload', function (): void {
         actingMember();
 
-        $this->from(route('catalog.currencies.index'))
-            ->post(route('catalog.currencies.store'), [])
+        $this->from(route('administration.currencies.index'))
+            ->post(route('administration.currencies.store'), [])
             ->assertRedirect()
             ->assertInvalid(['code', 'decimal_places', 'name', 'quote_source', 'symbol', 'type']);
     });
@@ -145,8 +145,8 @@ describe('store', function (): void {
         actingMember();
         Currency::factory()->create(['code' => 'ARS']);
 
-        $this->from(route('catalog.currencies.index'))
-            ->post(route('catalog.currencies.store'), currencyPayload(['code' => 'ARS']))
+        $this->from(route('administration.currencies.index'))
+            ->post(route('administration.currencies.store'), currencyPayload(['code' => 'ARS']))
             ->assertRedirect()
             ->assertInvalid([
                 'code' => trans('validation.unique', ['attribute' => trans('validation.attributes.code')]),
@@ -156,8 +156,8 @@ describe('store', function (): void {
     it('rejects decimal places above 18', function (): void {
         actingMember();
 
-        $this->from(route('catalog.currencies.index'))
-            ->post(route('catalog.currencies.store'), currencyPayload(['decimal_places' => 19]))
+        $this->from(route('administration.currencies.index'))
+            ->post(route('administration.currencies.store'), currencyPayload(['decimal_places' => 19]))
             ->assertRedirect()
             ->assertInvalid(['decimal_places']);
     });
@@ -169,7 +169,7 @@ describe('edit', function (): void {
         $currency = Currency::factory()->fiat()->create(['code' => 'ARS']);
 
         $this->withHeaders(inertiaModalHeaders())
-            ->get(route('catalog.currencies.edit', ['currency' => $currency->getKey()]))
+            ->get(route('administration.currencies.edit', ['currency' => $currency->getKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('catalog/currencies/edit')
@@ -189,8 +189,8 @@ describe('update', function (): void {
             'quote_source' => QuoteSource::ManualOrScheduled,
         ]);
 
-        $this->from(route('catalog.currencies.index'))
-            ->patch(route('catalog.currencies.update', ['currency' => $currency->getKey()]), [
+        $this->from(route('administration.currencies.index'))
+            ->patch(route('administration.currencies.update', ['currency' => $currency->getKey()]), [
                 'name' => 'Peso',
                 'symbol' => '$',
                 'quote_source' => QuoteSource::Live->value,
@@ -210,8 +210,8 @@ describe('activate', function (): void {
         actingMember();
         $currency = Currency::factory()->inactive()->create();
 
-        $this->from(route('catalog.currencies.index'))
-            ->patch(route('catalog.currencies.activate', ['currency' => $currency->getKey()]))
+        $this->from(route('administration.currencies.index'))
+            ->patch(route('administration.currencies.activate', ['currency' => $currency->getKey()]))
             ->assertRedirect();
 
         assertFlashedToast(trans('Saved'));
@@ -224,8 +224,8 @@ describe('deactivate', function (): void {
         actingMember();
         $currency = Currency::factory()->active()->create();
 
-        $this->from(route('catalog.currencies.index'))
-            ->patch(route('catalog.currencies.deactivate', ['currency' => $currency->getKey()]))
+        $this->from(route('administration.currencies.index'))
+            ->patch(route('administration.currencies.deactivate', ['currency' => $currency->getKey()]))
             ->assertRedirect();
 
         assertFlashedToast(trans('Saved'));

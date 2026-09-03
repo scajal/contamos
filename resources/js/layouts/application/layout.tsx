@@ -43,10 +43,10 @@ import {
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
-import currencies from "@/routes/administration/currencies";
+import currencies from "@/routes/administration/catalog/currencies";
+import users from "@/routes/administration/identity/users";
 import accounts from "@/routes/finance/teams/accounts";
 import transactions from "@/routes/finance/teams/transactions";
-import users from "@/routes/identity/users";
 
 export const ApplicationLayout = ({
     breadcrumb,
