@@ -7,11 +7,13 @@ namespace App\Modules\Core\Finance\Http\Requests\Team\Transaction;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Spatie\QueryBuilder\AllowedFilter;
 
 class IndexRequest extends FormRequest
 {
@@ -22,6 +24,24 @@ class IndexRequest extends FormRequest
     {
         // @todo: Add authorization logic.
         return true;
+    }
+
+    /**
+     * Get the list of allowed filters for the
+     * request.
+     *
+     * @return array<string, \Spatie\QueryBuilder\AllowedFilter>
+     */
+    public function filters(): array
+    {
+        return [
+            AllowedFilter::exact('type'),
+            AllowedFilter::exact('account', new Transaction()->account()->getForeignKeyName()),
+            AllowedFilter::exact('currency', new Transaction()->currency()->getForeignKeyName()),
+            AllowedFilter::groupOr('search', [AllowedFilter::exact('id'), AllowedFilter::partial('description')]),
+            AllowedFilter::scope('from', 'occurred_from'),
+            AllowedFilter::scope('to', 'occurred_until'),
+        ];
     }
 
     /**

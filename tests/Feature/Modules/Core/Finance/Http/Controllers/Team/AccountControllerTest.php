@@ -42,6 +42,7 @@ describe('index', function (): void {
                 ->component('finance/teams/accounts/index')
                 ->has('user')
                 ->has('types')
+                ->has('filters')
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('accounts.data', 1)
                     ->where('accounts.data.0.name', 'Checking')));
@@ -67,6 +68,10 @@ describe('index', function (): void {
         ]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('filters.type', AccountType::Bank->value)
+                ->where('filters.is_active', 'true')
+                ->where('filters.search', 'Check')
+                ->where('filters.currency', $peso->getKey())
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('accounts.data', 1)
                     ->where('accounts.data.0.id', $matching->getKey())));

@@ -20,7 +20,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 use InertiaUI\Modal\Modal;
-use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class TransactionController
@@ -31,7 +30,6 @@ class TransactionController
     public function index(Team $team, IndexRequest $request): Response
     {
         return Inertia::render('finance/teams/transactions/index', [
-            'filters' => $request->validated('filter', []),
             'accounts' => $team->accounts()
                 ->orderBy('name')
                 ->get(),
@@ -39,20 +37,11 @@ class TransactionController
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(),
+            'filters' => $request->validated('filter', []),
             'types' => TransactionType::cases(),
             'transactions' => Inertia::scroll(
                 fn (): LengthAwarePaginator => QueryBuilder::for($team->transactions(), $request)
-                    ->allowedFilters(
-                        AllowedFilter::groupOr('search', [
-                            AllowedFilter::exact('id'),
-                            AllowedFilter::partial('description'),
-                        ]),
-                        AllowedFilter::exact('type'),
-                        AllowedFilter::exact('account', new Transaction()->account()->getForeignKeyName()),
-                        AllowedFilter::exact('currency', new Transaction()->currency()->getForeignKeyName()),
-                        AllowedFilter::scope('from', 'occurred_from'),
-                        AllowedFilter::scope('to', 'occurred_until'),
-                    )
+                    ->allowedFilters(...$request->filters())
                     ->with('account', 'currency', 'user')
                     ->orderBy('occurred_at', 'desc')
                     ->paginate(10)

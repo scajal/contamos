@@ -1,4 +1,4 @@
-import { Link, usePage } from "@inertiajs/react";
+import { Deferred, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
@@ -7,10 +7,13 @@ import {
     ChevronLeftIcon,
     ChevronRightIcon,
     CircleDashedIcon,
+    ListFilterPlusIcon,
     MoreHorizontalIcon,
     PlusIcon,
     SearchIcon,
+    SearchXIcon,
     TrashIcon,
+    XIcon,
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
@@ -24,19 +27,32 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
+import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
+import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { formatAmount } from "@/lib/utils";
 import routes from "@/routes/catalog/currencies";
+import { QuoteSource } from "@/types/app/modules/core/catalog/enums/currency/quote/quote-source";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Quote } from "@/types/app/modules/core/catalog/models/currency/quote";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 
+type PageFilters = {
+    search: string | null;
+    source: QuoteSource | null;
+};
+
 type PageProps = {
     currency: Currency;
+    filters: Partial<PageFilters>;
     quotes: LengthAwarePaginator<Quote>;
+    sources: Array<QuoteSource>;
 };
 
 const Index = () => {
@@ -48,16 +64,16 @@ const Index = () => {
             {/** Content */}
             <div className="flex flex-col gap-4">
                 {/** Filters and actions */}
-                <div className="flex items-center justify-between">
-                    <div className="flex-2">
+                <div className="flex items-center justify-between gap-2 max-sm:flex-col">
+                    <div className="flex-1 max-sm:w-full">
                         <Filters />
                     </div>
-                    <div className="flex flex-1 justify-end">
+                    <div className="flex justify-end max-sm:order-first max-sm:w-full">
                         <Actions />
                     </div>
                 </div>
 
-                {/** Currencies */}
+                {/** Quotes */}
                 <div className="flex flex-col gap-4 [&>div]:rounded-sm [&>div]:border">
                     <Table />
                 </div>
@@ -96,13 +112,80 @@ const Filters = () => {
      */
     const t = useLaravelReactI18n().t;
 
+    /**
+     * The page's props.
+     */
+    const { currency, filters: initial, sources } = usePage<PageProps>().props;
+
+    /**
+     * The filters synced with the URL.
+     */
+    const { clear, filters, isFiltered, setFilters } = useFilters<PageFilters>({
+        initial: {
+            search: initial?.search ?? null,
+            source: initial?.source ?? null,
+        },
+        only: ["quotes", "filters"],
+        url: (query) => routes.quotes.index.url({ currency: currency.id }, { query }),
+    });
+
     return (
-        <InputGroup>
-            <InputGroupAddon>
-                <SearchIcon />
-            </InputGroupAddon>
-            <InputGroupInput placeholder={t("Search by date")} />
-        </InputGroup>
+        <div className="flex items-center gap-2">
+            {/** Search */}
+            <InputGroup>
+                <InputGroupAddon>
+                    <SearchIcon />
+                </InputGroupAddon>
+                <InputGroupInput
+                    onChange={(event) => setFilters({ search: event.target.value }, { debounced: true })}
+                    placeholder={t("Search by date")}
+                    value={filters.search ?? ""}
+                />
+            </InputGroup>
+
+            {/** Advanced filters */}
+            <Popover>
+                <PopoverTrigger className="relative" render={<Button size="icon" variant="outline" />}>
+                    <ListFilterPlusIcon />
+                    {isFiltered && (
+                        <span className="bg-destructive/50 absolute -top-1 -right-1 size-3 rounded-full text-white" />
+                    )}
+                </PopoverTrigger>
+                <PopoverContent>
+                    <PopoverHeader>
+                        <PopoverTitle>{t("More filters")}</PopoverTitle>
+                    </PopoverHeader>
+                    <div className="flex flex-col gap-4">
+                        {/** Source */}
+                        <Field>
+                            <FieldLabel>{t("Quote source")}</FieldLabel>
+                            <Select onValueChange={(value) => setFilters({ source: value })} value={filters.source}>
+                                <SelectTrigger>
+                                    <SelectValue>
+                                        {(value: QuoteSource | null) => `${value ? t(`enums.${value}`) : t("All")}`}
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value={null}>{t("All")}</SelectItem>
+                                        {sources.map((source) => (
+                                            <SelectItem key={source} value={source}>
+                                                {t(`enums.${source}`)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </Field>
+                    </div>
+                </PopoverContent>
+            </Popover>
+
+            {/** Clear */}
+            <Button disabled={!isFiltered} onClick={clear} size="icon" variant="outline">
+                <XIcon />
+            </Button>
+        </div>
     );
 };
 
@@ -120,6 +203,7 @@ const Actions = () => {
 
     return (
         <Button
+            className="max-sm:w-full"
             nativeButton={false}
             render={
                 <ModalLink href={routes.quotes.create.url({ currency: currency.id })}>
@@ -141,82 +225,113 @@ const Table = () => {
     /**
      * The page's props.
      */
-    const { currency, quotes } = usePage<PageProps>().props;
+    const { currency, filters, quotes } = usePage<PageProps>().props;
+
+    /**
+     * Whether the listing is being filtered.
+     */
+    const isFiltered = Object.values(filters ?? {}).some((value) => value !== null && value !== "");
 
     return (
         <Fragment>
             <TableComponent>
                 <TableBody>
-                    {/** Empty state */}
-                    {quotes?.data?.length < 1 && (
-                        <TableRow>
-                            <TableCell colSpan={2}>
-                                <Empty>
-                                    <EmptyHeader>
-                                        <EmptyMedia variant="icon">
-                                            <CircleDashedIcon />
-                                        </EmptyMedia>
-                                        <EmptyTitle>{t("No :name yet", { name: t("quotes") })}</EmptyTitle>
-                                        <EmptyDescription>
-                                            {t("Add a new :name to get started.", { name: t("quote") })}
-                                        </EmptyDescription>
-                                    </EmptyHeader>
-                                </Empty>
-                            </TableCell>
-                        </TableRow>
-                    )}
-                    {/** Data */}
-                    {quotes?.data?.length
-                        ? quotes?.data?.map((quote) => (
-                              <TableRow key={quote.id}>
-                                  <TableCell>
-                                      <div className="flex flex-col gap-1">
-                                          <span className="font-medium">
-                                              {formatAmount(quote.rate, currentLocale(), currency)}
-                                          </span>
-                                          <span className="text-sm text-gray-500">
-                                              {format(new Date(quote.observed_at), "MMMM d, yyyy HH:mm")}
-                                          </span>
-                                      </div>
-                                  </TableCell>
-                                  <TableCell className="w-12 text-right">
-                                      <DropdownMenu>
-                                          <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
-                                              <MoreHorizontalIcon />
-                                              <span className="sr-only">{t("Actions")}</span>
-                                          </DropdownMenuTrigger>
-                                          <DropdownMenuContent align="end">
-                                              <ConfirmAction
-                                                  className="w-full"
-                                                  title={t("Are you sure you want to delete the quote?")}
-                                                  description={t("This action cannot be undone.")}
-                                                  confirmLabel={t("Delete")}
-                                                  action={
-                                                      <Link
-                                                          href={routes.quotes.destroy.url({
-                                                              currency: currency.id,
-                                                              quote: quote.id,
-                                                          })}
-                                                          method="delete"
-                                                      />
-                                                  }
-                                              >
-                                                  <DropdownMenuItem closeOnClick={false} variant="destructive">
-                                                      <TrashIcon />
-                                                      <span>{t("Delete")}</span>
-                                                  </DropdownMenuItem>
-                                              </ConfirmAction>
-                                          </DropdownMenuContent>
-                                      </DropdownMenu>
-                                  </TableCell>
-                              </TableRow>
-                          ))
-                        : null}
+                    <Deferred data="quotes" fallback={<SkeletonRows />}>
+                        {/** Empty state */}
+                        {quotes?.data?.length < 1 && (
+                            <TableRow>
+                                <TableCell colSpan={2}>
+                                    <Empty>
+                                        <EmptyHeader>
+                                            <EmptyMedia variant="icon">
+                                                {isFiltered ? <SearchXIcon /> : <CircleDashedIcon />}
+                                            </EmptyMedia>
+                                            <EmptyTitle>
+                                                {isFiltered
+                                                    ? t("No results for the current filters")
+                                                    : t("No :name yet", { name: t("quotes") })}
+                                            </EmptyTitle>
+                                            <EmptyDescription>
+                                                {isFiltered
+                                                    ? t("Try adjusting or clearing the filters.")
+                                                    : t("Add a new :name to get started.", { name: t("quote") })}
+                                            </EmptyDescription>
+                                        </EmptyHeader>
+                                    </Empty>
+                                </TableCell>
+                            </TableRow>
+                        )}
+                        {/** Data */}
+                        {quotes?.data?.length
+                            ? quotes?.data?.map((quote) => (
+                                  <TableRow key={quote.id}>
+                                      <TableCell>
+                                          <div className="flex flex-col gap-1">
+                                              <span className="font-medium">
+                                                  {formatAmount(quote.rate, currentLocale(), currency)}
+                                              </span>
+                                              <span className="text-sm text-gray-500">
+                                                  {format(new Date(quote.observed_at), "MMMM d, yyyy HH:mm")}
+                                              </span>
+                                          </div>
+                                      </TableCell>
+                                      <TableCell className="w-12 text-right">
+                                          <DropdownMenu>
+                                              <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
+                                                  <MoreHorizontalIcon />
+                                                  <span className="sr-only">{t("Actions")}</span>
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent align="end">
+                                                  <ConfirmAction
+                                                      className="w-full"
+                                                      title={t("Are you sure you want to delete the quote?")}
+                                                      description={t("This action cannot be undone.")}
+                                                      confirmLabel={t("Delete")}
+                                                      action={
+                                                          <Link
+                                                              href={routes.quotes.destroy.url({
+                                                                  currency: currency.id,
+                                                                  quote: quote.id,
+                                                              })}
+                                                              method="delete"
+                                                          />
+                                                      }
+                                                  >
+                                                      <DropdownMenuItem closeOnClick={false} variant="destructive">
+                                                          <TrashIcon />
+                                                          <span>{t("Delete")}</span>
+                                                      </DropdownMenuItem>
+                                                  </ConfirmAction>
+                                              </DropdownMenuContent>
+                                          </DropdownMenu>
+                                      </TableCell>
+                                  </TableRow>
+                              ))
+                            : null}
+                    </Deferred>
                 </TableBody>
             </TableComponent>
 
             {/** Pagination */}
             {quotes?.data?.length ? <Pagination /> : null}
+        </Fragment>
+    );
+};
+
+const SkeletonRows = () => {
+    return (
+        <Fragment>
+            {[0, 1, 2].map((row) => (
+                <TableRow key={row}>
+                    <TableCell>
+                        <div className="flex flex-col gap-2">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-3 w-32" />
+                        </div>
+                    </TableCell>
+                    <TableCell />
+                </TableRow>
+            ))}
         </Fragment>
     );
 };

@@ -31,9 +31,61 @@ describe('index', function (): void {
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('catalog/currencies/quotes/index')
                 ->where('currency.id', $currency->getKey())
+                ->has('filters')
+                ->has('sources')
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('quotes.data', 2)
                     ->where('quotes.data.0.id', $newer->getKey())));
+    });
+
+    it('filters quotes by source and search', function (): void {
+        actingMember();
+        $currency = Currency::factory()->create();
+        $matching = Quote::factory()->for($currency)->create([
+            'observed_at' => '2024-06-01 12:00:00',
+            'source' => QuoteSource::Manual,
+        ]);
+        Quote::factory()->for($currency)->create([
+            'observed_at' => '2024-06-01 12:00:00',
+            'source' => QuoteSource::Live,
+        ]);
+        Quote::factory()->for($currency)->create([
+            'observed_at' => '2024-01-01 12:00:00',
+            'source' => QuoteSource::Manual,
+        ]);
+        Quote::factory()->create([
+            'observed_at' => '2024-06-01 12:00:00',
+            'source' => QuoteSource::Manual,
+        ]);
+
+        $this->get(route('catalog.currencies.quotes.index', [
+            'currency' => $currency->getKey(),
+            'filter' => [
+                'search' => '2024-06-01',
+                'source' => QuoteSource::Manual->value,
+            ],
+        ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('filters.search', '2024-06-01')
+                ->where('filters.source', QuoteSource::Manual->value)
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('quotes.data', 1)
+                    ->where('quotes.data.0.id', $matching->getKey())));
+    });
+
+    it('rejects an invalid source filter', function (): void {
+        actingMember();
+        $currency = Currency::factory()->create();
+
+        $this->get(route('catalog.currencies.quotes.index', [
+            'currency' => $currency->getKey(),
+            'filter' => ['source' => 'not-a-source'],
+        ]))
+            ->assertRedirect()
+            ->assertInvalid([
+                'filter.source' => trans('validation.enum', ['attribute' => 'filter.source']),
+            ]);
     });
 });
 

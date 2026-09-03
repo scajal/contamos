@@ -8,6 +8,7 @@ use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Spatie\QueryBuilder\AllowedFilter;
 
 class IndexRequest extends FormRequest
 {
@@ -18,6 +19,21 @@ class IndexRequest extends FormRequest
     {
         // @todo: Add authorization logic.
         return true;
+    }
+
+    /**
+     * Get the list of allowed filters for the
+     * request.
+     *
+     * @return array<string, \Spatie\QueryBuilder\AllowedFilter>
+     */
+    public function filters(): array
+    {
+        return [
+            AllowedFilter::exact('type'),
+            AllowedFilter::groupOr('search', [AllowedFilter::partial('name'), AllowedFilter::partial('code')]),
+            AllowedFilter::scope('is_active'),
+        ];
     }
 
     /**

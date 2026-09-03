@@ -16,7 +16,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 use InertiaUI\Modal\Modal;
-use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class CurrencyController
@@ -29,11 +28,7 @@ class CurrencyController
         return Inertia::render('catalog/currencies/index', [
             'currencies' => Inertia::defer(
                 fn (): LengthAwarePaginator => QueryBuilder::for(Currency::class, $request)
-                    ->allowedFilters(
-                        AllowedFilter::scope('is_active'),
-                        AllowedFilter::groupOr('search', [AllowedFilter::partial('name'), AllowedFilter::partial('code')]),
-                        AllowedFilter::exact('type'),
-                    )
+                    ->allowedFilters(...$request->filters())
                     ->orderBy('created_at', 'desc')
                     ->paginate(10)
                     ->withQueryString(),

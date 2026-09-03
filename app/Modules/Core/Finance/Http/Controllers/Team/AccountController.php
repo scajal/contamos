@@ -19,7 +19,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 use InertiaUI\Modal\Modal;
-use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class AccountController
@@ -32,12 +31,7 @@ class AccountController
         return Inertia::render('finance/teams/accounts/index', [
             'accounts' => Inertia::defer(
                 fn (): LengthAwarePaginator => QueryBuilder::for($team->accounts(), $request)
-                    ->allowedFilters(
-                        AllowedFilter::exact('currency', 'currencies.'.new Currency()->getKeyName()),
-                        AllowedFilter::scope('is_active'),
-                        AllowedFilter::partial('search', 'name'),
-                        AllowedFilter::exact('type'),
-                    )
+                    ->allowedFilters(...$request->filters())
                     ->with('currencies')
                     ->orderBy('created_at', 'desc')
                     ->paginate(10)

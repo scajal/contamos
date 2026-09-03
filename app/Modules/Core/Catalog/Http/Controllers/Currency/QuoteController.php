@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Catalog\Http\Controllers\Currency;
 
+use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
+use App\Modules\Core\Catalog\Http\Requests\Currency\Quote\IndexRequest;
 use App\Modules\Core\Catalog\Http\Requests\Currency\Quote\StoreRequest;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
@@ -13,21 +15,26 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 use InertiaUI\Modal\Modal;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class QuoteController
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Currency $currency): Response
+    public function index(Currency $currency, IndexRequest $request): Response
     {
         return Inertia::render('catalog/currencies/quotes/index', [
             'currency' => $currency,
+            'filters' => $request->validated('filter', []),
             'quotes' => Inertia::defer(
-                fn (): LengthAwarePaginator => $currency->quotes()
+                fn (): LengthAwarePaginator => QueryBuilder::for($currency->quotes(), $request)
+                    ->allowedFilters(...$request->filters())
                     ->orderBy('created_at', 'desc')
-                    ->paginate(10),
+                    ->paginate(10)
+                    ->withQueryString(),
             ),
+            'sources' => QuoteSource::cases(),
         ]);
     }
 

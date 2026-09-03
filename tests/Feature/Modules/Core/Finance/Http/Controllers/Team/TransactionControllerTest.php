@@ -54,6 +54,7 @@ describe('index', function (): void {
                 ->has('accounts')
                 ->has('currencies')
                 ->has('types')
+                ->has('filters')
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('transactions.data', 1)
                     ->where('transactions.data.0.id', $transaction->getKey())));
@@ -98,6 +99,47 @@ describe('index', function (): void {
         ]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('filters.type', TransactionType::Expense->value)
+                ->where('filters.account', $account->getKey())
+                ->where('filters.currency', $currency->getKey())
+                ->where('filters.search', 'lunch')
+                ->where('filters.from', '2024-06-01')
+                ->where('filters.to', '2024-06-30')
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('transactions.data', 1)
+                    ->where('transactions.data.0.id', $matching->getKey())));
+    });
+
+    it('filters transactions by id through search', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $matching = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+            'description' => 'Lunch',
+        ]);
+        Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+            'description' => 'Dinner',
+        ]);
+
+        $this->get(route('finance.teams.transactions.index', [
+            'team' => $team->getKey(),
+            'filter' => [
+                'search' => $matching->getKey(),
+            ],
+        ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('filters.search', $matching->getKey())
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('transactions.data', 1)
                     ->where('transactions.data.0.id', $matching->getKey())));
