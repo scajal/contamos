@@ -59,6 +59,14 @@ Route::as('finance.teams.')
             ->name('accounts.update')
             ->scopeBindings();
 
+        Route::patch('/accounts/{account}/deactivate', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'deactivate'])
+            ->name('accounts.deactivate')
+            ->scopeBindings();
+
+        Route::patch('/accounts/{account}/activate', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'activate'])
+            ->name('accounts.activate')
+            ->scopeBindings();
+
         /*
         |--------------------------------------------------------------------------
         | Transaction routes

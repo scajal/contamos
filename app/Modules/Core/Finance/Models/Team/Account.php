@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property string $id
+ * @property bool $is_active
  * @property string $name
  * @property string $team_id
  * @property \App\Modules\Core\Finance\Enums\Account\AccountType $type
@@ -33,7 +34,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @mixin \Eloquent
  */
-#[Fillable('name', 'type')]
+#[Fillable('is_active', 'name', 'type')]
 class Account extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
@@ -52,6 +53,7 @@ class Account extends Model
     protected function casts(): array
     {
         return [
+            'is_active' => 'boolean',
             'type' => AccountType::class,
         ];
     }

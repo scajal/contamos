@@ -28,6 +28,7 @@ class AccountFactory extends Factory
     public function definition(): array
     {
         return [
+            'is_active' => fake()->boolean(),
             'name' => fake()->word(),
             'type' => fake()->randomElement(AccountType::cases()),
         ];

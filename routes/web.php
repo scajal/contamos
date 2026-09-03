@@ -1,11 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
 /**
  * Fallback
  */
-
-use Illuminate\Support\Facades\Route;
-
 Route::get('/', fn () => to_route('login'));
 
 /*

@@ -14,6 +14,7 @@ return new class extends Migration
     {
         Schema::create('accounts', function (Blueprint $table): void {
             $table->ulid('id')->primary();
+            $table->boolean('is_active')->default(true);
             $table->string('name');
             $table->foreignIdFor(Team::class)->constrained()->cascadeOnDelete();
             $table->string('type')->index();

@@ -39,7 +39,9 @@ class AccountController
     public function create(Team $team): Modal
     {
         return Inertia::modal('finance/teams/accounts/create', [
-            'currencies' => Currency::query()->get(),
+            'currencies' => Currency::query()
+                ->where('is_active', true)
+                ->get(),
             'types' => AccountType::cases(),
         ])->baseRoute('finance.teams.accounts.index', ['team' => $team->getKey()]);
     }
@@ -84,6 +86,36 @@ class AccountController
             ->using($request->safe()->only(['name', 'type']), $request->validated('currency_ids')); // @phpstan-ignore-line argument.type
 
         // Flash a success message to the session.
+        Toast::make(trans('Saved'))
+            ->flash();
+
+        return back();
+    }
+
+    /**
+     * Activate the specified resource.
+     */
+    public function activate(Team $team, Account $account): RedirectResponse
+    {
+        // Activate the account.
+        $account->update(['is_active' => true]);
+
+        // Show a message to the user.
+        Toast::make(trans('Saved'))
+            ->flash();
+
+        return back();
+    }
+
+    /**
+     * Deactivate the specified resource.
+     */
+    public function deactivate(Team $team, Account $account): RedirectResponse
+    {
+        // Deactivate the account.
+        $account->update(['is_active' => false]);
+
+        // Show a message to the user.
         Toast::make(trans('Saved'))
             ->flash();
 

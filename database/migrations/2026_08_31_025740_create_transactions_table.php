@@ -22,8 +22,8 @@ return new class extends Migration
             $table->foreignIdFor(Currency::class)->constrained()->cascadeOnDelete();
             $table->unsignedTinyInteger('decimal_places')->default(2);
             $table->text('description')->nullable();
-            $table->decimal('exchange_rate', 36, 18);
             $table->dateTime('occurred_at')->useCurrent();
+            $table->decimal('quote', 36, 18);
             $table->foreignIdFor(Team::class)->constrained()->cascadeOnDelete();
             $table->string('type');
             $table->foreignIdFor(User::class)->nullable()->constrained()->nullOnDelete();

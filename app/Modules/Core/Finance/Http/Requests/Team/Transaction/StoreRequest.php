@@ -10,6 +10,7 @@ use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use Exception;
 use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -52,6 +53,16 @@ class StoreRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'quote' => $this->currency()?->currentQuote?->rate ?? throw new Exception('Currency has no current quote'),
+        ]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
@@ -84,6 +95,11 @@ class StoreRequest extends FormRequest
             'occurred_at' => [
                 'required',
                 'date',
+            ],
+            'quote' => [
+                'sometimes',
+                'nullable',
+                'decimal:0,18',
             ],
             'type' => [
                 'required',

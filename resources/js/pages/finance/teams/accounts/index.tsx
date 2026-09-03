@@ -2,6 +2,7 @@ import { Deferred, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
+    CheckIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
     CircleDashedIcon,
@@ -9,9 +10,11 @@ import {
     PencilIcon,
     PlusIcon,
     SearchIcon,
+    XIcon,
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -162,6 +165,13 @@ const Table = () => {
                                               </span>
                                           </div>
                                       </TableCell>
+                                      <TableCell>
+                                          {account.is_active ? (
+                                              <Badge variant="ghost">{t("Active")}</Badge>
+                                          ) : (
+                                              <Badge variant="destructive">{t("Inactive")}</Badge>
+                                          )}
+                                      </TableCell>
                                       <TableCell className="text-right">
                                           <DropdownMenu>
                                               <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
@@ -180,6 +190,31 @@ const Table = () => {
                                                               <PencilIcon />
                                                               <span>{t("Edit")}</span>
                                                           </ModalLink>
+                                                      }
+                                                  />
+                                                  <DropdownMenuItem
+                                                      nativeButton
+                                                      render={
+                                                          <Link
+                                                              className="w-full"
+                                                              href={
+                                                                  account.is_active
+                                                                      ? routes.deactivate.url({
+                                                                            account: account.id,
+                                                                            team: account.team_id,
+                                                                        })
+                                                                      : routes.activate.url({
+                                                                            account: account.id,
+                                                                            team: account.team_id,
+                                                                        })
+                                                              }
+                                                              method="patch"
+                                                          >
+                                                              {account.is_active ? <XIcon /> : <CheckIcon />}
+                                                              <span>
+                                                                  {account.is_active ? t("Deactivate") : t("Activate")}
+                                                              </span>
+                                                          </Link>
                                                       }
                                                   />
                                               </DropdownMenuContent>

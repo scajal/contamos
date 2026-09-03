@@ -66,6 +66,13 @@ export default function Show({ transaction }: PageProps) {
                                 <FieldLabel>{t("Transaction ID")}</FieldLabel>
                                 <FieldDescription>{transaction.id}</FieldDescription>
                             </Field>
+                            {/** Exchange rate */}
+                            <Field>
+                                <FieldLabel>{t("Quote")}</FieldLabel>
+                                <FieldDescription>
+                                    {formatAmount(transaction.quote, currentLocale(), transaction.currency)}
+                                </FieldDescription>
+                            </Field>
                         </div>
                         <SheetFooter>
                             <ConfirmAction

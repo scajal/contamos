@@ -10,6 +10,7 @@ import type { Transaction } from "./transaction";
 export interface Account {
     id: string;
     currencies?: Array<Currency & { pivot?: AccountCurrency }>;
+    is_active: boolean;
     name: string;
     team_id: string;
     type: AccountType;

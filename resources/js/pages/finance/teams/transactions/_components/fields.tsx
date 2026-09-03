@@ -1,6 +1,6 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CalendarIcon, ListIcon } from "lucide-react";
+import { CalendarIcon, DollarSignIcon, ListIcon } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -12,7 +12,7 @@ import {
     ComboboxTrigger,
     ComboboxValue,
 } from "@/components/ui/combobox";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
@@ -185,6 +185,30 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                     placeholder={t("Enter a description")}
                 />
                 {invalid("description") && <FieldError>{errors.description}</FieldError>}
+            </Field>
+
+            {/** Exchange rate */}
+            <Field>
+                <FieldLabel>{t("Exchange rate")}</FieldLabel>
+                <InputGroup>
+                    <InputGroupAddon>
+                        <DollarSignIcon />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                        aria-invalid={invalid("quote")}
+                        defaultValue={defaultValues?.quote}
+                        name="quote"
+                        inputMode="decimal"
+                        placeholder={t("Enter a quote")}
+                        type="text"
+                    />
+                </InputGroup>
+                <FieldDescription>
+                    {t(
+                        "The quote of the currency at the time of the transaction. Leave blank to use the current rate.",
+                    )}
+                </FieldDescription>
+                {invalid("quote") && <FieldError>{errors.quote}</FieldError>}
             </Field>
         </div>
     );

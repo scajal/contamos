@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 /**
@@ -24,6 +25,7 @@ use Illuminate\Support\Str;
  * @property \App\Modules\Core\Catalog\Enums\Currency\CurrencyType $type
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Modules\Core\Catalog\Models\Currency\Quote|null $currentQuote
  * @property-read \Illuminate\Database\Eloquent\Collection<\App\Modules\Core\Catalog\Models\Currency\Quote> $quotes
  *
  * @method static \Database\Factories\Modules\Core\Catalog\Models\CurrencyFactory factory($count = null, $state = [])
@@ -77,6 +79,17 @@ class Currency extends Model
             'quote_source' => QuoteSource::class,
             'type' => CurrencyType::class,
         ];
+    }
+
+    /**
+     * Get the current quote for the currency.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne<\App\Modules\Core\Catalog\Models\Currency\Quote>
+     */
+    public function currentQuote(): HasOne
+    {
+        return $this->hasOne(Quote::class)
+            ->latestOfMany('observed_at');
     }
 
     /**

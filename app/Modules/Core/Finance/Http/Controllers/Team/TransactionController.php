@@ -42,6 +42,7 @@ class TransactionController
     {
         return Inertia::modal('finance/teams/transactions/create', [
             'accounts' => $team->accounts()
+                ->where('is_active', true)
                 ->with('currencies')
                 ->get(),
             'type' => $type,
