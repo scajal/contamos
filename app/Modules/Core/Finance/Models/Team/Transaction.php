@@ -18,12 +18,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property string $id
  * @property string $account_id
- * @property string $amount
+ * @property numeric $amount
  * @property string $currency_id
  * @property int $decimal_places
  * @property string|null $description
- * @property string $quote
  * @property \Carbon\CarbonImmutable $occurred_at
+ * @property numeric $quote
  * @property string $team_id
  * @property \App\Modules\Core\Finance\Enums\Transaction\TransactionType $type
  * @property string|null $user_id
@@ -37,6 +37,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Database\Factories\Modules\Core\Finance\Models\Team\TransactionFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction occurredFrom(string $date)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction occurredUntil(string $date)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction query()
  *
  * @mixin \Eloquent

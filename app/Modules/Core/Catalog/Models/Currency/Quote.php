@@ -15,13 +15,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property string $currency_id
  * @property \Carbon\CarbonImmutable $observed_at
- * @property string $rate
+ * @property numeric $rate
  * @property string|null $recorded_by
+ * @property string $source
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
  * @property-read \App\Modules\Core\Identity\Models\User|null $recorder
  *
+ * @method static \Database\Factories\Modules\Core\Catalog\Models\Currency\QuoteFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\Quote newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\Quote newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency\Quote query()

@@ -31,6 +31,7 @@ use Illuminate\Support\Str;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Catalog\Models\Currency\Quote> $quotes
  *
  * @method static \Database\Factories\Modules\Core\Catalog\Models\CurrencyFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency isActive(string|bool $value = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Catalog\Models\Currency query()
@@ -89,7 +90,7 @@ class Currency extends Model
      * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
      */
     #[Scope]
-    protected function isActive(Builder $query, string $value): void
+    protected function isActive(Builder $query, bool|string $value = true): void
     {
         $query->where('is_active', filter_var($value, FILTER_VALIDATE_BOOLEAN));
     }

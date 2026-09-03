@@ -14,6 +14,7 @@ use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
@@ -65,7 +66,7 @@ class TransactionController
         return Inertia::modal('finance/teams/transactions/create', [
             'accounts' => $team->accounts()
                 ->where('is_active', true)
-                ->with('currencies')
+                ->with(['currencies' => fn (BelongsToMany $query): BelongsToMany => $query->isActive()])
                 ->get(),
             'type' => $type,
         ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getKey()]);

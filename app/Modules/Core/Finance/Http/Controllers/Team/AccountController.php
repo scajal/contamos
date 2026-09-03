@@ -55,7 +55,7 @@ class AccountController
     {
         return Inertia::modal('finance/teams/accounts/create', [
             'currencies' => Currency::query()
-                ->where('is_active', true)
+                ->isActive()
                 ->get(),
             'types' => AccountType::cases(),
         ])->baseRoute('finance.teams.accounts.index', ['team' => $team->getKey()]);
