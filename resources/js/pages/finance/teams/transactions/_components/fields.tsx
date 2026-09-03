@@ -189,7 +189,7 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
 
             {/** Exchange rate */}
             <Field>
-                <FieldLabel>{t("Exchange rate")}</FieldLabel>
+                <FieldLabel>{t("Quote")}</FieldLabel>
                 <InputGroup>
                     <InputGroupAddon>
                         <DollarSignIcon />
@@ -205,7 +205,7 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                 </InputGroup>
                 <FieldDescription>
                     {t(
-                        "The quote of the currency at the time of the transaction. Leave blank to use the current rate.",
+                        "The quote of the currency at the time of the transaction. Leave blank to use the current rate (if any).",
                     )}
                 </FieldDescription>
                 {invalid("quote") && <FieldError>{errors.quote}</FieldError>}
