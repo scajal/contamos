@@ -33,6 +33,17 @@ class IndexRequest extends FormRequest
                 'sometimes',
                 'array',
             ],
+            'filter.currency' => [
+                'sometimes',
+                'nullable',
+                'string',
+                Rule::exists(Currency::class, new Currency()->getKeyName()),
+            ],
+            'filter.is_active' => [
+                'sometimes',
+                'nullable',
+                Rule::in(['true', 'false']),
+            ],
             'filter.search' => [
                 'sometimes',
                 'nullable',
@@ -44,17 +55,6 @@ class IndexRequest extends FormRequest
                 'nullable',
                 'string',
                 Rule::enum(AccountType::class),
-            ],
-            'filter.is_active' => [
-                'sometimes',
-                'nullable',
-                'boolean',
-            ],
-            'filter.currency' => [
-                'sometimes',
-                'nullable',
-                'string',
-                Rule::exists(Currency::class, new Currency()->getKeyName()),
             ],
         ];
     }

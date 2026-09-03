@@ -7,6 +7,8 @@ use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -79,6 +81,17 @@ class Currency extends Model
             'quote_source' => QuoteSource::class,
             'type' => CurrencyType::class,
         ];
+    }
+
+    /**
+     * Scope the query to currencies with the given active state.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     */
+    #[Scope]
+    protected function isActive(Builder $query, string $value): void
+    {
+        $query->where('is_active', filter_var($value, FILTER_VALIDATE_BOOLEAN));
     }
 
     /**

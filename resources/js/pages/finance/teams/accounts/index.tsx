@@ -6,6 +6,7 @@ import {
     ChevronLeftIcon,
     ChevronRightIcon,
     CircleDashedIcon,
+    ListFilterPlusIcon,
     MoreHorizontalIcon,
     PencilIcon,
     PlusIcon,
@@ -24,8 +25,10 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
+import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
@@ -60,11 +63,11 @@ const Index = () => {
             {/** Content */}
             <div className="flex flex-col gap-4">
                 {/** Filters and actions */}
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex-2">
+                <div className="flex items-center justify-between gap-2 max-sm:flex-col">
+                    <div className="flex-1 max-sm:w-full">
                         <Filters />
                     </div>
-                    <div className="flex flex-1 justify-end">
+                    <div className="flex justify-end max-sm:order-first max-sm:w-full">
                         <Actions />
                     </div>
                 </div>
@@ -119,9 +122,9 @@ const Filters = () => {
     });
 
     return (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
             {/** Search */}
-            <InputGroup className="max-w-xs">
+            <InputGroup>
                 <InputGroupAddon>
                     <SearchIcon />
                 </InputGroupAddon>
@@ -132,71 +135,72 @@ const Filters = () => {
                 />
             </InputGroup>
 
-            {/** Type */}
-            <Select onValueChange={(value) => setFilters({ type: value })} value={filters.type}>
-                <SelectTrigger>
-                    <SelectValue>
-                        {(value: AccountType | null) => `${t("Type")}: ${value ? t(`enums.${value}`) : t("All")}`}
-                    </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectGroup>
-                        <SelectItem value={null}>{t("All")}</SelectItem>
-                        {types.map((type) => (
-                            <SelectItem key={type} value={type}>
-                                {t(`enums.${type}`)}
-                            </SelectItem>
-                        ))}
-                    </SelectGroup>
-                </SelectContent>
-            </Select>
+            {/** Advanced filters */}
+            <Popover>
+                <PopoverTrigger className="relative" render={<Button size="icon" variant="outline" />}>
+                    <ListFilterPlusIcon />
+                    {isFiltered && (
+                        <span className="bg-destructive/50 absolute -top-1 -right-1 size-3 rounded-full text-white" />
+                    )}
+                </PopoverTrigger>
+                <PopoverContent>
+                    <PopoverHeader>
+                        <PopoverTitle>{t("More filters")}</PopoverTitle>
+                    </PopoverHeader>
+                    <div className="flex flex-col gap-4">
+                        {/** Type */}
+                        <Field>
+                            <FieldLabel>{t("Type")}</FieldLabel>
+                            <Select onValueChange={(value) => setFilters({ type: value })} value={filters.type}>
+                                <SelectTrigger>
+                                    <SelectValue>
+                                        {(value: AccountType | null) => `${value ? t(`enums.${value}`) : t("All")}`}
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value={null}>{t("All")}</SelectItem>
+                                        {types.map((type) => (
+                                            <SelectItem key={type} value={type}>
+                                                {t(`enums.${type}`)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </Field>
 
-            {/** Status */}
-            <Select onValueChange={(value) => setFilters({ is_active: value })} value={filters.is_active}>
-                <SelectTrigger>
-                    <SelectValue>
-                        {(value: string | null) =>
-                            `${t("Status")}: ${value === null ? t("All") : value === "true" ? t("Active") : t("Inactive")}`
-                        }
-                    </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectGroup>
-                        <SelectItem value={null}>{t("All")}</SelectItem>
-                        <SelectItem value="true">{t("Active")}</SelectItem>
-                        <SelectItem value="false">{t("Inactive")}</SelectItem>
-                    </SelectGroup>
-                </SelectContent>
-            </Select>
-
-            {/** Currency */}
-            <Select onValueChange={(value) => setFilters({ currency: value })} value={filters.currency}>
-                <SelectTrigger>
-                    <SelectValue>
-                        {(value: string | null) =>
-                            `${t("Currency")}: ${currencies.find((currency) => currency.id === value)?.code ?? t("All")}`
-                        }
-                    </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectGroup>
-                        <SelectItem value={null}>{t("All")}</SelectItem>
-                        {currencies.map((currency) => (
-                            <SelectItem key={currency.id} value={currency.id}>
-                                {`${currency.code} · ${currency.name}`}
-                            </SelectItem>
-                        ))}
-                    </SelectGroup>
-                </SelectContent>
-            </Select>
+                        {/** Status */}
+                        <Field>
+                            <FieldLabel>{t("Status")}</FieldLabel>
+                            <Select
+                                onValueChange={(value) => setFilters({ is_active: value })}
+                                value={filters.is_active}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue>
+                                        {(value: string | null) =>
+                                            `${value === null ? t("All") : value === "true" ? t("Active") : t("Inactive")}`
+                                        }
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value={null}>{t("All")}</SelectItem>
+                                        <SelectItem value="true">{t("Active")}</SelectItem>
+                                        <SelectItem value="false">{t("Inactive")}</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </Field>
+                    </div>
+                </PopoverContent>
+            </Popover>
 
             {/** Clear */}
-            {isFiltered && (
-                <Button onClick={clear} variant="ghost">
-                    <XIcon />
-                    <span>{t("Clear filters")}</span>
-                </Button>
-            )}
+            <Button disabled={!isFiltered} onClick={clear} size="icon" variant="outline">
+                <XIcon />
+            </Button>
         </div>
     );
 };
@@ -215,6 +219,7 @@ const Actions = () => {
 
     return (
         <Button
+            className="max-sm:w-full"
             nativeButton={false}
             render={
                 <ModalLink href={routes.create.url({ team: { id: user?.current_team_id ?? "" } })}>

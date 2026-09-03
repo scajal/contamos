@@ -30,25 +30,21 @@ class AccountController
     public function index(Team $team, IndexRequest $request): Response
     {
         return Inertia::render('finance/teams/accounts/index', [
-            'filters' => $request->validated('filter', []),
-            'currencies' => Currency::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(),
-            'types' => AccountType::cases(),
             'accounts' => Inertia::defer(
                 fn (): LengthAwarePaginator => QueryBuilder::for($team->accounts(), $request)
                     ->allowedFilters(
+                        AllowedFilter::exact('currency', 'currencies.'.new Currency()->getKeyName()),
+                        AllowedFilter::scope('is_active'),
                         AllowedFilter::partial('search', 'name'),
                         AllowedFilter::exact('type'),
-                        AllowedFilter::exact('is_active'),
-                        AllowedFilter::exact('currency', 'currencies.'.new Currency()->getKeyName()),
                     )
                     ->with('currencies')
                     ->orderBy('created_at', 'desc')
                     ->paginate(10)
                     ->withQueryString(),
             ),
+            'filters' => $request->validated('filter', []),
+            'types' => AccountType::cases(),
         ]);
     }
 

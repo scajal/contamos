@@ -27,12 +27,10 @@ class CurrencyController
     public function index(IndexRequest $request): Response
     {
         return Inertia::render('catalog/currencies/index', [
-            'filters' => $request->array('filter'),
-            'types' => CurrencyType::cases(),
             'currencies' => Inertia::defer(
                 fn (): LengthAwarePaginator => QueryBuilder::for(Currency::class, $request)
                     ->allowedFilters(
-                        AllowedFilter::exact('is_active'),
+                        AllowedFilter::scope('is_active'),
                         AllowedFilter::groupOr('search', [AllowedFilter::partial('name'), AllowedFilter::partial('code')]),
                         AllowedFilter::exact('type'),
                     )
@@ -40,6 +38,8 @@ class CurrencyController
                     ->paginate(10)
                     ->withQueryString(),
             ),
+            'filters' => $request->validated('filter', []),
+            'types' => CurrencyType::cases(),
         ]);
     }
 

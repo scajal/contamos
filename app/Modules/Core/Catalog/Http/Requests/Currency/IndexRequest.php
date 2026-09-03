@@ -35,7 +35,7 @@ class IndexRequest extends FormRequest
             'filter.is_active' => [
                 'sometimes',
                 'nullable',
-                'boolean',
+                Rule::in(['true', 'false']),
             ],
             'filter.search' => [
                 'sometimes',
