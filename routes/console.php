@@ -9,4 +9,4 @@
 |
 */
 
-require __DIR__.'/Modules/Core/Catalog/Routes/console.php';
+require __DIR__.'/../app/Modules/Core/Catalog/Routes/console.php';

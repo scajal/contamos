@@ -16,11 +16,5 @@ enum QuoteSource: string
      * Represent the "manual" source, which gets the
      * quote from a manual input.
      */
-    case Manual = 'manual';
-
-    /**
-     * Represent the "scheduled" source, which gets the
-     * quote from a scheduled job.
-     */
-    case Scheduled = 'scheduled';
+    case ManualOrScheduled = 'manual/scheduled';
 }

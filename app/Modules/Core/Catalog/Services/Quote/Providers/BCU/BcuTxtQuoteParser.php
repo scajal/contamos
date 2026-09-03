@@ -48,8 +48,13 @@ class BcuTxtQuoteParser
      */
     public function parse(string $contents): Collection
     {
-        $quotes = $this->parseInternational($this->section($contents, self::INTERNATIONAL_START, self::LOCAL_START));
+        // Parse the international currencies
+        // of the file.
+        $quotes = $this->parseInternational(
+            $this->section($contents, self::INTERNATIONAL_START, self::LOCAL_START)
+        );
 
+        // Parse the local currencies of the file.
         foreach ($this->parseLocal($this->section($contents, self::LOCAL_START, self::LOCAL_END)) as $code => $rate) {
             if (! $quotes->has($code)) {
                 $quotes->put($code, $rate);
@@ -64,16 +69,16 @@ class BcuTxtQuoteParser
      */
     private function section(string $contents, string $startMarker, string $endMarker): string
     {
-        $start = Str::position($contents, $startMarker);
-
-        if ($start === false) {
+        // Find the position of the start marker.
+        if (($start = Str::position($contents, $startMarker)) === false) {
             throw new QuoteProviderException("The BCU TXT is missing the [{$startMarker}] section.");
         }
 
+        // Calculate the position of the start of the section.
         $from = $start + Str::length($startMarker);
-        $end = Str::position($contents, $endMarker, $from);
 
-        if ($end === false) {
+        // Find the position of the end marker.
+        if (($end = Str::position($contents, $endMarker, $from)) === false) {
             throw new QuoteProviderException("The BCU TXT is missing the [{$endMarker}] section.");
         }
 
@@ -89,18 +94,17 @@ class BcuTxtQuoteParser
     {
         $quotes = collect();
 
+        // Loop through each line in the section.
         foreach (Str::of($section)->explode("\n") as $line) {
             $line = Str::trim($line);
 
+            // If the line does not match the expected format, skip it.
             if (! preg_match('/^([A-Z]{3})\s+.+\s+(\d{4})\s+(\*{1,2})\s+([\d.]+)\s*$/', $line, $matches)) {
                 continue;
             }
 
-            $code = $matches[1];
-            $convention = $matches[3];
-            $arbitraje = $matches[4];
-
-            $quotes->put($code, $convention === '**' ? bcdiv('1', $arbitraje, 18) : $arbitraje);
+            // Extract the code, convention, and arbitraje from the line.
+            $quotes->put($matches[1], $matches[3] === '**' ? bcdiv('1', $matches[4], 18) : $matches[4]);
         }
 
         return $quotes;
@@ -115,16 +119,17 @@ class BcuTxtQuoteParser
     {
         $quotes = collect();
 
+        // Loop through each line in the section.
         foreach (Str::of($section)->explode("\n") as $line) {
             $line = Str::trim($line);
 
+            // If the line does not match the expected format, skip it.
             if (! preg_match('/\s(\d{4})\s+[A-Z]{2,3}\s+([\d.]+)\s*$/', $line, $matches)) {
                 continue;
             }
 
-            $code = self::LOCAL_CODES[$matches[1]] ?? null;
-
-            if (! is_string($code)) {
+            // Extract the code from the line.
+            if (! is_string($code = self::LOCAL_CODES[$matches[1]] ?? null)) {
                 continue;
             }
 

@@ -36,7 +36,7 @@ it('creates scheduled quotes for currencies the BCU file includes', function ():
     $uyu = Currency::factory()->fiat()->scheduled()->create(['code' => 'UYU']);
     $manualUyu = Currency::factory()->fiat()->create([
         'code' => 'UYI',
-        'quote_source' => QuoteSource::Manual,
+        'quote_source' => QuoteSource::ManualOrScheduled,
     ]);
     Currency::factory()->fiat()->scheduled()->create(['code' => 'XYZ']);
     Currency::factory()->crypto()->scheduled()->create(['code' => 'BTC']);
@@ -48,7 +48,7 @@ it('creates scheduled quotes for currencies the BCU file includes', function ():
         ->and($eur->quotes()->count())->toBe(1)
         ->and($uyu->quotes()->count())->toBe(1)
         ->and($manualUyu->quotes()->count())->toBe(0)
-        ->and(Quote::query()->where('source', QuoteSource::Scheduled)->count())->toBe(3);
+        ->and(Quote::query()->where('source', QuoteSource::ManualOrScheduled)->count())->toBe(3);
 
     $arsQuote = $ars->quotes()->first();
     $eurQuote = $eur->quotes()->first();

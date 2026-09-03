@@ -35,6 +35,8 @@ class AggregateQuoteProvider implements Contracts\QuoteProvider
      */
     public function quotesOn(CarbonImmutable $date, Collection $currencies): Collection
     {
+        // Merge quotes from every registered provider. The first provider that
+        // returns a given currency code wins.
         return collect($this->providers)
             ->flatMap(fn (QuoteProvider $provider): Collection => $provider->quotesOn($date, $currencies))
             ->unique('code')

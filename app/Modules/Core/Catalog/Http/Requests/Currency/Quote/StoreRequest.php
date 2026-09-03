@@ -26,7 +26,7 @@ class StoreRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'source' => QuoteSource::Manual->value,
+            'source' => QuoteSource::ManualOrScheduled->value,
         ]);
     }
 

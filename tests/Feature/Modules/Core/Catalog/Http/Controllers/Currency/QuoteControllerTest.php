@@ -43,7 +43,7 @@ describe('index', function (): void {
         $currency = Currency::factory()->create();
         $matching = Quote::factory()->for($currency)->create([
             'observed_at' => '2024-06-01 12:00:00',
-            'source' => QuoteSource::Manual,
+            'source' => QuoteSource::ManualOrScheduled,
         ]);
         Quote::factory()->for($currency)->create([
             'observed_at' => '2024-06-01 12:00:00',
@@ -51,24 +51,24 @@ describe('index', function (): void {
         ]);
         Quote::factory()->for($currency)->create([
             'observed_at' => '2024-01-01 12:00:00',
-            'source' => QuoteSource::Manual,
+            'source' => QuoteSource::ManualOrScheduled,
         ]);
         Quote::factory()->create([
             'observed_at' => '2024-06-01 12:00:00',
-            'source' => QuoteSource::Manual,
+            'source' => QuoteSource::ManualOrScheduled,
         ]);
 
         $this->get(route('catalog.currencies.quotes.index', [
             'currency' => $currency->getKey(),
             'filter' => [
                 'search' => '2024-06-01',
-                'source' => QuoteSource::Manual->value,
+                'source' => QuoteSource::ManualOrScheduled->value,
             ],
         ]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->where('filters.search', '2024-06-01')
-                ->where('filters.source', QuoteSource::Manual->value)
+                ->where('filters.source', QuoteSource::ManualOrScheduled->value)
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('quotes.data', 1)
                     ->where('quotes.data.0.id', $matching->getKey())));
@@ -119,7 +119,7 @@ describe('store', function (): void {
         assertFlashedToast(trans('Saved'));
         $this->assertDatabaseHas((new Quote)->getTable(), [
             $currency->quotes()->getForeignKeyName() => $currency->getKey(),
-            'source' => QuoteSource::Manual->value,
+            'source' => QuoteSource::ManualOrScheduled->value,
             'rate' => '1.250000000000000000',
         ]);
     });

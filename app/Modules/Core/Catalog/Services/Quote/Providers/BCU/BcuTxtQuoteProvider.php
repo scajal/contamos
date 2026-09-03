@@ -21,7 +21,12 @@ class BcuTxtQuoteProvider implements QuoteProvider
      */
     public const string URL = 'https://www.bcu.gub.uy/_layouts/15/BCU.Cotizaciones/handler/FileHandler.ashx';
 
-    public function __construct(private BcuTxtQuoteParser $parser) {}
+    /**
+     * Create a new BCU TXT quote provider.
+     */
+    public function __construct(
+        private BcuTxtQuoteParser $parser
+    ) {}
 
     /**
      * Fetch BCU quotes for scheduled currencies whose codes appear in the TXT.
@@ -31,10 +36,15 @@ class BcuTxtQuoteProvider implements QuoteProvider
      */
     public function quotesOn(CarbonImmutable $date, Collection $currencies): Collection
     {
+        // Get the observed at date in Montevideo timezone.
         $observedAt = $date->timezone('America/Montevideo')->startOfDay();
+
+        // Get the wanted currencies by code.
         $wanted = $currencies->keyBy('code');
 
-        return $this->parser->parse($this->download($observedAt))
+        // Parse the quotes and intersect them with the wanted currencies.
+        return $this->parser
+            ->parse($this->download($observedAt))
             ->intersectByKeys($wanted)
             ->map(fn (string $rate, string $code): array => [
                 'code' => $code,

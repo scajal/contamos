@@ -23,7 +23,7 @@ function currencyPayload(array $overrides = []): array
         'code' => 'ars',
         'decimal_places' => 2,
         'name' => 'Argentine Peso',
-        'quote_source' => QuoteSource::Manual->value,
+        'quote_source' => QuoteSource::ManualOrScheduled->value,
         'symbol' => '$',
         'type' => CurrencyType::Fiat->value,
         ...$overrides,
@@ -186,7 +186,7 @@ describe('update', function (): void {
             'code' => 'ARS',
             'name' => 'Old',
             'symbol' => 'x',
-            'quote_source' => QuoteSource::Manual,
+            'quote_source' => QuoteSource::ManualOrScheduled,
         ]);
 
         $this->from(route('catalog.currencies.index'))

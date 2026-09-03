@@ -24,7 +24,7 @@ class QuoteFactory extends Factory
     /**
      * Define the model's default state.
      *
-     * The default quote source is \App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource::Manual.
+     * The default quote source is \App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource::ManualOrScheduled.
      *
      * @return array<string, mixed>
      */
@@ -35,7 +35,7 @@ class QuoteFactory extends Factory
             'observed_at' => fake()->dateTime(),
             'rate' => fake()->randomFloat(2, 0, 100),
             'recorded_by' => null,
-            'source' => QuoteSource::Manual,
+            'source' => QuoteSource::ManualOrScheduled,
         ];
     }
 }
