@@ -15,7 +15,7 @@ Import route helpers from @/routes/ (or @/actions/ for controller actions). Use 
 
 ## JSON sentence keys for i18n
 
-Use full English strings as keys in lang/{locale}.json. Frontend: useLaravelReactI18n().t("Sentence"). Backend: trans("Sentence").
+Use full English strings as keys in lang/{locale}.json. Frontend: useLaravelReactI18n().t("Sentence"). Backend: trans("Sentence"). Spanish UI copy uses tú (Agrega, Ingresa, Selecciona, Edita), not usted.
 
 ## Persistent Page.layout for full pages
 

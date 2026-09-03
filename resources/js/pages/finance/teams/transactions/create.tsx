@@ -47,7 +47,7 @@ export default function Create({ accounts, type }: PageProps) {
                             {(formProps) => (
                                 <Fragment>
                                     <SheetHeader>
-                                        <SheetTitle>{t("Register an :name", { name: type.toString() })}</SheetTitle>
+                                        <SheetTitle>{t("Register an :name", { name: t(type) })}</SheetTitle>
                                         <SheetDescription>{t("Add a new transaction.")}</SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-4">

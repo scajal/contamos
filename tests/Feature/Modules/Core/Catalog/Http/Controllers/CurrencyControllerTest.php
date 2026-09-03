@@ -149,7 +149,7 @@ describe('store', function (): void {
             ->post(route('catalog.currencies.store'), currencyPayload(['code' => 'ARS']))
             ->assertRedirect()
             ->assertInvalid([
-                'code' => trans('validation.unique', ['attribute' => 'code']),
+                'code' => trans('validation.unique', ['attribute' => trans('validation.attributes.code')]),
             ]);
     });
 
