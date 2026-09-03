@@ -19,3 +19,6 @@ When `rules()` needs a route-bound model, method-inject it with `#[RouteParamete
 
 ## IndexRequest validates filter values
 Index pages use a Form Request named `IndexRequest` (sibling of StoreRequest/UpdateRequest) with `sometimes|nullable` rules on `filter.*` (Rule::enum, boolean, date_format:Y-m-d, Rule::exists scoped to the team). Query Builder only allow-lists filter keys; the IndexRequest is what keeps bad values (unknown enums, unparsable dates) from 500ing.
+
+## IndexRequest owns AllowedFilter list
+Put Query Builder `AllowedFilter` definitions on `IndexRequest::filters()`. In the index action call `->allowedFilters(...$request->filters())`; do not inline the allow-list in the controller.

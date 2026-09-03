@@ -1,6 +1,7 @@
 ---
 paths:
-    - "app/Modules/*/Routes/**"
+  - 'app/Modules/*/Routes/**'
+  - 'app/Modules/**/Routes/**'
 ---
 
 # Routes
@@ -18,3 +19,6 @@ Prefix named routes with the module segment (`identity.`, `catalog.`, `finance.â
 
 ## WorkOS session middleware
 Add `ValidateSessionWithWorkOS` alongside `Authenticate` on authenticated module route groups. Do not protect those groups with `Authenticate` alone.
+
+## Nested scopeBindings on child routes
+Chain `->scopeBindings()` on nested resource routes so the child must belong to the parent. Do not resolve nested `{parent}/{child}` routes without it.

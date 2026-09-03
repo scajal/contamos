@@ -43,3 +43,6 @@ When returning `Inertia::modal()`, chain `->baseRoute('named.route', …)` so th
 
 ## Filter index listings with Query Builder
 Index pages accept `filter[...]` query params via spatie/laravel-query-builder: `QueryBuilder::for(Model::class | $team->relation(), $request)->allowedFilters(...)` with explicit `AllowedFilter` entries (variadic, not an array). Keep `Inertia::defer()` / `Inertia::scroll()->defer()` and `paginate(10)`, chain `->withQueryString()` so prev/next URLs keep filters, and pass `'filters' => $request->validated('filter', [])` so the page can seed its controls. Use `AllowedFilter::scope()` with a `#[Scope]` model method when the filter needs typed logic (PHPStan rejects `mixed` in `callback()`).
+
+## IndexRequest owns AllowedFilter list
+Put Query Builder `AllowedFilter` definitions on `IndexRequest::filters()`. In the index action call `->allowedFilters(...$request->filters())`; do not inline the allow-list in the controller.
