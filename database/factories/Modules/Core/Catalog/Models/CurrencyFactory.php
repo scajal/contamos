@@ -73,6 +73,17 @@ class CurrencyFactory extends Factory
     }
 
     /**
+     * Indicate that the quote source is
+     * \App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource::Scheduled.
+     */
+    public function scheduled(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'quote_source' => QuoteSource::Scheduled,
+        ]);
+    }
+
+    /**
      * Indicate that the currency is inactive.
      */
     public function inactive(): static

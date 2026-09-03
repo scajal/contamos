@@ -1,6 +1,8 @@
 <?php
 
 use App\Modules\Authentication\Actions\ResolveAuthenticationRedirect;
+use App\Modules\Core\Catalog\Console\Commands\SyncScheduledQuotesCommand;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -25,4 +27,14 @@ return Application::configure(basePath: dirname(__DIR__))
             ])
     )
     ->withRouting(web: __DIR__.'/../routes/web.php', health: '/up')
+    ->withCommands([
+        __DIR__.'/../app/Modules/Core/Catalog/Console/Commands',
+    ])
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command(SyncScheduledQuotesCommand::class)
+            ->weekdays()
+            ->dailyAt('18:00')
+            ->timezone('America/Montevideo')
+            ->withoutOverlapping();
+    })
     ->create();

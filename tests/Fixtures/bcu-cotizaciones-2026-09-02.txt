@@ -1,0 +1,56 @@
+BANCO CENTRAL DEL URUGUAY - DEPARTAMENTO DE OPERACIONES MONETARIAS
+DEPARTAMENTO DE PLANIFICACIÓN Y GESTIÓN DE RIESGOS
+CAMBIOS Y ARBITRAJES DEL DÍA  2 DE SEPTIEMBRE DE 2026
+
+M E R C A D O    D E    C A M B I O S    I N T E R N A C I O N A L
+CÓDIGO EMISOR              DENOMINACIÓN           CÓDIGO         ARBITRAJE
+ARS       ARGENTINA              PESO ARGENTINO         0500 *            1510.590100
+BRL       BRASIL                 REAL                   1000 *               5.108300
+CAD       CANADA                 DOLAR CANADIENSE       2309 *               1.384100
+CLP       CHILE                  PESO CHILENO           1300 *             938.000000
+CNH       CHINA                  YUAN OFF SHORE         4155 *               6.718000
+CNY       CHINA                  YUAN RENMIMBI          4150 *               6.719000
+COP       COLOMBIA               PESO COLOMBIANO        5500 *            3159.500000
+DKK       DINAMARCA              CORONA DANESA          1800 *               6.451700
+USD       ESTADOS UNIDOS         DOLAR USA              2222 *               1.000000
+HKD       HONG KONG              DOLAR HONG KONG        5100 *               7.842000
+HUF       HUNGRIA                FORINT HUNGARO         4300 *             317.410000
+INR       INDIA                  RUPIA INDIA            5700 *              94.972500
+ISK       ISLANDIA               CORONA ISLANDESA       4900 *             121.200000
+JPY       JAPON                  YEN                    3600 *             158.940000
+KRW       KOREA                  WON                    5300 *            1357.500000
+MYR       MALASIA                RINGGIT MALAYO         5600 *               4.043500
+MXN       MEXICO                 PESO MEXICANO          4200 *              16.979600
+NOK       NORUEGA                CORONA NORUEGA         4600 *               9.315900
+PYG       PARAGUAY               GUARANI                4800 *            5951.700000
+PEN       PERU                   NVO.SOL PERUANO        4000 *               3.361800
+RUB       RUSIA                  RUBLO                  5400 *              88.339223
+ZAR       SUDAFRICA              RAND SUDAFRICANO       1620 *              16.063900
+SEK       SUECIA                 CORONA SUECA           5800 *               9.624300
+CHF       SUIZA                  FRANCO SUIZO           5900 *               0.813300
+TRY       TURQUIA                LIRA TURCA             4400 *              48.290000
+VEF       VENEZUELA              BOLIVAR                6200 *             799.191700
+AUD       AUSTRALIA              DOL. AUSTRALIANO       0105 **              0.716800
+GBP       GRAN BRETAÑA           LIBRA ESTERLINA        2700 **              1.348600
+NZD       NUEVA ZELANDIA         DOL. NEOZELANDES       1490 **              0.584500
+EUR       UNION MONET.EUROPEA    EURO                   1111 **              1.158600
+SDR       F.M.I.                 DER.ESP. DE GIRO       0002 **              1.367350
+C O T I Z A C I O N E S    I N T E R B A N C A R I A S   (M E R C A D O    L O C A L)
+EMISOR                 DENOMINACIÓN           CÓDIGO       PROMEDIO
+ARGENTINA              PESO ARG.BILLETE       0501  UYU       0.027
+BRASIL                 REAL BILLETE           1001  UYU       7.936
+ESTADOS UNIDOS         DLS. USA BILLETE       2225  UYU      40.233
+ESTADOS UNIDOS         DLS. USA CABLE         2224  UYU      40.233
+URUGUAY                DLS.PROMED.FONDO       2230  UYU      40.233
+URUGUAY                UNIDAD INDEXADA        9800  UI        6.63740
+URUGUAY                UNIDAD PREVISIONAL     9700  UP        1.79500
+URUGUAY                UNIDAD REAJUSTAB       9900  UR     1940.770
+M E T A L E S    P R E C I O S O S    (O N Z A S    T R O Y    E N    U S D)
+LONDRES                O R O                  9000                4373.880000
+LONDRES                P A L A D I O          9600                1351.250000
+LONDRES                P L A T A              9300                  65.080000
+LONDRES                P L A T I N O          9400                1756.620000
+T A S A S    L O C A L E S
+URUGUAY                Tasa Med. de Mercado   9203                   5.750000 valor 02/09/26
+*  CONVENCIÓN: UNIDAD DE MONEDA POR DÓLARES DE EE.UU.
+** CONVENCIÓN: DÓLARES EE.UU. POR UNIDAD DE MONEDA
