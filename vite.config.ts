@@ -60,7 +60,10 @@ export default defineConfig({
             presets: [reactCompilerPreset()],
         }),
         inertia(),
-        laravel({ input: ["resources/css/app.css", "resources/js/app.tsx"], refresh: true }),
+        laravel({
+            input: ["resources/css/app.css", "resources/js/app.tsx", "resources/css/filament/administration/theme.css"],
+            refresh: true,
+        }),
         react(),
         tailwindcss(),
         wayfinder({ formVariants: true }),

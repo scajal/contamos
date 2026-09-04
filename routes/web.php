@@ -38,7 +38,7 @@ require __DIR__.'/../app/Modules/Authentication/Routes/web.php';
 |
 */
 
-require __DIR__.'/../app/Modules/Administration/Routes/web.php';
+// require __DIR__.'/../app/Modules/Administration/Routes/web.php';
 
 /*
 |--------------------------------------------------------------------------

@@ -8,10 +8,8 @@ import {
     BanknoteIcon,
     ChevronDownIcon,
     ChevronsUpDownIcon,
-    CircleDollarSignIcon,
     LayoutDashboardIcon,
     LogOutIcon,
-    UsersIcon,
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
@@ -43,8 +41,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
-import currencies from "@/routes/administration/catalog/currencies";
-import users from "@/routes/administration/identity/users";
 import accounts from "@/routes/finance/teams/accounts";
 import transactions from "@/routes/finance/teams/transactions";
 
@@ -189,18 +185,7 @@ const Sidebar = () => {
                 </SidebarGroup>
                 <SidebarGroup>
                     <SidebarGroupLabel>{t("Administration")}</SidebarGroupLabel>
-                    <SidebarMenu>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton render={<Link href={currencies.index.url()} />}>
-                                <CircleDollarSignIcon />
-                                <span>{t("Currencies")}</span>
-                            </SidebarMenuButton>
-                            <SidebarMenuButton render={<Link href={users.index.url()} />}>
-                                <UsersIcon />
-                                <span>{t("Users")}</span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
+                    <SidebarMenu></SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>

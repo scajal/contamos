@@ -6,6 +6,7 @@
     "license": "UNLICENSED",
     "require": {
         "php": "^8.3",
+        "filament/filament": "^5.7",
         "inertiajs/inertia-laravel": "^3.0",
         "inertiaui/modal": "^3.1",
         "laravel-lang/common": "^6.8",
@@ -73,7 +74,8 @@
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",

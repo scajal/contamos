@@ -89,6 +89,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the password field for the user.
+     */
+    public function getAuthPassword(): string
+    {
+        return '';
+    }
+
+    /**
      * Switch the user to a different team.
      */
     public function switchTeam(Team $team): bool
