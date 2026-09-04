@@ -1,0 +1,4 @@
+@import "../../../vendor/filament/filament/resources/css/theme.css";
+
+@source "../../../app/Modules/Administration/Panels/Administration/**/*";
+@source "../../../resources/views/filament/modules/administration/panels/administration/**/*";
