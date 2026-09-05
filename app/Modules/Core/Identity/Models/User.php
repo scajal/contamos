@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\URL;
  * @property string|null $avatar
  * @property string $email
  * @property \Carbon\CarbonImmutable|null $email_verified_at
- * @property string $external_id
+ * @property string|null $external_id
  * @property bool $is_active
  * @property string $name
  * @property string|null $remember_token
