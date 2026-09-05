@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Catalog\Enums\Currency;
 
-enum CurrencyType: string
+use Filament\Support\Contracts\HasLabel;
+
+enum CurrencyType: string implements HasLabel
 {
     /**
      * Cryptocurrencies are digital currencies that are not issued by a central bank.
@@ -21,4 +23,12 @@ enum CurrencyType: string
      * or organization (like loyalty points).
      */
     case Virtual = 'virtual';
+
+    /**
+     * Get the label of the currency type.
+     */
+    public function getLabel(): string
+    {
+        return trans("enums.{$this->value}");
+    }
 }

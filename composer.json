@@ -6,6 +6,7 @@
     "license": "UNLICENSED",
     "require": {
         "php": "^8.3",
+        "codewithdennis/filament-lucide-icons": "^4.1",
         "filament/filament": "^5.7",
         "inertiajs/inertia-laravel": "^3.0",
         "inertiaui/modal": "^3.1",

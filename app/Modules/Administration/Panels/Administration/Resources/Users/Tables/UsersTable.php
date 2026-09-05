@@ -21,8 +21,7 @@ class UsersTable
     {
         return $table
             ->columns(self::getColumns())
-            ->recordActions(self::getRecordActions())
-            ->toolbarActions(self::getToolbarActions());
+            ->recordActions(self::getRecordActions());
     }
 
     /**
@@ -44,6 +43,10 @@ class UsersTable
                     Tables\Columns\TextColumn::make('email')
                         ->searchable(),
                 ]),
+                Tables\Columns\TextColumn::make('is_active')
+                    ->formatStateUsing(fn (bool $state): string => $state ? trans('Active') : trans('Inactive'))
+                    ->color(fn (bool $state): array => $state ? Color::Green : Color::Red)
+                    ->badge(),
             ]),
         ];
     }
@@ -57,8 +60,10 @@ class UsersTable
     {
         return [
             Actions\ActionGroup::make([
-                Actions\ViewAction::make(),
-                Actions\DeleteAction::make(),
+                Actions\ActionGroup::make([
+                    Actions\ViewAction::make(),
+                    Actions\DeleteAction::make(),
+                ])->dropdown(false),
                 Actions\ActionGroup::make([
                     Actions\Action::make('activate')
                         ->action(fn (User $record): bool => $record->update(['is_active' => true]))
@@ -75,20 +80,6 @@ class UsersTable
                         ->icon(Heroicon::XMark)
                         ->color(Color::Red),
                 ])->dropdown(false),
-            ]),
-        ];
-    }
-
-    /**
-     * Get the toolbar actions for the table.
-     *
-     * @return array<int, \Filament\Actions\BulkActionGroup>
-     */
-    protected static function getToolbarActions(): array
-    {
-        return [
-            Actions\BulkActionGroup::make([
-                Actions\DeleteBulkAction::make(),
             ]),
         ];
     }

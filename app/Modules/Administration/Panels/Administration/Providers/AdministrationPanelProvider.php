@@ -18,7 +18,7 @@ class AdministrationPanelProvider extends PanelProvider
     {
         return parent::panel($panel)
             ->id('administration')
-            ->colors(['primary' => Color::Green])
+            ->colors(['primary' => Color::Lime])
             ->discoverClusters(in: app_path('Modules/Administration/Panels/Administration/Clusters'), for: 'App\Modules\Administration\Panels\Administration\Clusters')
             ->discoverLivewireComponents(in: app_path('Modules/Administration/Panels/Administration/Livewire/Components'), for: 'App\Modules\Administration\Panels\Administration\Livewire\Components')
             ->discoverPages(in: app_path('Modules/Administration/Panels/Administration/Pages'), for: 'App\Modules\Administration\Panels\Administration\Pages')
