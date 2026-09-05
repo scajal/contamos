@@ -183,10 +183,6 @@ const Sidebar = () => {
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>
-                <SidebarGroup>
-                    <SidebarGroupLabel>{t("Administration")}</SidebarGroupLabel>
-                    <SidebarMenu></SidebarMenu>
-                </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
                 <SidebarMenu>
