@@ -74,6 +74,15 @@ class CreateTransaction
                 $transaction->user()->associate($this->user)->save();
             }
 
+            // Update the account balance.
+            $this->team?->accounts()
+                ->whereKey($transaction->account->getKey())
+                ->firstOrFail()
+                ->currencies()
+                ->updateExistingPivot($currency->getKey(), [
+                    'balance' => DB::raw("balance {$transaction->type->sign()} {$transaction->amount}"),
+                ]);
+
             // Return the transaction.
             return $transaction;
         });

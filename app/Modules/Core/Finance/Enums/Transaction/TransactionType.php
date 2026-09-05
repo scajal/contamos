@@ -15,4 +15,16 @@ enum TransactionType: string
      * Represents an income.
      */
     case Income = 'income';
+
+    /**
+     * Get the sign for the transaction
+     * type.
+     */
+    public function sign(): string
+    {
+        return match ($this) {
+            self::Expense => '-',
+            self::Income => '+',
+        };
+    }
 }

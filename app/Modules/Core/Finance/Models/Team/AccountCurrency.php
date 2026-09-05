@@ -5,11 +5,12 @@ namespace App\Modules\Core\Finance\Models\Team;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
- * @property int $id
+ * @property string $id
  * @property string $account_id
  * @property string $currency_id
  * @property \Carbon\CarbonImmutable|null $created_at
@@ -26,15 +27,10 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 #[Table('account_currencies')]
 class AccountCurrency extends Pivot
 {
-    /** @use \App\Modules\Support\Concerns\DefinesKeyType<int> */
+    /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = true;
+    use HasUlids;
 
     /**
      * Get the account that the account currency belongs to.

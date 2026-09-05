@@ -81,6 +81,7 @@ class Account extends Model
     {
         return $this->belongsToMany(Currency::class, new AccountCurrency()->getTable(), $this->getForeignKey(), new Currency()->getForeignKey())
             ->using(AccountCurrency::class)
+            ->withPivot(['balance'])
             ->withTimestamps();
     }
 
