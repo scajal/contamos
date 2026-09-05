@@ -34,3 +34,6 @@ Put domain feature modules under `app/Modules/Core/{Module}/`. Keep Authenticati
 
 ## Eager-load at the call site
 Eager-load relations with per-query `->with()` or `->load()`. Do not set model-level `$with`.
+
+## CarbonImmutable dates
+Application dates are CarbonImmutable. Typehint and construct with CarbonImmutable; do not introduce mutable Carbon.

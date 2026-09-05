@@ -25,3 +25,6 @@ After a successful write that flashes an Inertia toast, call `assertFlashedToast
 
 ## inertiaModalHeaders for modal visits
 When visiting an Inertia modal route, send `withHeaders(inertiaModalHeaders())` so the request is a modal XHR, not a dual base-page visit.
+
+## CarbonImmutable dates
+Application dates are CarbonImmutable. Typehint and construct with CarbonImmutable; do not introduce mutable Carbon.

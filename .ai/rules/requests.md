@@ -22,3 +22,6 @@ Index pages use a Form Request named `IndexRequest` (sibling of StoreRequest/Upd
 
 ## IndexRequest owns AllowedFilter list
 Put Query Builder `AllowedFilter` definitions on `IndexRequest::filters()`. In the index action call `->allowedFilters(...$request->filters())`; do not inline the allow-list in the controller.
+
+## Validation attributes in lang files
+Put custom validation attribute labels in lang/{locale}/validation.php under attributes. Do not add Form Request attributes() or messages() methods.

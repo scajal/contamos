@@ -16,3 +16,6 @@ For team-scoped setup, use `actingMember()` (Feature) or `memberWithTeam()` (Uni
 
 ## Instantiate Unit collaborators with new
 Unit-test Actions, middleware, and support classes by constructing them with `new` against real Eloquent factories. Do not Mockery-mock application classes.
+
+## CarbonImmutable dates
+Application dates are CarbonImmutable. Typehint and construct with CarbonImmutable; do not introduce mutable Carbon.
