@@ -77,11 +77,10 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                 <FieldLabel>{t("Type")}</FieldLabel>
                 <Select
                     defaultValue={defaultValues?.type}
-                    disabled={isLocked("type")}
                     name="type"
                     onValueChange={(value) => setType(value as AccountType)}
                 >
-                    <SelectTrigger aria-invalid={invalid("type")}>
+                    <SelectTrigger aria-invalid={invalid("type")} disabled={isLocked("type")}>
                         <SelectValue>
                             {(value: AccountType | null) => (value ? t(`enums.${value}`) : t("Select a type"))}
                         </SelectValue>

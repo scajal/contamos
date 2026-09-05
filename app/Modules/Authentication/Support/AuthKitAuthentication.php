@@ -29,6 +29,20 @@ class AuthKitAuthentication
      */
     public function findUsing(WorkOSUser $user): ?User
     {
-        return User::query()->where('external_id', $user->id)->first();
+        return User::query()
+            ->where('external_id', $user->id)
+            ->orWhere('email', $user->email)
+            ->first();
+    }
+
+    /**
+     * Update a user using the provided WorkOS information.
+     */
+    public function updateUsing(User $user, WorkOSUser $userFromWorkOS): User
+    {
+        return tap($user)->update(array_filter([
+            'avatar' => $userFromWorkOS->avatar ?? '',
+            'external_id' => $user->external_id ?? $userFromWorkOS->id,
+        ]));
     }
 }

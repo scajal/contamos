@@ -26,7 +26,7 @@ class AuthenticationController
      */
     public function authenticate(AuthKitAuthenticationRequest $request, AuthKitAuthentication $authKit, ResolveAuthenticationRedirect $resolveAuthenticationRedirect): Response
     {
-        $request->authenticate($authKit->findUsing(...), $authKit->createUsing(...));
+        $request->authenticate($authKit->findUsing(...), $authKit->createUsing(...), $authKit->updateUsing(...));
 
         // If the user is not active, logout from
         // WorkOS and the app.
