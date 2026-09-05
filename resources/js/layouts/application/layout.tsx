@@ -157,7 +157,7 @@ const Sidebar = () => {
                         <SidebarMenuItem>
                             <SidebarMenuButton render={<Link href="/" />}>
                                 <LayoutDashboardIcon />
-                                <span>{t("Overview")}</span>
+                                <span>{t("Dashboard")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>
@@ -167,18 +167,18 @@ const Sidebar = () => {
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={<Link href={transactions.index.url({ team: user?.current_team_id ?? "" })} />}
-                            >
-                                <ArrowLeftRightIcon />
-                                <span>{t("Transactions")}</span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
                                 render={<Link href={accounts.index.url({ team: user?.current_team_id ?? "" })} />}
                             >
                                 <BanknoteIcon />
                                 <span>{t("Accounts")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                render={<Link href={transactions.index.url({ team: user?.current_team_id ?? "" })} />}
+                            >
+                                <ArrowLeftRightIcon />
+                                <span>{t("Transactions")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>

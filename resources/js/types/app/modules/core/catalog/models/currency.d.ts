@@ -16,5 +16,6 @@ export interface Currency {
     type: CurrencyType;
     created_at: string | null;
     updated_at: string | null;
+    currentQuote?: Quote | null;
     quotes?: Array<Quote>;
 }

@@ -115,7 +115,7 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                             )}
                             {currencies.map((currency) => (
                                 <TableRow key={currency.id} className="has-data-checked:bg-muted">
-                                    <TableCell className="w-8">
+                                    <TableCell className="w-6">
                                         <Checkbox
                                             aria-invalid={invalid("currency_ids")}
                                             defaultChecked={defaultValues?.currency_ids?.includes(currency.id)}
@@ -126,7 +126,7 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                                         />
                                     </TableCell>
                                     <TableCell>
-                                        <label htmlFor={`currency-${currency.id}`} className="flex flex-col gap-1">
+                                        <label htmlFor={`currency-${currency.id}`} className="flex flex-col">
                                             <span className="font-medium">{currency.name}</span>
                                             <span className="text-muted-foreground text-sm">{currency.code}</span>
                                         </label>
