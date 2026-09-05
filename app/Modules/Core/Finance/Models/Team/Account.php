@@ -49,6 +49,25 @@ class Account extends Model
     use HasUlids;
 
     /**
+     * Scope the query to the aggregated balance per currency
+     * of the accounts matching the query.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     */
+    #[Scope]
+    protected function balancesByCurrency(Builder $query): void
+    {
+        $query
+            ->select(($currency = new Currency)->qualifyColumns(['id', 'code', 'decimal_places', 'symbol']))
+            ->selectRaw(sprintf('SUM(%s) AS balance', ($pivot = new AccountCurrency)->qualifyColumn('balance')))
+            ->join($pivot->getTable(), $pivot->qualifyColumn($this->getForeignKey()), '=', $this->getQualifiedKeyName())
+            ->join($currency->getTable(), $currency->getQualifiedKeyName(), '=',
+                $pivot->qualifyColumn($currency->getForeignKey()))
+            ->groupBy($currency->qualifyColumns(['id', 'code', 'symbol', 'decimal_places']))
+            ->orderBy($currency->qualifyColumn('code'));
+    }
+
+    /**
      * The attributes that should be cast.
      *
      * @return array<string, string>
@@ -62,17 +81,6 @@ class Account extends Model
     }
 
     /**
-     * Scope the query to accounts with the given active state.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
-     */
-    #[Scope]
-    protected function isActive(Builder $query, bool|string $value = true): void
-    {
-        $query->where('is_active', filter_var($value, FILTER_VALIDATE_BOOLEAN));
-    }
-
-    /**
      * Get the currencies for the account.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Modules\Core\Catalog\Models\Currency, $this, \App\Modules\Core\Finance\Models\Team\AccountCurrency, 'pivot'>
@@ -83,6 +91,17 @@ class Account extends Model
             ->using(AccountCurrency::class)
             ->withPivot(['balance'])
             ->withTimestamps();
+    }
+
+    /**
+     * Scope the query to accounts with the given active state.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     */
+    #[Scope]
+    protected function isActive(Builder $query, bool|string $value = true): void
+    {
+        $query->where('is_active', filter_var($value, FILTER_VALIDATE_BOOLEAN));
     }
 
     /**

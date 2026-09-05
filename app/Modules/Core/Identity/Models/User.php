@@ -7,6 +7,8 @@ namespace App\Modules\Core\Identity\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use App\Modules\Support\Concerns\DefinesKeyType;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -43,7 +45,7 @@ use Illuminate\Support\Facades\URL;
  */
 #[Fillable(['avatar', 'email', 'external_id', 'is_active', 'name'])]
 #[Hidden(['external_id', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
@@ -63,6 +65,15 @@ class User extends Authenticatable
             "{$team->getTable()}.{$team->getKeyName()}",
             $team->getKey()
         )->exists();
+    }
+
+    /**
+     * Determine if the user can access the filament panel.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // @todo: Add security validation.
+        return true;
     }
 
     /**

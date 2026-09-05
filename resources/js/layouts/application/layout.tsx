@@ -10,6 +10,7 @@ import {
     ChevronsUpDownIcon,
     LayoutDashboardIcon,
     LogOutIcon,
+    ShieldCheckIcon,
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
@@ -21,6 +22,7 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
@@ -41,6 +43,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
+import administration from "@/routes/filament/administration";
 import accounts from "@/routes/finance/teams/accounts";
 import transactions from "@/routes/finance/teams/transactions";
 
@@ -146,7 +149,7 @@ const Sidebar = () => {
     /**
      * The page's props.
      */
-    const { user } = usePage().props;
+    const { auth, user } = usePage().props;
 
     return (
         <SidebarComponent collapsible="icon">
@@ -201,6 +204,21 @@ const Sidebar = () => {
                                 <ChevronsUpDownIcon className="ml-auto size-4" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent side={isMobile ? "bottom" : "right"} align="end" sideOffset={4}>
+                                {auth.canAccessAdministration && (
+                                    <Fragment>
+                                        <DropdownMenuGroup>
+                                            <DropdownMenuItem
+                                                render={
+                                                    <a href={administration.pages.dashboard.url()} target="_blank" />
+                                                }
+                                            >
+                                                <ShieldCheckIcon />
+                                                <span>{t("Administration")}</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuGroup>
+                                        <DropdownMenuSeparator />
+                                    </Fragment>
+                                )}
                                 <DropdownMenuGroup>
                                     <DropdownMenuItem render={<a href={logout.url()} />}>
                                         <LogOutIcon />

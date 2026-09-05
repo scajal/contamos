@@ -11,6 +11,7 @@ declare module "react" {
 declare module "@inertiajs/core" {
     export interface InertiaConfig {
         sharedPageProps: {
+            auth: { canAccessAdministration: boolean };
             user: User | null;
             [key: string]: unknown;
         };

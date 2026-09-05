@@ -2,6 +2,7 @@
 
 namespace App\Modules\Support\Http\Middleware;
 
+use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Middleware;
@@ -41,6 +42,10 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
+
+            'auth' => [
+                'canAccessAdministration' => $user?->canAccessPanel(Filament::getPanel('administration')),
+            ],
 
             // The authenticated user.
             'user' => Inertia::always($user),
