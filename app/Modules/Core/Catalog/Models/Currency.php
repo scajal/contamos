@@ -105,7 +105,7 @@ class Currency extends Model
     #[Scope]
     protected function isActive(Builder $query, bool|string $value = true): void
     {
-        $query->where('is_active', filter_var($value, FILTER_VALIDATE_BOOLEAN));
+        $query->where($this->qualifyColumn('is_active'), filter_var($value, FILTER_VALIDATE_BOOLEAN));
     }
 
     /**

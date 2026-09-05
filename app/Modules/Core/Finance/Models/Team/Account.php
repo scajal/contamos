@@ -4,6 +4,7 @@ namespace App\Modules\Core\Finance\Models\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\Account\AccountType;
+use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -57,13 +58,18 @@ class Account extends Model
     #[Scope]
     protected function balancesByCurrency(Builder $query): void
     {
+        // Build one CASE branch per transaction type, signing the amount accordingly.
+        $signedAmount = collect(TransactionType::cases())
+            ->map(fn (TransactionType $type): string => sprintf('WHEN %s = ? THEN %s%s', ($transaction = new Transaction)->qualifyColumn('type'), $type->sign(), $transaction->qualifyColumn('amount')))
+            ->implode(' ');
+
+        // For each currency, sum the signed amount of the transactions.
         $query
-            ->select(($currency = new Currency)->qualifyColumns(['id', 'code', 'decimal_places', 'symbol']))
-            ->selectRaw(sprintf('SUM(%s) AS balance', ($pivot = new AccountCurrency)->qualifyColumn('balance')))
-            ->join($pivot->getTable(), $pivot->qualifyColumn($this->getForeignKey()), '=', $this->getQualifiedKeyName())
-            ->join($currency->getTable(), $currency->getQualifiedKeyName(), '=',
-                $pivot->qualifyColumn($currency->getForeignKey()))
-            ->groupBy($currency->qualifyColumns(['id', 'code', 'symbol', 'decimal_places']))
+            ->select(($currency = new Currency)->qualifyColumns([$currency->getKeyName(), 'code', 'decimal_places', 'symbol']))
+            ->selectRaw(sprintf('SUM(CASE %s ELSE 0 END) AS balance', $signedAmount), array_column(TransactionType::cases(), 'value'))
+            ->join(($transaction = new Transaction)->getTable(), $transaction->qualifyColumn($this->getForeignKey()), '=', $this->getQualifiedKeyName())
+            ->join($currency->getTable(), $currency->getQualifiedKeyName(), '=', $transaction->qualifyColumn($currency->getForeignKey()))
+            ->groupBy($currency->qualifyColumns([$currency->getKeyName(), 'code', 'decimal_places', 'symbol']))
             ->orderBy($currency->qualifyColumn('code'));
     }
 
@@ -101,7 +107,7 @@ class Account extends Model
     #[Scope]
     protected function isActive(Builder $query, bool|string $value = true): void
     {
-        $query->where('is_active', filter_var($value, FILTER_VALIDATE_BOOLEAN));
+        $query->where($this->qualifyColumn('is_active'), filter_var($value, FILTER_VALIDATE_BOOLEAN));
     }
 
     /**
