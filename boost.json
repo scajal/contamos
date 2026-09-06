@@ -18,6 +18,7 @@
         "infer-conventions",
         "laravel-best-practices",
         "testing-best-practices",
+        "pennant-development",
         "wayfinder-development",
         "inertia-react-development",
         "tailwindcss-development",

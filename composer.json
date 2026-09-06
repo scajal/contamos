@@ -12,6 +12,7 @@
         "inertiaui/modal": "^3.1",
         "laravel-lang/common": "^6.8",
         "laravel/framework": "^13.17",
+        "laravel/pennant": "^1.26",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
         "laravel/workos": "^0.6.0",
