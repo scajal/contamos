@@ -2,6 +2,19 @@ import "react";
 import { User } from "./app/modules/core/identity/models/user";
 import { Toast } from "./app/modules/support/objects/toast";
 
+declare global {
+    interface Window {
+        Paddle?: {
+            Checkout: {
+                open: (options: Record<string, unknown>) => void;
+            };
+            Environment: {
+                set: (environment: "sandbox" | "production") => void;
+            };
+        };
+    }
+}
+
 declare module "react" {
     interface InputHTMLAttributes<T> {
         passwordrules?: string;

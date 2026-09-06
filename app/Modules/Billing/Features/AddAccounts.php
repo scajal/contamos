@@ -14,6 +14,6 @@ class AddAccounts
      */
     public function resolve(Team $team): bool
     {
-        return ($limit = $team->plan()->limits()['accounts']) === null || $limit > $team->accounts()->count();
+        return ($limit = $team->plan()->limits()['accounts']) === null || $limit > $team->planUsage('accounts');
     }
 }

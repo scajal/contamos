@@ -14,6 +14,6 @@ class AddMembers
      */
     public function resolve(Team $team): bool
     {
-        return ($limit = $team->plan()->limits()['members']) === null || $limit > $team->users()->count();
+        return ($limit = $team->plan()->limits()['members']) === null || $limit > $team->planUsage('members');
     }
 }

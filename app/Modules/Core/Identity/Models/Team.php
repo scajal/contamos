@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Laravel\Paddle\Billable;
 use Laravel\Pennant\Concerns\HasFeatures;
@@ -140,6 +141,22 @@ class Team extends Model
     }
 
     /**
+     * Get the customer's email to associate with Paddle.
+     */
+    public function paddleEmail(): ?string
+    {
+        return Auth::user()?->email ?? $this->users()->first()->email;
+    }
+
+    /**
+     * Get the customer's name to associate with Paddle.
+     */
+    public function paddleName(): ?string
+    {
+        return $this->name;
+    }
+
+    /**
      * Get the team's current plan.
      */
     public function plan(): Plan
@@ -148,6 +165,34 @@ class Team extends Model
             $this->subscribed() => Plan::Pro,
             default => Plan::Free,
         };
+    }
+
+    /**
+     * Get the current plan usage for each
+     * of the plan metrics.
+     *
+     * @param  'accounts'|'members'|'transactionsPerMonth'|null  $metric
+     * @return int|array{
+     *      accounts: int,
+     *      members: int,
+     *      transactionsPerMonth: int|null,
+     * }
+     */
+    public function planUsage(?string $metric = null): array|int
+    {
+        if ($metric) {
+            return match ($metric) {
+                'accounts' => $this->accounts()->count(),
+                'members' => $this->users()->count(),
+                'transactionsPerMonth' => $this->transactions()->occurredFrom(now()->startOfMonth())->occurredUntil(now()->endOfMonth())->count(),
+            };
+        }
+
+        return [
+            'accounts' => $this->accounts()->count(),
+            'members' => $this->users()->count(),
+            'transactionsPerMonth' => $this->transactions()->occurredFrom(now()->startOfMonth())->occurredUntil(now()->endOfMonth())->count(),
+        ];
     }
 
     /**

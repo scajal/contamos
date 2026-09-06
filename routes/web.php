@@ -46,3 +46,14 @@ require __DIR__.'/../app/Modules/Authentication/Routes/web.php';
 */
 
 require __DIR__.'/../app/Modules/Core/Finance/Routes/web.php';
+
+/*
+|--------------------------------------------------------------------------
+| Billing routes
+|--------------------------------------------------------------------------
+|
+| This file contains the routes for the billing module.
+|
+*/
+
+require __DIR__.'/../app/Modules/Billing/Routes/web.php';

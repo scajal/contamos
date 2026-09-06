@@ -14,11 +14,6 @@ class AddTransactions
      */
     public function resolve(Team $team): bool
     {
-        return ($limit = $team->plan()->limits()['transactionsPerMonth']) === null || (
-            $limit > $team->transactions()
-                ->occurredFrom(now()->startOfMonth())
-                ->occurredUntil(now()->endOfMonth())
-                ->count()
-        );
+        return ($limit = $team->plan()->limits()['transactionsPerMonth']) === null || $limit > $team->planUsage('transactionsPerMonth');
     }
 }
