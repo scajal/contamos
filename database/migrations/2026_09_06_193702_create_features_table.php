@@ -12,7 +12,7 @@ return new class extends PennantMigration
     public function up(): void
     {
         Schema::create('features', function (Blueprint $table) {
-            $table->ulid('id')->primary();
+            $table->id();
             $table->string('name');
             $table->string('scope');
             $table->text('value');

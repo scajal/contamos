@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Models;
 
+use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use Laravel\Paddle\Billable;
+use Laravel\Pennant\Concerns\HasFeatures;
 
 /**
  * @property string $id
@@ -38,12 +41,17 @@ use Illuminate\Support\Str;
  */
 class Team extends Model
 {
+    use Billable {
+        transactions as billingTransactions;
+    }
+
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Identity\Models\TeamFactory> */
     use HasFactory;
 
+    use HasFeatures;
     use HasUlids;
 
     /**
@@ -129,6 +137,17 @@ class Team extends Model
     public function invitations(): HasMany
     {
         return $this->hasMany(Team\TeamInvitation::class);
+    }
+
+    /**
+     * Get the team's current plan.
+     */
+    public function plan(): Plan
+    {
+        return match (true) {
+            $this->subscribed() => Plan::Pro,
+            default => Plan::Free,
+        };
     }
 
     /**
