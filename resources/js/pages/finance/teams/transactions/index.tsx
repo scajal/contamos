@@ -440,7 +440,7 @@ const Listing = () => {
                         <Fragment key={date}>
                             <Item className="p-0 pb-4 not-first:mt-4">
                                 <ItemHeader>
-                                    <ItemTitle>{format(new Date(date), "MMMM d, yyyy")}</ItemTitle>
+                                    <ItemTitle>{format(parse(date, DATE_FORMAT, new Date()), "MMMM d, yyyy")}</ItemTitle>
                                 </ItemHeader>
                             </Item>
                             <div className="min-w-0 overflow-x-auto rounded-sm border">

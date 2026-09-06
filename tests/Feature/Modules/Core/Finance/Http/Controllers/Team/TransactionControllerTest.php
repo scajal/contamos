@@ -280,6 +280,24 @@ describe('store', function (): void {
             ->and($transaction->tags)->toHaveCount(0);
     });
 
+    it('stores a datetime-local occurred_at in UTC using the submitted timezone', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'occurred_at' => '2026-09-06T12:21',
+                'timezone' => 'America/Argentina/Buenos_Aires',
+            ]))
+            ->assertRedirect();
+
+        expect(Transaction::query()->sole()->occurred_at->toDateTimeString())->toBe('2026-09-06 15:21:00');
+    });
+
     it('attaches tags when creating a transaction', function (): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);

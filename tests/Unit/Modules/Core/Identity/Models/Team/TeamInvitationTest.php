@@ -34,6 +34,13 @@ it('keeps the provided code and expiration date', function (): void {
         ->and($invitation->expires_at?->equalTo($expiresAt))->toBeTrue();
 });
 
+it('stores the email in lowercase', function (): void {
+    $invitation = TeamInvitation::factory()->create(['email' => 'Ada@Example.com']);
+
+    expect($invitation->email)->toBe('ada@example.com')
+        ->and($invitation->fresh()?->email)->toBe('ada@example.com');
+});
+
 it('uses the code as the route key', function (): void {
     $invitation = TeamInvitation::factory()->create();
 

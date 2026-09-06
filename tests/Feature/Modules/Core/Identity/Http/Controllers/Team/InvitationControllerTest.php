@@ -234,6 +234,24 @@ describe('store', function (): void {
         Notification::assertNothingSent();
     });
 
+    it('rejects an open invitation for the same email in a different case', function (): void {
+        Notification::fake();
+        [$user, $team] = actingMember();
+        TeamInvitation::factory()->for($team)->create(['email' => 'ada@example.com']);
+
+        $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
+            ->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload([
+                'email' => 'Ada@Example.com',
+            ]))
+            ->assertRedirect()
+            ->assertInvalid([
+                'email' => trans('This email already has an open invitation.'),
+            ]);
+
+        expect(TeamInvitation::query()->count())->toBe(1);
+        Notification::assertNothingSent();
+    });
+
     it('allows inviting an email again once its invitation expired or was accepted', function (): void {
         Notification::fake();
         [$user, $team] = actingMember();

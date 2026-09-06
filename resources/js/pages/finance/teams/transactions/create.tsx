@@ -45,6 +45,10 @@ export default function Create({ accounts, tags, type }: PageProps) {
                                 router.reload({ reset: ["transactions"] });
                             }}
                             options={{ only: ["errors"] }}
+                            transform={(data) => ({
+                                ...data,
+                                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                            })}
                         >
                             {(formProps) => (
                                 <Fragment>

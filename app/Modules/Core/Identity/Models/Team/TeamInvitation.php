@@ -68,10 +68,16 @@ class TeamInvitation extends Model
         // Callback executed when an invitation is
         // being created.
         static::creating(function (TeamInvitation $invitation): void {
+            // Normalize the email so lookups and uniqueness
+            // checks ignore case and surrounding spaces.
+            $invitation->email = Str::lower(trim($invitation->email));
+
+            // Generate a new code if one is not provided.
             if (blank($invitation->code)) {
                 $invitation->code = Str::random(64);
             }
 
+            // Set the expiration date to 7 days from now if not provided.
             if (blank($invitation->expires_at)) {
                 $invitation->expires_at = CarbonImmutable::now()->addDays(7);
             }

@@ -10,6 +10,7 @@ use Closure;
 use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 
 class StoreRequest extends FormRequest
 {
@@ -77,7 +78,7 @@ class StoreRequest extends FormRequest
             // If an open invitation exists for the email, fail the validation.
             $isInvited = $team->invitations()
                 ->pending()
-                ->where('email', $value)
+                ->where('email', Str::lower($value))
                 ->exists();
 
             if ($isInvited) {
