@@ -6,6 +6,7 @@ import type { Team } from "../../../identity/models/team";
 import type { User } from "../../../identity/models/user";
 import { TransactionType } from "../../enums/transaction/transaction-type";
 import type { Account } from "./account";
+import type { Tag } from "./tag";
 
 export interface Transaction {
     id: string;
@@ -23,6 +24,7 @@ export interface Transaction {
     updated_at: string | null;
     account?: Account;
     currency?: Currency;
+    tags?: Tag[];
     team?: Team;
     user?: User | null;
 }

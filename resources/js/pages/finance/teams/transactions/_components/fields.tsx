@@ -3,6 +3,7 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { CalendarIcon, DollarSignIcon, ListIcon } from "lucide-react";
 import { useState } from "react";
 
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Combobox,
     ComboboxContent,
@@ -12,18 +13,21 @@ import {
     ComboboxTrigger,
     ComboboxValue,
 } from "@/components/ui/combobox";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
+import { Item, ItemContent, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { Textarea } from "@/components/ui/textarea";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
+import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 
-type FormProps = Partial<Omit<Transaction, "account" | "currency" | "team" | "user">>;
+type FormProps = Partial<Omit<Transaction, "account" | "currency" | "tags" | "team" | "user"> & { tag_ids: Array<string> }>;
 
 type Props = FormComponentSlotProps<FormProps> & {
     accounts: Array<Account>;
     defaultValues?: FormProps;
+    tags: Array<Tag>;
 };
 
 /**
@@ -37,7 +41,7 @@ function toDateTimeLocalValue(value?: string): string {
     return `${resolved.getFullYear()}-${pad(resolved.getMonth() + 1)}-${pad(resolved.getDate())}T${pad(resolved.getHours())}:${pad(resolved.getMinutes())}`;
 }
 
-export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
+export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props) => {
     /**
      * Translate the provided string
      * to the current locale.
@@ -189,6 +193,41 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                 />
                 {invalid("description") && <FieldError>{errors.description}</FieldError>}
             </Field>
+
+            {/** Tags */}
+            <FieldSet data-invalid={invalid("tag_ids") || undefined}>
+                <FieldLegend variant="label">{t("Tags")}</FieldLegend>
+                <FieldDescription>{t("Choose the tags for this transaction.")}</FieldDescription>
+                {tags.length > 0 ? (
+                    <div className="overflow-hidden rounded-sm border">
+                        <ItemGroup className="gap-0">
+                            {tags.map((tag) => (
+                                <Item
+                                    className="rounded-none border-0 border-b last:border-b-0"
+                                    key={tag.id}
+                                    size="sm"
+                                >
+                                    <ItemMedia>
+                                        <Checkbox
+                                            aria-invalid={invalid("tag_ids")}
+                                            defaultChecked={defaultValues?.tag_ids?.includes(tag.id)}
+                                            id={`tag-${tag.id}`}
+                                            name="tag_ids[]"
+                                            value={tag.id}
+                                        />
+                                    </ItemMedia>
+                                    <ItemContent>
+                                        <ItemTitle>
+                                            <label htmlFor={`tag-${tag.id}`}>{tag.name}</label>
+                                        </ItemTitle>
+                                    </ItemContent>
+                                </Item>
+                            ))}
+                        </ItemGroup>
+                    </div>
+                ) : null}
+                {invalid("tag_ids") && <FieldError>{errors.tag_ids}</FieldError>}
+            </FieldSet>
 
             {/** Exchange rate */}
             <Field data-invalid={invalid("quote") || undefined}>

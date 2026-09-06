@@ -9,15 +9,17 @@ import { Spinner } from "@/components/ui/spinner";
 import transactions from "@/routes/finance/teams/transactions";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
+import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 
 import { Fields } from "./_components/fields";
 
 type PageProps = {
     accounts: Array<Account>;
+    tags: Array<Tag>;
     type: TransactionType;
 };
 
-export default function Create({ accounts, type }: PageProps) {
+export default function Create({ accounts, tags, type }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -55,7 +57,7 @@ export default function Create({ accounts, type }: PageProps) {
                                         </SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-4">
-                                        <Fields accounts={accounts} defaultValues={{ type }} {...formProps} />
+                                        <Fields accounts={accounts} defaultValues={{ type }} tags={tags} {...formProps} />
                                     </div>
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">

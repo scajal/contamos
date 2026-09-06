@@ -281,6 +281,7 @@ return [
         'subject' => 'subject',
         'symbol' => 'symbol',
         'tag' => 'tag',
+        'tag_ids' => 'tags',
         'tags' => 'tags',
         'teacher' => 'teacher',
         'terms' => 'terms',

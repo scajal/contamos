@@ -25,3 +25,6 @@ Put Query Builder `AllowedFilter` definitions on `IndexRequest::filters()`. In t
 
 ## Validation attributes in lang files
 Put custom validation attribute labels in lang/{locale}/validation.php under attributes. Do not add Form Request attributes() or messages() methods.
+
+## distinct belongs on array items
+Laravel distinct compares sibling values on wildcard attributes (tag_ids.*), not the parent array. Putting distinct on tag_ids lets duplicate IDs through and the taggables unique index then 500s.

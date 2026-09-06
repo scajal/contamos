@@ -281,6 +281,7 @@ return [
         'subject' => 'asunto',
         'symbol' => 'símbolo',
         'tag' => 'etiqueta',
+        'tag_ids' => 'etiquetas',
         'tags' => 'etiquetas',
         'teacher' => 'profesor',
         'terms' => 'términos',

@@ -7,6 +7,7 @@ namespace App\Modules\Core\Finance\Http\Requests\Team\Transaction;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use Illuminate\Container\Attributes\RouteParameter;
@@ -40,8 +41,42 @@ class IndexRequest extends FormRequest
             AllowedFilter::exact('currency', new Transaction()->currency()->getForeignKeyName()),
             AllowedFilter::groupOr('search', [AllowedFilter::exact('id'), AllowedFilter::partial('description')]),
             AllowedFilter::scope('from', 'occurred_from'),
+            AllowedFilter::scope('tags', 'withAnyTags'),
             AllowedFilter::scope('to', 'occurred_until'),
         ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Validate that the tags are a string and not empty.
+        if (! (is_string($tags = $this->input('filter.tags'))) || ! $tags) {
+            return;
+        }
+
+        // Merge the tags into the request.
+        $this->merge(['filter' => ['tags' => explode(',', $tags)]]);
+    }
+
+    /**
+     * Validated filters with list values compacted for the query string.
+     *
+     * @return array<string, mixed>
+     */
+    public function presentedFilters(): array
+    {
+        // Get the filters from the request.
+        /** @var array<string, mixed> $filters */
+        $filters = $this->validated('filter', []);
+
+        // If the tags are an array, implode them into a string.
+        if (isset($filters['tags']) && is_array($filters['tags'])) {
+            $filters['tags'] = implode(',', array_values(array_filter($filters['tags'], is_string(...))));
+        }
+
+        return $filters;
     }
 
     /**
@@ -85,6 +120,17 @@ class IndexRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'date_format:Y-m-d',
+            ],
+            'filter.tags' => [
+                'sometimes',
+                'nullable',
+                'array',
+            ],
+            'filter.tags.*' => [
+                'required',
+                'string',
+                Rule::exists(Tag::class, new Tag()->getKeyName())
+                    ->where(new Tag()->team()->getForeignKeyName(), $team->getKey()),
             ],
             'filter.to' => [
                 'sometimes',

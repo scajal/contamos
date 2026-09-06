@@ -7,6 +7,7 @@ use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Concerns\DefinesKeyType;
+use App\Modules\Support\Concerns\HasTags;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Modules\Core\Finance\Models\Team\Account $account
  * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Tag> $tags
  * @property-read \App\Modules\Core\Identity\Models\Team $team
  * @property-read \App\Modules\Core\Identity\Models\User|null $user
  *
@@ -52,6 +54,7 @@ class Transaction extends Model
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Finance\Models\Team\TransactionFactory> */
     use HasFactory;
 
+    use HasTags;
     use HasUlids;
 
     /**

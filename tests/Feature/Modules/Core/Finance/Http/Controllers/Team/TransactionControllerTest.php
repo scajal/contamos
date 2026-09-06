@@ -6,6 +6,7 @@ use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -170,6 +171,54 @@ describe('index', function (): void {
             ->assertRedirect()
             ->assertInvalid(['filter.account']);
     });
+
+    it('filters transactions that have any of the given tags', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $comida = Tag::factory()->active()->for($team)->create(['name' => 'Comida']);
+        $salidas = Tag::factory()->active()->for($team)->create(['name' => 'Salidas']);
+        $matching = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        $matching->tags()->attach($comida->getKey());
+        $other = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        $other->tags()->attach($salidas->getKey());
+
+        $this->get(route('finance.teams.transactions.index', [
+            'team' => $team->getKey(),
+            'filter' => [
+                'tags' => $comida->getKey(),
+            ],
+        ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('filters.tags', $comida->getKey())
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('transactions.data', 1)
+                    ->where('transactions.data.0.id', $matching->getKey())));
+    });
+
+    it('rejects a tag filter from another team', function (): void {
+        [$user, $team] = actingMember();
+        $foreign = Tag::factory()->for(Team::factory())->create();
+
+        $this->get(route('finance.teams.transactions.index', [
+            'team' => $team->getKey(),
+            'filter' => ['tags' => $foreign->getKey()],
+        ]))
+            ->assertRedirect()
+            ->assertInvalid(['filter.tags.0']);
+    });
 });
 
 describe('create', function (): void {
@@ -180,6 +229,8 @@ describe('create', function (): void {
         $account = Account::factory()->bank()->active()->for($team)->create();
         $account->currencies()->attach([$currency->getKey(), $inactiveCurrency->getKey()]);
         Account::factory()->bank()->inactive()->for($team)->create();
+        $tag = Tag::factory()->active()->for($team)->create();
+        Tag::factory()->inactive()->for($team)->create();
 
         $this->withHeaders(inertiaModalHeaders())
             ->get(route('finance.teams.transactions.create', [
@@ -193,6 +244,8 @@ describe('create', function (): void {
                 ->where('accounts.0.id', $account->getKey())
                 ->has('accounts.0.currencies', 1)
                 ->where('accounts.0.currencies.0.id', $currency->getKey())
+                ->has('tags', 1)
+                ->where('tags.0.id', $tag->getKey())
                 ->where('type', $type->value));
     })->with(TransactionType::cases());
 
@@ -223,7 +276,80 @@ describe('store', function (): void {
         $transaction = Transaction::query()->sole();
         expect($transaction->decimal_places)->toBe(2)
             ->and($transaction->user?->is($user))->toBeTrue()
-            ->and($transaction->type)->toBe(TransactionType::Expense);
+            ->and($transaction->type)->toBe(TransactionType::Expense)
+            ->and($transaction->tags)->toHaveCount(0);
+    });
+
+    it('attaches tags when creating a transaction', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $comida = Tag::factory()->active()->for($team)->create();
+        $salidas = Tag::factory()->active()->for($team)->create();
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'tag_ids' => [$comida->getKey(), $salidas->getKey()],
+            ]))
+            ->assertRedirect();
+
+        $transaction = Transaction::query()->sole();
+        expect($transaction->tags()->pluck($comida->qualifyColumn($comida->getKeyName()))->all())
+            ->toEqualCanonicalizing([$comida->getKey(), $salidas->getKey()]);
+    });
+
+    it('rejects duplicate tag ids', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->active()->for($team)->create();
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'tag_ids' => [$tag->getKey(), $tag->getKey()],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['tag_ids.0']);
+    });
+
+    it('rejects an inactive tag', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->inactive()->for($team)->create();
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'tag_ids' => [$tag->getKey()],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['tag_ids.0']);
+    });
+
+    it('rejects a tag from another team', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->active()->for(Team::factory())->create();
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'tag_ids' => [$tag->getKey()],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['tag_ids.0']);
     });
 
     it('defaults the quote from the currency current quote when omitted', function (): void {
@@ -301,6 +427,8 @@ describe('show', function (): void {
             'team_id' => $team->getKey(),
             'user_id' => $user->getKey(),
         ]);
+        $tag = Tag::factory()->active()->for($team)->create();
+        $transaction->tags()->attach($tag->getKey());
 
         $this->withHeaders(inertiaModalHeaders())
             ->get(route('finance.teams.transactions.show', [
@@ -310,7 +438,9 @@ describe('show', function (): void {
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('finance/teams/transactions/show')
-                ->where('transaction.id', $transaction->getKey()));
+                ->where('transaction.id', $transaction->getKey())
+                ->has('transaction.tags', 1)
+                ->where('transaction.tags.0.id', $tag->getKey()));
     });
 
     it('returns 404 when the transaction belongs to another team', function (): void {

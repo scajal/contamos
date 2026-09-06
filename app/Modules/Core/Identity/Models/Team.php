@@ -3,6 +3,7 @@
 namespace App\Modules\Core\Identity\Models;
 
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,6 +21,7 @@ use Illuminate\Support\Str;
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Account> $accounts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Tag> $tags
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction> $transactions
  * @property-read \App\Modules\Core\Identity\Models\Membership|null $membership
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\User> $users
@@ -101,6 +103,16 @@ class Team extends Model
             ->max();
 
         return $existing->isEmpty() ? $default : "{$default}-".($suffix + 1);
+    }
+
+    /**
+     * Get the tags of the team.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\Tag, $this>
+     */
+    public function tags(): HasMany
+    {
+        return $this->hasMany(Tag::class);
     }
 
     /**

@@ -31,19 +31,15 @@ class TransactionController
     public function index(Team $team, IndexRequest $request): Response
     {
         return Inertia::render('finance/teams/transactions/index', [
-            'accounts' => $team->accounts()
-                ->orderBy('name')
-                ->get(),
-            'currencies' => Currency::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(),
-            'filters' => $request->validated('filter', []),
+            'accounts' => $team->accounts()->orderBy('name')->get(),
+            'currencies' => Currency::query()->isActive()->orderBy('name')->get(),
+            'filters' => $request->presentedFilters(),
+            'tags' => $team->tags()->orderBy('name')->get(),
             'types' => TransactionType::cases(),
             'transactions' => Inertia::scroll(
                 fn (): LengthAwarePaginator => QueryBuilder::for($team->transactions(), $request)
                     ->allowedFilters(...$request->filters())
-                    ->with('account', 'currency', 'user')
+                    ->with('account', 'currency', 'user', 'tags')
                     ->orderBy('occurred_at', 'desc')
                     ->paginate(10)
                     ->withQueryString(),
@@ -60,6 +56,7 @@ class TransactionController
             'accounts' => $team->accounts()->isActive()->with(['currencies' => function (Relation $currencies): void {
                 $currencies->isActive(); // @phpstan-ignore-line argument.type
             }])->get(),
+            'tags' => $team->tags()->isActive()->orderBy('name')->get(),
             'type' => $type,
         ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getKey()]);
     }
@@ -73,7 +70,15 @@ class TransactionController
         $createTransaction
             ->for($team)
             ->by($user)
-            ->using($request->validated());
+            ->using($request->safe([
+                (new Transaction)->account()->getForeignKeyName(),
+                'amount',
+                (new Transaction)->currency()->getForeignKeyName(),
+                'description',
+                'occurred_at',
+                'quote',
+                'type',
+            ]), $request->tagIds());
 
         // Flash a success message to the session.
         Toast::make(trans('Saved'))
@@ -88,7 +93,7 @@ class TransactionController
     public function show(Team $team, Transaction $transaction): Modal
     {
         return Inertia::modal('finance/teams/transactions/show', [
-            'transaction' => $transaction->load('account', 'currency', 'user'),
+            'transaction' => $transaction->load('account', 'currency', 'user', 'tags'),
         ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getKey()]);
     }
 

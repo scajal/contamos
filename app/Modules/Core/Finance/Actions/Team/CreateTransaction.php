@@ -46,15 +46,16 @@ class CreateTransaction
      * information.
      *
      * @param  array<string, mixed>  $attributes
+     * @param  array<int, string>  $tagIds
      */
-    public function using(array $attributes): Transaction
+    public function using(array $attributes, array $tagIds = []): Transaction
     {
         // If the team is not set, throw an exception.
         if (! $this->team instanceof \App\Modules\Core\Identity\Models\Team) {
             throw new Exception('A transaction cannot be created without a team.');
         }
 
-        return DB::transaction(function () use ($attributes): Transaction {
+        return DB::transaction(function () use ($attributes, $tagIds): Transaction {
             // Get the currency for the transaction.
             /** @var \App\Modules\Core\Catalog\Models\Currency $currency */
             $currency = Currency::query()
@@ -73,6 +74,9 @@ class CreateTransaction
             if ($this->user instanceof \App\Modules\Core\Identity\Models\User) {
                 $transaction->user()->associate($this->user)->save();
             }
+
+            // Attach the tags to the transaction.
+            $transaction->attachTags($tagIds);
 
             // Update the account balance.
             $this->team?->accounts()

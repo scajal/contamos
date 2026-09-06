@@ -6,6 +6,7 @@ use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 
@@ -64,3 +65,41 @@ it('associates the provided user with the transaction', function (): void {
 
     expect($transaction->user?->is($user))->toBeTrue();
 });
+
+it('attaches tags after creating the transaction', function (): void {
+    $team = Team::factory()->create();
+    $currency = Currency::factory()->fiat()->create(['decimal_places' => 2]);
+    $account = Account::factory()->bank()->for($team)->create();
+    $tag = Tag::factory()->active()->for($team)->create();
+
+    $transaction = (new CreateTransaction)
+        ->for($team)
+        ->using([
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => '2024-01-01 00:00:00',
+            'quote' => '1',
+            'type' => TransactionType::Expense->value,
+        ], [$tag->getKey()]);
+
+    expect($transaction->tags()->pluck($tag->qualifyColumn($tag->getKeyName()))->all())->toBe([$tag->getKey()]);
+});
+
+it('throws when a tag belongs to another team', function (): void {
+    $team = Team::factory()->create();
+    $currency = Currency::factory()->fiat()->create(['decimal_places' => 2]);
+    $account = Account::factory()->bank()->for($team)->create();
+    $tag = Tag::factory()->active()->for(Team::factory())->create();
+
+    (new CreateTransaction)
+        ->for($team)
+        ->using([
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => '2024-01-01 00:00:00',
+            'quote' => '1',
+            'type' => TransactionType::Expense->value,
+        ], [$tag->getKey()]);
+})->throws(\InvalidArgumentException::class);

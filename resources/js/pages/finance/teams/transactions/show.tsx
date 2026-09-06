@@ -2,6 +2,7 @@ import { Link } from "@inertiajs/react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
+import { Badge } from "@/components/ui/badge";
 import { ConfirmAction } from "@/components/confirm-action";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -65,6 +66,22 @@ export default function Show({ transaction }: PageProps) {
                                 <Field>
                                     <FieldLabel>{t("Account")}</FieldLabel>
                                     <p className="text-sm">{transaction.account?.name ?? "-"}</p>
+                                </Field>
+
+                                {/** Tags */}
+                                <Field>
+                                    <FieldLabel>{t("Tags")}</FieldLabel>
+                                    {(transaction.tags ?? []).length > 0 ? (
+                                        <div className="flex flex-wrap gap-1">
+                                            {(transaction.tags ?? []).map((tag) => (
+                                                <Badge key={tag.id} variant="outline">
+                                                    {tag.name}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm">-</p>
+                                    )}
                                 </Field>
 
                                 {/** ID */}

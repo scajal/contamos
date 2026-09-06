@@ -7,6 +7,7 @@ namespace App\Modules\Core\Finance\Http\Requests\Team\Transaction;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
@@ -99,6 +100,18 @@ class StoreRequest extends FormRequest
                 'required',
                 'decimal:0,18',
             ],
+            'tag_ids' => [
+                'sometimes',
+                'array',
+            ],
+            'tag_ids.*' => [
+                'required',
+                'string',
+                'distinct',
+                Rule::exists(Tag::class, new Tag()->getKeyName())
+                    ->where(new Tag()->team()->getForeignKeyName(), $team->getKey())
+                    ->where('is_active', true),
+            ],
             'type' => [
                 'required',
                 'string',
@@ -106,5 +119,21 @@ class StoreRequest extends FormRequest
                 Rule::enum(TransactionType::class),
             ],
         ];
+    }
+
+    /**
+     * Get the validated tag ids for the transaction.
+     *
+     * @return array<int, string>
+     */
+    public function tagIds(): array
+    {
+        $tagIds = $this->safe(['tag_ids'])['tag_ids'] ?? [];
+
+        if (! is_array($tagIds)) {
+            return [];
+        }
+
+        return array_values(array_filter($tagIds, is_string(...)));
     }
 }

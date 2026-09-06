@@ -18,6 +18,7 @@ import {
 import { type DateRange } from "react-day-picker";
 import { Fragment } from "react/jsx-runtime";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -43,6 +44,7 @@ import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
+import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 
 type PageFilters = {
@@ -50,6 +52,7 @@ type PageFilters = {
     type: TransactionType | null;
     account: string | null;
     currency: string | null;
+    tags: string | null;
     from: string | null;
     to: string | null;
 };
@@ -58,6 +61,7 @@ type PageProps = {
     accounts: Account[];
     currencies: Currency[];
     filters: Partial<PageFilters>;
+    tags: Tag[];
     transactions: LengthAwarePaginator<Transaction>;
     types: TransactionType[];
 };
@@ -173,7 +177,7 @@ const Filters = () => {
     /**
      * The page's props.
      */
-    const { accounts, currencies, filters: initial, types, user } = usePage<PageProps>().props;
+    const { accounts, currencies, filters: initial, tags, types, user } = usePage<PageProps>().props;
 
     /**
      * The filters synced with the URL.
@@ -184,6 +188,7 @@ const Filters = () => {
             type: initial?.type ?? null,
             account: initial?.account ?? null,
             currency: initial?.currency ?? null,
+            tags: initial?.tags ?? null,
             from: initial?.from ?? null,
             to: initial?.to ?? null,
         },
@@ -292,6 +297,30 @@ const Filters = () => {
                                         {currencies.map((currency) => (
                                             <SelectItem key={currency.id} value={currency.id}>
                                                 {`${currency.code} · ${currency.name}`}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </Field>
+
+                        {/** Tags */}
+                        <Field>
+                            <FieldLabel>{t("Tags")}</FieldLabel>
+                            <Select onValueChange={(value) => setFilters({ tags: value })} value={filters.tags}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue>
+                                        {(value: string | null) =>
+                                            `${tags.find((tag) => tag.id === value)?.name ?? t("All")}`
+                                        }
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value={null}>{t("All")}</SelectItem>
+                                        {tags.map((tag) => (
+                                            <SelectItem key={tag.id} value={tag.id}>
+                                                {tag.name}
                                             </SelectItem>
                                         ))}
                                     </SelectGroup>
@@ -424,7 +453,18 @@ const Listing = () => {
                                                 </TableCell>
                                                 <TableCell>{transaction.account?.name ?? "-"}</TableCell>
                                                 <TableCell className="truncate">
-                                                    {transaction.description ?? ""}
+                                                    <div className="flex flex-col gap-1">
+                                                        <span>{transaction.description ?? ""}</span>
+                                                        {(transaction.tags ?? []).length > 0 ? (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {(transaction.tags ?? []).map((tag) => (
+                                                                    <Badge key={tag.id} variant="outline">
+                                                                        {tag.name}
+                                                                    </Badge>
+                                                                ))}
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <span

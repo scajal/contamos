@@ -11,6 +11,7 @@ import {
     LayoutDashboardIcon,
     LogOutIcon,
     ShieldCheckIcon,
+    TagIcon,
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
@@ -45,12 +46,14 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
 import administration from "@/routes/filament/administration";
 import accounts from "@/routes/finance/teams/accounts";
+import tags from "@/routes/finance/teams/tags";
 import transactions from "@/routes/finance/teams/transactions";
 
 const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/accounts", title: "Accounts" },
     { prefix: "finance/teams/transactions", title: "Transactions" },
     { prefix: "finance/teams/dashboard", title: "Dashboard" },
+    { prefix: "finance/teams/tags", title: "Tags" },
 ];
 
 export const ApplicationLayout = ({
@@ -204,6 +207,14 @@ const Sidebar = () => {
                             >
                                 <BanknoteIcon />
                                 <span>{t("Accounts")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                render={<Link href={tags.index.url({ team: user?.current_team_id ?? "" })} />}
+                            >
+                                <TagIcon />
+                                <span>{t("Tags")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                         <SidebarMenuItem>

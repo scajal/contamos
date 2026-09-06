@@ -55,7 +55,7 @@ Route::as('finance.teams.')
             ->name('accounts.edit')
             ->scopeBindings();
 
-        Route::put('/accounts/{account}', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'update'])
+        Route::patch('/accounts/{account}', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'update'])
             ->name('accounts.update')
             ->scopeBindings();
 
@@ -65,6 +65,40 @@ Route::as('finance.teams.')
 
         Route::patch('/accounts/{account}/activate', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'activate'])
             ->name('accounts.activate')
+            ->scopeBindings();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tag routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the tag management.
+        |
+        */
+
+        Route::get('tags', [\App\Modules\Core\Finance\Http\Controllers\Team\TagController::class, 'index'])
+            ->name('tags.index');
+
+        Route::get('tags/create', [\App\Modules\Core\Finance\Http\Controllers\Team\TagController::class, 'create'])
+            ->name('tags.create');
+
+        Route::post('tags', [\App\Modules\Core\Finance\Http\Controllers\Team\TagController::class, 'store'])
+            ->name('tags.store');
+
+        Route::get('tags/{tag}/edit', [\App\Modules\Core\Finance\Http\Controllers\Team\TagController::class, 'edit'])
+            ->name('tags.edit')
+            ->scopeBindings();
+
+        Route::patch('tags/{tag}', [\App\Modules\Core\Finance\Http\Controllers\Team\TagController::class, 'update'])
+            ->name('tags.update')
+            ->scopeBindings();
+
+        Route::patch('tags/{tag}/activate', [\App\Modules\Core\Finance\Http\Controllers\Team\TagController::class, 'activate'])
+            ->name('tags.activate')
+            ->scopeBindings();
+
+        Route::patch('tags/{tag}/deactivate', [\App\Modules\Core\Finance\Http\Controllers\Team\TagController::class, 'deactivate'])
+            ->name('tags.deactivate')
             ->scopeBindings();
 
         /*
