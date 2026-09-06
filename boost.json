@@ -1,13 +1,21 @@
 {
-    "agents": ["claude_code", "codex", "cursor"],
+    "agents": [
+        "claude_code",
+        "codex",
+        "cursor"
+    ],
     "cloud": false,
     "guidelines": true,
     "mcp": true,
     "nightwatch": false,
-    "packages": ["inertiaui/modal", "spatie/laravel-query-builder"],
+    "packages": [
+        "inertiaui/modal",
+        "spatie/laravel-query-builder"
+    ],
     "sail": false,
     "skills": [
         "infer-conventions",
+        "cashier-paddle-development",
         "laravel-best-practices",
         "testing-best-practices",
         "wayfinder-development",
