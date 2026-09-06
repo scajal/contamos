@@ -11,13 +11,14 @@ import {
     LayoutDashboardIcon,
     LogOutIcon,
     MailIcon,
+    PlusIcon,
     ShieldCheckIcon,
     TagIcon,
     UsersIcon,
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,8 +49,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
 import administration from "@/routes/filament/administration";
 import accounts from "@/routes/finance/teams/accounts";
+import dashboard from "@/routes/finance/teams/dashboard";
 import tags from "@/routes/finance/teams/tags";
 import transactions from "@/routes/finance/teams/transactions";
+import teams from "@/routes/identity/teams";
 import invitations from "@/routes/identity/teams/invitations";
 import members from "@/routes/identity/teams/members";
 
@@ -61,6 +64,18 @@ const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "identity/teams/invitations", title: "Invitations" },
     { prefix: "identity/teams/members", title: "Members" },
 ];
+
+/**
+ * The initials of the given name, used as the
+ * avatar fallback.
+ */
+const initials = (name: string) =>
+    name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? "")
+        .join("");
 
 export const ApplicationLayout = ({
     breadcrumb,
@@ -196,7 +211,7 @@ const Sidebar = () => {
     return (
         <SidebarComponent collapsible="icon">
             <SidebarHeader>
-                <img src="/images/iso-logo.png" alt="ISO" className="ml-2 size-8" />
+                <TeamSwitcher />
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
@@ -270,7 +285,8 @@ const Sidebar = () => {
                                 render={<SidebarMenuButton className="aria-expanded:bg-muted" size="lg" />}
                             >
                                 <Avatar>
-                                    <AvatarFallback>CP</AvatarFallback>
+                                    <AvatarImage src={user?.avatar ?? undefined} />
+                                    <AvatarFallback>{initials(user?.name ?? "")}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col">
                                     <span className="truncate font-medium">{user?.name}</span>
@@ -307,5 +323,78 @@ const Sidebar = () => {
             </SidebarFooter>
             <SidebarRail />
         </SidebarComponent>
+    );
+};
+
+const TeamSwitcher = () => {
+    /**
+     * Translate the provided string to the
+     * current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * Check if the screen is mobile.
+     */
+    const isMobile = useIsMobile();
+
+    /**
+     * The page's props.
+     */
+    const { user } = usePage().props;
+
+    /**
+     * The team the user is currently on.
+     */
+    const currentTeam = user?.current_team;
+
+    if (!currentTeam) {
+        return null;
+    }
+
+    return (
+        <SidebarMenu>
+            <SidebarMenuItem>
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        render={<SidebarMenuButton className="aria-expanded:bg-muted h-auto" size="sm" />}
+                    >
+                        <Avatar size="sm">
+                            <AvatarFallback>{initials(currentTeam.name)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex min-w-0 flex-1 flex-col">
+                            <span className="text-muted-foreground truncate text-xs">{t("Team")}</span>
+                            <span className="truncate text-sm font-medium">{currentTeam.name}</span>
+                        </div>
+                        <ChevronsUpDownIcon className="ml-auto" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                        align="start"
+                        className="min-w-56"
+                        side={isMobile ? "bottom" : "right"}
+                        sideOffset={4}
+                    >
+                        <DropdownMenuGroup>
+                            {(user.teams ?? []).map((team) => (
+                                <DropdownMenuItem
+                                    key={team.id}
+                                    render={<Link href={dashboard.index.url({ team: team.slug })} />}
+                                >
+                                    <Avatar size="sm">
+                                        <AvatarFallback>{initials(team.name)}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="truncate">{team.name}</span>
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem render={<Link href={teams.create.url()} />}>
+                            <PlusIcon />
+                            <span>{t("Create :name", { name: t("team") })}</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </SidebarMenuItem>
+        </SidebarMenu>
     );
 };

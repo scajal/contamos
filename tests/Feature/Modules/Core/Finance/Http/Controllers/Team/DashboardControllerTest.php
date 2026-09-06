@@ -151,3 +151,19 @@ it('switches the current team when the route team differs', function (): void {
 
     expect($user->fresh()?->current_team_id)->toBe($otherTeam->getKey());
 });
+
+it('shares the member teams on the dashboard', function (): void {
+    [$user, $team] = actingMember();
+    $other = Team::factory()->create();
+    $user->teams()->attach($other);
+
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->has('user.teams', 2)
+            ->where('user.teams', function (mixed $teams) use ($team, $other): bool {
+                $slugs = collect($teams)->pluck('slug');
+
+                return $slugs->contains($team->getRouteKey()) && $slugs->contains($other->getRouteKey());
+            }));
+});
