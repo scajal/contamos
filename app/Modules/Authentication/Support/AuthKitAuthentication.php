@@ -20,6 +20,7 @@ class AuthKitAuthentication
             'email' => $user->email,
             'email_verified_at' => CarbonImmutable::now(),
             'external_id' => $user->id,
+            'is_active' => true,
             'name' => $user->firstName.' '.$user->lastName,
         ]);
     }

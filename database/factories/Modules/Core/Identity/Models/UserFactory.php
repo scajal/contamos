@@ -31,9 +31,19 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'external_id' => 'fake-'.fake()->uuid(),
-            'is_active' => fake()->boolean(),
+            'is_active' => true,
             'name' => fake()->name(),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /**
+     * Indicate that the user is inactive.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'is_active' => false,
+        ]);
     }
 }

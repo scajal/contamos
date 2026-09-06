@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Authentication\Http\Controllers;
 
 use App\Modules\Authentication\Actions\ResolveAuthenticationRedirect;
@@ -26,11 +28,16 @@ class AuthenticationController
      */
     public function authenticate(AuthKitAuthenticationRequest $request, AuthKitAuthentication $authKit, ResolveAuthenticationRedirect $resolveAuthenticationRedirect): Response
     {
-        $request->authenticate($authKit->findUsing(...), $authKit->createUsing(...), $authKit->updateUsing(...));
+        /** @var \App\Modules\Core\Identity\Models\User $user */
+        $user = $request->authenticate(
+            $authKit->findUsing(...),
+            $authKit->createUsing(...),
+            $authKit->updateUsing(...),
+        );
 
         // If the user is not active, logout from
         // WorkOS and the app.
-        if (! ($request->user()?->is_active)) {
+        if (! $user->is_active) {
             return to_route('logout');
         }
 

@@ -27,6 +27,7 @@ it('creates a user from the WorkOS profile', function (): void {
         ->and($user->email)->toBe('ada@example.com')
         ->and($user->name)->toBe('Ada Lovelace')
         ->and($user->avatar)->toBe('https://example.com/ada.png')
+        ->and($user->is_active)->toBeTrue()
         ->and($user->email_verified_at?->equalTo(now()))->toBeTrue();
 });
 

@@ -124,6 +124,20 @@ describe('authenticate', function (): void {
         assertAuthenticatedAs($user->refresh());
     });
 
+    it('redirects an inactive user to logout', function (): void {
+        $user = User::factory()->inactive()->create(['external_id' => 'user_inactive']);
+        fakeWorkOsAuthentication('user_inactive', $user->email);
+
+        $state = ['state' => 'csrf-token', 'previous_url' => base64_encode('/')];
+
+        withSession(['state' => json_encode($state)])
+            ->get(route('authenticate', [
+                'code' => 'auth-code',
+                'state' => json_encode($state),
+            ]))
+            ->assertRedirectToRoute('logout');
+    });
+
     it('returns 403 when the state does not match', function (): void {
         withSession(['state' => json_encode(['state' => 'expected'])])
             ->get(route('authenticate', [

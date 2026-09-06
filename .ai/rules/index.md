@@ -7,6 +7,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Modules/**/Actions/** | .ai/rules/actions.md |
 | app/Modules/Administration/** | .ai/rules/administration.md |
 | resources/js/layouts/application/** | .ai/rules/application.md |
+| app/Modules/Authentication/** | .ai/rules/authentication.md |
 | app/Modules/Core/Catalog/** | .ai/rules/catalog.md |
 | app/Modules/**/Http/Controllers/** | .ai/rules/controllers.md |
 | app/Modules/**/Enums/** | .ai/rules/enums.md |
@@ -17,6 +18,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | lang/*.json, lang/*/validation.php | .ai/rules/lang.md |
 | database/migrations/** | .ai/rules/migrations.md |
 | app/Modules/**/Models/** | .ai/rules/models.md |
+| tests/Feature/Modules/Administration/** | .ai/rules/modules-administration.md |
 | app/Modules/** | .ai/rules/modules.md |
 | resources/js/pages/**/index.tsx | .ai/rules/pages.md |
 | app/**, tests/**, database/factories/** | .ai/rules/phpdoc.md |
