@@ -26,3 +26,26 @@ it('resolves the dashboard of the first team when the user has teams', function 
     expect((new ResolveAuthenticationRedirect)->fromRequest($request))
         ->toBe(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]));
 });
+
+it('resolves the intended url stored by the guest redirect and forgets it', function (): void {
+    [$user, $team] = memberWithTeam();
+    $request = Request::create('/');
+    $request->setUserResolver(fn (): User => $user);
+    $request->setLaravelSession(session()->driver());
+    $request->session()->put('url.intended', 'https://app.test/invitations/abc');
+
+    expect((new ResolveAuthenticationRedirect)->fromRequest($request))
+        ->toBe('https://app.test/invitations/abc')
+        ->and($request->session()->has('url.intended'))->toBeFalse();
+});
+
+it('ignores an empty intended url', function (): void {
+    [$user, $team] = memberWithTeam();
+    $request = Request::create('/');
+    $request->setUserResolver(fn (): User => $user);
+    $request->setLaravelSession(session()->driver());
+    $request->session()->put('url.intended', '');
+
+    expect((new ResolveAuthenticationRedirect)->fromRequest($request))
+        ->toBe(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]));
+});

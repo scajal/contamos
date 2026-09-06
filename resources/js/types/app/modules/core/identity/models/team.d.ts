@@ -5,6 +5,7 @@ import type { Account } from "../../finance/models/team/account";
 import type { Tag } from "../../finance/models/team/tag";
 import type { Transaction } from "../../finance/models/team/transaction";
 import type { Membership } from "./membership";
+import type { TeamInvitation } from "./team/team-invitation";
 import type { User } from "./user";
 
 export interface Team {
@@ -14,6 +15,7 @@ export interface Team {
     created_at: string | null;
     updated_at: string | null;
     accounts?: Account[];
+    invitations?: TeamInvitation[];
     membership?: Membership | null;
     tags?: Tag[];
     transactions?: Array<Transaction>;

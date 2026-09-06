@@ -124,6 +124,22 @@ describe('authenticate', function (): void {
         assertAuthenticatedAs($user->refresh());
     });
 
+    it('redirects to the intended url when the user was sent to login from a protected page', function (): void {
+        $user = User::factory()->create(['external_id' => 'user_invited']);
+        fakeWorkOsAuthentication('user_invited', $user->email);
+
+        $state = ['state' => 'csrf-token', 'previous_url' => base64_encode('/')];
+        $intended = route('identity.invitations.show', ['invitation' => str_repeat('a', 64)]);
+
+        withSession(['state' => json_encode($state), 'url.intended' => $intended])
+            ->get(route('authenticate', [
+                'code' => 'auth-code',
+                'state' => json_encode($state),
+            ]))
+            ->assertRedirect($intended)
+            ->assertSessionMissing('url.intended');
+    });
+
     it('redirects an inactive user to logout', function (): void {
         $user = User::factory()->inactive()->create(['external_id' => 'user_inactive']);
         fakeWorkOsAuthentication('user_inactive', $user->email);

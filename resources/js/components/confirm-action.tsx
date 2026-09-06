@@ -19,11 +19,22 @@ type Props = {
     confirmLabel?: string;
     cancelLabel?: string;
     action: ReactElement;
-    children: ReactElement;
+    children?: ReactElement;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
     className?: string;
 };
 
-export function ConfirmAction({ title, description, confirmLabel, cancelLabel, action, children }: Props) {
+export function ConfirmAction({
+    title,
+    description,
+    confirmLabel,
+    cancelLabel,
+    action,
+    children,
+    open,
+    onOpenChange,
+}: Props) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -31,8 +42,8 @@ export function ConfirmAction({ title, description, confirmLabel, cancelLabel, a
     const t = useLaravelReactI18n().t;
 
     return (
-        <AlertDialog>
-            <AlertDialogTrigger nativeButton={false} render={children} />
+        <AlertDialog {...(typeof open === "boolean" ? { onOpenChange, open } : {})}>
+            {children ? <AlertDialogTrigger nativeButton={false} render={children} /> : null}
             <AlertDialogContent size="sm">
                 <AlertDialogHeader>
                     <AlertDialogTitle>{title}</AlertDialogTitle>

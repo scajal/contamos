@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Core\Identity\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
@@ -32,4 +33,63 @@ Route::as('identity.')
 
         Route::post('teams', [\App\Modules\Core\Identity\Http\Controllers\User\TeamController::class, 'store'])
             ->name('teams.store');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Invitation routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes let an invitee review and accept an invitation. They are
+        | not team-scoped because the invitee is not a member yet.
+        |
+        */
+
+        Route::get('invitations/{invitation}', [\App\Modules\Core\Identity\Http\Controllers\InvitationController::class, 'show'])
+            ->name('invitations.show');
+
+        Route::post('invitations/{invitation}/accept', [\App\Modules\Core\Identity\Http\Controllers\InvitationController::class, 'accept'])
+            ->name('invitations.accept');
+    });
+
+Route::as('identity.teams.')
+    ->prefix('teams/{team}')
+    ->middleware([Authenticate::class, ValidateSessionWithWorkOS::class, EnsureTeamMembership::class])
+    ->group(function (): void {
+        /*
+        |--------------------------------------------------------------------------
+        | Member routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the team member management.
+        |
+        */
+
+        Route::get('members', [\App\Modules\Core\Identity\Http\Controllers\Team\MemberController::class, 'index'])
+            ->name('members.index');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Invitation routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the team invitation management.
+        |
+        */
+
+        Route::get('invitations', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'index'])
+            ->name('invitations.index');
+
+        Route::get('invitations/create', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'create'])
+            ->name('invitations.create');
+
+        Route::post('invitations', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'store'])
+            ->name('invitations.store');
+
+        Route::patch('invitations/{invitation}/resend', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'resend'])
+            ->name('invitations.resend')
+            ->scopeBindings();
+
+        Route::delete('invitations/{invitation}', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'destroy'])
+            ->name('invitations.destroy')
+            ->scopeBindings();
     });

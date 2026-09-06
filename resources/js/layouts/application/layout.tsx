@@ -10,8 +10,10 @@ import {
     ChevronsUpDownIcon,
     LayoutDashboardIcon,
     LogOutIcon,
+    MailIcon,
     ShieldCheckIcon,
     TagIcon,
+    UsersIcon,
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
@@ -48,12 +50,16 @@ import administration from "@/routes/filament/administration";
 import accounts from "@/routes/finance/teams/accounts";
 import tags from "@/routes/finance/teams/tags";
 import transactions from "@/routes/finance/teams/transactions";
+import invitations from "@/routes/identity/teams/invitations";
+import members from "@/routes/identity/teams/members";
 
 const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/accounts", title: "Accounts" },
     { prefix: "finance/teams/transactions", title: "Transactions" },
     { prefix: "finance/teams/dashboard", title: "Dashboard" },
     { prefix: "finance/teams/tags", title: "Tags" },
+    { prefix: "identity/teams/invitations", title: "Invitations" },
+    { prefix: "identity/teams/members", title: "Members" },
 ];
 
 export const ApplicationLayout = ({
@@ -160,7 +166,7 @@ export const ApplicationLayout = ({
                 </header>
                 {/** Content */}
                 <main className="flex min-w-0 flex-1 p-4 md:p-10">
-                    <div className="mx-auto flex w-full min-w-0 max-w-5xl flex-col">{children}</div>
+                    <div className="mx-auto flex w-full max-w-5xl min-w-0 flex-col">{children}</div>
                 </main>
             </SidebarInset>
         </SidebarProvider>
@@ -232,6 +238,22 @@ const Sidebar = () => {
                             >
                                 <TagIcon />
                                 <span>{t("Tags")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                render={<Link href={members.index.url({ team: user?.current_team?.slug ?? "" })} />}
+                            >
+                                <UsersIcon />
+                                <span>{t("Members")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                render={<Link href={invitations.index.url({ team: user?.current_team?.slug ?? "" })} />}
+                            >
+                                <MailIcon />
+                                <span>{t("Invitations")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>

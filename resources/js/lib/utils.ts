@@ -54,3 +54,28 @@ export function formatAmount(amount: string, locale: string, currency?: AmountCu
 
     return `${currency?.symbol} ${formatted}`;
 }
+
+/**
+ * The status of a team invitation, derived from its
+ * accepted and expiration dates.
+ */
+export type InvitationStatus = "accepted" | "expired" | "pending";
+
+/**
+ * Derive the status of a team invitation from its
+ * accepted and expiration dates.
+ */
+export function invitationStatus(invitation: {
+    accepted_at: string | null;
+    expires_at: string | null;
+}): InvitationStatus {
+    if (invitation.accepted_at) {
+        return "accepted";
+    }
+
+    if (invitation.expires_at && new Date(invitation.expires_at) <= new Date()) {
+        return "expired";
+    }
+
+    return "pending";
+}
