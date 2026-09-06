@@ -186,7 +186,9 @@ const Sidebar = () => {
 
     return (
         <SidebarComponent collapsible="icon">
-            <SidebarHeader>Logo</SidebarHeader>
+            <SidebarHeader>
+                <img src="/images/iso-logo.png" alt="ISO" className="ml-2 size-8" />
+            </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarMenu>

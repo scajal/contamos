@@ -143,6 +143,7 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                                     className="rounded-none border-0 border-b last:border-b-0"
                                     key={currency.id}
                                     size="sm"
+                                    variant="outline"
                                 >
                                     <ItemMedia>
                                         <Checkbox

@@ -1,6 +1,7 @@
 ---
 paths:
   - 'resources/js/pages/**/index.tsx'
+  - 'resources/js/pages/**/*.tsx'
 ---
 
 # Pages
@@ -10,3 +11,6 @@ Index pages keep filters in the URL with `useFilters` (`@/hooks/use-filters`): s
 
 ## Deferred listings with Skeleton fallback
 Wrap deferred index listings in `<Deferred data="…" fallback={<Skeleton… />}>` and use Empty UI components for the empty state.
+
+## Stacked Item rows need outline for dividers
+Item defaults to border-transparent, so `border-b` on stacked rows is invisible. For Item lists inside a bordered container (accounts, tags, currency/tag pickers), use variant="outline" with `rounded-none border-0 border-b last:border-b-0` — the same pattern as accounts/index and tags/index. Do not rely on TableRow borders after migrating a list to Item.

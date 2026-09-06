@@ -206,6 +206,7 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
                                     className="rounded-none border-0 border-b last:border-b-0"
                                     key={tag.id}
                                     size="sm"
+                                    variant="outline"
                                 >
                                     <ItemMedia>
                                         <Checkbox
