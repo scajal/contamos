@@ -53,7 +53,7 @@ class TeamInvitation extends Model
     /**
      * Mark the invitation as accepted.
      */
-    public function accept(): static
+    public function accept(): self
     {
         return tap($this)->update(['accepted_at' => CarbonImmutable::now()]);
     }
@@ -165,7 +165,7 @@ class TeamInvitation extends Model
      * Regenerate the invitation code and push
      * the expiration date forward.
      */
-    public function renew(): static
+    public function renew(): self
     {
         return tap($this)->update([
             'code' => Str::random(64),
@@ -187,7 +187,6 @@ class TeamInvitation extends Model
             'accepted' => $query->whereNotNull('accepted_at'),
             'expired' => $query->whereNull('accepted_at')->where('expires_at', '<=', CarbonImmutable::now()),
             'pending' => $query->whereNull('accepted_at')->where('expires_at', '>', CarbonImmutable::now()),
-            default => $query,
         };
     }
 
