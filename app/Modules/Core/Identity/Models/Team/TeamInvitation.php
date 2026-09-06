@@ -11,6 +11,25 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property string $id
+ * @property \Carbon\CarbonImmutable|null $accepted_at
+ * @property string $code
+ * @property string $email
+ * @property \Carbon\CarbonImmutable|null $expires_at
+ * @property string $invited_by
+ * @property string $team_id
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Modules\Core\Identity\Models\Team $team
+ * @property-read \App\Modules\Core\Identity\Models\User $user
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\Team\TeamInvitation newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\Team\TeamInvitation newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\Team\TeamInvitation query()
+ *
+ * @mixin \Eloquent
+ */
 #[Fillable(['accepted_at', 'code', 'email', 'expires_at'])]
 class TeamInvitation extends Model
 {
@@ -26,7 +45,7 @@ class TeamInvitation extends Model
     {
         parent::boot();
 
-        static::creating(function (TeamInvitation $invitation) {
+        static::creating(function (TeamInvitation $invitation): void {
             if (empty($invitation->code)) {
                 $invitation->code = Str::random(64);
             }

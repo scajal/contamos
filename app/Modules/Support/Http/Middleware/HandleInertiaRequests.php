@@ -42,7 +42,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
 
             'auth' => [
-                'canAccessAdministration' => ($user = $this->user($request)) ? $user->canAccessPanel(Filament::getPanel('administration')) : false,
+                'canAccessAdministration' => ($user = $this->user($request)) && $user->canAccessPanel(Filament::getPanel('administration')),
             ],
 
             // The authenticated user.

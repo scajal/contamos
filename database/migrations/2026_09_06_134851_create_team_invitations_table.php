@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('team_invitations', function (Blueprint $table) {
+        Schema::create('team_invitations', function (Blueprint $table): void {
             $table->ulid('id')->primary();
             $table->dateTime('accepted_at')->nullable();
             $table->string('code', 64)->unique();
