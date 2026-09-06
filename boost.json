@@ -10,7 +10,8 @@
     "nightwatch": false,
     "packages": [
         "inertiaui/modal",
-        "spatie/laravel-query-builder"
+        "spatie/laravel-query-builder",
+        "filament/filament"
     ],
     "sail": false,
     "skills": [

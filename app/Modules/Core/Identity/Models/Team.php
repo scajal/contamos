@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use Laravel\Paddle\Billable;
 
 /**
  * @property string $id
@@ -36,6 +37,10 @@ use Illuminate\Support\Str;
  */
 class Team extends Model
 {
+    use Billable {
+        transactions as billingTransactions;
+    }
+
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
