@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Models;
 
-use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
@@ -145,7 +144,16 @@ class Team extends Model
      */
     public function paddleEmail(): ?string
     {
-        return Auth::user()?->email ?? $this->users()->first()->email;
+        /** @var \App\Modules\Core\Identity\Models\User|null $user */
+        $user = Auth::user();
+
+        // If the user belongs to the team, return their email.
+        if ($user?->belongsToTeam($this)) {
+            return $user->email;
+        }
+
+        // Return the first user's email.
+        return $this->users->first()?->email;
     }
 
     /**
@@ -154,45 +162,6 @@ class Team extends Model
     public function paddleName(): ?string
     {
         return $this->name;
-    }
-
-    /**
-     * Get the team's current plan.
-     */
-    public function plan(): Plan
-    {
-        return match (true) {
-            $this->subscribed() => Plan::Pro,
-            default => Plan::Free,
-        };
-    }
-
-    /**
-     * Get the current plan usage for each
-     * of the plan metrics.
-     *
-     * @param  'accounts'|'members'|'transactionsPerMonth'|null  $metric
-     * @return int|array{
-     *      accounts: int,
-     *      members: int,
-     *      transactionsPerMonth: int|null,
-     * }
-     */
-    public function planUsage(?string $metric = null): array|int
-    {
-        if ($metric) {
-            return match ($metric) {
-                'accounts' => $this->accounts()->count(),
-                'members' => $this->users()->count(),
-                'transactionsPerMonth' => $this->transactions()->occurredFrom(now()->startOfMonth())->occurredUntil(now()->endOfMonth())->count(),
-            };
-        }
-
-        return [
-            'accounts' => $this->accounts()->count(),
-            'members' => $this->users()->count(),
-            'transactionsPerMonth' => $this->transactions()->occurredFrom(now()->startOfMonth())->occurredUntil(now()->endOfMonth())->count(),
-        ];
     }
 
     /**

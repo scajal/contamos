@@ -1,13 +1,6 @@
 <?php
 
-use App\Modules\Billing\Features\AddAccounts;
-use App\Modules\Core\Identity\Models\Team;
 use Illuminate\Support\Facades\Route;
-
-Route::get('teams/{team}/test', fn (Team $team) => dd(
-    $team->plan()->limits(),
-    $team->features()->active(AddAccounts::class)
-));
 
 /**
  * Fallback

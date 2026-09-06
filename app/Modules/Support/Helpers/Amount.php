@@ -52,7 +52,7 @@ class Amount
         }
 
         // Get the group size.
-        $groupSize = is_int($groupSize = ($formatter = new NumberFormatter($locale, NumberFormatter::DECIMAL))->getAttribute(NumberFormatter::GROUPING_SIZE)) && $groupSize > 0 // @phpstan-ignore-line booleanAnd.leftAlwaysTrue Ignore false positive.
+        $groupSize = is_int($groupSize = ($formatter = new NumberFormatter($locale, NumberFormatter::DECIMAL))->getAttribute(NumberFormatter::GROUPING_SIZE)) && $groupSize > 0
                 ? $groupSize
                 : 3;
 

@@ -20,15 +20,5 @@ Route::as('billing.teams.')
     ->prefix('teams/{team}')
     ->middleware([Authenticate::class, ValidateSessionWithWorkOS::class, EnsureTeamMembership::class])
     ->group(function (): void {
-        /*
-        |--------------------------------------------------------------------------
-        | Subscription routes
-        |--------------------------------------------------------------------------
-        |
-        | These routes correspond to the subscription management.
-        |
-        */
-
-        Route::get('billing', [\App\Modules\Billing\Http\Controllers\Team\SubscriptionController::class, 'show'])
-            ->name('subscription.show');
+        //
     });
