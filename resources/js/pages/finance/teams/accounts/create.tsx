@@ -48,14 +48,16 @@ export default function Create({ currencies, types }: PageProps) {
                                 <Fragment>
                                     <SheetHeader>
                                         <SheetTitle>{t("Create :name", { name: t("account") })}</SheetTitle>
-                                        <SheetDescription>{t("Add a new account to the team.")}</SheetDescription>
+                                        <SheetDescription>
+                                            {t("Name the account, pick a type, and choose the currencies it can hold.")}
+                                        </SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-4">
                                         <Fields currencies={currencies} types={types} {...formProps} />
                                     </div>
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
-                                            {formProps.processing && <Spinner />}
+                                            {formProps.processing && <Spinner data-icon="inline-start" />}
                                             {t("Save")}
                                         </Button>
                                     </SheetFooter>

@@ -2,10 +2,13 @@ import { Deferred, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
+    BanknoteIcon,
+    BitcoinIcon,
     CheckIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
     CircleDashedIcon,
+    LandmarkIcon,
     ListFilterPlusIcon,
     MoreHorizontalIcon,
     PencilIcon,
@@ -13,25 +16,26 @@ import {
     SearchIcon,
     SearchXIcon,
     XIcon,
+    type LucideIcon,
 } from "lucide-react";
-import { Fragment } from "react/jsx-runtime";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import routes from "@/routes/finance/teams/accounts";
@@ -54,6 +58,12 @@ type PageProps = {
     types: AccountType[];
 };
 
+const TYPE_ICONS: Record<AccountType, LucideIcon> = {
+    bank: LandmarkIcon,
+    cash: BanknoteIcon,
+    crypto: BitcoinIcon,
+};
+
 const Index = () => {
     return (
         <div className="flex flex-col gap-8">
@@ -68,14 +78,12 @@ const Index = () => {
                         <Filters />
                     </div>
                     <div className="flex justify-end max-sm:order-first max-sm:w-full">
-                        <Actions />
+                        <CreateAccountButton className="max-sm:w-full" />
                     </div>
                 </div>
 
                 {/** Accounts */}
-                <div className="flex flex-col gap-4 [&>div]:rounded-sm [&>div]:border">
-                    <Table />
-                </div>
+                <Listing />
             </div>
         </div>
     );
@@ -89,9 +97,38 @@ const Header = () => {
     const t = useLaravelReactI18n().t;
 
     return (
-        <header>
+        <header className="flex flex-col gap-1">
             <h1 className="text-2xl font-medium">{t("Accounts")}</h1>
+            <p className="text-muted-foreground text-sm">
+                {t("Bank, cash, and crypto accounts this team transacts with.")}
+            </p>
         </header>
+    );
+};
+
+const CreateAccountButton = ({ className }: { className?: string }) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { user } = usePage().props;
+
+    return (
+        <Button
+            className={className}
+            nativeButton={false}
+            render={
+                <ModalLink href={routes.create.url({ team: { id: user?.current_team_id ?? "" } })}>
+                    <PlusIcon data-icon="inline-start" />
+                    {t("Create :name", { name: t("account") })}
+                </ModalLink>
+            }
+        />
     );
 };
 
@@ -124,30 +161,35 @@ const Filters = () => {
     return (
         <div className="flex items-center gap-2">
             {/** Search */}
-            <InputGroup>
-                <InputGroupAddon>
-                    <SearchIcon />
-                </InputGroupAddon>
-                <InputGroupInput
-                    onChange={(event) => setFilters({ search: event.target.value }, { debounced: true })}
-                    placeholder={t("Search by name")}
-                    value={filters.search ?? ""}
-                />
-            </InputGroup>
+            <Field className="flex-1">
+                <FieldLabel className="sr-only" htmlFor="accounts-search">
+                    {t("Search")}
+                </FieldLabel>
+                <InputGroup>
+                    <InputGroupAddon>
+                        <SearchIcon />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                        id="accounts-search"
+                        onChange={(event) => setFilters({ search: event.target.value }, { debounced: true })}
+                        placeholder={t("Search by name")}
+                        value={filters.search ?? ""}
+                    />
+                </InputGroup>
+            </Field>
 
             {/** Advanced filters */}
             <Popover>
                 <PopoverTrigger className="relative" render={<Button size="icon" variant="outline" />}>
                     <ListFilterPlusIcon />
-                    {isFiltered && (
-                        <span className="bg-destructive/50 absolute -top-1 -right-1 size-3 rounded-full text-white" />
-                    )}
+                    <span className="sr-only">{t("More filters")}</span>
+                    {isFiltered && <span className="bg-primary absolute -top-1 -right-1 size-3 rounded-full" />}
                 </PopoverTrigger>
                 <PopoverContent>
                     <PopoverHeader>
                         <PopoverTitle>{t("More filters")}</PopoverTitle>
                     </PopoverHeader>
-                    <div className="flex flex-col gap-4">
+                    <FieldGroup className="gap-4">
                         {/** Type */}
                         <Field>
                             <FieldLabel>{t("Type")}</FieldLabel>
@@ -193,45 +235,44 @@ const Filters = () => {
                                 </SelectContent>
                             </Select>
                         </Field>
-                    </div>
+
+                        {/** Currency */}
+                        <Field>
+                            <FieldLabel>{t("Currency")}</FieldLabel>
+                            <Select onValueChange={(value) => setFilters({ currency: value })} value={filters.currency}>
+                                <SelectTrigger>
+                                    <SelectValue>
+                                        {(value: string | null) =>
+                                            `${currencies.find((currency) => currency.id === value)?.code ?? t("All")}`
+                                        }
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value={null}>{t("All")}</SelectItem>
+                                        {currencies.map((currency) => (
+                                            <SelectItem key={currency.id} value={currency.id}>
+                                                {`${currency.code} · ${currency.name}`}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </Field>
+                    </FieldGroup>
                 </PopoverContent>
             </Popover>
 
             {/** Clear */}
             <Button disabled={!isFiltered} onClick={clear} size="icon" variant="outline">
                 <XIcon />
+                <span className="sr-only">{t("Clear filters")}</span>
             </Button>
         </div>
     );
 };
 
-const Actions = () => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    /**
-     * The page's props.
-     */
-    const { user } = usePage().props;
-
-    return (
-        <Button
-            className="max-sm:w-full"
-            nativeButton={false}
-            render={
-                <ModalLink href={routes.create.url({ team: { id: user?.current_team_id ?? "" } })}>
-                    <PlusIcon />
-                    <span>{t("Create")}</span>
-                </ModalLink>
-            }
-        />
-    );
-};
-
-const Table = () => {
+const Listing = () => {
     /**
      * Translate the provided string
      * to the current locale.
@@ -249,132 +290,140 @@ const Table = () => {
     const isFiltered = Object.values(filters ?? {}).some((value) => value !== null && value !== "");
 
     return (
-        <Fragment>
-            <TableComponent>
-                <TableBody>
-                    <Deferred data="accounts" fallback={<SkeletonRows />}>
-                        {/** Empty state */}
-                        {accounts?.data?.length < 1 && (
-                            <TableRow>
-                                <TableCell colSpan={3}>
-                                    <Empty>
-                                        <EmptyHeader>
-                                            <EmptyMedia variant="icon">
-                                                {isFiltered ? <SearchXIcon /> : <CircleDashedIcon />}
-                                            </EmptyMedia>
-                                            <EmptyTitle>
-                                                {isFiltered
-                                                    ? t("No results for the current filters")
-                                                    : t("No :name yet", { name: t("accounts") })}
-                                            </EmptyTitle>
-                                            <EmptyDescription>
-                                                {isFiltered
-                                                    ? t("Try adjusting or clearing the filters.")
-                                                    : t("Add a new :name to get started.", { name: t("account") })}
-                                            </EmptyDescription>
-                                        </EmptyHeader>
-                                    </Empty>
-                                </TableCell>
-                            </TableRow>
-                        )}
-                        {/** Data */}
-                        {accounts?.data?.length
-                            ? accounts?.data?.map((account) => (
-                                  <TableRow key={account.id}>
-                                      <TableCell>
-                                          <div className="flex flex-col gap-1">
-                                              <span className="font-medium">{account.name}</span>
-                                              <span className="text-sm text-gray-500">
-                                                  {t(`enums.${account.type}`)}
-                                              </span>
-                                          </div>
-                                      </TableCell>
-                                      <TableCell>
-                                          {account.is_active ? (
-                                              <Badge variant="ghost">{t("Active")}</Badge>
-                                          ) : (
-                                              <Badge variant="destructive">{t("Inactive")}</Badge>
-                                          )}
-                                      </TableCell>
-                                      <TableCell className="text-right">
-                                          <DropdownMenu>
-                                              <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
-                                                  <MoreHorizontalIcon />
-                                                  <span className="sr-only">{t("Actions")}</span>
-                                              </DropdownMenuTrigger>
-                                              <DropdownMenuContent align="end">
-                                                  <DropdownMenuItem
-                                                      render={
-                                                          <ModalLink
-                                                              href={routes.edit.url({
-                                                                  account: { id: account.id },
-                                                                  team: { id: account.team_id },
-                                                              })}
-                                                          >
-                                                              <PencilIcon />
-                                                              <span>{t("Edit")}</span>
-                                                          </ModalLink>
-                                                      }
-                                                  />
-                                                  <DropdownMenuItem
-                                                      nativeButton
-                                                      render={
-                                                          <Link
-                                                              className="w-full"
-                                                              href={
-                                                                  account.is_active
-                                                                      ? routes.deactivate.url({
-                                                                            account: account.id,
-                                                                            team: account.team_id,
-                                                                        })
-                                                                      : routes.activate.url({
-                                                                            account: account.id,
-                                                                            team: account.team_id,
-                                                                        })
-                                                              }
-                                                              method="patch"
-                                                          >
-                                                              {account.is_active ? <XIcon /> : <CheckIcon />}
-                                                              <span>
-                                                                  {account.is_active ? t("Deactivate") : t("Activate")}
-                                                              </span>
-                                                          </Link>
-                                                      }
-                                                  />
-                                              </DropdownMenuContent>
-                                          </DropdownMenu>
-                                      </TableCell>
-                                  </TableRow>
-                              ))
-                            : null}
-                    </Deferred>
-                </TableBody>
-            </TableComponent>
+        <Deferred data="accounts" fallback={<SkeletonRows />}>
+            {!accounts?.data?.length ? (
+                <div className="rounded-sm border">
+                    <Empty>
+                        <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                                {isFiltered ? <SearchXIcon /> : <CircleDashedIcon />}
+                            </EmptyMedia>
+                            <EmptyTitle>
+                                {isFiltered
+                                    ? t("No results for the current filters")
+                                    : t("No :name yet", { name: t("accounts") })}
+                            </EmptyTitle>
+                            <EmptyDescription>
+                                {isFiltered
+                                    ? t("Try adjusting or clearing the filters.")
+                                    : t("Add a new :name to get started.", { name: t("account") })}
+                            </EmptyDescription>
+                        </EmptyHeader>
+                        {!isFiltered ? (
+                            <EmptyContent>
+                                <CreateAccountButton />
+                            </EmptyContent>
+                        ) : null}
+                    </Empty>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-4">
+                    <div className="overflow-hidden rounded-sm border">
+                        <ItemGroup className="gap-0">
+                            {(accounts?.data ?? []).map((account) => {
+                                const Icon = TYPE_ICONS[account.type];
 
-            {/** Pagination */}
-            {accounts?.data?.length ? <Pagination /> : null}
-        </Fragment>
+                                return (
+                                    <Item
+                                        className="rounded-none border-0 border-b last:border-b-0"
+                                        key={account.id}
+                                        size="sm"
+                                    >
+                                        <ItemMedia variant="icon">
+                                            <Icon />
+                                        </ItemMedia>
+                                        <ItemContent>
+                                            <ItemTitle>{account.name}</ItemTitle>
+                                            <ItemDescription>{t(`enums.${account.type}`)}</ItemDescription>
+                                        </ItemContent>
+                                        <ItemActions className="flex-wrap justify-end">
+                                            {(account.currencies ?? []).map((currency) => (
+                                                <Badge key={currency.id} variant="outline">
+                                                    {currency.code}
+                                                </Badge>
+                                            ))}
+                                            {account.is_active ? (
+                                                <Badge variant="ghost">{t("Active")}</Badge>
+                                            ) : (
+                                                <Badge variant="destructive">{t("Inactive")}</Badge>
+                                            )}
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
+                                                    <MoreHorizontalIcon />
+                                                    <span className="sr-only">{t("Actions")}</span>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuGroup>
+                                                        <DropdownMenuItem
+                                                            render={
+                                                                <ModalLink
+                                                                    href={routes.edit.url({
+                                                                        account: { id: account.id },
+                                                                        team: { id: account.team_id },
+                                                                    })}
+                                                                >
+                                                                    <PencilIcon />
+                                                                    <span>{t("Edit")}</span>
+                                                                </ModalLink>
+                                                            }
+                                                        />
+                                                        <DropdownMenuItem
+                                                            nativeButton
+                                                            render={
+                                                                <Link
+                                                                    className="w-full"
+                                                                    href={
+                                                                        account.is_active
+                                                                            ? routes.deactivate.url({
+                                                                                  account: account.id,
+                                                                                  team: account.team_id,
+                                                                              })
+                                                                            : routes.activate.url({
+                                                                                  account: account.id,
+                                                                                  team: account.team_id,
+                                                                              })
+                                                                    }
+                                                                    method="patch"
+                                                                >
+                                                                    {account.is_active ? <XIcon /> : <CheckIcon />}
+                                                                    <span>
+                                                                        {account.is_active
+                                                                            ? t("Deactivate")
+                                                                            : t("Activate")}
+                                                                    </span>
+                                                                </Link>
+                                                            }
+                                                        />
+                                                    </DropdownMenuGroup>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </ItemActions>
+                                    </Item>
+                                );
+                            })}
+                        </ItemGroup>
+                    </div>
+                    <Pagination />
+                </div>
+            )}
+        </Deferred>
     );
 };
 
 const SkeletonRows = () => {
     return (
-        <Fragment>
+        <div className="overflow-hidden rounded-sm border">
             {[0, 1, 2].map((row) => (
-                <TableRow key={row}>
-                    <TableCell>
-                        <div className="flex flex-col gap-2">
-                            <Skeleton className="h-4 w-40" />
-                            <Skeleton className="h-3 w-12" />
-                        </div>
-                    </TableCell>
-                    <TableCell>
-                        <Skeleton className="h-5 w-16" />
-                    </TableCell>
-                    <TableCell />
-                </TableRow>
+                <div className="flex items-center gap-3 border-b px-3 py-2.5 last:border-b-0" key={row}>
+                    <Skeleton className="size-8 rounded-sm" />
+                    <div className="flex flex-1 flex-col gap-2">
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-3 w-12" />
+                    </div>
+                    <Skeleton className="h-5 w-16" />
+                </div>
             ))}
-        </Fragment>
+        </div>
     );
 };
 
@@ -400,7 +449,7 @@ const Pagination = () => {
                         render={<Link href={accounts?.prev_page_url ?? undefined} />}
                         variant="ghost"
                     >
-                        <ChevronLeftIcon />
+                        <ChevronLeftIcon data-icon="inline-start" />
                         <span>{t("Previous")}</span>
                     </Button>
                 </PaginationItem>
@@ -412,7 +461,7 @@ const Pagination = () => {
                         variant="ghost"
                     >
                         <span>{t("Next")}</span>
-                        <ChevronRightIcon />
+                        <ChevronRightIcon data-icon="inline-end" />
                     </Button>
                 </PaginationItem>
             </PaginationContent>

@@ -37,6 +37,10 @@ class AccountController
                     ->paginate(10)
                     ->withQueryString(),
             ),
+            'currencies' => Currency::query()
+                ->isActive()
+                ->orderBy('name')
+                ->get(),
             'filters' => $request->validated('filter', []),
             'types' => AccountType::cases(),
         ]);

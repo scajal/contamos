@@ -66,7 +66,7 @@ export default function Edit({ account, currencies, types }: PageProps) {
                                     </div>
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
-                                            {formProps.processing && <Spinner />}
+                                            {formProps.processing && <Spinner data-icon="inline-start" />}
                                             {t("Save")}
                                         </Button>
                                     </SheetFooter>

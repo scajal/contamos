@@ -43,6 +43,8 @@ describe('index', function (): void {
                 ->has('user')
                 ->has('types')
                 ->has('filters')
+                ->has('currencies', 1)
+                ->where('currencies.0.id', $currency->getKey())
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('accounts.data', 1)
                     ->where('accounts.data.0.name', 'Checking')));

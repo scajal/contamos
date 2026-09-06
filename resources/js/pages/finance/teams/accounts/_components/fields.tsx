@@ -1,14 +1,22 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { TypeIcon } from "lucide-react";
+import { BanknoteIcon, BitcoinIcon, CircleDashedIcon, LandmarkIcon, type LucideIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { Empty, EmptyTitle } from "@/components/ui/empty";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import {
+    Field,
+    FieldDescription,
+    FieldError,
+    FieldGroup,
+    FieldLabel,
+    FieldLegend,
+    FieldSet,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { AccountType } from "@/types/app/modules/core/finance/enums/account/account-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
@@ -20,6 +28,12 @@ type Props = FormComponentSlotProps<FormProps> & {
     defaultValues?: FormProps;
     locked?: ReadonlyArray<keyof FormProps>;
     types: Array<AccountType>;
+};
+
+const TYPE_ICONS: Record<AccountType, LucideIcon> = {
+    bank: LandmarkIcon,
+    cash: BanknoteIcon,
+    crypto: BitcoinIcon,
 };
 
 export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, invalid, locked, types }: Props) => {
@@ -52,70 +66,85 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
     const isLocked = useCallback((field: keyof FormProps): boolean => locked?.includes(field) ?? false, [locked]);
 
     return (
-        <div className="space-y-6">
+        <FieldGroup>
             {/** Name */}
-            <Field>
-                <FieldLabel>{t("Name")}</FieldLabel>
-                <InputGroup>
-                    <InputGroupAddon>
-                        <TypeIcon />
-                    </InputGroupAddon>
-                    <InputGroupInput
-                        autoFocus
-                        aria-invalid={invalid("name")}
-                        defaultValue={defaultValues?.name}
-                        disabled={isLocked("name")}
-                        name="name"
-                        placeholder={t("Enter a name")}
-                    />
-                </InputGroup>
+            <Field data-invalid={invalid("name") || undefined}>
+                <FieldLabel htmlFor="account-name">{t("Name")}</FieldLabel>
+                <Input
+                    autoFocus
+                    aria-invalid={invalid("name")}
+                    defaultValue={defaultValues?.name}
+                    disabled={isLocked("name")}
+                    id="account-name"
+                    name="name"
+                    placeholder={t("Enter a name")}
+                />
                 {invalid("name") && <FieldError>{errors.name}</FieldError>}
             </Field>
 
             {/** Type */}
-            <Field>
-                <FieldLabel>{t("Type")}</FieldLabel>
-                <Select
-                    defaultValue={defaultValues?.type}
-                    name="type"
-                    onValueChange={(value) => setType(value as AccountType)}
+            <Field data-invalid={invalid("type") || undefined}>
+                <FieldLabel id="account-type-label">{t("Type")}</FieldLabel>
+                <input name="type" type="hidden" value={type ?? ""} />
+                <ToggleGroup
+                    aria-labelledby="account-type-label"
+                    aria-invalid={invalid("type")}
+                    className="w-full"
+                    disabled={isLocked("type")}
+                    onValueChange={(value) => {
+                        if (!isLocked("type")) {
+                            setType(value[0] as AccountType | undefined);
+                        }
+                    }}
+                    spacing={0}
+                    value={type ? [type] : []}
+                    variant="outline"
                 >
-                    <SelectTrigger aria-invalid={invalid("type")} disabled={isLocked("type")}>
-                        <SelectValue>
-                            {(value: AccountType | null) => (value ? t(`enums.${value}`) : t("Select a type"))}
-                        </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectGroup>
-                            {types.map((type) => (
-                                <SelectItem key={type} value={type}>
-                                    {t(`enums.${type}`)}
-                                </SelectItem>
-                            ))}
-                        </SelectGroup>
-                    </SelectContent>
-                </Select>
+                    {types.map((accountType) => {
+                        const Icon = TYPE_ICONS[accountType];
+
+                        return (
+                            <ToggleGroupItem className="flex-1" key={accountType} value={accountType}>
+                                <Icon data-icon="inline-start" />
+                                {t(`enums.${accountType}`)}
+                            </ToggleGroupItem>
+                        );
+                    })}
+                </ToggleGroup>
                 {invalid("type") && <FieldError>{errors.type}</FieldError>}
             </Field>
 
             {/** Currencies */}
-            <Field>
-                <FieldLabel>{t("Currencies")}</FieldLabel>
+            <FieldSet data-invalid={invalid("currency_ids") || undefined}>
+                <FieldLegend variant="label">{t("Currencies")}</FieldLegend>
+                <FieldDescription>{t("Choose the currencies this account can hold.")}</FieldDescription>
                 <div className="overflow-hidden rounded-sm border">
-                    <Table>
-                        <TableBody>
-                            {!currencies.length && (
-                                <TableRow>
-                                    <TableCell colSpan={2} className="text-center">
-                                        <Empty>
-                                            <EmptyTitle>{t("No currencies found")}</EmptyTitle>
-                                        </Empty>
-                                    </TableCell>
-                                </TableRow>
-                            )}
+                    {!type ? (
+                        <Empty>
+                            <EmptyHeader>
+                                <EmptyMedia variant="icon">
+                                    <CircleDashedIcon />
+                                </EmptyMedia>
+                                <EmptyTitle>{t("Select a type to see available currencies.")}</EmptyTitle>
+                            </EmptyHeader>
+                        </Empty>
+                    ) : null}
+                    {type && !currencies.length ? (
+                        <Empty>
+                            <EmptyHeader>
+                                <EmptyTitle>{t("No currencies found")}</EmptyTitle>
+                            </EmptyHeader>
+                        </Empty>
+                    ) : null}
+                    {currencies.length > 0 ? (
+                        <ItemGroup className="gap-0">
                             {currencies.map((currency) => (
-                                <TableRow key={currency.id} className="has-data-checked:bg-muted">
-                                    <TableCell className="w-6">
+                                <Item
+                                    className="rounded-none border-0 border-b last:border-b-0"
+                                    key={currency.id}
+                                    size="sm"
+                                >
+                                    <ItemMedia>
                                         <Checkbox
                                             aria-invalid={invalid("currency_ids")}
                                             defaultChecked={defaultValues?.currency_ids?.includes(currency.id)}
@@ -124,20 +153,20 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                                             name="currency_ids[]"
                                             value={currency.id}
                                         />
-                                    </TableCell>
-                                    <TableCell>
-                                        <label htmlFor={`currency-${currency.id}`} className="flex flex-col">
-                                            <span className="font-medium">{currency.name}</span>
-                                            <span className="text-muted-foreground text-sm">{currency.code}</span>
-                                        </label>
-                                    </TableCell>
-                                </TableRow>
+                                    </ItemMedia>
+                                    <ItemContent>
+                                        <ItemTitle>
+                                            <label htmlFor={`currency-${currency.id}`}>{currency.name}</label>
+                                        </ItemTitle>
+                                        <ItemDescription>{currency.code}</ItemDescription>
+                                    </ItemContent>
+                                </Item>
                             ))}
-                        </TableBody>
-                    </Table>
+                        </ItemGroup>
+                    ) : null}
                 </div>
                 {invalid("currency_ids") && <FieldError>{errors.currency_ids}</FieldError>}
-            </Field>
-        </div>
+            </FieldSet>
+        </FieldGroup>
     );
 };
