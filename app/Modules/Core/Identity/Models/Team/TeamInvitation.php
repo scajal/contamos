@@ -74,16 +74,6 @@ class TeamInvitation extends Model
     }
 
     /**
-     * Get the user who created the invitation.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\User, $this>
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
      * Indicate if the invitation has been accepted.
      */
     public function isAccepted(): bool
@@ -96,7 +86,17 @@ class TeamInvitation extends Model
      */
     public function isExpired(): bool
     {
-        return $this->expires_at !== null && $this->expires_at->isPast();
+        return ! $this->isAccepted() && $this->expires_at !== null && $this->expires_at->isPast();
+    }
+
+    /**
+     * Get the user who created the invitation.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
