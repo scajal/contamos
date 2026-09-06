@@ -45,40 +45,8 @@ class HandleInertiaRequests extends Middleware
                 'canAccessAdministration' => ($user = $this->user($request)) && $user->canAccessPanel(Filament::getPanel('administration')),
             ],
 
-            // Plan, usage, and limits for the sidebar and upsell prompts.
-            'billing' => $this->billing($user),
-
             // The authenticated user.
             'user' => Inertia::always($user),
-        ];
-    }
-
-    /**
-     * Build the billing prop shared with every page: the current
-     * team's plan, feature usage, and limits, plus whether the
-     * user can still join another Free-plan team.
-     *
-     * @return array<string, mixed>
-     */
-    protected function billing(?User $user): array
-    {
-        if (! $user instanceof User) {
-            return [
-                'plan' => null,
-                'limits' => null,
-                'usage' => null,
-                'can_join_free_team' => false,
-            ];
-        }
-
-        $features = ['accounts', 'members', 'transactions'];
-        $team = isset($user->current_team_id) ? $user->currentTeam : null;
-
-        return [
-            'plan' => $team?->plan()->value,
-            'limits' => $team ? collect($features)->mapWithKeys(fn (string $feature): array => [$feature => $team->plan()->limit($feature)])->all() : null,
-            'usage' => $team ? collect($features)->mapWithKeys(fn (string $feature): array => [$feature => $team->usage($feature)])->all() : null,
-            'can_join_free_team' => $user->canJoinFreeTeam(),
         ];
     }
 

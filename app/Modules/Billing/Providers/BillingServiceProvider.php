@@ -22,16 +22,6 @@ class BillingServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register services.
-     */
-    public function register(): void
-    {
-        // The module owns the webhook route so it can point
-        // it at its own controller.
-        Cashier::ignoreRoutes();
-    }
-
-    /**
      * Configure the models that the billing module
      * uses.
      */

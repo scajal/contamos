@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Modules\Billing\Http\Middleware\EnsureWithinPlanLimit;
 use App\Modules\Core\Identity\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
@@ -85,11 +84,9 @@ Route::as('identity.teams.')
             ->name('invitations.index');
 
         Route::get('invitations/create', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'create'])
-            ->middleware(EnsureWithinPlanLimit::class.':members')
             ->name('invitations.create');
 
         Route::post('invitations', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'store'])
-            ->middleware(EnsureWithinPlanLimit::class.':members')
             ->name('invitations.store');
 
         Route::patch('invitations/{invitation}/resend', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'resend'])

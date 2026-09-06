@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Modules\Billing\Http\Middleware\EnsureWithinPlanLimit;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Identity\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Auth\Middleware\Authenticate;
@@ -47,11 +46,9 @@ Route::as('finance.teams.')
             ->name('accounts.index');
 
         Route::get('/accounts/create', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'create'])
-            ->middleware(EnsureWithinPlanLimit::for('accounts'))
             ->name('accounts.create');
 
         Route::post('/accounts', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'store'])
-            ->middleware(EnsureWithinPlanLimit::for('accounts'))
             ->name('accounts.store');
 
         Route::get('/accounts/{account}/edit', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'edit'])
@@ -118,11 +115,9 @@ Route::as('finance.teams.')
 
         Route::get('/transactions/create/{type}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'create'])
             ->whereIn('type', TransactionType::cases())
-            ->middleware(EnsureWithinPlanLimit::for('transactions'))
             ->name('transactions.create');
 
         Route::post('/transactions', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'store'])
-            ->middleware(EnsureWithinPlanLimit::for('transactions'))
             ->name('transactions.store');
 
         Route::get('/transactions/{transaction}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'show'])

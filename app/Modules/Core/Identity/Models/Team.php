@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Models;
 
-use App\Modules\Billing\Concerns\HasPlan;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
@@ -16,7 +15,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
-use Laravel\Paddle\Billable;
 
 /**
  * @property string $id
@@ -43,27 +41,13 @@ use Laravel\Paddle\Billable;
  */
 class Team extends Model
 {
-    use Billable {
-        transactions as billingTransactions;
-    }
-
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Identity\Models\TeamFactory> */
     use HasFactory;
 
-    use HasPlan;
     use HasUlids;
-
-    /**
-     * The relations that should never be serialized, since billing
-     * internals are not part of the team's public shape and must
-     * never leak into an Inertia page shared with team members.
-     *
-     * @var list<string>
-     */
-    protected $hidden = ['billingTransactions', 'customer', 'subscriptions'];
 
     /**
      * Get the accounts of the team.
