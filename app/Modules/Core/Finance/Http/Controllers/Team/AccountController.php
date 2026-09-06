@@ -111,7 +111,7 @@ class AccountController
     public function activate(Team $team, Account $account): RedirectResponse
     {
         // Activate the account.
-        $account->update(['is_active' => true]);
+        $account->activate();
 
         // Show a message to the user.
         Toast::make(trans('Saved'))
@@ -126,7 +126,7 @@ class AccountController
     public function deactivate(Team $team, Account $account): RedirectResponse
     {
         // Deactivate the account.
-        $account->update(['is_active' => false]);
+        $account->deactivate();
 
         // Show a message to the user.
         Toast::make(trans('Saved'))

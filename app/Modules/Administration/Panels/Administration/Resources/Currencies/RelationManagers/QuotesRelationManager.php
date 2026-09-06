@@ -53,7 +53,7 @@ class QuotesRelationManager extends RelationManager
         return [
             Tables\Columns\Layout\Stack::make([
                 Tables\Columns\TextColumn::make('rate')
-                    ->formatStateUsing(fn (Quote $record): string => new Amount()->format($record->rate, $record->currency))
+                    ->formatStateUsing(fn (Quote $record): string => new Amount()->format($record->rate, $record->currency)) // @phpstan-ignore-line argument.type False positive.
                     ->weight(FontWeight::Medium),
                 Tables\Columns\TextColumn::make('observed_at')
                     ->searchable(isIndividual: true)

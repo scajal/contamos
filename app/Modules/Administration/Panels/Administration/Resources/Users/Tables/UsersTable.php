@@ -66,14 +66,14 @@ class UsersTable
                 ])->dropdown(false),
                 Actions\ActionGroup::make([
                     Actions\Action::make('activate')
-                        ->action(fn (User $record): bool => $record->update(['is_active' => true]))
+                        ->action(fn (User $record): bool => $record->activate())
                         ->visible(fn (User $record): bool => ! $record->is_active)
                         ->successNotificationTitle(trans('Saved'))
                         ->requiresConfirmation()
                         ->icon(Heroicon::Check)
                         ->color(Color::Green),
                     Actions\Action::make('deactivate')
-                        ->action(fn (User $record): bool => $record->update(['is_active' => false]))
+                        ->action(fn (User $record): bool => $record->deactivate())
                         ->visible(fn (User $record): bool => $record->is_active)
                         ->successNotificationTitle(trans('Saved'))
                         ->requiresConfirmation()

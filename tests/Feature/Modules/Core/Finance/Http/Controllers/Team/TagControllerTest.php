@@ -132,6 +132,19 @@ describe('store', function (): void {
             ->assertRedirect()
             ->assertInvalid(['name']);
     });
+
+    it('rejects a name that is not a string', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
+            ->post(route('finance.teams.tags.store', ['team' => $team->getKey()]), tagPayload([
+                'name' => ['Comida'],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['name']);
+
+        expect(Tag::query()->count())->toBe(0);
+    });
 });
 
 describe('edit', function (): void {
@@ -217,6 +230,23 @@ describe('update', function (): void {
             'team' => $team->getKey(),
             'tag' => $foreign->getKey(),
         ]), tagPayload())->assertNotFound();
+    });
+
+    it('rejects a name that is not a string', function (): void {
+        [$user, $team] = actingMember();
+        $tag = Tag::factory()->for($team)->create(['name' => 'Comida']);
+
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
+            ->patch(route('finance.teams.tags.update', [
+                'team' => $team->getKey(),
+                'tag' => $tag->getKey(),
+            ]), tagPayload([
+                'name' => ['Salidas'],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['name']);
+
+        expect($tag->fresh()?->name)->toBe('Comida');
     });
 });
 

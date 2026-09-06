@@ -42,26 +42,21 @@ class StoreRequest extends FormRequest
     /**
      * Reject a name that another tag on the team already uses, ignoring case.
      */
-    protected function uniqueName(Team $team, ?Tag $except = null): Closure
+    protected function uniqueName(Team $team): Closure
     {
-        return function (string $attribute, mixed $value, Closure $fail) use ($team, $except): void {
+        return function (string $attribute, mixed $value, Closure $fail) use ($team): void {
             // Validate that the value is a string.
             if (! is_string($value)) {
                 return;
             }
 
-            // Build the query to check if the name is unique.
-            $query = Tag::query()
-                ->where((new Tag)->team()->getForeignKeyName(), $team->getKey())
-                ->whereRaw('LOWER(name) = ?', [mb_strtolower($value)]);
-
-            // If the tag is not the same as the except tag, add the where clause to exclude it.
-            if ($except instanceof Tag) {
-                $query->whereKeyNot($except);
-            }
-
             // If the tag name is not unique, fail the validation.
-            if ($query->exists()) {
+            $taken = Tag::query()
+                ->where((new Tag)->team()->getForeignKeyName(), $team->getKey())
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower($value)])
+                ->exists();
+
+            if ($taken) {
                 $fail(trans('validation.unique'));
             }
         };

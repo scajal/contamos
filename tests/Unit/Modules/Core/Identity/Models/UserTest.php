@@ -25,6 +25,12 @@ it('does not switch to a team the user does not belong to', function (): void {
         ->and($user->fresh()?->current_team_id)->toBeNull();
 });
 
+it('returns an empty password because authentication is delegated to WorkOS', function (): void {
+    $user = User::factory()->make();
+
+    expect($user->getAuthPassword())->toBe('');
+});
+
 it('switches to a team the user belongs to and sets the url default', function (): void {
     [$user, $team] = memberWithTeam();
     $otherTeam = Team::factory()->create();

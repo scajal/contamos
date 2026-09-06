@@ -15,6 +15,13 @@ it('redirects guests to login', function (): void {
         ->assertRedirectToRoute('login');
 });
 
+it('renders the currencies index for an authenticated member', function (): void {
+    actingMember();
+
+    $this->get(route('filament.administration.resources.currencies.index'))
+        ->assertOk();
+});
+
 it('lists currencies', function (): void {
     actingMember();
     $currency = Currency::factory()->active()->fiat()->create(['name' => 'Peso', 'code' => 'ARS']);

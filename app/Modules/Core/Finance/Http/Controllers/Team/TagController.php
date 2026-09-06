@@ -91,7 +91,7 @@ class TagController
     public function activate(Team $team, Tag $tag): RedirectResponse
     {
         // Activate the tag.
-        $tag->update(['is_active' => true]);
+        $tag->activate();
 
         // Show a success message.
         Toast::make(trans('Saved'))
@@ -106,7 +106,7 @@ class TagController
     public function deactivate(Team $team, Tag $tag): RedirectResponse
     {
         // Deactivate the tag.
-        $tag->update(['is_active' => false]);
+        $tag->deactivate();
 
         // Show a success message.
         Toast::make(trans('Saved'))

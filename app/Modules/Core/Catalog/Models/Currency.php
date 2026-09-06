@@ -6,9 +6,9 @@ use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
 use App\Modules\Core\Catalog\Enums\Currency\Quote\QuoteSource;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Support\Concerns\DefinesKeyType;
+use App\Modules\Support\Concerns\HasActivation;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -45,6 +45,8 @@ class Currency extends Model
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
+    use HasActivation;
+
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Catalog\Models\CurrencyFactory> */
     use HasFactory;
 
@@ -79,7 +81,6 @@ class Currency extends Model
     {
         return [
             'decimal_places' => 'integer',
-            'is_active' => 'boolean',
             'quote_source' => QuoteSource::class,
             'type' => CurrencyType::class,
         ];
@@ -95,17 +96,6 @@ class Currency extends Model
         return $this
             ->hasOne(Quote::class)
             ->ofMany(['observed_at' => 'max'], fn (Builder $query): Builder => $query->where('observed_at', '<=', CarbonImmutable::now()));
-    }
-
-    /**
-     * Scope the query to currencies with the given active state.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
-     */
-    #[Scope]
-    protected function isActive(Builder $query, bool|string $value = true): void
-    {
-        $query->where($this->qualifyColumn('is_active'), filter_var($value, FILTER_VALIDATE_BOOLEAN));
     }
 
     /**

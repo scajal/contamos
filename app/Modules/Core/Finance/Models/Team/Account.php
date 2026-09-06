@@ -7,6 +7,7 @@ use App\Modules\Core\Finance\Enums\Account\AccountType;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Support\Concerns\DefinesKeyType;
+use App\Modules\Support\Concerns\HasActivation;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read \App\Modules\Core\Identity\Models\Team $team
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction> $transactions
  *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account balancesByCurrency()
  * @method static \Database\Factories\Modules\Core\Finance\Models\Team\AccountFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account isActive(string|bool $value = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account newModelQuery()
@@ -43,6 +45,8 @@ class Account extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
+
+    use HasActivation;
 
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Finance\Models\Team\AccountFactory> */
     use HasFactory;
@@ -81,7 +85,6 @@ class Account extends Model
     protected function casts(): array
     {
         return [
-            'is_active' => 'boolean',
             'type' => AccountType::class,
         ];
     }
@@ -97,17 +100,6 @@ class Account extends Model
             ->using(AccountCurrency::class)
             ->withPivot(['balance'])
             ->withTimestamps();
-    }
-
-    /**
-     * Scope the query to accounts with the given active state.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
-     */
-    #[Scope]
-    protected function isActive(Builder $query, bool|string $value = true): void
-    {
-        $query->where($this->qualifyColumn('is_active'), filter_var($value, FILTER_VALIDATE_BOOLEAN));
     }
 
     /**

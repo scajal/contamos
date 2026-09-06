@@ -7,6 +7,7 @@ namespace App\Modules\Core\Identity\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use App\Modules\Support\Concerns\DefinesKeyType;
+use App\Modules\Support\Concerns\HasActivation;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -37,6 +38,7 @@ use Illuminate\Support\Facades\URL;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team> $teams
  *
  * @method static \Database\Factories\Modules\Core\Identity\Models\UserFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\User isActive(string|bool $value = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\User newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\User query()
@@ -49,6 +51,8 @@ class User extends Authenticatable implements FilamentUser
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
+
+    use HasActivation;
 
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Identity\Models\UserFactory> */
     use HasFactory;
@@ -73,7 +77,7 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         // @todo: Add security validation.
-        return true;
+        return in_array($this->email, ['operator@example.com', 'operator@example.com']);
     }
 
     /**
@@ -85,7 +89,6 @@ class User extends Authenticatable implements FilamentUser
     {
         return [
             'email_verified_at' => 'datetime',
-            'is_active' => 'boolean',
         ];
     }
 

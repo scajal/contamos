@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
  * @property string $id
+ * @property numeric $balance
  * @property string $account_id
  * @property string $currency_id
  * @property \Carbon\CarbonImmutable|null $created_at

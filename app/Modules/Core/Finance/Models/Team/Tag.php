@@ -4,9 +4,8 @@ namespace App\Modules\Core\Finance\Models\Team;
 
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Support\Concerns\DefinesKeyType;
+use App\Modules\Support\Concerns\HasActivation;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,33 +34,12 @@ class Tag extends Model
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
+    use HasActivation;
+
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Finance\Models\Team\TagFactory> */
     use HasFactory;
 
     use HasUlids;
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'is_active' => 'boolean',
-        ];
-    }
-
-    /**
-     * Scope the query to tags with the given active state.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
-     */
-    #[Scope]
-    protected function isActive(Builder $query, bool|string $value = true): void
-    {
-        $query->where($this->qualifyColumn('is_active'), filter_var($value, FILTER_VALIDATE_BOOLEAN));
-    }
 
     /**
      * Get the team that owns the tag.

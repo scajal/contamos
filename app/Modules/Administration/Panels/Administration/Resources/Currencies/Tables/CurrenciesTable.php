@@ -63,14 +63,14 @@ class CurrenciesTable
                 ])->dropdown(false),
                 Actions\ActionGroup::make([
                     Actions\Action::make('activate')
-                        ->action(fn (Currency $record): bool => $record->update(['is_active' => true]))
+                        ->action(fn (Currency $record): bool => $record->activate())
                         ->visible(fn (Currency $record): bool => ! $record->is_active)
                         ->successNotificationTitle(trans('Saved'))
                         ->requiresConfirmation()
                         ->icon(Heroicon::Check)
                         ->color(Color::Green),
                     Actions\Action::make('deactivate')
-                        ->action(fn (Currency $record): bool => $record->update(['is_active' => false]))
+                        ->action(fn (Currency $record): bool => $record->deactivate())
                         ->visible(fn (Currency $record): bool => $record->is_active)
                         ->successNotificationTitle(trans('Saved'))
                         ->requiresConfirmation()
