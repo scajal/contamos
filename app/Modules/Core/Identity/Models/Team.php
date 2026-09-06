@@ -66,13 +66,16 @@ class Team extends Model
             if (blank($team->slug)) {
                 $team->slug = self::generateSlug($team->name);
             }
+
+            // Ensure the slug is lowercase.
+            $team->slug = Str::lower($team->slug);
         });
 
         // Callback executed when a team is
         // being updated.
         static::updating(function (self $team): void {
             if ($team->isDirty('name')) {
-                $team->slug = self::generateSlug($team->name, $team->getKey()); // @phpstan-ignore-line argument.type Key is always string.
+                $team->slug = Str::lower(self::generateSlug($team->name, $team->getKey())); // @phpstan-ignore-line argument.type Key is always string.
             }
         });
     }
@@ -103,6 +106,15 @@ class Team extends Model
             ->max();
 
         return $existing->isEmpty() ? $default : "{$default}-".($suffix + 1);
+    }
+
+    /**
+     * Get the route key name for the
+     * model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
     }
 
     /**

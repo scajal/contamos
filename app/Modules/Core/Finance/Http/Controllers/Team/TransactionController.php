@@ -58,7 +58,7 @@ class TransactionController
             }])->get(),
             'tags' => $team->tags()->isActive()->orderBy('name')->get(),
             'type' => $type,
-        ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getKey()]);
+        ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getRouteKey()]);
     }
 
     /**
@@ -94,7 +94,7 @@ class TransactionController
     {
         return Inertia::modal('finance/teams/transactions/show', [
             'transaction' => $transaction->load('account', 'currency', 'user', 'tags'),
-        ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getKey()]);
+        ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getRouteKey()]);
     }
 
     /**

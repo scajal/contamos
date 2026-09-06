@@ -1,21 +1,22 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { BanknoteIcon, BitcoinIcon, CircleDashedIcon, LandmarkIcon, type LucideIcon } from "lucide-react";
+import { BanknoteIcon, BitcoinIcon, CoinsIcon, LandmarkIcon, type LucideIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 
-import { Checkbox } from "@/components/ui/checkbox";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import {
-    Field,
-    FieldDescription,
-    FieldError,
-    FieldGroup,
-    FieldLabel,
-    FieldLegend,
-    FieldSet,
-} from "@/components/ui/field";
+    Combobox,
+    ComboboxChip,
+    ComboboxChips,
+    ComboboxChipsInput,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxItem,
+    ComboboxList,
+    ComboboxValue,
+} from "@/components/ui/combobox";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
+import { InputGroupAddon } from "@/components/ui/input-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { AccountType } from "@/types/app/modules/core/finance/enums/account/account-type";
@@ -47,6 +48,13 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
      * The type of the account.
      */
     const [type, setType] = useState<AccountType | undefined>(defaultValues?.type);
+
+    /**
+     * The currencies currently selected for the account.
+     */
+    const [selectedCurrencies, setSelectedCurrencies] = useState<Array<Currency>>(
+        () => listOfCurrencies.filter((currency) => defaultValues?.currency_ids?.includes(currency.id)),
+    );
 
     /**
      * The list of selectable currencies based on the
@@ -93,7 +101,18 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                     disabled={isLocked("type")}
                     onValueChange={(value) => {
                         if (!isLocked("type")) {
-                            setType(value[0] as AccountType | undefined);
+                            const nextType = value[0] as AccountType | undefined;
+
+                            setType(nextType);
+                            setSelectedCurrencies((current) =>
+                                current.filter((currency) =>
+                                    nextType === "crypto"
+                                        ? currency.type === "cryptocurrency"
+                                        : nextType === undefined
+                                          ? false
+                                          : currency.type !== "cryptocurrency",
+                                ),
+                            );
                         }
                     }}
                     spacing={0}
@@ -115,59 +134,51 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
             </Field>
 
             {/** Currencies */}
-            <FieldSet data-invalid={invalid("currency_ids") || undefined}>
-                <FieldLegend variant="label">{t("Currencies")}</FieldLegend>
+            <Field data-invalid={invalid("currency_ids") || undefined}>
+                <FieldLabel htmlFor="account-currencies">{t("Currencies")}</FieldLabel>
                 <FieldDescription>{t("Choose the currencies this account can hold.")}</FieldDescription>
-                <div className="overflow-hidden rounded-sm border">
-                    {!type ? (
-                        <Empty>
-                            <EmptyHeader>
-                                <EmptyMedia variant="icon">
-                                    <CircleDashedIcon />
-                                </EmptyMedia>
-                                <EmptyTitle>{t("Select a type to see available currencies.")}</EmptyTitle>
-                            </EmptyHeader>
-                        </Empty>
-                    ) : null}
-                    {type && !currencies.length ? (
-                        <Empty>
-                            <EmptyHeader>
-                                <EmptyTitle>{t("No currencies found")}</EmptyTitle>
-                            </EmptyHeader>
-                        </Empty>
-                    ) : null}
-                    {currencies.length > 0 ? (
-                        <ItemGroup className="gap-0">
-                            {currencies.map((currency) => (
-                                <Item
-                                    className="rounded-none border-0 border-b last:border-b-0"
-                                    key={currency.id}
-                                    size="sm"
-                                    variant="outline"
-                                >
-                                    <ItemMedia>
-                                        <Checkbox
-                                            aria-invalid={invalid("currency_ids")}
-                                            defaultChecked={defaultValues?.currency_ids?.includes(currency.id)}
-                                            disabled={isLocked("currency_ids")}
-                                            id={`currency-${currency.id}`}
-                                            name="currency_ids[]"
-                                            value={currency.id}
-                                        />
-                                    </ItemMedia>
-                                    <ItemContent>
-                                        <ItemTitle>
-                                            <label htmlFor={`currency-${currency.id}`}>{currency.name}</label>
-                                        </ItemTitle>
-                                        <ItemDescription>{currency.code}</ItemDescription>
-                                    </ItemContent>
-                                </Item>
+                <Combobox<Currency, true>
+                    disabled={!type || isLocked("currency_ids")}
+                    isItemEqualToValue={(left, right) => left.id === right.id}
+                    items={currencies}
+                    itemToStringLabel={(item) => `${item.code} ${item.name}`}
+                    itemToStringValue={(item) => item.id}
+                    multiple
+                    name="currency_ids[]"
+                    onValueChange={setSelectedCurrencies}
+                    value={selectedCurrencies}
+                >
+                    <ComboboxChips
+                        aria-invalid={invalid("currency_ids")}
+                        className="w-full has-[[data-slot=input-group-addon]]:pl-0"
+                    >
+                        <InputGroupAddon className="self-start">
+                            <CoinsIcon />
+                        </InputGroupAddon>
+                        <ComboboxValue>
+                            {selectedCurrencies.map((currency) => (
+                                <ComboboxChip key={currency.id}>{currency.code}</ComboboxChip>
                             ))}
-                        </ItemGroup>
-                    ) : null}
-                </div>
+                        </ComboboxValue>
+                        <ComboboxChipsInput
+                            disabled={!type || isLocked("currency_ids")}
+                            id="account-currencies"
+                            placeholder={t("Select currencies")}
+                        />
+                    </ComboboxChips>
+                    <ComboboxContent>
+                        <ComboboxEmpty>{t("No currencies found")}</ComboboxEmpty>
+                        <ComboboxList>
+                            {(currency) => (
+                                <ComboboxItem key={currency.id} value={currency}>
+                                    {`${currency.code} · ${currency.name}`}
+                                </ComboboxItem>
+                            )}
+                        </ComboboxList>
+                    </ComboboxContent>
+                </Combobox>
                 {invalid("currency_ids") && <FieldError>{errors.currency_ids}</FieldError>}
-            </FieldSet>
+            </Field>
         </FieldGroup>
     );
 };

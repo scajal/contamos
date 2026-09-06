@@ -29,7 +29,7 @@ describe('index', function (): void {
         [$user, $team] = actingMember();
         Tag::factory()->active()->for($team)->create(['name' => 'Comida']);
 
-        $this->get(route('finance.teams.tags.index', ['team' => $team->getKey()]))
+        $this->get(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('finance/teams/tags/index')
@@ -46,7 +46,7 @@ describe('index', function (): void {
         Tag::factory()->inactive()->for($team)->create(['name' => 'Salidas']);
 
         $this->get(route('finance.teams.tags.index', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'filter' => [
                 'is_active' => 'true',
                 'search' => 'Comi',
@@ -65,7 +65,7 @@ describe('index', function (): void {
         [$user, $team] = actingMember();
 
         $this->get(route('finance.teams.tags.index', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'filter' => ['is_active' => 'not-a-boolean'],
         ]))
             ->assertRedirect()
@@ -78,7 +78,7 @@ describe('create', function (): void {
         [$user, $team] = actingMember();
 
         $this->withHeaders(inertiaModalHeaders())
-            ->get(route('finance.teams.tags.create', ['team' => $team->getKey()]))
+            ->get(route('finance.teams.tags.create', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('finance/teams/tags/create'));
@@ -89,8 +89,8 @@ describe('store', function (): void {
     it('creates a tag for the team', function (): void {
         [$user, $team] = actingMember();
 
-        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.tags.store', ['team' => $team->getKey()]), tagPayload())
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload())
             ->assertRedirect();
 
         assertFlashedToast(trans('Saved'));
@@ -105,8 +105,8 @@ describe('store', function (): void {
         [$user, $team] = actingMember();
         Tag::factory()->for($team)->create(['name' => 'Comida']);
 
-        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.tags.store', ['team' => $team->getKey()]), tagPayload([
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload([
                 'name' => 'comida',
             ]))
             ->assertRedirect()
@@ -117,8 +117,8 @@ describe('store', function (): void {
         [$user, $team] = actingMember();
         Tag::factory()->for(Team::factory())->create(['name' => 'Comida']);
 
-        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.tags.store', ['team' => $team->getKey()]), tagPayload())
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload())
             ->assertRedirect();
 
         expect($team->tags()->where('name', 'Comida')->count())->toBe(1);
@@ -127,8 +127,8 @@ describe('store', function (): void {
     it('rejects an empty payload', function (): void {
         [$user, $team] = actingMember();
 
-        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.tags.store', ['team' => $team->getKey()]), [])
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), [])
             ->assertRedirect()
             ->assertInvalid(['name']);
     });
@@ -136,8 +136,8 @@ describe('store', function (): void {
     it('rejects a name that is not a string', function (): void {
         [$user, $team] = actingMember();
 
-        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.tags.store', ['team' => $team->getKey()]), tagPayload([
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload([
                 'name' => ['Comida'],
             ]))
             ->assertRedirect()
@@ -154,7 +154,7 @@ describe('edit', function (): void {
 
         $this->withHeaders(inertiaModalHeaders())
             ->get(route('finance.teams.tags.edit', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'tag' => $tag->getKey(),
             ]))
             ->assertOk()
@@ -168,7 +168,7 @@ describe('edit', function (): void {
         $foreign = Tag::factory()->for(Team::factory())->create();
 
         $this->get(route('finance.teams.tags.edit', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'tag' => $foreign->getKey(),
         ]))->assertNotFound();
     });
@@ -179,9 +179,9 @@ describe('update', function (): void {
         [$user, $team] = actingMember();
         $tag = Tag::factory()->for($team)->create(['name' => 'Old']);
 
-        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
             ->patch(route('finance.teams.tags.update', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'tag' => $tag->getKey(),
             ]), tagPayload([
                 'name' => 'New',
@@ -196,9 +196,9 @@ describe('update', function (): void {
         [$user, $team] = actingMember();
         $tag = Tag::factory()->for($team)->create(['name' => 'Comida']);
 
-        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
             ->patch(route('finance.teams.tags.update', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'tag' => $tag->getKey(),
             ]), tagPayload())
             ->assertRedirect();
@@ -211,9 +211,9 @@ describe('update', function (): void {
         Tag::factory()->for($team)->create(['name' => 'Comida']);
         $tag = Tag::factory()->for($team)->create(['name' => 'Salidas']);
 
-        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
             ->patch(route('finance.teams.tags.update', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'tag' => $tag->getKey(),
             ]), tagPayload([
                 'name' => 'comida',
@@ -227,7 +227,7 @@ describe('update', function (): void {
         $foreign = Tag::factory()->for(Team::factory())->create();
 
         $this->patch(route('finance.teams.tags.update', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'tag' => $foreign->getKey(),
         ]), tagPayload())->assertNotFound();
     });
@@ -236,9 +236,9 @@ describe('update', function (): void {
         [$user, $team] = actingMember();
         $tag = Tag::factory()->for($team)->create(['name' => 'Comida']);
 
-        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
             ->patch(route('finance.teams.tags.update', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'tag' => $tag->getKey(),
             ]), tagPayload([
                 'name' => ['Salidas'],
@@ -255,9 +255,9 @@ describe('activate', function (): void {
         [$user, $team] = actingMember();
         $tag = Tag::factory()->inactive()->for($team)->create();
 
-        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
             ->patch(route('finance.teams.tags.activate', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'tag' => $tag->getKey(),
             ]))
             ->assertRedirect();
@@ -272,9 +272,9 @@ describe('deactivate', function (): void {
         [$user, $team] = actingMember();
         $tag = Tag::factory()->active()->for($team)->create();
 
-        $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
             ->patch(route('finance.teams.tags.deactivate', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'tag' => $tag->getKey(),
             ]))
             ->assertRedirect();

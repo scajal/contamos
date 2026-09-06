@@ -36,7 +36,7 @@ describe('index', function (): void {
         $account = Account::factory()->bank()->active()->for($team)->create(['name' => 'Checking']);
         $account->currencies()->attach($currency);
 
-        $this->get(route('finance.teams.accounts.index', ['team' => $team->getKey()]))
+        $this->get(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('finance/teams/accounts/index')
@@ -60,7 +60,7 @@ describe('index', function (): void {
         $other->currencies()->attach($real);
 
         $this->get(route('finance.teams.accounts.index', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'filter' => [
                 'type' => AccountType::Bank->value,
                 'is_active' => 'true',
@@ -83,7 +83,7 @@ describe('index', function (): void {
         [$user, $team] = actingMember();
 
         $this->get(route('finance.teams.accounts.index', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'filter' => ['type' => 'not-a-type'],
         ]))
             ->assertRedirect()
@@ -98,7 +98,7 @@ describe('create', function (): void {
         Currency::factory()->inactive()->fiat()->create(['code' => 'BRL']);
 
         $this->withHeaders(inertiaModalHeaders())
-            ->get(route('finance.teams.accounts.create', ['team' => $team->getKey()]))
+            ->get(route('finance.teams.accounts.create', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('finance/teams/accounts/create')
@@ -113,8 +113,8 @@ describe('store', function (): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create();
 
-        $this->from(route('finance.teams.accounts.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.accounts.store', ['team' => $team->getKey()]), accountPayload([
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
                 'currency_ids' => [$currency->getKey()],
             ]))
             ->assertRedirect();
@@ -131,8 +131,8 @@ describe('store', function (): void {
         [$user, $team] = actingMember();
         $crypto = Currency::factory()->active()->crypto()->create();
 
-        $this->from(route('finance.teams.accounts.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.accounts.store', ['team' => $team->getKey()]), accountPayload([
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
                 'type' => AccountType::Bank->value,
                 'currency_ids' => [$crypto->getKey()],
             ]))
@@ -144,8 +144,8 @@ describe('store', function (): void {
         [$user, $team] = actingMember();
         $fiat = Currency::factory()->active()->fiat()->create();
 
-        $this->from(route('finance.teams.accounts.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.accounts.store', ['team' => $team->getKey()]), accountPayload([
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
                 'type' => AccountType::Crypto->value,
                 'currency_ids' => [$fiat->getKey()],
             ]))
@@ -157,8 +157,8 @@ describe('store', function (): void {
         [$user, $team] = actingMember();
         $crypto = Currency::factory()->active()->crypto()->create();
 
-        $this->from(route('finance.teams.accounts.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.accounts.store', ['team' => $team->getKey()]), accountPayload([
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
                 'type' => AccountType::Crypto->value,
                 'currency_ids' => [$crypto->getKey()],
             ]))
@@ -170,8 +170,8 @@ describe('store', function (): void {
     it('rejects an empty payload', function (): void {
         [$user, $team] = actingMember();
 
-        $this->from(route('finance.teams.accounts.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.accounts.store', ['team' => $team->getKey()]), [])
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), [])
             ->assertRedirect()
             ->assertInvalid(['currency_ids', 'name', 'type']);
     });
@@ -184,7 +184,7 @@ describe('edit', function (): void {
 
         $this->withHeaders(inertiaModalHeaders())
             ->get(route('finance.teams.accounts.edit', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'account' => $account->getKey(),
             ]))
             ->assertOk()
@@ -200,7 +200,7 @@ describe('edit', function (): void {
         $foreign = Account::factory()->for(Team::factory())->create();
 
         $this->get(route('finance.teams.accounts.edit', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'account' => $foreign->getKey(),
         ]))->assertNotFound();
     });
@@ -214,9 +214,9 @@ describe('update', function (): void {
         $account = Account::factory()->bank()->for($team)->create(['name' => 'Old']);
         $account->currencies()->attach($old);
 
-        $this->from(route('finance.teams.accounts.index', ['team' => $team->getKey()]))
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
             ->patch(route('finance.teams.accounts.update', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'account' => $account->getKey(),
             ]), accountPayload([
                 'name' => 'New',
@@ -236,7 +236,7 @@ describe('update', function (): void {
         $foreign = Account::factory()->for(Team::factory())->create();
 
         $this->patch(route('finance.teams.accounts.update', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'account' => $foreign->getKey(),
         ]), accountPayload([
             'currency_ids' => [$currency->getKey()],
@@ -249,9 +249,9 @@ describe('activate', function (): void {
         [$user, $team] = actingMember();
         $account = Account::factory()->inactive()->for($team)->create();
 
-        $this->from(route('finance.teams.accounts.index', ['team' => $team->getKey()]))
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
             ->patch(route('finance.teams.accounts.activate', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'account' => $account->getKey(),
             ]))
             ->assertRedirect();
@@ -266,9 +266,9 @@ describe('deactivate', function (): void {
         [$user, $team] = actingMember();
         $account = Account::factory()->active()->for($team)->create();
 
-        $this->from(route('finance.teams.accounts.index', ['team' => $team->getKey()]))
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
             ->patch(route('finance.teams.accounts.deactivate', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'account' => $account->getKey(),
             ]))
             ->assertRedirect();

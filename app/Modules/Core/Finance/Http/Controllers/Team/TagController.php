@@ -42,7 +42,7 @@ class TagController
     public function create(Team $team): Modal
     {
         return Inertia::modal('finance/teams/tags/create')
-            ->baseRoute('finance.teams.tags.index', ['team' => $team->getKey()]);
+            ->baseRoute('finance.teams.tags.index', ['team' => $team->getRouteKey()]);
     }
 
     /**
@@ -67,7 +67,7 @@ class TagController
     {
         return Inertia::modal('finance/teams/tags/edit', [
             'tag' => $tag,
-        ])->baseRoute('finance.teams.tags.index', ['team' => $team->getKey()]);
+        ])->baseRoute('finance.teams.tags.index', ['team' => $team->getRouteKey()]);
     }
 
     /**

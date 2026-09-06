@@ -1,22 +1,23 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CalendarIcon, DollarSignIcon, ListIcon } from "lucide-react";
+import { CalendarIcon, DollarSignIcon, ListIcon, TagIcon } from "lucide-react";
 import { useState } from "react";
 
-import { Checkbox } from "@/components/ui/checkbox";
 import {
     Combobox,
+    ComboboxChip,
+    ComboboxChips,
+    ComboboxChipsInput,
     ComboboxContent,
+    ComboboxEmpty,
     ComboboxInput,
     ComboboxItem,
     ComboboxList,
     ComboboxTrigger,
     ComboboxValue,
 } from "@/components/ui/combobox";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
-import { Item, ItemContent, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { Textarea } from "@/components/ui/textarea";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
@@ -73,6 +74,13 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
             (currencies.length === 1 ? currencies[0] : null)
         );
     });
+
+    /**
+     * The tags currently selected for the transaction.
+     */
+    const [selectedTags, setSelectedTags] = useState<Array<Tag>>(
+        () => tags.filter((tag) => defaultValues?.tag_ids?.includes(tag.id)),
+    );
 
     return (
         <FieldGroup>
@@ -196,46 +204,43 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
             </Field>
 
             {/** Tags */}
-            <FieldSet data-invalid={invalid("tag_ids") || undefined}>
-                <FieldLegend variant="label">{t("Tags")}</FieldLegend>
+            <Field data-invalid={invalid("tag_ids") || undefined}>
+                <FieldLabel htmlFor="transaction-tags">{t("Tags")}</FieldLabel>
                 <FieldDescription>{t("Choose the tags for this transaction.")}</FieldDescription>
-                <div className="overflow-hidden rounded-sm border">
-                    {!tags.length ? (
-                        <Empty>
-                            <EmptyHeader>
-                                <EmptyTitle>{t("No tags found")}</EmptyTitle>
-                            </EmptyHeader>
-                        </Empty>
-                    ) : (
-                        <ItemGroup className="gap-0">
-                            {tags.map((tag) => (
-                                <Item
-                                    className="rounded-none border-0 border-b last:border-b-0"
-                                    key={tag.id}
-                                    size="sm"
-                                    variant="outline"
-                                >
-                                    <ItemMedia>
-                                        <Checkbox
-                                            aria-invalid={invalid("tag_ids")}
-                                            defaultChecked={defaultValues?.tag_ids?.includes(tag.id)}
-                                            id={`tag-${tag.id}`}
-                                            name="tag_ids[]"
-                                            value={tag.id}
-                                        />
-                                    </ItemMedia>
-                                    <ItemContent>
-                                        <ItemTitle>
-                                            <label htmlFor={`tag-${tag.id}`}>{tag.name}</label>
-                                        </ItemTitle>
-                                    </ItemContent>
-                                </Item>
+                <Combobox<Tag, true>
+                    isItemEqualToValue={(left, right) => left.id === right.id}
+                    items={tags}
+                    itemToStringLabel={(item) => item.name}
+                    itemToStringValue={(item) => item.id}
+                    multiple
+                    name="tag_ids[]"
+                    onValueChange={setSelectedTags}
+                    value={selectedTags}
+                >
+                    <ComboboxChips aria-invalid={invalid("tag_ids")} className="w-full has-[[data-slot=input-group-addon]]:pl-0">
+                        <InputGroupAddon className="self-start">
+                            <TagIcon />
+                        </InputGroupAddon>
+                        <ComboboxValue>
+                            {selectedTags.map((tag) => (
+                                <ComboboxChip key={tag.id}>{tag.name}</ComboboxChip>
                             ))}
-                        </ItemGroup>
-                    )}
-                </div>
+                        </ComboboxValue>
+                        <ComboboxChipsInput id="transaction-tags" placeholder={t("Select tags")} />
+                    </ComboboxChips>
+                    <ComboboxContent>
+                        <ComboboxEmpty>{t("No tags found")}</ComboboxEmpty>
+                        <ComboboxList>
+                            {(tag) => (
+                                <ComboboxItem key={tag.id} value={tag}>
+                                    {tag.name}
+                                </ComboboxItem>
+                            )}
+                        </ComboboxList>
+                    </ComboboxContent>
+                </Combobox>
                 {invalid("tag_ids") && <FieldError>{errors.tag_ids}</FieldError>}
-            </FieldSet>
+            </Field>
 
             {/** Exchange rate */}
             <Field data-invalid={invalid("quote") || undefined}>

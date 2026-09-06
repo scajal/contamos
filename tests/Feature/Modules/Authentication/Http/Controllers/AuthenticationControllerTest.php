@@ -82,7 +82,7 @@ describe('login', function (): void {
         [$user, $team] = actingMember();
 
         get(route('login'))
-            ->assertRedirectToRoute('finance.teams.dashboard.index', ['team' => $team->getKey()]);
+            ->assertRedirectToRoute('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]);
     });
 });
 
@@ -119,7 +119,7 @@ describe('authenticate', function (): void {
                 'code' => 'auth-code',
                 'state' => json_encode($state),
             ]))
-            ->assertRedirectToRoute('finance.teams.dashboard.index', ['team' => $team->getKey()]);
+            ->assertRedirectToRoute('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]);
 
         assertAuthenticatedAs($user->refresh());
     });

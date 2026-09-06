@@ -18,19 +18,20 @@ use Inertia\Testing\AssertableInertia as Assert;
 it('redirects guests to login', function (): void {
     $team = Team::factory()->create();
 
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getKey()]))
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
         ->assertRedirectToRoute('login');
 });
 
 it('renders the dashboard for a team member', function (): void {
     [$user, $team] = actingMember();
 
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getKey()]))
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
         ->assertOk()
         ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('finance/teams/dashboard')
             ->has('user')
             ->where('user.id', $user->getKey())
+            ->where('user.currentTeam.slug', $team->getRouteKey())
             ->where('has_accounts', false)
             ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->has('balances', 0)
@@ -51,7 +52,7 @@ it('renders the signed balance per currency of the active accounts', function ()
     Transaction::factory()->income()->for($inactive)->for($peso)->create(['amount' => '500']);
     Transaction::factory()->income()->for($foreign)->for($peso)->create(['amount' => '900']);
 
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getKey()]))
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
         ->assertOk()
         ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('finance/teams/dashboard')
@@ -73,7 +74,7 @@ it('does not count inactive accounts toward the empty path', function (): void {
     [, $team] = actingMember();
     Account::factory()->bank()->inactive()->for($team)->create();
 
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getKey()]))
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
         ->assertOk()
         ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->where('has_accounts', false));
@@ -105,7 +106,7 @@ it('renders the eight most recent transactions of the active accounts', function
         'occurred_at' => now()->addHour(),
     ]);
 
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getKey()]))
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
         ->assertOk()
         ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
@@ -126,7 +127,7 @@ it('redirects a user with no teams to team creation', function (): void {
     $team = Team::factory()->create();
     $this->actingAs($user);
 
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getKey()]))
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
         ->assertRedirectToRoute('identity.teams.create');
 });
 
@@ -134,7 +135,7 @@ it('forbids a user who belongs to another team', function (): void {
     actingMember();
     $foreignTeam = Team::factory()->create();
 
-    $this->get(route('finance.teams.dashboard.index', ['team' => $foreignTeam->getKey()]))
+    $this->get(route('finance.teams.dashboard.index', ['team' => $foreignTeam->getRouteKey()]))
         ->assertForbidden();
 });
 
@@ -145,7 +146,7 @@ it('switches the current team when the route team differs', function (): void {
 
     expect($user->fresh()?->current_team_id)->toBe($currentTeam->getKey());
 
-    $this->get(route('finance.teams.dashboard.index', ['team' => $otherTeam->getKey()]))
+    $this->get(route('finance.teams.dashboard.index', ['team' => $otherTeam->getRouteKey()]))
         ->assertOk();
 
     expect($user->fresh()?->current_team_id)->toBe($otherTeam->getKey());

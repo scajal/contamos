@@ -39,7 +39,7 @@ describe('store', function (): void {
         $this->from(route('identity.teams.create'))
             ->post(route('identity.teams.store'), ['name' => 'Acme'])
             ->assertRedirectToRoute('finance.teams.dashboard.index', [
-                'team' => Team::query()->sole()->getKey(),
+                'team' => Team::query()->sole()->getRouteKey(),
             ]);
 
         $team = Team::query()->sole();

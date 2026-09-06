@@ -24,5 +24,5 @@ it('resolves the dashboard of the first team when the user has teams', function 
     $request->setUserResolver(fn (): User => $user);
 
     expect((new ResolveAuthenticationRedirect)->fromRequest($request))
-        ->toBe(route('finance.teams.dashboard.index', ['team' => $team->getKey()]));
+        ->toBe(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]));
 });

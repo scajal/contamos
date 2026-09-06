@@ -125,7 +125,7 @@ class User extends Authenticatable implements FilamentUser
             ->save();
 
         // Set the team as default in the URL.
-        URL::defaults(['team' => $team->getKey()]);
+        URL::defaults(['team' => $team->getRouteKey()]);
 
         return true;
     }

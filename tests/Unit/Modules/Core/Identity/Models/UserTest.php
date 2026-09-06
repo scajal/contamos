@@ -38,5 +38,5 @@ it('switches to a team the user belongs to and sets the url default', function (
 
     expect($user->switchTeam($otherTeam))->toBeTrue()
         ->and($user->fresh()?->current_team_id)->toBe($otherTeam->getKey())
-        ->and(URL::getDefaultParameters())->toHaveKey('team', $otherTeam->getKey());
+        ->and(URL::getDefaultParameters())->toHaveKey('team', $otherTeam->getRouteKey());
 });

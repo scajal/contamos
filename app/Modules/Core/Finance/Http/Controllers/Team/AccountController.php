@@ -56,7 +56,7 @@ class AccountController
                 ->isActive()
                 ->get(),
             'types' => AccountType::cases(),
-        ])->baseRoute('finance.teams.accounts.index', ['team' => $team->getKey()]);
+        ])->baseRoute('finance.teams.accounts.index', ['team' => $team->getRouteKey()]);
     }
 
     /**
@@ -85,7 +85,7 @@ class AccountController
             'account' => $account->load('currencies:'.new Currency()->getKeyName()),
             'currencies' => Currency::query()->get(),
             'types' => AccountType::cases(),
-        ])->baseRoute('finance.teams.accounts.index', ['team' => $team->getKey()]);
+        ])->baseRoute('finance.teams.accounts.index', ['team' => $team->getRouteKey()]);
     }
 
     /**

@@ -47,7 +47,7 @@ describe('index', function (): void {
             'description' => 'Lunch',
         ]);
 
-        $this->get(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
+        $this->get(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('finance/teams/transactions/index')
@@ -88,7 +88,7 @@ describe('index', function (): void {
         ]);
 
         $this->get(route('finance.teams.transactions.index', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'filter' => [
                 'type' => TransactionType::Expense->value,
                 'account' => $account->getKey(),
@@ -133,7 +133,7 @@ describe('index', function (): void {
         ]);
 
         $this->get(route('finance.teams.transactions.index', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'filter' => [
                 'search' => $matching->getKey(),
             ],
@@ -150,7 +150,7 @@ describe('index', function (): void {
         [$user, $team] = actingMember();
 
         $this->get(route('finance.teams.transactions.index', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'filter' => [
                 'from' => '2024-06-30',
                 'to' => '2024-06-01',
@@ -165,7 +165,7 @@ describe('index', function (): void {
         $foreign = Account::factory()->for(Team::factory())->create();
 
         $this->get(route('finance.teams.transactions.index', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'filter' => ['account' => $foreign->getKey()],
         ]))
             ->assertRedirect()
@@ -195,7 +195,7 @@ describe('index', function (): void {
         $other->tags()->attach($salidas->getKey());
 
         $this->get(route('finance.teams.transactions.index', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'filter' => [
                 'tags' => $comida->getKey(),
             ],
@@ -213,7 +213,7 @@ describe('index', function (): void {
         $foreign = Tag::factory()->for(Team::factory())->create();
 
         $this->get(route('finance.teams.transactions.index', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'filter' => ['tags' => $foreign->getKey()],
         ]))
             ->assertRedirect()
@@ -234,7 +234,7 @@ describe('create', function (): void {
 
         $this->withHeaders(inertiaModalHeaders())
             ->get(route('finance.teams.transactions.create', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'type' => $type->value,
             ]))
             ->assertOk()
@@ -252,7 +252,7 @@ describe('create', function (): void {
     it('returns 404 for an unknown transaction type', function (): void {
         [$user, $team] = actingMember();
 
-        $this->get('/teams/'.$team->getKey().'/transactions/create/transfer')
+        $this->get('/teams/'.$team->getRouteKey().'/transactions/create/transfer')
             ->assertNotFound();
     });
 });
@@ -264,8 +264,8 @@ describe('store', function (): void {
         $account = Account::factory()->bank()->active()->for($team)->create();
         $account->currencies()->attach($currency);
 
-        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), transactionPayload([
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
                 $account->getForeignKey() => $account->getKey(),
                 $currency->getForeignKey() => $currency->getKey(),
             ]))
@@ -288,8 +288,8 @@ describe('store', function (): void {
         $comida = Tag::factory()->active()->for($team)->create();
         $salidas = Tag::factory()->active()->for($team)->create();
 
-        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), transactionPayload([
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
                 $account->getForeignKey() => $account->getKey(),
                 $currency->getForeignKey() => $currency->getKey(),
                 'tag_ids' => [$comida->getKey(), $salidas->getKey()],
@@ -308,8 +308,8 @@ describe('store', function (): void {
         $account->currencies()->attach($currency);
         $tag = Tag::factory()->active()->for($team)->create();
 
-        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), transactionPayload([
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
                 $account->getForeignKey() => $account->getKey(),
                 $currency->getForeignKey() => $currency->getKey(),
                 'tag_ids' => [$tag->getKey(), $tag->getKey()],
@@ -325,8 +325,8 @@ describe('store', function (): void {
         $account->currencies()->attach($currency);
         $tag = Tag::factory()->inactive()->for($team)->create();
 
-        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), transactionPayload([
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
                 $account->getForeignKey() => $account->getKey(),
                 $currency->getForeignKey() => $currency->getKey(),
                 'tag_ids' => [$tag->getKey()],
@@ -342,8 +342,8 @@ describe('store', function (): void {
         $account->currencies()->attach($currency);
         $tag = Tag::factory()->active()->for(Team::factory())->create();
 
-        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), transactionPayload([
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
                 $account->getForeignKey() => $account->getKey(),
                 $currency->getForeignKey() => $currency->getKey(),
                 'tag_ids' => [$tag->getKey()],
@@ -368,8 +368,8 @@ describe('store', function (): void {
         ]);
         unset($payload['quote']);
 
-        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), $payload)
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), $payload)
             ->assertRedirect();
 
         expect(Transaction::query()->sole()->quote)->toBe('1.500000000000000000');
@@ -382,8 +382,8 @@ describe('store', function (): void {
         $account = Account::factory()->bank()->active()->for($team)->create();
         $account->currencies()->attach($attached);
 
-        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), transactionPayload([
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
                 $account->getForeignKey() => $account->getKey(),
                 $other->getForeignKey() => $other->getKey(),
             ]))
@@ -397,8 +397,8 @@ describe('store', function (): void {
         $foreign = Account::factory()->bank()->active()->for(Team::factory())->create();
         $foreign->currencies()->attach($currency);
 
-        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), transactionPayload([
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
                 $foreign->getForeignKey() => $foreign->getKey(),
                 $currency->getForeignKey() => $currency->getKey(),
             ]))
@@ -409,8 +409,8 @@ describe('store', function (): void {
     it('rejects an empty payload', function (): void {
         [$user, $team] = actingMember();
 
-        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
-            ->post(route('finance.teams.transactions.store', ['team' => $team->getKey()]), [])
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), [])
             ->assertRedirect()
             ->assertInvalid(['amount', 'occurred_at', 'quote', 'type']);
     });
@@ -432,7 +432,7 @@ describe('show', function (): void {
 
         $this->withHeaders(inertiaModalHeaders())
             ->get(route('finance.teams.transactions.show', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'transaction' => $transaction->getKey(),
             ]))
             ->assertOk()
@@ -448,7 +448,7 @@ describe('show', function (): void {
         $foreign = Transaction::factory()->create();
 
         $this->get(route('finance.teams.transactions.show', [
-            'team' => $team->getKey(),
+            'team' => $team->getRouteKey(),
             'transaction' => $foreign->getKey(),
         ]))->assertNotFound();
     });
@@ -468,9 +468,9 @@ describe('destroy', function (): void {
             'user_id' => $user->getKey(),
         ]);
 
-        $this->from(route('finance.teams.transactions.index', ['team' => $team->getKey()]))
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
             ->delete(route('finance.teams.transactions.destroy', [
-                'team' => $team->getKey(),
+                'team' => $team->getRouteKey(),
                 'transaction' => $transaction->getKey(),
             ]))
             ->assertRedirect();

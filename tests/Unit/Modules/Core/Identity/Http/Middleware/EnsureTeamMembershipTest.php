@@ -16,7 +16,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 it('resolves a string team route parameter by route key', function (): void {
     [$user, $team] = memberWithTeam();
-    $teamKey = $team->getKey();
+    $teamKey = $team->getRouteKey();
 
     if (! is_string($teamKey)) {
         throw new InvalidArgumentException('Expected a string team key.');
