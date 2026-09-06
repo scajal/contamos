@@ -201,7 +201,7 @@ const Sidebar = () => {
                     </SidebarMenu>
                 </SidebarGroup>
                 <SidebarGroup>
-                    <SidebarGroupLabel>{t("Team")}</SidebarGroupLabel>
+                    <SidebarGroupLabel>{t("Finance")}</SidebarGroupLabel>
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton
@@ -213,18 +213,25 @@ const Sidebar = () => {
                         </SidebarMenuItem>
                         <SidebarMenuItem>
                             <SidebarMenuButton
+                                render={
+                                    <Link href={transactions.index.url({ team: user?.current_team?.slug ?? "" })} />
+                                }
+                            >
+                                <ArrowLeftRightIcon />
+                                <span>{t("Transactions")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroup>
+                <SidebarGroup>
+                    <SidebarGroupLabel>{t("Settings")}</SidebarGroupLabel>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
                                 render={<Link href={tags.index.url({ team: user?.current_team?.slug ?? "" })} />}
                             >
                                 <TagIcon />
                                 <span>{t("Tags")}</span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                render={<Link href={transactions.index.url({ team: user?.current_team?.slug ?? "" })} />}
-                            >
-                                <ArrowLeftRightIcon />
-                                <span>{t("Transactions")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>

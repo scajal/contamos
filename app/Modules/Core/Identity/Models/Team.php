@@ -119,6 +119,16 @@ class Team extends Model
     }
 
     /**
+     * Get the invitations of the team.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Identity\Models\Team\TeamInvitation, $this>
+     */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(Team\TeamInvitation::class);
+    }
+
+    /**
      * Get the tags of the team.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\Tag, $this>
