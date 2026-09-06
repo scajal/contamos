@@ -31,6 +31,6 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Modules/*/Routes/**, app/Modules/**/Routes/**, routes/console.php | .ai/rules/routes.md |
 | app/Modules/Support/** | .ai/rules/support.md |
 | app/Modules/Core/Finance/**, app/Modules/Core/Identity/** | .ai/rules/teams.md |
-| resources/js/components/ui/button.tsx | .ai/rules/ui.md |
+| resources/js/components/ui/button.tsx, resources/js/components/ui/table.tsx | .ai/rules/ui.md |
 | tests/Unit/** | .ai/rules/unit.md |
 | .github/workflows/** | .ai/rules/workflows.md |

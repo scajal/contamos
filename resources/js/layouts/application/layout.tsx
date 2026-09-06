@@ -100,7 +100,7 @@ export const ApplicationLayout = ({
             {/** Sidebar */}
             <Sidebar />
             {/** Wrapper */}
-            <SidebarInset>
+            <SidebarInset className="min-w-0">
                 {/** Header */}
                 <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
                     <div className="flex h-full w-full items-center justify-between px-4">
@@ -159,8 +159,8 @@ export const ApplicationLayout = ({
                     </div>
                 </header>
                 {/** Content */}
-                <main className="flex flex-1 p-4 md:p-10">
-                    <div className="mx-auto flex w-full max-w-5xl flex-col">{children}</div>
+                <main className="flex min-w-0 flex-1 p-4 md:p-10">
+                    <div className="mx-auto flex w-full min-w-0 max-w-5xl flex-col">{children}</div>
                 </main>
             </SidebarInset>
         </SidebarProvider>

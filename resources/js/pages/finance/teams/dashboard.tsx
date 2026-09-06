@@ -86,7 +86,7 @@ const Balances = () => {
     }
 
     return (
-        <div className="overflow-x-auto rounded-sm border">
+        <div className="min-w-0 overflow-x-auto rounded-sm border">
             <div className="flex min-w-full divide-x">
                 {balances.map((balance) => (
                     <BalanceCell balance={balance} key={balance.id} team={team.slug} />
@@ -164,14 +164,14 @@ const RecentActivity = () => {
                 </Button>
             </div>
             {[...grouped].map(([date, items]) => (
-                <div className="flex flex-col" key={date}>
+                <div className="flex min-w-0 flex-col" key={date}>
                     <Item className="p-0 pb-4">
                         <ItemHeader>
                             <ItemTitle>{format(new Date(date), "MMMM d, yyyy")}</ItemTitle>
                         </ItemHeader>
                     </Item>
-                    <div className="overflow-hidden rounded-sm border">
-                        <TableComponent className="table-fixed">
+                    <div className="min-w-0 overflow-x-auto rounded-sm border">
+                        <TableComponent>
                             <TableBody>
                                 {items.map((transaction) => (
                                     <TableRow key={transaction.id}>
@@ -179,7 +179,7 @@ const RecentActivity = () => {
                                             {format(new Date(transaction.occurred_at), "HH:mm")}
                                         </TableCell>
                                         <TableCell>{transaction.account?.name ?? "-"}</TableCell>
-                                        <TableCell className="truncate">{transaction.description ?? ""}</TableCell>
+                                        <TableCell>{transaction.description ?? ""}</TableCell>
                                         <TableCell className="text-right">
                                             <span
                                                 className={cn(
@@ -333,8 +333,8 @@ const SkeletonActivity = () => {
                     <Skeleton className="h-4 w-32" />
                 </ItemHeader>
             </Item>
-            <div className="overflow-hidden rounded-sm border">
-                <TableComponent className="table-fixed">
+            <div className="min-w-0 overflow-x-auto rounded-sm border">
+                <TableComponent>
                     <TableBody>
                         {[0, 1, 2].map((row) => (
                             <TableRow key={row}>

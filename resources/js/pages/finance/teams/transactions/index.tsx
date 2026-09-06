@@ -443,8 +443,8 @@ const Listing = () => {
                                     <ItemTitle>{format(new Date(date), "MMMM d, yyyy")}</ItemTitle>
                                 </ItemHeader>
                             </Item>
-                            <div className="overflow-hidden rounded-sm border">
-                                <TableComponent className="table-fixed">
+                            <div className="min-w-0 overflow-x-auto rounded-sm border">
+                                <TableComponent>
                                     <TableBody>
                                         {items.map((transaction) => (
                                             <TableRow key={transaction.id}>
@@ -452,7 +452,7 @@ const Listing = () => {
                                                     {format(new Date(transaction.occurred_at), "HH:mm")}
                                                 </TableCell>
                                                 <TableCell>{transaction.account?.name ?? "-"}</TableCell>
-                                                <TableCell className="truncate">
+                                                <TableCell>
                                                     <div className="flex flex-col gap-1">
                                                         <span>{transaction.description ?? ""}</span>
                                                         {(transaction.tags ?? []).length > 0 ? (
@@ -526,8 +526,8 @@ const SkeletonGroup = () => {
                     <Skeleton className="h-4 w-32" />
                 </ItemHeader>
             </Item>
-            <div className="overflow-hidden rounded-sm border">
-                <TableComponent className="table-fixed">
+            <div className="min-w-0 overflow-x-auto rounded-sm border">
+                <TableComponent>
                     <TableBody>
                         {[0, 1, 2].map((row) => (
                             <TableRow key={row}>
