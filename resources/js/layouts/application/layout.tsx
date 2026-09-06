@@ -127,7 +127,10 @@ export const ApplicationLayout = ({
                         {user?.current_team && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger render={<Button />}>
-                                    <span>{t("Create :name", { name: t("transaction") })}</span>
+                                    <span>
+                                        {t("Create")}
+                                        <span className="max-sm:hidden">{t("transaction")}</span>
+                                    </span>
                                     <ChevronDownIcon className="transition-transform in-data-popup-open:rotate-180" />
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-auto min-w-(--anchor-width)">
