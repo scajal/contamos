@@ -66,7 +66,7 @@ class Account extends Model
         // For each currency, sum the signed amount of the transactions.
         $query
             ->select(($currency = new Currency)->qualifyColumns([$currency->getKeyName(), 'code', 'decimal_places', 'symbol']))
-            ->selectRaw(sprintf('SUM(CASE %s ELSE 0 END) AS balance', $signedAmount), array_column(TransactionType::cases(), 'value'))
+            ->selectRaw(sprintf('SUM(CASE %s ELSE 0 END) AS balance', $signedAmount), array_column(TransactionType::cases(), 'value')) // @phpstan-ignore-line argument.type Columns come from the models.
             ->join(($transaction = new Transaction)->getTable(), $transaction->qualifyColumn($this->getForeignKey()), '=', $this->getQualifiedKeyName())
             ->join($currency->getTable(), $currency->getQualifiedKeyName(), '=', $transaction->qualifyColumn($currency->getForeignKey()))
             ->groupBy($currency->qualifyColumns([$currency->getKeyName(), 'code', 'decimal_places', 'symbol']))

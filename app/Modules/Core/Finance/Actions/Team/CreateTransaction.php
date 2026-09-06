@@ -80,7 +80,7 @@ class CreateTransaction
                 ->firstOrFail()
                 ->currencies()
                 ->updateExistingPivot($currency->getKey(), [
-                    'balance' => DB::raw("balance {$transaction->type->sign()} {$transaction->amount}"),
+                    'balance' => DB::raw("balance {$transaction->type->sign()} {$transaction->amount}"), // @phpstan-ignore-line argument.type Sign and amount come from the transaction.
                 ]);
 
             // Return the transaction.

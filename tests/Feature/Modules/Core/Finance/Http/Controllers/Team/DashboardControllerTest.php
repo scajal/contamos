@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Illuminate\Support\Str;
@@ -24,9 +27,39 @@ it('renders the dashboard for a team member', function (): void {
     $this->get(route('finance.teams.dashboard.index', ['team' => $team->getKey()]))
         ->assertOk()
         ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-            ->component('welcome')
+            ->component('finance/teams/dashboard')
             ->has('user')
-            ->where('user.id', $user->getKey()));
+            ->where('user.id', $user->getKey())
+            ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('balances', 0)));
+});
+
+it('renders the signed balance per currency of the active accounts', function (): void {
+    [$user, $team] = actingMember();
+    $peso = Currency::factory()->active()->fiat()->create(['code' => 'ARS', 'decimal_places' => 2, 'symbol' => '$']);
+    $dollar = Currency::factory()->active()->fiat()->create(['code' => 'USD', 'decimal_places' => 2, 'symbol' => 'US$']);
+    $active = Account::factory()->bank()->active()->for($team)->create();
+    $inactive = Account::factory()->cash()->inactive()->for($team)->create();
+    $foreign = Account::factory()->bank()->active()->for(Team::factory())->create();
+
+    Transaction::factory()->income()->for($active)->for($peso)->create(['amount' => '100.50']);
+    Transaction::factory()->expense()->for($active)->for($peso)->create(['amount' => '30.25']);
+    Transaction::factory()->expense()->for($active)->for($dollar)->create(['amount' => '10']);
+    Transaction::factory()->income()->for($inactive)->for($peso)->create(['amount' => '500']);
+    Transaction::factory()->income()->for($foreign)->for($peso)->create(['amount' => '900']);
+
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getKey()]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->component('finance/teams/dashboard')
+            ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('balances', 2)
+                ->where('balances.0.code', 'ARS')
+                ->where('balances.0.symbol', '$')
+                ->where('balances.0.decimal_places', 2)
+                ->where('balances.0.balance', fn (mixed $balance): bool => (float) $balance === 70.25)
+                ->where('balances.1.code', 'USD')
+                ->where('balances.1.balance', fn (mixed $balance): bool => (float) $balance === -10.0)));
 });
 
 it('returns 404 when the team does not exist', function (): void {

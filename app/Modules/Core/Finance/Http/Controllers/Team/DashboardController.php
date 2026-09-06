@@ -12,7 +12,7 @@ use Inertia\Response;
 class DashboardController
 {
     /**
-     * Display a listing of the resource.
+     * Display the dashboard for the team.
      */
     public function index(Team $team): Response
     {
@@ -23,6 +23,7 @@ class DashboardController
                     ->balancesByCurrency()
                     ->get(),
             ),
+            'team' => $team,
         ]);
     }
 }
