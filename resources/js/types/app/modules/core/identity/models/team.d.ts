@@ -17,6 +17,7 @@ export interface Team {
     accounts?: Account[];
     invitations?: TeamInvitation[];
     membership?: Membership | null;
+    plan?: "free" | "pro";
     tags?: Tag[];
     transactions?: Array<Transaction>;
     users?: User[];

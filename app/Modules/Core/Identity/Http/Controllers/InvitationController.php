@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Http\Controllers;
 
+use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Identity\Actions\User\AcceptInvitation;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
@@ -34,6 +35,17 @@ class InvitationController
         // If the invitation can no longer be accepted by this user,
         // show it again so the page explains why.
         if (! $invitation->isPending() || ! $invitation->isFor($user->email)) {
+            return to_route('identity.invitations.show', ['invitation' => $invitation]);
+        }
+
+        // A user already in a Free-plan team cannot join another
+        // Free-plan team; Pro teams are always joinable. A user who
+        // already belongs to this team is just re-confirming, not
+        // joining a new one, so the limit does not apply.
+        if (! $user->belongsToTeam($invitation->team) && $invitation->team->plan() === Plan::Free && ! $user->canJoinFreeTeam()) {
+            Toast::make(trans('You already belong to a free team. Upgrade that team or ask this team to upgrade.'))
+                ->flash();
+
             return to_route('identity.invitations.show', ['invitation' => $invitation]);
         }
 

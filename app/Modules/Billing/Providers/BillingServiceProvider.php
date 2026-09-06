@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Providers;
+declare(strict_types=1);
+
+namespace App\Modules\Billing\Providers;
 
 use App\Modules\Billing\Models\Customer;
 use App\Modules\Billing\Models\Subscription;
@@ -17,6 +19,16 @@ class BillingServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureModels();
+    }
+
+    /**
+     * Register services.
+     */
+    public function register(): void
+    {
+        // The module owns the webhook route so it can point
+        // it at its own controller.
+        Cashier::ignoreRoutes();
     }
 
     /**

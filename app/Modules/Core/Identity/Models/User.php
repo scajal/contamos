@@ -6,6 +6,7 @@ namespace App\Modules\Core\Identity\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Modules\Billing\Enums\Plan;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\HasActivation;
 use Filament\Models\Contracts\FilamentUser;
@@ -69,6 +70,20 @@ class User extends Authenticatable implements FilamentUser
             "{$team->getTable()}.{$team->getKeyName()}",
             $team->getKey()
         )->exists();
+    }
+
+    /**
+     * Determine if the user can still join (by creating or accepting
+     * an invitation to) another Free-plan team.
+     *
+     * Load the user's teams with their subscriptions before calling
+     * this to avoid N+1 queries.
+     */
+    public function canJoinFreeTeam(): bool
+    {
+        $freeTeams = $this->teams->filter(fn (Team $team): bool => $team->plan() === Plan::Free)->count();
+
+        return Plan::Free->allows('teams', $freeTeams);
     }
 
     /**

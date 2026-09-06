@@ -119,4 +119,32 @@ describe('accept', function (): void {
 
         expect($user->fresh()?->belongsToTeam($invitation->team))->toBeFalse();
     })->with(['accepted', 'expired']);
+
+    it('blocks a user already in a free team from accepting an invitation to another free team', function (): void {
+        [$user, $existingTeam] = actingMember();
+        $user->update(['email' => 'ada@example.com']);
+        $invitation = TeamInvitation::factory()->create(['email' => 'ada@example.com']);
+
+        $this->post(route('identity.invitations.accept', ['invitation' => $invitation]))
+            ->assertRedirectToRoute('identity.invitations.show', ['invitation' => $invitation]);
+
+        assertFlashedToast(trans('You already belong to a free team. Upgrade that team or ask this team to upgrade.'));
+        expect($user->fresh()?->belongsToTeam($invitation->team))->toBeFalse()
+            ->and($invitation->fresh()?->isAccepted())->toBeFalse();
+    });
+
+    it('lets a user already in a free team accept an invitation to a pro team', function (): void {
+        \Laravel\Paddle\Cashier::fake();
+        [$user] = actingMember();
+        $user->update(['email' => 'ada@example.com']);
+        $invitation = TeamInvitation::factory()->create(['email' => 'ada@example.com']);
+        $invitation->team->subscriptions()->create(['type' => 'default', 'paddle_id' => 'sub_test', 'status' => 'active'])
+            ->items()->create(['product_id' => 'pro_test', 'price_id' => 'pri_month', 'status' => 'active', 'quantity' => 1]);
+
+        $this->post(route('identity.invitations.accept', ['invitation' => $invitation]))
+            ->assertRedirectToRoute('finance.teams.dashboard.index', ['team' => $invitation->team->getRouteKey()]);
+
+        expect($user->fresh()?->belongsToTeam($invitation->team))->toBeTrue()
+            ->and($invitation->fresh()?->isAccepted())->toBeTrue();
+    });
 });

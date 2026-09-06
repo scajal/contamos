@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Core\Identity\Models;
 
+use App\Modules\Billing\Concerns\HasPlan;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
@@ -22,7 +25,10 @@ use Laravel\Paddle\Billable;
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Account> $accounts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Billing\Models\Transaction> $billingTransactions
+ * @property-read \App\Modules\Billing\Models\Customer|null $customer
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team\TeamInvitation> $invitations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Billing\Models\Subscription> $subscriptions
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Tag> $tags
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction> $transactions
  * @property-read \App\Modules\Core\Identity\Models\Membership|null $membership
@@ -47,7 +53,17 @@ class Team extends Model
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Identity\Models\TeamFactory> */
     use HasFactory;
 
+    use HasPlan;
     use HasUlids;
+
+    /**
+     * The relations that should never be serialized, since billing
+     * internals are not part of the team's public shape and must
+     * never leak into an Inertia page shared with team members.
+     *
+     * @var list<string>
+     */
+    protected $hidden = ['billingTransactions', 'customer', 'subscriptions'];
 
     /**
      * Get the accounts of the team.
@@ -122,6 +138,16 @@ class Team extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /**
+     * Get the billable model's name to associate with
+     * Paddle. Teams have no owner, so billing is
+     * always set up under the team's own name.
+     */
+    public function paddleName(): ?string
+    {
+        return $this->name;
     }
 
     /**
