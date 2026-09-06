@@ -129,9 +129,9 @@ const CreateTransactionMenu = ({ className }: { className?: string }) => {
     const { user } = usePage().props;
 
     /**
-     * The current team id.
+     * The current team's route key.
      */
-    const team = user?.currentTeam?.slug ?? "";
+    const team = user?.current_team?.slug ?? "";
 
     return (
         <DropdownMenu>
@@ -192,7 +192,7 @@ const Filters = () => {
             from: initial?.from ?? null,
             to: initial?.to ?? null,
         },
-        url: (query) => routes.index.url({ team: user?.currentTeam?.slug ?? "" }, { query }),
+        url: (query) => routes.index.url({ team: user?.current_team?.slug ?? "" }, { query }),
         only: ["transactions", "filters"],
         reset: ["transactions"],
     });
@@ -381,9 +381,9 @@ const Listing = () => {
     );
 
     /**
-     * The current team id.
+     * The current team's route key.
      */
-    const team = user?.currentTeam?.slug ?? "";
+    const team = user?.current_team?.slug ?? "";
 
     return (
         <Deferred data="transactions" fallback={<SkeletonGroup />}>

@@ -1,4 +1,4 @@
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
@@ -22,6 +22,11 @@ export default function Show({ transaction }: PageProps) {
      * to the current locale.
      */
     const { currentLocale, t } = useLaravelReactI18n();
+
+    /**
+     * The page's props.
+     */
+    const { user } = usePage().props;
 
     /**
      * Whether this transaction is an expense.
@@ -107,7 +112,7 @@ export default function Show({ transaction }: PageProps) {
                                 action={
                                     <Link
                                         href={transactions.destroy.url({
-                                            team: transaction.team_id,
+                                            team: user?.current_team?.slug ?? "",
                                             transaction: transaction.id,
                                         })}
                                         method="delete"

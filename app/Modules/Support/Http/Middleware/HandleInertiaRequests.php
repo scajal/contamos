@@ -2,6 +2,7 @@
 
 namespace App\Modules\Support\Http\Middleware;
 
+use App\Modules\Core\Identity\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -37,18 +38,33 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        /** @var \App\Modules\Core\Identity\Models\User|null $user */
-        $user = $request->user();
-
         return [
             ...parent::share($request),
 
             'auth' => [
-                'canAccessAdministration' => $user?->canAccessPanel(Filament::getPanel('administration')),
+                'canAccessAdministration' => ($user = $this->user($request)) ? $user->canAccessPanel(Filament::getPanel('administration')) : false,
             ],
 
             // The authenticated user.
-            'user' => Inertia::always($user?->loadMissing('currentTeam')),
+            'user' => Inertia::always($user),
         ];
+    }
+
+    /**
+     * Get the current authenticated user,
+     * if any.
+     */
+    protected function user(Request $request): ?User
+    {
+        /** @var \App\Modules\Core\Identity\Models\User|null $user */
+        $user = $request->user();
+
+        // If the user is an instance of the User model
+        // and has a current team, load the current team.
+        if ($user instanceof User && isset($user->current_team_id)) {
+            $user->loadMissing('currentTeam');
+        }
+
+        return $user;
     }
 }

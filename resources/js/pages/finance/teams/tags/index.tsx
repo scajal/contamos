@@ -106,7 +106,7 @@ const CreateTagButton = ({ className }: { className?: string }) => {
             className={className}
             nativeButton={false}
             render={
-                <ModalLink href={routes.create.url({ team: user?.currentTeam?.slug ?? "" })}>
+                <ModalLink href={routes.create.url({ team: user?.current_team?.slug ?? "" })}>
                     <PlusIcon data-icon="inline-start" />
                     {t("Create :name", { name: t("tag") })}
                 </ModalLink>
@@ -135,7 +135,7 @@ const Filters = () => {
             search: initial?.search ?? null,
             is_active: initial?.is_active ?? null,
         },
-        url: (query) => routes.index.url({ team: user?.currentTeam?.slug ?? "" }, { query }),
+        url: (query) => routes.index.url({ team: user?.current_team?.slug ?? "" }, { query }),
         only: ["tags", "filters"],
     });
 
@@ -286,7 +286,7 @@ const Listing = () => {
                                                             <ModalLink
                                                                 href={routes.edit.url({
                                                                     tag: { id: tag.id },
-                                                                    team: user?.currentTeam?.slug ?? "",
+                                                                    team: user?.current_team?.slug ?? "",
                                                                 })}
                                                             >
                                                                 <PencilIcon />
@@ -303,11 +303,11 @@ const Listing = () => {
                                                                     tag.is_active
                                                                         ? routes.deactivate.url({
                                                                               tag: tag.id,
-                                                                              team: user?.currentTeam?.slug ?? "",
+                                                                              team: user?.current_team?.slug ?? "",
                                                                           })
                                                                         : routes.activate.url({
                                                                               tag: tag.id,
-                                                                              team: user?.currentTeam?.slug ?? "",
+                                                                              team: user?.current_team?.slug ?? "",
                                                                           })
                                                                 }
                                                                 method="patch"

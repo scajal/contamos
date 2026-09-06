@@ -1,6 +1,7 @@
 ---
 paths:
-    - "resources/js/**"
+  - 'resources/js/**'
+  - 'resources/js/**/*.tsx'
 ---
 
 # Js
@@ -32,3 +33,6 @@ Share create/edit form fields via a colocated `./_components/fields` module next
 ## Inertia prop types mirror PHP modules
 
 Put Inertia/serialized domain types under `@/types/app/modules/...` mirroring the PHP `App\Modules\...` path (kebab-case filenames). Import those types in pages instead of ad-hoc interfaces for domain shapes.
+
+## Frontend team routes use slug
+Wayfinder {team} params use user.current_team.slug (or the page team.slug), never current_team_id, team.id, or *.team_id. HandleInertiaRequests loads currentTeam when current_team_id is present; Inertia serializes it as current_team.

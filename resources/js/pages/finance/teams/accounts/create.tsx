@@ -35,7 +35,7 @@ export default function Create({ currencies, types }: PageProps) {
                 <Sheet {...rootProps}>
                     <SheetContent>
                         <Form
-                            {...accounts.store.form({ team: user?.currentTeam?.slug ?? "" })}
+                            {...accounts.store.form({ team: user?.current_team?.slug ?? "" })}
                             className="contents"
                             disableWhileProcessing
                             onSuccess={() => {

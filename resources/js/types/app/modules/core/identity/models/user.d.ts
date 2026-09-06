@@ -9,7 +9,7 @@ export interface User {
     id: string;
     avatar: string | null;
     current_team_id: string | null;
-    currentTeam: Team | null;
+    current_team: Team | null;
     email: string;
     email_verified_at: string | null;
     is_active: boolean;

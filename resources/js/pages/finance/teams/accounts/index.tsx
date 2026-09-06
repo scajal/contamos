@@ -123,7 +123,7 @@ const CreateAccountButton = ({ className }: { className?: string }) => {
             className={className}
             nativeButton={false}
             render={
-                <ModalLink href={routes.create.url({ team: user?.currentTeam?.slug ?? "" })}>
+                <ModalLink href={routes.create.url({ team: user?.current_team?.slug ?? "" })}>
                     <PlusIcon data-icon="inline-start" />
                     {t("Create :name", { name: t("account") })}
                 </ModalLink>
@@ -154,7 +154,7 @@ const Filters = () => {
             is_active: initial?.is_active ?? null,
             currency: initial?.currency ?? null,
         },
-        url: (query) => routes.index.url({ team: user?.currentTeam?.slug ?? "" }, { query }),
+        url: (query) => routes.index.url({ team: user?.current_team?.slug ?? "" }, { query }),
         only: ["accounts", "filters"],
     });
 
@@ -360,7 +360,7 @@ const Listing = () => {
                                                                 <ModalLink
                                                                     href={routes.edit.url({
                                                                         account: { id: account.id },
-                                                                        team: user?.currentTeam?.slug ?? "",
+                                                                        team: user?.current_team?.slug ?? "",
                                                                     })}
                                                                 >
                                                                     <PencilIcon />
@@ -377,11 +377,11 @@ const Listing = () => {
                                                                         account.is_active
                                                                             ? routes.deactivate.url({
                                                                                   account: account.id,
-                                                                                  team: user?.currentTeam?.slug ?? "",
+                                                                                  team: user?.current_team?.slug ?? "",
                                                                               })
                                                                             : routes.activate.url({
                                                                                   account: account.id,
-                                                                                  team: user?.currentTeam?.slug ?? "",
+                                                                                  team: user?.current_team?.slug ?? "",
                                                                               })
                                                                     }
                                                                     method="patch"

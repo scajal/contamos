@@ -11,12 +11,13 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Modules/Core/Catalog/** | .ai/rules/catalog.md |
 | resources/js/pages/finance/**/_components/fields.tsx | .ai/rules/components.md |
 | app/Modules/**/Http/Controllers/** | .ai/rules/controllers.md |
+| app/Modules/Core/**/*.php | .ai/rules/core.md |
 | app/Modules/**/Enums/** | .ai/rules/enums.md |
 | database/factories/** | .ai/rules/factories.md |
 | tests/Feature/** | .ai/rules/feature.md |
 | resources/js/pages/finance/** | .ai/rules/finance.md |
 | app/Modules/Core/Identity/Models/Team.php | .ai/rules/identity-models.md |
-| resources/js/** | .ai/rules/js.md |
+| resources/js/**, resources/js/**/*.tsx | .ai/rules/js.md |
 | lang/*.json, lang/*/validation.php | .ai/rules/lang.md |
 | database/migrations/** | .ai/rules/migrations.md |
 | app/Modules/**/Models/** | .ai/rules/models.md |

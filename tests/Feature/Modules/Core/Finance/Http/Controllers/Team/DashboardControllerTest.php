@@ -31,7 +31,7 @@ it('renders the dashboard for a team member', function (): void {
             ->component('finance/teams/dashboard')
             ->has('user')
             ->where('user.id', $user->getKey())
-            ->where('user.currentTeam.slug', $team->getRouteKey())
+            ->where('user.current_team.slug', $team->getRouteKey())
             ->where('has_accounts', false)
             ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->has('balances', 0)
