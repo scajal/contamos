@@ -48,7 +48,7 @@ export default function Show({ transaction }: PageProps) {
                                     <span
                                         className={cn(
                                             "text-2xl font-semibold tabular-nums",
-                                            isExpense && "text-destructive",
+                                            isExpense ? "text-destructive" : "text-success",
                                         )}
                                     >
                                         {`${isExpense ? "-" : "+"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}

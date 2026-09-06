@@ -15,7 +15,7 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Breadcrumb, BreadcrumbList } from "@/components/ui/breadcrumb";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -47,6 +47,12 @@ import administration from "@/routes/filament/administration";
 import accounts from "@/routes/finance/teams/accounts";
 import transactions from "@/routes/finance/teams/transactions";
 
+const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
+    { prefix: "finance/teams/accounts", title: "Accounts" },
+    { prefix: "finance/teams/transactions", title: "Transactions" },
+    { prefix: "finance/teams/dashboard", title: "Dashboard" },
+];
+
 export const ApplicationLayout = ({
     breadcrumb,
     children,
@@ -61,9 +67,30 @@ export const ApplicationLayout = ({
     const t = useLaravelReactI18n().t;
 
     /**
+     * The current Inertia page.
+     */
+    const page = usePage();
+
+    /**
      * The page's props.
      */
-    const { user } = usePage().props;
+    const { user } = page.props;
+
+    /**
+     * The current page title for the header breadcrumb.
+     */
+    const pageTitle = PAGE_TITLES.find(({ prefix }) => page.component.startsWith(prefix))?.title;
+
+    /**
+     * The breadcrumb trail: an explicit override, or the current page.
+     */
+    const items =
+        breadcrumb ??
+        (pageTitle ? (
+            <BreadcrumbItem>
+                <BreadcrumbPage>{t(pageTitle)}</BreadcrumbPage>
+            </BreadcrumbItem>
+        ) : null);
 
     return (
         <SidebarProvider>
@@ -73,17 +100,20 @@ export const ApplicationLayout = ({
             <SidebarInset>
                 {/** Header */}
                 <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                    <div className="flex w-full items-center justify-between px-4">
+                    <div className="flex h-full w-full items-center justify-between px-4">
                         <div className="flex items-center gap-2">
                             <SidebarTrigger className="-ml-1" />
-                            {breadcrumb && (
+                            {items ? (
                                 <Fragment>
-                                    <Separator className="hidden md:block" orientation="vertical" />
-                                    <Breadcrumb className="hidden md:block">
-                                        <BreadcrumbList>{breadcrumb}</BreadcrumbList>
+                                    <Separator
+                                        className="mr-2 data-vertical:h-4 data-vertical:self-auto"
+                                        orientation="vertical"
+                                    />
+                                    <Breadcrumb>
+                                        <BreadcrumbList>{items}</BreadcrumbList>
                                     </Breadcrumb>
                                 </Fragment>
-                            )}
+                            ) : null}
                         </div>
                         {user?.current_team_id && (
                             <DropdownMenu>

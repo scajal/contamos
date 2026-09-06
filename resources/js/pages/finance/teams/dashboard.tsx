@@ -184,7 +184,9 @@ const RecentActivity = () => {
                                             <span
                                                 className={cn(
                                                     "font-medium tabular-nums",
-                                                    transaction.type === "expense" && "text-destructive",
+                                                    transaction.type === "expense"
+                                                        ? "text-destructive"
+                                                        : "text-success",
                                                 )}
                                             >
                                                 {`${transaction.type === "income" ? "+" : "-"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}

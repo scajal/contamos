@@ -6,11 +6,13 @@ Before planning or editing, find the row whose globs match the file's path and r
 | --- | --- |
 | app/Modules/**/Actions/** | .ai/rules/actions.md |
 | app/Modules/Administration/** | .ai/rules/administration.md |
+| resources/js/layouts/application/** | .ai/rules/application.md |
 | app/Modules/Core/Catalog/** | .ai/rules/catalog.md |
 | app/Modules/**/Http/Controllers/** | .ai/rules/controllers.md |
 | app/Modules/**/Enums/** | .ai/rules/enums.md |
 | database/factories/** | .ai/rules/factories.md |
 | tests/Feature/** | .ai/rules/feature.md |
+| resources/js/pages/finance/** | .ai/rules/finance.md |
 | resources/js/** | .ai/rules/js.md |
 | lang/*.json, lang/*/validation.php | .ai/rules/lang.md |
 | database/migrations/** | .ai/rules/migrations.md |

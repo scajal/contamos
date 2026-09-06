@@ -18,7 +18,6 @@ import {
 import { type DateRange } from "react-day-picker";
 import { Fragment } from "react/jsx-runtime";
 
-import { BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -431,7 +430,9 @@ const Listing = () => {
                                                     <span
                                                         className={cn(
                                                             "font-medium tabular-nums",
-                                                            transaction.type === "expense" && "text-destructive",
+                                                            transaction.type === "expense"
+                                                                ? "text-destructive"
+                                                                : "text-success",
                                                         )}
                                                     >
                                                         {`${transaction.type === "income" ? "+" : "-"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
@@ -512,29 +513,6 @@ const SkeletonGroup = () => {
     );
 };
 
-const Breadcrumb = () => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    /**
-     * The page's props.
-     */
-    const { user } = usePage<PageProps>().props;
-
-    return (
-        <Fragment>
-            <BreadcrumbItem>
-                <BreadcrumbLink render={<Link href={routes.index.url({ team: user?.current_team_id ?? "" })} />}>
-                    <span>{t("Transactions")}</span>
-                </BreadcrumbLink>
-            </BreadcrumbItem>
-        </Fragment>
-    );
-};
-
-Index.layout = (page: React.ReactNode) => <ApplicationLayout breadcrumb={<Breadcrumb />}>{page}</ApplicationLayout>;
+Index.layout = (page: React.ReactNode) => <ApplicationLayout>{page}</ApplicationLayout>;
 
 export default Index;
