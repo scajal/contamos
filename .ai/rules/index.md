@@ -27,3 +27,4 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Modules/Support/** | .ai/rules/support.md |
 | app/Modules/Core/Finance/**, app/Modules/Core/Identity/** | .ai/rules/teams.md |
 | tests/Unit/** | .ai/rules/unit.md |
+| .github/workflows/** | .ai/rules/workflows.md |
