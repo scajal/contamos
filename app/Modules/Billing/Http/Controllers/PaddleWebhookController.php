@@ -4,13 +4,67 @@ declare(strict_types=1);
 
 namespace App\Modules\Billing\Http\Controllers;
 
+use App\Modules\Billing\Features\ProPlan;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\Carbon;
 use Laravel\Paddle\Events\TransactionCompleted;
 use Laravel\Paddle\Http\Controllers\WebhookController;
+use Laravel\Pennant\Feature;
 
 class PaddleWebhookController extends WebhookController
 {
+    /**
+     * Handle subscription canceled, then forget the cached ProPlan
+     * feature value so the team's plan is re-resolved.
+     *
+     * @param  array{data: array{id: string}}  $payload
+     */
+    protected function handleSubscriptionCanceled(array $payload): void
+    {
+        parent::handleSubscriptionCanceled($payload);
+
+        $this->forgetProPlan($payload);
+    }
+
+    /**
+     * Handle subscription created, then forget the cached ProPlan
+     * feature value so the team's plan is re-resolved.
+     *
+     * @param  array{data: array{id: string}}  $payload
+     */
+    protected function handleSubscriptionCreated(array $payload): void
+    {
+        parent::handleSubscriptionCreated($payload);
+
+        $this->forgetProPlan($payload);
+    }
+
+    /**
+     * Handle subscription paused, then forget the cached ProPlan
+     * feature value so the team's plan is re-resolved.
+     *
+     * @param  array{data: array{id: string}}  $payload
+     */
+    protected function handleSubscriptionPaused(array $payload): void
+    {
+        parent::handleSubscriptionPaused($payload);
+
+        $this->forgetProPlan($payload);
+    }
+
+    /**
+     * Handle subscription updated, then forget the cached ProPlan
+     * feature value so the team's plan is re-resolved.
+     *
+     * @param  array{data: array{id: string}}  $payload
+     */
+    protected function handleSubscriptionUpdated(array $payload): void
+    {
+        parent::handleSubscriptionUpdated($payload);
+
+        $this->forgetProPlan($payload);
+    }
+
     /**
      * Handle a transaction completed notification, writing through the
      * team's billing transactions instead of Cashier's default
@@ -51,5 +105,21 @@ class PaddleWebhookController extends WebhookController
 
         // Dispatch the event.
         TransactionCompleted::dispatch($billable, $transaction, $payload);
+    }
+
+    /**
+     * Forget the cached ProPlan feature value for the team behind
+     * the subscription in the payload, so the next check
+     * re-resolves it from Cashier's current state.
+     *
+     * @param  array{data: array{id: string}}  $payload
+     */
+    protected function forgetProPlan(array $payload): void
+    {
+        // Find the subscription and forget the cached ProPlan
+        // feature value for the team.
+        if (($subscription = $this->findSubscription($payload['data']['id']))?->billable instanceof Team) {
+            Feature::for($subscription->billable)->forget(ProPlan::class);
+        }
     }
 }

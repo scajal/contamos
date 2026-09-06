@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Billing\Concerns;
 
 use App\Modules\Billing\Enums\Plan;
+use App\Modules\Billing\Features\ProPlan;
 use Carbon\CarbonImmutable;
+use Laravel\Pennant\Feature;
 
 /**
  * @mixin \Illuminate\Database\Eloquent\Model
@@ -13,12 +15,13 @@ use Carbon\CarbonImmutable;
 trait HasPlan
 {
     /**
-     * Get the team's current plan, derived from
-     * its Paddle subscription state.
+     * Get the team's current plan. Resolved through the ProPlan
+     * Pennant feature rather than querying Cashier directly, so
+     * the plan-tier check is cached and centralized.
      */
     public function plan(): Plan
     {
-        return $this->subscribed() ? Plan::Pro : Plan::Free;
+        return Feature::for($this)->active(ProPlan::class) ? Plan::Pro : Plan::Free;
     }
 
     /**

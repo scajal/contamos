@@ -273,14 +273,16 @@ const Sidebar = () => {
                     </SidebarMenu>
                 </SidebarGroup>
                 <SidebarGroup>
-                    <SidebarGroupLabel>{t("Settings")}</SidebarGroupLabel>
+                    <SidebarGroupLabel>{t("Team")}</SidebarGroupLabel>
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={<Link href={tags.index.url({ team: user?.current_team?.slug ?? "" })} />}
+                                render={
+                                    <Link href={subscriptions.index.url({ team: user?.current_team?.slug ?? "" })} />
+                                }
                             >
-                                <TagIcon />
-                                <span>{t("Tags")}</span>
+                                <CreditCardIcon />
+                                <span>{t("Billing")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                         <SidebarMenuItem>
@@ -299,14 +301,17 @@ const Sidebar = () => {
                                 <span>{t("Invitations")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroup>
+                <SidebarGroup>
+                    <SidebarGroupLabel>{t("Settings")}</SidebarGroupLabel>
+                    <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={
-                                    <Link href={subscriptions.index.url({ team: user?.current_team?.slug ?? "" })} />
-                                }
+                                render={<Link href={tags.index.url({ team: user?.current_team?.slug ?? "" })} />}
                             >
-                                <CreditCardIcon />
-                                <span>{t("Billing")}</span>
+                                <TagIcon />
+                                <span>{t("Tags")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>

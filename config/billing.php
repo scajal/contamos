@@ -31,17 +31,36 @@ return [
     */
 
     'limits' => [
+        /*
+        |--------------------------------------------------------------------------
+        | Free plan
+        |--------------------------------------------------------------------------
+        |
+        | The free plan has a limited number of accounts, members, and transactions.
+        |
+        */
+
         'free' => [
-            'accounts' => 3,
+            'accounts' => 0,
             'members' => 2,
-            'transactions' => 100,
             'teams' => 1,
+            'transactions' => 100, // Per month.
         ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pro plan
+        |--------------------------------------------------------------------------
+        |
+        | The pro plan has no limits.
+        |
+        */
+
         'pro' => [
             'accounts' => null,
             'members' => null,
-            'transactions' => null,
             'teams' => null,
+            'transactions' => null, // Per month.
         ],
     ],
 
