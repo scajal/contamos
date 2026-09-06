@@ -3,10 +3,14 @@ import { ModalLink } from "@inertiaui/modal-react";
 import { format, parse } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
+    ArrowDownIcon,
+    ArrowUpIcon,
+    ChevronDownIcon,
     CircleDashedIcon,
     EyeIcon,
     ListFilterPlusIcon,
     MoreHorizontalIcon,
+    PlusIcon,
     SearchIcon,
     SearchXIcon,
     XIcon,
@@ -20,11 +24,12 @@ import { Calendar } from "@/components/ui/calendar";
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
 import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
@@ -82,14 +87,12 @@ const Index = () => {
                         <Filters />
                     </div>
                     <div className="flex justify-end max-sm:order-first max-sm:w-full">
-                        <Actions />
+                        <CreateTransactionMenu className="max-sm:w-full" />
                     </div>
                 </div>
 
                 {/** Transactions */}
-                <div className="flex flex-col">
-                    <Table />
-                </div>
+                <Listing />
             </div>
         </div>
     );
@@ -103,9 +106,61 @@ const Header = () => {
     const t = useLaravelReactI18n().t;
 
     return (
-        <header>
+        <header className="flex flex-col gap-1">
             <h1 className="text-2xl font-medium">{t("Transactions")}</h1>
+            <p className="text-muted-foreground text-sm">{t("Income and expenses recorded for this team.")}</p>
         </header>
+    );
+};
+
+const CreateTransactionMenu = ({ className }: { className?: string }) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { user } = usePage().props;
+
+    /**
+     * The current team id.
+     */
+    const teamId = user?.current_team_id ?? "";
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger render={<Button className={className} />}>
+                <PlusIcon data-icon="inline-start" />
+                {t("Create :name", { name: t("transaction") })}
+                <ChevronDownIcon
+                    data-icon="inline-end"
+                    className="transition-transform in-data-popup-open:rotate-180"
+                />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                    <DropdownMenuItem
+                        render={
+                            <ModalLink href={routes.create.url({ team: teamId, type: "income" })}>
+                                <ArrowDownIcon />
+                                <span>{t("Register an :name", { name: t("income") })}</span>
+                            </ModalLink>
+                        }
+                    />
+                    <DropdownMenuItem
+                        render={
+                            <ModalLink href={routes.create.url({ team: teamId, type: "expense" })}>
+                                <ArrowUpIcon />
+                                <span>{t("Register an :name", { name: t("expense") })}</span>
+                            </ModalLink>
+                        }
+                    />
+                </DropdownMenuGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 };
 
@@ -146,39 +201,42 @@ const Filters = () => {
     return (
         <div className="flex items-center gap-2">
             {/** Search */}
-            <InputGroup>
-                <InputGroupAddon>
-                    <SearchIcon />
-                </InputGroupAddon>
-                <InputGroupInput
-                    onChange={(event) => setFilters({ search: event.target.value }, { debounced: true })}
-                    placeholder={t("Search by ID or description")}
-                    value={filters.search ?? ""}
-                />
-            </InputGroup>
+            <Field className="flex-1">
+                <FieldLabel className="sr-only" htmlFor="transactions-search">
+                    {t("Search")}
+                </FieldLabel>
+                <InputGroup>
+                    <InputGroupAddon>
+                        <SearchIcon />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                        id="transactions-search"
+                        onChange={(event) => setFilters({ search: event.target.value }, { debounced: true })}
+                        placeholder={t("Search by ID or description")}
+                        value={filters.search ?? ""}
+                    />
+                </InputGroup>
+            </Field>
 
             {/** Advanced filters */}
             <Popover>
                 <PopoverTrigger className="relative" render={<Button size="icon" variant="outline" />}>
                     <ListFilterPlusIcon />
-                    {isFiltered && (
-                        <span className="bg-destructive/50 absolute -top-1 -right-1 size-3 rounded-full text-white" />
-                    )}
+                    <span className="sr-only">{t("More filters")}</span>
+                    {isFiltered && <span className="bg-primary absolute -top-1 -right-1 size-3 rounded-full" />}
                 </PopoverTrigger>
                 <PopoverContent className="w-fit">
                     <PopoverHeader>
                         <PopoverTitle>{t("More filters")}</PopoverTitle>
                     </PopoverHeader>
-                    <div className="flex flex-col gap-4">
+                    <FieldGroup className="gap-4">
                         {/** Type */}
                         <Field>
                             <FieldLabel>{t("Type")}</FieldLabel>
                             <Select onValueChange={(value) => setFilters({ type: value })} value={filters.type}>
                                 <SelectTrigger>
                                     <SelectValue>
-                                        {(value: TransactionType | null) =>
-                                            `${value ? t(`enums.${value}`) : t("All")}`
-                                        }
+                                        {(value: TransactionType | null) => `${value ? t(`enums.${value}`) : t("All")}`}
                                     </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -221,10 +279,7 @@ const Filters = () => {
                         {/** Currency */}
                         <Field>
                             <FieldLabel>{t("Currency")}</FieldLabel>
-                            <Select
-                                onValueChange={(value) => setFilters({ currency: value })}
-                                value={filters.currency}
-                            >
+                            <Select onValueChange={(value) => setFilters({ currency: value })} value={filters.currency}>
                                 <SelectTrigger>
                                     <SelectValue>
                                         {(value: string | null) =>
@@ -260,23 +315,20 @@ const Filters = () => {
                                 selected={range}
                             />
                         </Field>
-                    </div>
+                    </FieldGroup>
                 </PopoverContent>
             </Popover>
 
             {/** Clear */}
             <Button disabled={!isFiltered} onClick={clear} size="icon" variant="outline">
                 <XIcon />
+                <span className="sr-only">{t("Clear filters")}</span>
             </Button>
         </div>
     );
 };
 
-const Actions = () => {
-    return <Fragment></Fragment>;
-};
-
-const Table = () => {
+const Listing = () => {
     /**
      * Translate the provided string
      * to the current locale.
@@ -286,7 +338,7 @@ const Table = () => {
     /**
      * The page's props.
      */
-    const { filters, transactions } = usePage<PageProps>().props;
+    const { filters, transactions, user } = usePage<PageProps>().props;
 
     /**
      * Whether the listing is being filtered.
@@ -300,44 +352,63 @@ const Table = () => {
         format(new Date(transaction.occurred_at), "yyyy-MM-dd"),
     );
 
+    /**
+     * The current team id.
+     */
+    const teamId = user?.current_team_id ?? "";
+
     return (
-        <Fragment>
-            <Deferred data="transactions" fallback={<SkeletonGroup />}>
-                <InfiniteScroll data="transactions" onlyNext>
-                    {/** Empty state */}
-                    {transactions?.data?.length < 1 && (
-                        <div className="overflow-hidden rounded-sm border">
-                            <TableComponent>
-                                <TableBody>
-                                    <TableRow>
-                                        <TableCell colSpan={2}>
-                                            <Empty>
-                                                <EmptyHeader>
-                                                    <EmptyMedia variant="icon">
-                                                        {isFiltered ? <SearchXIcon /> : <CircleDashedIcon />}
-                                                    </EmptyMedia>
-                                                    <EmptyTitle>
-                                                        {isFiltered
-                                                            ? t("No results for the current filters")
-                                                            : t("No :name yet", { name: t("transactions") })}
-                                                    </EmptyTitle>
-                                                    <EmptyDescription>
-                                                        {isFiltered
-                                                            ? t("Try adjusting or clearing the filters.")
-                                                            : t("Add a new :name to get started.", {
-                                                                  name: t("transaction"),
-                                                              })}
-                                                    </EmptyDescription>
-                                                </EmptyHeader>
-                                            </Empty>
-                                        </TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </TableComponent>
-                        </div>
-                    )}
-                    {/** Data */}
-                    {[...grouped].map(([date, items]) => (
+        <Deferred data="transactions" fallback={<SkeletonGroup />}>
+            <InfiniteScroll data="transactions" onlyNext>
+                {!transactions?.data?.length ? (
+                    <div className="overflow-hidden rounded-sm border">
+                        <Empty>
+                            <EmptyHeader>
+                                <EmptyMedia variant="icon">
+                                    {isFiltered ? <SearchXIcon /> : <CircleDashedIcon />}
+                                </EmptyMedia>
+                                <EmptyTitle>
+                                    {isFiltered
+                                        ? t("No results for the current filters")
+                                        : t("No :name yet", { name: t("transactions") })}
+                                </EmptyTitle>
+                                <EmptyDescription>
+                                    {isFiltered
+                                        ? t("Try adjusting or clearing the filters.")
+                                        : t("Add a new :name to get started.", {
+                                              name: t("transaction"),
+                                          })}
+                                </EmptyDescription>
+                            </EmptyHeader>
+                            {!isFiltered ? (
+                                <EmptyContent>
+                                    <div className="flex flex-wrap justify-center gap-2">
+                                        <Button
+                                            nativeButton={false}
+                                            render={
+                                                <ModalLink href={routes.create.url({ team: teamId, type: "income" })}>
+                                                    <ArrowDownIcon data-icon="inline-start" />
+                                                    {t("Register an :name", { name: t("income") })}
+                                                </ModalLink>
+                                            }
+                                            variant="outline"
+                                        />
+                                        <Button
+                                            nativeButton={false}
+                                            render={
+                                                <ModalLink href={routes.create.url({ team: teamId, type: "expense" })}>
+                                                    <ArrowUpIcon data-icon="inline-start" />
+                                                    {t("Register an :name", { name: t("expense") })}
+                                                </ModalLink>
+                                            }
+                                        />
+                                    </div>
+                                </EmptyContent>
+                            ) : null}
+                        </Empty>
+                    </div>
+                ) : (
+                    [...grouped].map(([date, items]) => (
                         <Fragment key={date}>
                             <Item className="p-0 pb-4 not-first:mt-4">
                                 <ItemHeader>
@@ -349,18 +420,18 @@ const Table = () => {
                                     <TableBody>
                                         {items.map((transaction) => (
                                             <TableRow key={transaction.id}>
-                                                <TableCell className="w-16">
+                                                <TableCell className="text-muted-foreground w-16 tabular-nums">
                                                     {format(new Date(transaction.occurred_at), "HH:mm")}
                                                 </TableCell>
                                                 <TableCell>{transaction.account?.name ?? "-"}</TableCell>
-                                                <TableCell>{transaction.description ?? ""}</TableCell>
+                                                <TableCell className="truncate">
+                                                    {transaction.description ?? ""}
+                                                </TableCell>
                                                 <TableCell className="text-right">
                                                     <span
                                                         className={cn(
-                                                            "font-medium",
-                                                            transaction.type === "income"
-                                                                ? "text-green-500"
-                                                                : "text-red-500",
+                                                            "font-medium tabular-nums",
+                                                            transaction.type === "expense" && "text-destructive",
                                                         )}
                                                     >
                                                         {`${transaction.type === "income" ? "+" : "-"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
@@ -375,19 +446,21 @@ const Table = () => {
                                                             <span className="sr-only">{t("Actions")}</span>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem
-                                                                render={
-                                                                    <ModalLink
-                                                                        href={routes.show.url({
-                                                                            team: transaction.team_id,
-                                                                            transaction: transaction.id,
-                                                                        })}
-                                                                    >
-                                                                        <EyeIcon />
-                                                                        <span>{t("View")}</span>
-                                                                    </ModalLink>
-                                                                }
-                                                            />
+                                                            <DropdownMenuGroup>
+                                                                <DropdownMenuItem
+                                                                    render={
+                                                                        <ModalLink
+                                                                            href={routes.show.url({
+                                                                                team: transaction.team_id,
+                                                                                transaction: transaction.id,
+                                                                            })}
+                                                                        >
+                                                                            <EyeIcon />
+                                                                            <span>{t("View")}</span>
+                                                                        </ModalLink>
+                                                                    }
+                                                                />
+                                                            </DropdownMenuGroup>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </TableCell>
@@ -397,10 +470,10 @@ const Table = () => {
                                 </TableComponent>
                             </div>
                         </Fragment>
-                    ))}
-                </InfiniteScroll>
-            </Deferred>
-        </Fragment>
+                    ))
+                )}
+            </InfiniteScroll>
+        </Deferred>
     );
 };
 

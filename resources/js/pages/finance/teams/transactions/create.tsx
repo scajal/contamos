@@ -48,14 +48,18 @@ export default function Create({ accounts, type }: PageProps) {
                                 <Fragment>
                                     <SheetHeader>
                                         <SheetTitle>{t("Register an :name", { name: t(type) })}</SheetTitle>
-                                        <SheetDescription>{t("Add a new transaction.")}</SheetDescription>
+                                        <SheetDescription>
+                                            {type === "income"
+                                                ? t("Record money coming into an account.")
+                                                : t("Record money leaving an account.")}
+                                        </SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-4">
                                         <Fields accounts={accounts} defaultValues={{ type }} {...formProps} />
                                     </div>
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
-                                            {formProps.processing && <Spinner />}
+                                            {formProps.processing && <Spinner data-icon="inline-start" />}
                                             {t("Save")}
                                         </Button>
                                     </SheetFooter>

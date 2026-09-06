@@ -12,7 +12,7 @@ import {
     ComboboxTrigger,
     ComboboxValue,
 } from "@/components/ui/combobox";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
@@ -70,12 +70,12 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
     });
 
     return (
-        <div className="space-y-6">
+        <FieldGroup>
             {/** Type */}
             <input defaultValue={defaultValues?.type} name="type" type="hidden" />
 
             {/** Account */}
-            <Field>
+            <Field data-invalid={invalid("account_id") || undefined}>
                 <FieldLabel>{t("Account")}</FieldLabel>
                 <Combobox<Account>
                     items={accounts}
@@ -108,8 +108,8 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
             </Field>
 
             {/** Amount & Currency */}
-            <Field>
-                <FieldLabel>{t("Amount")}</FieldLabel>
+            <Field data-invalid={invalid("amount") || invalid("currency_id") || undefined}>
+                <FieldLabel htmlFor="transaction-amount">{t("Amount")}</FieldLabel>
                 <Combobox<Currency>
                     key={account?.id ?? "none"}
                     disabled={!account}
@@ -137,6 +137,7 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                             autoComplete="off"
                             defaultValue={defaultValues?.amount}
                             disabled={!account}
+                            id="transaction-amount"
                             inputMode="decimal"
                             name="amount"
                             placeholder={t("Enter an amount")}
@@ -159,8 +160,8 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
             </Field>
 
             {/** Date */}
-            <Field>
-                <FieldLabel>{t("Date")}</FieldLabel>
+            <Field data-invalid={invalid("occurred_at") || undefined}>
+                <FieldLabel htmlFor="transaction-occurred-at">{t("Date")}</FieldLabel>
                 <InputGroup>
                     <InputGroupAddon>
                         <CalendarIcon />
@@ -168,6 +169,7 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                     <InputGroupInput
                         aria-invalid={invalid("occurred_at")}
                         defaultValue={toDateTimeLocalValue(defaultValues?.occurred_at)}
+                        id="transaction-occurred-at"
                         name="occurred_at"
                         type="datetime-local"
                     />
@@ -176,11 +178,12 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
             </Field>
 
             {/** Description */}
-            <Field>
-                <FieldLabel>{t("Description")}</FieldLabel>
+            <Field data-invalid={invalid("description") || undefined}>
+                <FieldLabel htmlFor="transaction-description">{t("Description")}</FieldLabel>
                 <Textarea
                     aria-invalid={invalid("description")}
                     defaultValue={defaultValues?.description ?? undefined}
+                    id="transaction-description"
                     name="description"
                     placeholder={t("Enter a description")}
                 />
@@ -188,8 +191,8 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
             </Field>
 
             {/** Exchange rate */}
-            <Field>
-                <FieldLabel>{t("Quote")}</FieldLabel>
+            <Field data-invalid={invalid("quote") || undefined}>
+                <FieldLabel htmlFor="transaction-quote">{t("Quote")}</FieldLabel>
                 <InputGroup>
                     <InputGroupAddon>
                         <DollarSignIcon />
@@ -197,8 +200,9 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                     <InputGroupInput
                         aria-invalid={invalid("quote")}
                         defaultValue={defaultValues?.quote}
-                        name="quote"
+                        id="transaction-quote"
                         inputMode="decimal"
+                        name="quote"
                         placeholder={t("Enter a quote")}
                         type="text"
                     />
@@ -210,6 +214,6 @@ export const Fields = ({ accounts, defaultValues, errors, invalid }: Props) => {
                 </FieldDescription>
                 {invalid("quote") && <FieldError>{errors.quote}</FieldError>}
             </Field>
-        </div>
+        </FieldGroup>
     );
 };

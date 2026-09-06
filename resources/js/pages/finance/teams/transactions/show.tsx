@@ -4,8 +4,7 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 
 import { ConfirmAction } from "@/components/confirm-action";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn, formatAmount } from "@/lib/utils";
@@ -23,6 +22,11 @@ export default function Show({ transaction }: PageProps) {
      */
     const { currentLocale, t } = useLaravelReactI18n();
 
+    /**
+     * Whether this transaction is an expense.
+     */
+    const isExpense = transaction.type === "expense";
+
     return (
         <Modal>
             {({ rootProps }) => (
@@ -34,45 +38,49 @@ export default function Show({ transaction }: PageProps) {
                                 {format(new Date(transaction.occurred_at), "MMMM d, yyyy HH:mm")}
                             </SheetDescription>
                         </SheetHeader>
-                        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4">
-                            {/** Amount */}
-                            <Item
-                                className={cn("min-h-24", transaction.type === "income" ? "bg-green-50" : "bg-red-50")}
-                                variant="muted"
-                            >
-                                <ItemHeader className="justify-center">
-                                    <ItemTitle
+                        <div className="min-h-0 flex-1 overflow-y-auto px-4">
+                            <FieldGroup>
+                                {/** Amount */}
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-muted-foreground text-sm">
+                                        {t(`enums.${transaction.type}`)}
+                                    </span>
+                                    <span
                                         className={cn(
-                                            transaction.type === "income" ? "text-green-500" : "text-red-500",
-                                            "text-2xl",
+                                            "text-2xl font-semibold tabular-nums",
+                                            isExpense && "text-destructive",
                                         )}
                                     >
-                                        {`${transaction.type === "income" ? "+" : "-"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
-                                    </ItemTitle>
-                                </ItemHeader>
-                            </Item>
-                            {/** Description */}
-                            <Field>
-                                <FieldLabel>{t("Description")}</FieldLabel>
-                                <FieldDescription>{transaction.description ?? "-"}</FieldDescription>
-                            </Field>
-                            {/** Account */}
-                            <Field>
-                                <FieldLabel>{t("Account")}</FieldLabel>
-                                <FieldDescription>{transaction.account?.name ?? "-"}</FieldDescription>
-                            </Field>
-                            {/** ID */}
-                            <Field>
-                                <FieldLabel>{t("Transaction ID")}</FieldLabel>
-                                <FieldDescription>{transaction.id}</FieldDescription>
-                            </Field>
-                            {/** Exchange rate */}
-                            <Field>
-                                <FieldLabel>{t("Quote")}</FieldLabel>
-                                <FieldDescription>
-                                    {formatAmount(transaction.quote, currentLocale(), transaction.currency)}
-                                </FieldDescription>
-                            </Field>
+                                        {`${isExpense ? "-" : "+"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
+                                    </span>
+                                </div>
+
+                                {/** Description */}
+                                <Field>
+                                    <FieldLabel>{t("Description")}</FieldLabel>
+                                    <p className="text-sm">{transaction.description ?? "-"}</p>
+                                </Field>
+
+                                {/** Account */}
+                                <Field>
+                                    <FieldLabel>{t("Account")}</FieldLabel>
+                                    <p className="text-sm">{transaction.account?.name ?? "-"}</p>
+                                </Field>
+
+                                {/** ID */}
+                                <Field>
+                                    <FieldLabel>{t("Transaction ID")}</FieldLabel>
+                                    <p className="text-sm">{transaction.id}</p>
+                                </Field>
+
+                                {/** Exchange rate */}
+                                <Field>
+                                    <FieldLabel>{t("Quote")}</FieldLabel>
+                                    <p className="text-sm tabular-nums">
+                                        {formatAmount(transaction.quote, currentLocale(), transaction.currency)}
+                                    </p>
+                                </Field>
+                            </FieldGroup>
                         </div>
                         <SheetFooter>
                             <ConfirmAction
