@@ -14,6 +14,20 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Notify an Inertia <Form> that values changed. Custom controls like Combobox
+ * and ToggleGroup update hidden inputs in React without firing native events.
+ */
+export function markFormDirty(from?: Element | null): void {
+    requestAnimationFrame(() => {
+        const form =
+            (from instanceof Element ? from.closest("form") : null) ??
+            (document.activeElement instanceof Element ? document.activeElement.closest("form") : null);
+
+        form?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+}
+
+/**
  * Format a major-unit amount for display (grouping + currency decimals + catalog symbol).
  */
 export function formatAmount(amount: string, locale: string, currency?: AmountCurrency): string {

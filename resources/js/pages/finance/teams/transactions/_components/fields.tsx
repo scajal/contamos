@@ -1,7 +1,7 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { CalendarIcon, DollarSignIcon, ListIcon, TagIcon } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import {
     Combobox,
@@ -15,10 +15,12 @@ import {
     ComboboxList,
     ComboboxTrigger,
     ComboboxValue,
+    useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
+import { markFormDirty } from "@/lib/utils";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
@@ -82,8 +84,14 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
         () => tags.filter((tag) => defaultValues?.tag_ids?.includes(tag.id)),
     );
 
+    /**
+     * Anchor the tags dropdown to the full chips field.
+     */
+    const tagsAnchor = useComboboxAnchor();
+    const fields = useRef<HTMLDivElement>(null);
+
     return (
-        <FieldGroup>
+        <FieldGroup ref={fields}>
             {/** Type */}
             <input defaultValue={defaultValues?.type} name="type" type="hidden" />
 
@@ -99,6 +107,7 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
                         setAccount(value);
                         const currencies = value?.currencies ?? [];
                         setCurrency(currencies.length === 1 ? currencies[0] : null);
+                        markFormDirty(fields.current);
                     }}
                     value={account}
                 >
@@ -130,7 +139,10 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
                     itemToStringLabel={(item) => item.code}
                     itemToStringValue={(item) => item.id}
                     name="currency_id"
-                    onValueChange={setCurrency}
+                    onValueChange={(value) => {
+                        setCurrency(value);
+                        markFormDirty(fields.current);
+                    }}
                     value={currency}
                 >
                     <InputGroup>
@@ -214,10 +226,17 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
                     itemToStringValue={(item) => item.id}
                     multiple
                     name="tag_ids[]"
-                    onValueChange={setSelectedTags}
+                    onValueChange={(value) => {
+                        setSelectedTags(value);
+                        markFormDirty(fields.current);
+                    }}
                     value={selectedTags}
                 >
-                    <ComboboxChips aria-invalid={invalid("tag_ids")} className="w-full has-[[data-slot=input-group-addon]]:pl-0">
+                    <ComboboxChips
+                        aria-invalid={invalid("tag_ids")}
+                        className="w-full has-[[data-slot=input-group-addon]]:pl-0"
+                        ref={tagsAnchor}
+                    >
                         <InputGroupAddon className="self-start">
                             <TagIcon />
                         </InputGroupAddon>
@@ -228,7 +247,7 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
                         </ComboboxValue>
                         <ComboboxChipsInput id="transaction-tags" placeholder={t("Select tags")} />
                     </ComboboxChips>
-                    <ComboboxContent>
+                    <ComboboxContent anchor={tagsAnchor}>
                         <ComboboxEmpty>{t("No tags found")}</ComboboxEmpty>
                         <ComboboxList>
                             {(tag) => (

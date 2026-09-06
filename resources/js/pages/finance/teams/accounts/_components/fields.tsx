@@ -1,7 +1,7 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { BanknoteIcon, BitcoinIcon, CoinsIcon, LandmarkIcon, type LucideIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import {
     Combobox,
@@ -19,6 +19,7 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { Input } from "@/components/ui/input";
 import { InputGroupAddon } from "@/components/ui/input-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { markFormDirty } from "@/lib/utils";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { AccountType } from "@/types/app/modules/core/finance/enums/account/account-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
@@ -73,6 +74,7 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
      * Anchor the currencies dropdown to the full chips field.
      */
     const currenciesAnchor = useComboboxAnchor();
+    const fields = useRef<HTMLDivElement>(null);
 
     /**
      * Check if the field is locked.
@@ -80,7 +82,7 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
     const isLocked = useCallback((field: keyof FormProps): boolean => locked?.includes(field) ?? false, [locked]);
 
     return (
-        <FieldGroup>
+        <FieldGroup ref={fields}>
             {/** Name */}
             <Field data-invalid={invalid("name") || undefined}>
                 <FieldLabel htmlFor="account-name">{t("Name")}</FieldLabel>
@@ -119,6 +121,7 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                                           : currency.type !== "cryptocurrency",
                                 ),
                             );
+                            markFormDirty(fields.current);
                         }
                     }}
                     spacing={0}
@@ -153,9 +156,7 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                     name="currency_ids[]"
                     onValueChange={(value) => {
                         setSelectedCurrencies(value);
-                        requestAnimationFrame(() => {
-                            currenciesAnchor.current?.closest("form")?.dispatchEvent(new Event("input", { bubbles: true }));
-                        });
+                        markFormDirty(fields.current);
                     }}
                     value={selectedCurrencies}
                 >
