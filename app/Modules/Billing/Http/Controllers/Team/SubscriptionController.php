@@ -14,8 +14,7 @@ class SubscriptionController
      */
     public function show(Team $team): Response
     {
-        /** @var \App\Modules\Billing\Models\Subscription|null $subscription */
-        $subscription = $team->subscription();
+        $team->subscription();
 
         return Inertia::render('billing/teams/subscription/show', [
             'checkouts' => [

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Billing\Features;
 
 use App\Modules\Core\Identity\Models\Team;

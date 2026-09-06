@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('billing_transactions', function (Blueprint $table) {
+        Schema::create('billing_transactions', function (Blueprint $table): void {
             $table->id();
             $table->morphs('billable');
             $table->timestamp('billed_at');
