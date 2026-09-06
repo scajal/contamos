@@ -89,14 +89,14 @@ const Balances = () => {
         <div className="overflow-x-auto rounded-sm border">
             <div className="flex min-w-full divide-x">
                 {balances.map((balance) => (
-                    <BalanceCell balance={balance} key={balance.id} teamId={team.id} />
+                    <BalanceCell balance={balance} key={balance.id} team={team.slug} />
                 ))}
             </div>
         </div>
     );
 };
 
-const BalanceCell = ({ balance, teamId }: { balance: AccountBalance; teamId: string }) => {
+const BalanceCell = ({ balance, team }: { balance: AccountBalance; team: string }) => {
     /**
      * Get the current locale.
      */
@@ -116,7 +116,7 @@ const BalanceCell = ({ balance, teamId }: { balance: AccountBalance; teamId: str
     return (
         <Link
             className="hover:bg-muted flex min-w-40 flex-1 flex-col gap-1 p-4"
-            href={transactions.index.url({ team: teamId }, { query: { filter: { currency: balance.id } } })}
+            href={transactions.index.url({ team }, { query: { filter: { currency: balance.id } } })}
             prefetch
         >
             <span className="text-muted-foreground text-sm">{balance.code}</span>
@@ -140,7 +140,7 @@ const RecentActivity = () => {
     const { recent_transactions, team } = usePage<PageProps>().props;
 
     if (!recent_transactions.length) {
-        return <EmptyTransactions teamId={team.id} />;
+        return <EmptyTransactions team={team.slug} />;
     }
 
     /**
@@ -156,7 +156,7 @@ const RecentActivity = () => {
                 <h2 className="text-lg font-medium">{t("Recent activity")}</h2>
                 <Button
                     nativeButton={false}
-                    render={<Link href={transactions.index.url({ team: team.id })} prefetch />}
+                    render={<Link href={transactions.index.url({ team: team.slug })} prefetch />}
                     size="sm"
                     variant="ghost"
                 >
@@ -198,7 +198,7 @@ const RecentActivity = () => {
                                                 render={
                                                     <ModalLink
                                                         href={transactions.show.url({
-                                                            team: transaction.team_id,
+                                                            team: team.slug,
                                                             transaction: transaction.id,
                                                         })}
                                                     >
@@ -247,7 +247,7 @@ const EmptyAccounts = () => {
                     <Button
                         nativeButton={false}
                         render={
-                            <ModalLink href={accounts.create.url({ team: team.id })}>
+                            <ModalLink href={accounts.create.url({ team: team.slug })}>
                                 <PlusIcon data-icon="inline-start" />
                                 {t("Create :name", { name: t("account") })}
                             </ModalLink>
@@ -259,7 +259,7 @@ const EmptyAccounts = () => {
     );
 };
 
-const EmptyTransactions = ({ teamId }: { teamId: string }) => {
+const EmptyTransactions = ({ team }: { team: string }) => {
     /**
      * Translate the provided string
      * to the current locale.
@@ -283,7 +283,7 @@ const EmptyTransactions = ({ teamId }: { teamId: string }) => {
                         <Button
                             nativeButton={false}
                             render={
-                                <ModalLink href={transactions.create.url({ team: teamId, type: "income" })}>
+                                <ModalLink href={transactions.create.url({ team, type: "income" })}>
                                     <ArrowDownIcon data-icon="inline-start" />
                                     {t("Register an :name", { name: t("income") })}
                                 </ModalLink>
@@ -293,7 +293,7 @@ const EmptyTransactions = ({ teamId }: { teamId: string }) => {
                         <Button
                             nativeButton={false}
                             render={
-                                <ModalLink href={transactions.create.url({ team: teamId, type: "expense" })}>
+                                <ModalLink href={transactions.create.url({ team, type: "expense" })}>
                                     <ArrowUpIcon data-icon="inline-start" />
                                     {t("Register an :name", { name: t("expense") })}
                                 </ModalLink>

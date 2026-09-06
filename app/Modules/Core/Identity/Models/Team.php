@@ -86,26 +86,27 @@ class Team extends Model
      */
     protected static function generateSlug(string $name, ?string $exclude = null): string
     {
+        // Generate a default slug based on the name.
         $default = Str::slug($name);
 
         // Build the query to find a unique slug for
         // the team.
-        $query = static::query()
-            ->where(fn (Builder $query): Builder => $query->where('slug', $default)->orWhere('slug', 'like', "{$default}%"))
-            ->when(filled($exclude), fn (Builder $query): Builder => $query->whereKeyNot($exclude));
+        $isTaken = fn (string $slug): bool => static::query()
+            ->where('slug', $slug)
+            ->when(filled($exclude), fn (Builder $query): Builder => $query->whereKeyNot($exclude))
+            ->exists();
 
-        // Get the latest suffx created in
-        // the database.
-        $suffix = ($existing = $query->pluck('slug'))
-            ->map(fn (string $slug): ?int => match (true) { // @phpstan-ignore-line argument.type Anonymous collection.
-                $slug === $default => 0,
-                preg_match('/^'.preg_quote($default, '/').'-(\d+)$/', $slug, $matches) => (int) $matches[1],
-                default => null,
-            })
-            ->filter(fn (?int $suffix): bool => filled($suffix))
-            ->max();
+        // If the default slug is not taken, return it.
+        if (! $isTaken($default)) {
+            return $default;
+        }
 
-        return $existing->isEmpty() ? $default : "{$default}-".($suffix + 1);
+        // If the default slug is taken, generate a new one.
+        do {
+            $candidate = "{$default}-".Str::lower(Str::random(6));
+        } while ($isTaken($candidate));
+
+        return $candidate;
     }
 
     /**

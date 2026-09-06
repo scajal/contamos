@@ -118,7 +118,7 @@ export const ApplicationLayout = ({
                                 </Fragment>
                             ) : null}
                         </div>
-                        {user?.current_team_id && (
+                        {user?.currentTeam && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger render={<Button />}>
                                     <span>{t("Create :name", { name: t("transaction") })}</span>
@@ -130,7 +130,7 @@ export const ApplicationLayout = ({
                                             render={
                                                 <ModalLink
                                                     href={transactions.create.url({
-                                                        team: user?.current_team_id ?? "",
+                                                        team: user.currentTeam.slug,
                                                         type: "income",
                                                     })}
                                                 >
@@ -143,7 +143,7 @@ export const ApplicationLayout = ({
                                             render={
                                                 <ModalLink
                                                     href={transactions.create.url({
-                                                        team: user?.current_team_id ?? "",
+                                                        team: user.currentTeam.slug,
                                                         type: "expense",
                                                     })}
                                                 >
@@ -205,7 +205,7 @@ const Sidebar = () => {
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={<Link href={accounts.index.url({ team: user?.current_team_id ?? "" })} />}
+                                render={<Link href={accounts.index.url({ team: user?.currentTeam?.slug ?? "" })} />}
                             >
                                 <BanknoteIcon />
                                 <span>{t("Accounts")}</span>
@@ -213,7 +213,7 @@ const Sidebar = () => {
                         </SidebarMenuItem>
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={<Link href={tags.index.url({ team: user?.current_team_id ?? "" })} />}
+                                render={<Link href={tags.index.url({ team: user?.currentTeam?.slug ?? "" })} />}
                             >
                                 <TagIcon />
                                 <span>{t("Tags")}</span>
@@ -221,7 +221,7 @@ const Sidebar = () => {
                         </SidebarMenuItem>
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={<Link href={transactions.index.url({ team: user?.current_team_id ?? "" })} />}
+                                render={<Link href={transactions.index.url({ team: user?.currentTeam?.slug ?? "" })} />}
                             >
                                 <ArrowLeftRightIcon />
                                 <span>{t("Transactions")}</span>

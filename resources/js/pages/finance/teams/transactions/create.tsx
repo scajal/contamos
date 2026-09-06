@@ -37,7 +37,7 @@ export default function Create({ accounts, tags, type }: PageProps) {
                 <Sheet {...rootProps}>
                     <SheetContent>
                         <Form
-                            {...transactions.store.form({ team: user?.current_team_id ?? "" })}
+                            {...transactions.store.form({ team: user?.currentTeam?.slug ?? "" })}
                             className="contents"
                             disableWhileProcessing
                             onSuccess={() => {

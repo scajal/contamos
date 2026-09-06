@@ -131,7 +131,7 @@ const CreateTransactionMenu = ({ className }: { className?: string }) => {
     /**
      * The current team id.
      */
-    const teamId = user?.current_team_id ?? "";
+    const team = user?.currentTeam?.slug ?? "";
 
     return (
         <DropdownMenu>
@@ -147,7 +147,7 @@ const CreateTransactionMenu = ({ className }: { className?: string }) => {
                 <DropdownMenuGroup>
                     <DropdownMenuItem
                         render={
-                            <ModalLink href={routes.create.url({ team: teamId, type: "income" })}>
+                            <ModalLink href={routes.create.url({ team, type: "income" })}>
                                 <ArrowDownIcon />
                                 <span>{t("Register an :name", { name: t("income") })}</span>
                             </ModalLink>
@@ -155,7 +155,7 @@ const CreateTransactionMenu = ({ className }: { className?: string }) => {
                     />
                     <DropdownMenuItem
                         render={
-                            <ModalLink href={routes.create.url({ team: teamId, type: "expense" })}>
+                            <ModalLink href={routes.create.url({ team, type: "expense" })}>
                                 <ArrowUpIcon />
                                 <span>{t("Register an :name", { name: t("expense") })}</span>
                             </ModalLink>
@@ -192,7 +192,7 @@ const Filters = () => {
             from: initial?.from ?? null,
             to: initial?.to ?? null,
         },
-        url: (query) => routes.index.url({ team: { id: user?.current_team_id ?? "" } }, { query }),
+        url: (query) => routes.index.url({ team: user?.currentTeam?.slug ?? "" }, { query }),
         only: ["transactions", "filters"],
         reset: ["transactions"],
     });
@@ -383,7 +383,7 @@ const Listing = () => {
     /**
      * The current team id.
      */
-    const teamId = user?.current_team_id ?? "";
+    const team = user?.currentTeam?.slug ?? "";
 
     return (
         <Deferred data="transactions" fallback={<SkeletonGroup />}>
@@ -414,7 +414,7 @@ const Listing = () => {
                                         <Button
                                             nativeButton={false}
                                             render={
-                                                <ModalLink href={routes.create.url({ team: teamId, type: "income" })}>
+                                                <ModalLink href={routes.create.url({ team, type: "income" })}>
                                                     <ArrowDownIcon data-icon="inline-start" />
                                                     {t("Register an :name", { name: t("income") })}
                                                 </ModalLink>
@@ -424,7 +424,7 @@ const Listing = () => {
                                         <Button
                                             nativeButton={false}
                                             render={
-                                                <ModalLink href={routes.create.url({ team: teamId, type: "expense" })}>
+                                                <ModalLink href={routes.create.url({ team, type: "expense" })}>
                                                     <ArrowUpIcon data-icon="inline-start" />
                                                     {t("Register an :name", { name: t("expense") })}
                                                 </ModalLink>

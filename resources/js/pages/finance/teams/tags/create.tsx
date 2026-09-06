@@ -28,7 +28,7 @@ export default function Create() {
                 <Sheet {...rootProps}>
                     <SheetContent>
                         <Form
-                            {...tags.store.form({ team: user?.current_team_id ?? "" })}
+                            {...tags.store.form({ team: user?.currentTeam?.slug ?? "" })}
                             className="contents"
                             disableWhileProcessing
                             onSuccess={() => {

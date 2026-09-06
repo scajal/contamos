@@ -33,7 +33,7 @@ export default function Edit({ tag }: PageProps) {
                 <Sheet {...rootProps}>
                     <SheetContent>
                         <Form
-                            {...tags.update.form({ team: user?.current_team_id ?? "", tag: tag.id })}
+                            {...tags.update.form({ team: user?.currentTeam?.slug ?? "", tag: tag.id })}
                             className="contents"
                             disableWhileProcessing
                             onSuccess={() => {

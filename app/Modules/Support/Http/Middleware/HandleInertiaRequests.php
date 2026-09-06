@@ -48,7 +48,7 @@ class HandleInertiaRequests extends Middleware
             ],
 
             // The authenticated user.
-            'user' => Inertia::always($user),
+            'user' => Inertia::always($user?->loadMissing('currentTeam')),
         ];
     }
 }
