@@ -13,6 +13,7 @@ import {
     ComboboxTrigger,
     ComboboxValue,
 } from "@/components/ui/combobox";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Item, ItemContent, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
@@ -198,8 +199,14 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
             <FieldSet data-invalid={invalid("tag_ids") || undefined}>
                 <FieldLegend variant="label">{t("Tags")}</FieldLegend>
                 <FieldDescription>{t("Choose the tags for this transaction.")}</FieldDescription>
-                {tags.length > 0 ? (
-                    <div className="overflow-hidden rounded-sm border">
+                <div className="overflow-hidden rounded-sm border">
+                    {!tags.length ? (
+                        <Empty>
+                            <EmptyHeader>
+                                <EmptyTitle>{t("No tags found")}</EmptyTitle>
+                            </EmptyHeader>
+                        </Empty>
+                    ) : (
                         <ItemGroup className="gap-0">
                             {tags.map((tag) => (
                                 <Item
@@ -225,8 +232,8 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
                                 </Item>
                             ))}
                         </ItemGroup>
-                    </div>
-                ) : null}
+                    )}
+                </div>
                 {invalid("tag_ids") && <FieldError>{errors.tag_ids}</FieldError>}
             </FieldSet>
 
