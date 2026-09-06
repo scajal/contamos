@@ -492,7 +492,7 @@ const Listing = () => {
                                                                     render={
                                                                         <ModalLink
                                                                             href={routes.show.url({
-                                                                                team: transaction.team_id,
+                                                                                team,
                                                                                 transaction: transaction.id,
                                                                             })}
                                                                         >
