@@ -8,17 +8,19 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Modules/Administration/** | .ai/rules/administration.md |
 | resources/js/layouts/application/** | .ai/rules/application.md |
 | app/Modules/Authentication/** | .ai/rules/authentication.md |
+| bootstrap/app.php | .ai/rules/bootstrap.md |
 | app/Modules/Core/Catalog/** | .ai/rules/catalog.md |
 | resources/js/pages/finance/**/_components/fields.tsx | .ai/rules/components.md |
 | app/Modules/**/Http/Controllers/** | .ai/rules/controllers.md |
 | app/Modules/Core/**/*.php | .ai/rules/core.md |
 | app/Modules/**/Enums/** | .ai/rules/enums.md |
 | database/factories/** | .ai/rules/factories.md |
-| tests/Feature/** | .ai/rules/feature.md |
+| tests/Feature/**, tests/Pest.php | .ai/rules/feature.md |
 | resources/js/pages/finance/** | .ai/rules/finance.md |
 | app/Modules/Core/Identity/Models/Team.php | .ai/rules/identity-models.md |
 | resources/js/**, resources/js/**/*.tsx | .ai/rules/js.md |
 | lang/*.json, lang/*/validation.php | .ai/rules/lang.md |
+| app/Modules/Support/Http/Middleware/** | .ai/rules/middleware.md |
 | database/migrations/** | .ai/rules/migrations.md |
 | app/Modules/**/Models/** | .ai/rules/models.md |
 | tests/Feature/Modules/Administration/** | .ai/rules/modules-administration.md |
@@ -26,7 +28,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | resources/js/pages/**/index.tsx, resources/js/pages/**/*.tsx | .ai/rules/pages.md |
 | app/**, tests/**, database/factories/** | .ai/rules/phpdoc.md |
 | app/Modules/**/Http/Requests/** | .ai/rules/requests.md |
-| app/Modules/*/Routes/**, app/Modules/**/Routes/** | .ai/rules/routes.md |
+| app/Modules/*/Routes/**, app/Modules/**/Routes/**, routes/console.php | .ai/rules/routes.md |
 | app/Modules/Support/** | .ai/rules/support.md |
 | app/Modules/Core/Finance/**, app/Modules/Core/Identity/** | .ai/rules/teams.md |
 | tests/Unit/** | .ai/rules/unit.md |

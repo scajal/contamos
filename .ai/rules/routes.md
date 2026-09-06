@@ -2,6 +2,7 @@
 paths:
   - 'app/Modules/*/Routes/**'
   - 'app/Modules/**/Routes/**'
+  - routes/console.php
 ---
 
 # Routes
@@ -25,3 +26,6 @@ Chain `->scopeBindings()` on nested resource routes so the child must belong to 
 
 ## Currency admin UI is Filament Administration
 Currency and quote admin UI is Filament under Administration (`filament.administration.*`), not Catalog HTTP routes. Catalog remains the domain for Currency models and scheduled quote sync.
+
+## Console routes live in modules
+Register schedules in the module `Routes/console.php` and require it from `routes/console.php`. Discover Artisan commands via `bootstrap/app.php` `withCommands` pointing at the module Commands directory. Do not add `app/Console`.

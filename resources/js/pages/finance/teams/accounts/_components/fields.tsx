@@ -13,6 +13,7 @@ import {
     ComboboxItem,
     ComboboxList,
     ComboboxValue,
+    useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -67,6 +68,11 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
               ? false
               : currency.type !== "cryptocurrency",
     );
+
+    /**
+     * Anchor the currencies dropdown to the full chips field.
+     */
+    const currenciesAnchor = useComboboxAnchor();
 
     /**
      * Check if the field is locked.
@@ -145,12 +151,18 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                     itemToStringValue={(item) => item.id}
                     multiple
                     name="currency_ids[]"
-                    onValueChange={setSelectedCurrencies}
+                    onValueChange={(value) => {
+                        setSelectedCurrencies(value);
+                        requestAnimationFrame(() => {
+                            currenciesAnchor.current?.closest("form")?.dispatchEvent(new Event("input", { bubbles: true }));
+                        });
+                    }}
                     value={selectedCurrencies}
                 >
                     <ComboboxChips
                         aria-invalid={invalid("currency_ids")}
                         className="w-full has-[[data-slot=input-group-addon]]:pl-0"
+                        ref={currenciesAnchor}
                     >
                         <InputGroupAddon className="self-start">
                             <CoinsIcon />
@@ -166,7 +178,7 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                             placeholder={t("Select currencies")}
                         />
                     </ComboboxChips>
-                    <ComboboxContent>
+                    <ComboboxContent anchor={currenciesAnchor}>
                         <ComboboxEmpty>{t("No currencies found")}</ComboboxEmpty>
                         <ComboboxList>
                             {(currency) => (

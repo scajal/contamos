@@ -15,7 +15,7 @@ Place parent-owned Models, Controllers, Actions, and Requests under a parent seg
 
 ## Eloquent without extra layers
 
-Query and persist with Eloquent in controllers and Actions. Do not add Services, Repositories, Queries, Data/DTO classes, or domain Events/Listeners.
+Query and persist with Eloquent in controllers and Actions. Do not add Repositories, Queries, Data/DTO classes, or domain Events/Listeners.
 
 ## Method-inject collaborators
 

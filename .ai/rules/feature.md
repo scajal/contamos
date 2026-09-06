@@ -1,6 +1,7 @@
 ---
 paths:
   - 'tests/Feature/**'
+  - tests/Pest.php
 ---
 
 # Feature
@@ -28,3 +29,6 @@ When visiting an Inertia modal route, send `withHeaders(inertiaModalHeaders())` 
 
 ## CarbonImmutable dates
 Application dates are CarbonImmutable. Typehint and construct with CarbonImmutable; do not introduce mutable Carbon.
+
+## Feature beforeEach isolation fakes
+In Feature `pest()->beforeEach`, call `Http::preventStrayRequests()`, `Sleep::fake(syncWithCarbon: true)`, and `Exceptions::fake()`. Keep Feature HTTP outbound, sleeps, and exception reporting faked.

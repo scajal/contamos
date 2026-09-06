@@ -46,3 +46,6 @@ Index pages accept `filter[...]` query params via spatie/laravel-query-builder: 
 
 ## IndexRequest owns AllowedFilter list
 Put Query Builder `AllowedFilter` definitions on `IndexRequest::filters()`. In the index action call `->allowedFilters(...$request->filters())`; do not inline the allow-list in the controller.
+
+## Soft activation with HasActivation
+Models with an on/off flag use Support HasActivation (`is_active`, `activate()` / `deactivate()`, `isActive` scope). Expose activate/deactivate actions. Do not use SoftDeletes or a parallel status enum for that flag.
