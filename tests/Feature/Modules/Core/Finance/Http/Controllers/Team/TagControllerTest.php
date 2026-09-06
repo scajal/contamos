@@ -167,7 +167,7 @@ describe('update', function (): void {
         $tag = Tag::factory()->for($team)->create(['name' => 'Old']);
 
         $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
-            ->put(route('finance.teams.tags.update', [
+            ->patch(route('finance.teams.tags.update', [
                 'team' => $team->getKey(),
                 'tag' => $tag->getKey(),
             ]), tagPayload([
@@ -184,7 +184,7 @@ describe('update', function (): void {
         $tag = Tag::factory()->for($team)->create(['name' => 'Comida']);
 
         $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
-            ->put(route('finance.teams.tags.update', [
+            ->patch(route('finance.teams.tags.update', [
                 'team' => $team->getKey(),
                 'tag' => $tag->getKey(),
             ]), tagPayload())
@@ -199,7 +199,7 @@ describe('update', function (): void {
         $tag = Tag::factory()->for($team)->create(['name' => 'Salidas']);
 
         $this->from(route('finance.teams.tags.index', ['team' => $team->getKey()]))
-            ->put(route('finance.teams.tags.update', [
+            ->patch(route('finance.teams.tags.update', [
                 'team' => $team->getKey(),
                 'tag' => $tag->getKey(),
             ]), tagPayload([
@@ -213,7 +213,7 @@ describe('update', function (): void {
         [$user, $team] = actingMember();
         $foreign = Tag::factory()->for(Team::factory())->create();
 
-        $this->put(route('finance.teams.tags.update', [
+        $this->patch(route('finance.teams.tags.update', [
             'team' => $team->getKey(),
             'tag' => $foreign->getKey(),
         ]), tagPayload())->assertNotFound();

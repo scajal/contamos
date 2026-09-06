@@ -215,7 +215,7 @@ describe('update', function (): void {
         $account->currencies()->attach($old);
 
         $this->from(route('finance.teams.accounts.index', ['team' => $team->getKey()]))
-            ->put(route('finance.teams.accounts.update', [
+            ->patch(route('finance.teams.accounts.update', [
                 'team' => $team->getKey(),
                 'account' => $account->getKey(),
             ]), accountPayload([
@@ -235,7 +235,7 @@ describe('update', function (): void {
         $currency = Currency::factory()->active()->fiat()->create();
         $foreign = Account::factory()->for(Team::factory())->create();
 
-        $this->put(route('finance.teams.accounts.update', [
+        $this->patch(route('finance.teams.accounts.update', [
             'team' => $team->getKey(),
             'account' => $foreign->getKey(),
         ]), accountPayload([
