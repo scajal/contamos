@@ -73,3 +73,80 @@ describe('index', function (): void {
             ->assertInvalid(['filter.search']);
     });
 });
+
+describe('destroy', function (): void {
+    it('redirects guests to login', function (): void {
+        [$user, $team] = memberWithTeam();
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $user->getKey()]))
+            ->assertRedirectToRoute('login');
+    });
+
+    it('forbids users who are not members of the team', function (): void {
+        actingMember();
+        [$other, $team] = memberWithTeam();
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $other->getKey()]))
+            ->assertForbidden();
+    });
+
+    it('does not find a user who is not a member of the team', function (): void {
+        [$user, $team] = actingMember();
+        User::factory()->create()->teams()->attach($team);
+        $stranger = User::factory()->create();
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $stranger->getKey()]))
+            ->assertNotFound();
+    });
+
+    it('removes another member of the team', function (): void {
+        [$user, $team] = actingMember();
+        $other = User::factory()->create();
+        $other->teams()->attach($team);
+        $other->switchTeam($team);
+
+        $this->from(route('identity.teams.members.index', ['team' => $team->getRouteKey()]))
+            ->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $other->getKey()]))
+            ->assertRedirectToRoute('identity.teams.members.index', ['team' => $team->getRouteKey()]);
+
+        expect($other->fresh()?->belongsToTeam($team))->toBeFalse()
+            ->and($other->fresh()?->current_team_id)->toBeNull()
+            ->and($user->fresh()?->belongsToTeam($team))->toBeTrue();
+
+        assertFlashedToast(trans('Member removed'));
+    });
+
+    it('conflicts when the member is the last one of the team', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $user->getKey()]))
+            ->assertConflict();
+
+        expect($user->fresh()?->belongsToTeam($team))->toBeTrue();
+    });
+
+    it('leaves the team and lands on another team of the member', function (): void {
+        [$user, $team] = actingMember();
+        User::factory()->create()->teams()->attach($team);
+        $other = Team::factory()->create();
+        $user->teams()->attach($other);
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $user->getKey()]))
+            ->assertRedirectToRoute('finance.teams.dashboard.index', ['team' => $other->getRouteKey()]);
+
+        expect($user->fresh()?->belongsToTeam($team))->toBeFalse()
+            ->and($user->fresh()?->current_team_id)->toBe($other->getKey());
+
+        assertFlashedToast(trans('You left the team'));
+    });
+
+    it('leaves the last team of the member and lands on the team creation page', function (): void {
+        [$user, $team] = actingMember();
+        User::factory()->create()->teams()->attach($team);
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $user->getKey()]))
+            ->assertRedirectToRoute('identity.teams.create');
+
+        expect($user->fresh()?->current_team_id)->toBeNull();
+    });
+});
