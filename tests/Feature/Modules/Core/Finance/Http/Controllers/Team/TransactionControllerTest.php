@@ -329,8 +329,10 @@ describe('destroy', function (): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create();
         $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '75.00']);
         $transaction = Transaction::factory()->expense()->create([
             'account_id' => $account->getKey(),
+            'amount' => '25.00',
             'currency_id' => $currency->getKey(),
             'team_id' => $team->getKey(),
             'user_id' => $user->getKey(),
@@ -345,5 +347,6 @@ describe('destroy', function (): void {
 
         assertFlashedToast(trans('Deleted'));
         $this->assertModelMissing($transaction);
+        expect((float) $account->currencies()->firstOrFail()->pivot->balance)->toBe(100.0);
     });
 });

@@ -6,6 +6,7 @@ namespace App\Modules\Core\Finance\Http\Controllers\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
+use App\Modules\Core\Finance\Actions\Team\DeleteTransaction;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\IndexRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\StoreRequest;
@@ -56,12 +57,9 @@ class TransactionController
     public function create(Team $team, TransactionType $type): Modal
     {
         return Inertia::modal('finance/teams/transactions/create', [
-            'accounts' => $team->accounts()
-                ->isActive()
-                ->with(['currencies' => function (Relation $currencies): void {
-                    $currencies->isActive(); // @phpstan-ignore-line argument.type
-                }])
-                ->get(),
+            'accounts' => $team->accounts()->isActive()->with(['currencies' => function (Relation $currencies): void {
+                $currencies->isActive(); // @phpstan-ignore-line argument.type
+            }])->get(),
             'type' => $type,
         ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getKey()]);
     }
@@ -97,9 +95,12 @@ class TransactionController
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Team $team, Transaction $transaction): RedirectResponse
+    public function destroy(Team $team, Transaction $transaction, DeleteTransaction $deleteTransaction): RedirectResponse
     {
-        $transaction->delete();
+        // Delete the transaction and revert its balance effect.
+        $deleteTransaction
+            ->for($team)
+            ->using($transaction);
 
         // Flash a success message to the session.
         Toast::make(trans('Deleted'))

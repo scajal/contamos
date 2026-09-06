@@ -27,4 +27,16 @@ enum TransactionType: string
             self::Income => '+',
         };
     }
+
+    /**
+     * Get the sign that reverts the effect of the
+     * transaction type on a balance.
+     */
+    public function inverseSign(): string
+    {
+        return match ($this) {
+            self::Expense => '+',
+            self::Income => '-',
+        };
+    }
 }
