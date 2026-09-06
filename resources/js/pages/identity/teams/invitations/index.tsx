@@ -1,4 +1,4 @@
-import { Deferred, Link, usePage } from "@inertiajs/react";
+import { Deferred, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
@@ -37,10 +37,8 @@ import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } 
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFilters } from "@/hooks/use-filters";
-import { usePlanLimit } from "@/hooks/use-plan-limit";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { invitationStatus, type InvitationStatus } from "@/lib/utils";
-import subscriptions from "@/routes/billing/teams/subscriptions";
 import routes from "@/routes/identity/teams/invitations";
 import { TeamInvitation } from "@/types/app/modules/core/identity/models/team/team-invitation";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
@@ -106,24 +104,6 @@ const InviteMemberButton = ({ className }: { className?: string }) => {
      * The page's props.
      */
     const { user } = usePage().props;
-
-    /**
-     * Whether the team has reached its plan's member limit.
-     */
-    const atLimit = usePlanLimit("members");
-
-    if (atLimit) {
-        return (
-            <Button
-                className={className}
-                nativeButton={false}
-                render={<Link href={subscriptions.index.url({ team: user?.current_team?.slug ?? "" })} />}
-                variant="outline"
-            >
-                {t("Upgrade to Pro")}
-            </Button>
-        );
-    }
 
     return (
         <Button

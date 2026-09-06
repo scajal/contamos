@@ -8,7 +8,6 @@ import {
     BanknoteIcon,
     ChevronDownIcon,
     ChevronsUpDownIcon,
-    CreditCardIcon,
     LayoutDashboardIcon,
     LogOutIcon,
     MailIcon,
@@ -48,7 +47,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
-import subscriptions from "@/routes/billing/teams/subscriptions";
 import administration from "@/routes/filament/administration";
 import accounts from "@/routes/finance/teams/accounts";
 import dashboard from "@/routes/finance/teams/dashboard";
@@ -65,26 +63,12 @@ const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/tags", title: "Tags" },
     { prefix: "identity/teams/invitations", title: "Invitations" },
     { prefix: "identity/teams/members", title: "Members" },
-    { prefix: "billing/teams/subscriptions", title: "Billing" },
 ];
 
 /**
  * The initials of the given name, used as the
  * avatar fallback.
  */
-/**
- * Whether the current team has reached its plan's
- * monthly transaction limit.
- */
-const isAtTransactionLimit = (billing: {
-    limits: { transactions: number | null } | null;
-    usage: { transactions: number } | null;
-}) => {
-    const limit = billing.limits?.transactions ?? null;
-
-    return limit !== null && (billing.usage?.transactions ?? 0) >= limit;
-};
-
 const initials = (name: string) =>
     name
         .split(" ")
@@ -114,7 +98,7 @@ export const ApplicationLayout = ({
     /**
      * The page's props.
      */
-    const { billing, user } = page.props;
+    const { user } = page.props;
 
     /**
      * The current page title for the header breadcrumb.
@@ -155,56 +139,47 @@ export const ApplicationLayout = ({
                                 </Fragment>
                             ) : null}
                         </div>
-                        {user?.current_team &&
-                            (isAtTransactionLimit(billing) ? (
-                                <Button
-                                    nativeButton={false}
-                                    render={<Link href={subscriptions.index.url({ team: user.current_team.slug })} />}
-                                    variant="outline"
-                                >
-                                    {t("Upgrade to Pro")}
-                                </Button>
-                            ) : (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger render={<Button />}>
-                                        <span>
-                                            {t("Create")}
-                                            <span className="max-sm:hidden">{t("transaction")}</span>
-                                        </span>
-                                        <ChevronDownIcon className="transition-transform in-data-popup-open:rotate-180" />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-auto min-w-(--anchor-width)">
-                                        <DropdownMenuGroup>
-                                            <DropdownMenuItem
-                                                render={
-                                                    <ModalLink
-                                                        href={transactions.create.url({
-                                                            team: user.current_team.slug,
-                                                            type: "income",
-                                                        })}
-                                                    >
-                                                        <ArrowDownIcon />
-                                                        <span>{t("Register an :name", { name: t("income") })}</span>
-                                                    </ModalLink>
-                                                }
-                                            />
-                                            <DropdownMenuItem
-                                                render={
-                                                    <ModalLink
-                                                        href={transactions.create.url({
-                                                            team: user.current_team.slug,
-                                                            type: "expense",
-                                                        })}
-                                                    >
-                                                        <ArrowUpIcon />
-                                                        <span>{t("Register an :name", { name: t("expense") })}</span>
-                                                    </ModalLink>
-                                                }
-                                            />
-                                        </DropdownMenuGroup>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            ))}
+                        {user?.current_team && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger render={<Button />}>
+                                    <span>
+                                        {t("Create")}
+                                        <span className="max-sm:hidden">{t("transaction")}</span>
+                                    </span>
+                                    <ChevronDownIcon className="transition-transform in-data-popup-open:rotate-180" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-auto min-w-(--anchor-width)">
+                                    <DropdownMenuGroup>
+                                        <DropdownMenuItem
+                                            render={
+                                                <ModalLink
+                                                    href={transactions.create.url({
+                                                        team: user.current_team.slug,
+                                                        type: "income",
+                                                    })}
+                                                >
+                                                    <ArrowDownIcon />
+                                                    <span>{t("Register an :name", { name: t("income") })}</span>
+                                                </ModalLink>
+                                            }
+                                        />
+                                        <DropdownMenuItem
+                                            render={
+                                                <ModalLink
+                                                    href={transactions.create.url({
+                                                        team: user.current_team.slug,
+                                                        type: "expense",
+                                                    })}
+                                                >
+                                                    <ArrowUpIcon />
+                                                    <span>{t("Register an :name", { name: t("expense") })}</span>
+                                                </ModalLink>
+                                            }
+                                        />
+                                    </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                 </header>
                 {/** Content */}
@@ -275,16 +250,6 @@ const Sidebar = () => {
                 <SidebarGroup>
                     <SidebarGroupLabel>{t("Team")}</SidebarGroupLabel>
                     <SidebarMenu>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                render={
-                                    <Link href={subscriptions.index.url({ team: user?.current_team?.slug ?? "" })} />
-                                }
-                            >
-                                <CreditCardIcon />
-                                <span>{t("Billing")}</span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 render={<Link href={members.index.url({ team: user?.current_team?.slug ?? "" })} />}
@@ -381,7 +346,7 @@ const TeamSwitcher = () => {
     /**
      * The page's props.
      */
-    const { billing, user } = usePage().props;
+    const { user } = usePage().props;
 
     /**
      * The team the user is currently on.
@@ -427,15 +392,11 @@ const TeamSwitcher = () => {
                                 </DropdownMenuItem>
                             ))}
                         </DropdownMenuGroup>
-                        {billing.can_join_free_team ? (
-                            <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem render={<Link href={teams.create.url()} />}>
-                                    <PlusIcon />
-                                    <span>{t("Create :name", { name: t("team") })}</span>
-                                </DropdownMenuItem>
-                            </>
-                        ) : null}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem render={<Link href={teams.create.url()} />}>
+                            <PlusIcon />
+                            <span>{t("Create :name", { name: t("team") })}</span>
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>

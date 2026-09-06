@@ -41,6 +41,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
 
+            // The authentication status.
             'auth' => [
                 'canAccessAdministration' => ($user = $this->user($request)) && $user->canAccessPanel(Filament::getPanel('administration')),
             ],
@@ -56,19 +57,17 @@ class HandleInertiaRequests extends Middleware
      */
     protected function user(Request $request): ?User
     {
-        /** @var \App\Modules\Core\Identity\Models\User|null $user */
-        $user = $request->user();
-
-        if (! $user instanceof User) {
-            return $user;
+        // If the user is not an instance of User, return null.
+        if (! ($user = $request->user()) instanceof User) {
+            return null;
         }
 
-        $user->loadMissing('teams.subscriptions');
-
+        // Load the current team.
+        /** @var \App\Modules\Core\Identity\Models\User $user */
         if (isset($user->current_team_id)) {
             $user->loadMissing('currentTeam');
         }
 
-        return $user;
+        return $user->loadMissing('teams');
     }
 }

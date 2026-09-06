@@ -20,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(
         fn (Middleware $middleware): Middleware => $middleware
             ->encryptCookies()
-            ->preventRequestForgery(except: ['paddle/*'])
+            ->preventRequestForgery()
             ->redirectUsersTo(fn (Request $request): string => app(ResolveAuthenticationRedirect::class)->fromRequest($request))
             ->web(append: [
                 \App\Modules\Support\Http\Middleware\HandleInertiaRequests::class,

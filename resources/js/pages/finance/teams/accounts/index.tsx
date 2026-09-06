@@ -1,4 +1,4 @@
-import { Deferred, Link, usePage } from "@inertiajs/react";
+import { Deferred, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
@@ -37,9 +37,7 @@ import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } 
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFilters } from "@/hooks/use-filters";
-import { usePlanLimit } from "@/hooks/use-plan-limit";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import subscriptions from "@/routes/billing/teams/subscriptions";
 import routes from "@/routes/finance/teams/accounts";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { AccountType } from "@/types/app/modules/core/finance/enums/account/account-type";
@@ -119,24 +117,6 @@ const CreateAccountButton = ({ className }: { className?: string }) => {
      * The page's props.
      */
     const { user } = usePage().props;
-
-    /**
-     * Whether the team has reached its plan's account limit.
-     */
-    const atLimit = usePlanLimit("accounts");
-
-    if (atLimit) {
-        return (
-            <Button
-                className={className}
-                nativeButton={false}
-                render={<Link href={subscriptions.index.url({ team: user?.current_team?.slug ?? "" })} />}
-                variant="outline"
-            >
-                {t("Upgrade to Pro")}
-            </Button>
-        );
-    }
 
     return (
         <Button

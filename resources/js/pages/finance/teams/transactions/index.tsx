@@ -1,4 +1,4 @@
-import { Deferred, InfiniteScroll, Link, usePage } from "@inertiajs/react";
+import { Deferred, InfiniteScroll, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { format, parse } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
@@ -37,10 +37,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { useFilters } from "@/hooks/use-filters";
-import { usePlanLimit } from "@/hooks/use-plan-limit";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { cn, formatAmount } from "@/lib/utils";
-import subscriptions from "@/routes/billing/teams/subscriptions";
 import routes from "@/routes/finance/teams/transactions";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
@@ -134,25 +132,6 @@ const CreateTransactionMenu = ({ className }: { className?: string }) => {
      * The current team's route key.
      */
     const team = user?.current_team?.slug ?? "";
-
-    /**
-     * Whether the team has reached its plan's monthly
-     * transaction limit.
-     */
-    const atLimit = usePlanLimit("transactions");
-
-    if (atLimit) {
-        return (
-            <Button
-                className={className}
-                nativeButton={false}
-                render={<Link href={subscriptions.index.url({ team })} />}
-                variant="outline"
-            >
-                {t("Upgrade to Pro")}
-            </Button>
-        );
-    }
 
     return (
         <DropdownMenu>

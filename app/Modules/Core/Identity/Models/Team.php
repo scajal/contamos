@@ -23,10 +23,7 @@ use Illuminate\Support\Str;
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Account> $accounts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Billing\Models\Transaction> $billingTransactions
- * @property-read \App\Modules\Billing\Models\Customer|null $customer
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team\TeamInvitation> $invitations
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Billing\Models\Subscription> $subscriptions
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Tag> $tags
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction> $transactions
  * @property-read \App\Modules\Core\Identity\Models\Membership|null $membership
@@ -122,16 +119,6 @@ class Team extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
-    }
-
-    /**
-     * Get the billable model's name to associate with
-     * Paddle. Teams have no owner, so billing is
-     * always set up under the team's own name.
-     */
-    public function paddleName(): ?string
-    {
-        return $this->name;
     }
 
     /**

@@ -221,9 +221,6 @@ describe('store', function (): void {
     it('rejects an email that already has an open invitation', function (): void {
         Notification::fake();
         [$user, $team] = actingMember();
-        \Laravel\Paddle\Cashier::fake();
-        $team->subscriptions()->create(['type' => 'default', 'paddle_id' => 'sub_test', 'status' => 'active'])
-            ->items()->create(['product_id' => 'pro_test', 'price_id' => 'pri_month', 'status' => 'active', 'quantity' => 1]);
         TeamInvitation::factory()->for($team)->create(['email' => 'ada@example.com']);
 
         $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
@@ -240,9 +237,6 @@ describe('store', function (): void {
     it('rejects an open invitation for the same email in a different case', function (): void {
         Notification::fake();
         [$user, $team] = actingMember();
-        \Laravel\Paddle\Cashier::fake();
-        $team->subscriptions()->create(['type' => 'default', 'paddle_id' => 'sub_test', 'status' => 'active'])
-            ->items()->create(['product_id' => 'pro_test', 'price_id' => 'pri_month', 'status' => 'active', 'quantity' => 1]);
         TeamInvitation::factory()->for($team)->create(['email' => 'ada@example.com']);
 
         $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))

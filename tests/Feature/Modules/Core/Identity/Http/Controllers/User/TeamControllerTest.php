@@ -76,22 +76,8 @@ describe('store', function (): void {
             ]);
     });
 
-    it('blocks a user already in a free team from creating another', function (): void {
-        [$user, $team] = actingMember();
-
-        $this->from(route('identity.teams.create'))
-            ->post(route('identity.teams.store'), ['name' => 'Second Team'])
-            ->assertRedirectToRoute('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]);
-
-        assertFlashedToast(trans('You already belong to a free team. Upgrade that team to create another.'));
-        expect(Team::query()->count())->toBe(1);
-    });
-
-    it('lets a user whose only team is pro create another team', function (): void {
-        \Laravel\Paddle\Cashier::fake();
-        [$user, $team] = actingMember();
-        $team->subscriptions()->create(['type' => 'default', 'paddle_id' => 'sub_test', 'status' => 'active'])
-            ->items()->create(['product_id' => 'pro_test', 'price_id' => 'pri_month', 'status' => 'active', 'quantity' => 1]);
+    it('lets a user who already belongs to a team create another', function (): void {
+        actingMember();
 
         $this->from(route('identity.teams.create'))
             ->post(route('identity.teams.store'), ['name' => 'Second Team'])
