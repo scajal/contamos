@@ -1,4 +1,4 @@
-import { Deferred, usePage } from "@inertiajs/react";
+import { Deferred, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
