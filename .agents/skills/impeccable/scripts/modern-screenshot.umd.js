@@ -378,7 +378,7 @@
                         svgDefsElement: o == null ? void 0 : o.createElementNS(K, "defs"),
                         svgStyles: new Map(),
                         defaultComputedStyles: new Map(),
-                        workers: [...Array.from({ length: ze && n && i ? i : 0 })]
+                        workers: Array.from({ length: ze && n && i ? i : 0 })
                             .map(() => {
                                 try {
                                     const b = new Worker(n);
@@ -977,7 +977,7 @@
         return (e.replace(ke, (n, i, a) => (r.push([a, ue(a, t)]), n)), r.filter(([n]) => !re(n)));
     }
     function Lt(e) {
-        const t = e.replace(/([.*+?^${}()|\[\]\/\\])/g, "\\$1");
+        const t = e.replace(/([.*+?^${}()|[\]/\\])/g, "\\$1");
         return new RegExp(`(url\\(['"]?)(${t})(['"]?\\))`, "g");
     }
     const xt = [
@@ -1242,7 +1242,7 @@
                     }
                 });
             (l == null || l(E, p),
-                yield Promise.all([...Array.from({ length: 4 })].map(b)),
+                yield Promise.all(Array.from({ length: 4 }).map(b)),
                 i.timeEnd("embed node"),
                 yield f == null ? void 0 : f(g));
             const w = Yt(g, r);

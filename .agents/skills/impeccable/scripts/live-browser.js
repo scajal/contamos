@@ -4355,7 +4355,7 @@
                 : currentCount,
             phase: existing.phase || "applying",
             startedAt: Number(existing.startedAt) || Date.now(),
-            ...(patch || {}),
+            ...patch,
         });
     }
 
@@ -6948,7 +6948,7 @@
             })
             .catch((err) => {
                 const detail = err && err.message ? err.message : "fetch failed";
-                if (/source read failed: 404$/.test(detail)) {
+                if (detail.endsWith("source read failed: 404")) {
                     onNoWrapper("source file missing (404) while checking for the variant wrapper");
                     return;
                 }
@@ -8226,7 +8226,7 @@
             phase: "steer",
             reason,
             pageUrl: location.pathname,
-            ...(extra || {}),
+            ...extra,
         }).catch(() => null);
     }
 
@@ -11142,7 +11142,7 @@ void main() {
             pageChatExpanded,
             active: steerFocusTargetLabel(activeElementDeep()),
             shouldSteer: shouldFocusSteerChat(),
-            ...(extra || {}),
+            ...extra,
         });
     }
 

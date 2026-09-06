@@ -43,4 +43,5 @@ Wayfinder {team} params use user.current_team.slug (or the page team.slug), neve
 Share the authenticated user as top-level `user` with `Inertia::always` (eager-load `currentTeam` when present). Share `auth.canAccessAdministration` from the administration Filament panel. Do not nest the user under `auth` or re-share it from controllers.
 
 ## Layout reads shared user.teams
+
 The shared Inertia user includes teams (memberships) and current_team. The sidebar team switcher reads user.teams and user.current_team; do not refetch teams in the layout.

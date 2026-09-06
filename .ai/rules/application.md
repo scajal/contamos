@@ -14,4 +14,5 @@ ApplicationLayout renders a BreadcrumbPage for the current Inertia page (Dashboa
 SidebarInset, main, and the max-w-5xl content column use min-w-0 so nested overflow-x-auto tables can shrink and scroll instead of blowing out the flex layout.
 
 ## Sidebar header is the team switcher
+
 SidebarHeader is the team switcher (avatar initials, muted “Team” label, team name), not a logo. Switching visits finance.teams.dashboard.index with the team slug so EnsureTeamMembership updates current_team.

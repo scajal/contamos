@@ -34,6 +34,13 @@ export default defineConfig({
      */
     lint: {
         ignorePatterns: [
+            ".agents/**",
+            ".ai/**",
+            ".claude/**",
+            ".cursor/**",
+            ".github/**",
+            ".junie/**",
+            ".vscode/**",
             "vendor/**",
             "node_modules/**",
             "public/**",

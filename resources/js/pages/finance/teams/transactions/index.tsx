@@ -1,4 +1,4 @@
-import { Deferred, InfiniteScroll, Link, usePage } from "@inertiajs/react";
+import { Deferred, InfiniteScroll, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { format, parse } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
@@ -440,7 +440,9 @@ const Listing = () => {
                         <Fragment key={date}>
                             <Item className="p-0 pb-4 not-first:mt-4">
                                 <ItemHeader>
-                                    <ItemTitle>{format(parse(date, DATE_FORMAT, new Date()), "MMMM d, yyyy")}</ItemTitle>
+                                    <ItemTitle>
+                                        {format(parse(date, DATE_FORMAT, new Date()), "MMMM d, yyyy")}
+                                    </ItemTitle>
                                 </ItemHeader>
                             </Item>
                             <div className="min-w-0 overflow-x-auto rounded-sm border">
