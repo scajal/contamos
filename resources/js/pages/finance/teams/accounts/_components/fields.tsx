@@ -54,8 +54,8 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
     /**
      * The currencies currently selected for the account.
      */
-    const [selectedCurrencies, setSelectedCurrencies] = useState<Array<Currency>>(
-        () => listOfCurrencies.filter((currency) => defaultValues?.currency_ids?.includes(currency.id)),
+    const [selectedCurrencies, setSelectedCurrencies] = useState<Array<Currency>>(() =>
+        listOfCurrencies.filter((currency) => defaultValues?.currency_ids?.includes(currency.id)),
     );
 
     /**

@@ -1,7 +1,8 @@
+import { usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { LogOutIcon } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,12 +13,29 @@ import {
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { logout } from "@/routes";
 
+/**
+ * The initials of the given name, used as the
+ * avatar fallback.
+ */
+const initials = (name: string) =>
+    name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? "")
+        .join("");
+
 export const WizardLayout = ({ children }: { children: React.ReactNode }) => {
     /**
      * Translate the provided string to the
      * current locale.
      */
     const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { user } = usePage().props;
 
     return (
         <SidebarProvider>
@@ -31,10 +49,16 @@ export const WizardLayout = ({ children }: { children: React.ReactNode }) => {
                             <DropdownMenu>
                                 <DropdownMenuTrigger>
                                     <Avatar>
-                                        <AvatarFallback>CP</AvatarFallback>
+                                        <AvatarImage src={user?.avatar ?? undefined} />
+                                        <AvatarFallback>{initials(user?.name ?? "")}</AvatarFallback>
                                     </Avatar>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent side="bottom" align="center" sideOffset={4}>
+                                <DropdownMenuContent
+                                    align="center"
+                                    className="w-auto min-w-(--anchor-width)"
+                                    side="bottom"
+                                    sideOffset={4}
+                                >
                                     <DropdownMenuGroup>
                                         <DropdownMenuItem render={<a href={logout.url()} />}>
                                             <LogOutIcon />

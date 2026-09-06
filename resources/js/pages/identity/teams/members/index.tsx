@@ -1,11 +1,30 @@
 import { Deferred, Link, usePage } from "@inertiajs/react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ChevronLeftIcon, ChevronRightIcon, CircleDashedIcon, SearchIcon, SearchXIcon, XIcon } from "lucide-react";
+import {
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    CircleDashedIcon,
+    LogOutIcon,
+    MoreHorizontalIcon,
+    SearchIcon,
+    SearchXIcon,
+    TrashIcon,
+    XIcon,
+} from "lucide-react";
+import { useState } from "react";
 
+import { ConfirmAction } from "@/components/confirm-action";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
@@ -111,7 +130,7 @@ const Filters = () => {
                     <InputGroupInput
                         id="members-search"
                         onChange={(event) => setFilters({ search: event.target.value }, { debounced: true })}
-                        placeholder={t("Search by name")}
+                        placeholder={t("Search by email or name")}
                         value={filters.search ?? ""}
                     />
                 </InputGroup>
@@ -123,6 +142,73 @@ const Filters = () => {
                 <span className="sr-only">{t("Clear filters")}</span>
             </Button>
         </div>
+    );
+};
+
+const MemberActions = ({ member }: { member: User }) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { user } = usePage<PageProps>().props;
+
+    /**
+     * Whether the member is the authenticated user, who leaves
+     * the team instead of being removed from it.
+     */
+    const isSelf = member.id === user?.id;
+
+    /**
+     * Whether the removal confirmation dialog is open.
+     */
+    const [removeOpen, setRemoveOpen] = useState(false);
+
+    return (
+        <>
+            <DropdownMenu>
+                <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
+                    <MoreHorizontalIcon />
+                    <span className="sr-only">{t("Actions")}</span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-auto min-w-(--anchor-width)">
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={() => setRemoveOpen(true)} variant="destructive">
+                            {isSelf ? <LogOutIcon /> : <TrashIcon />}
+                            <span>{isSelf ? t("Leave team") : t("Remove")}</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <ConfirmAction
+                action={
+                    <Link
+                        href={routes.destroy.url({
+                            team: user?.current_team?.slug ?? "",
+                            user: member.id,
+                        })}
+                        method="delete"
+                    />
+                }
+                confirmLabel={isSelf ? t("Leave team") : t("Remove member")}
+                description={
+                    isSelf
+                        ? t("You will lose access to this team's accounts and transactions.")
+                        : t("The member will lose access to this team's accounts and transactions.")
+                }
+                onOpenChange={setRemoveOpen}
+                open={removeOpen}
+                title={
+                    isSelf
+                        ? t("Are you sure you want to leave the team?")
+                        : t("Are you sure you want to remove the member?")
+                }
+            />
+        </>
     );
 };
 
@@ -193,6 +279,7 @@ const Listing = () => {
                                     </ItemContent>
                                     <ItemActions className="flex-wrap justify-end">
                                         {member.id === user?.id ? <Badge variant="secondary">{t("You")}</Badge> : null}
+                                        {(members?.total ?? 0) > 1 ? <MemberActions member={member} /> : null}
                                     </ItemActions>
                                 </Item>
                             ))}

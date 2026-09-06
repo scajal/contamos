@@ -3,7 +3,7 @@ name: laravel-query-builder
 description: "Build filtered, sorted, and included API endpoints using spatie/laravel-query-builder. Activates when working with QueryBuilder, AllowedFilter, AllowedSort, AllowedInclude, or when the user mentions query parameters, API filtering, sorting, includes, or spatie/laravel-query-builder."
 license: MIT
 metadata:
-  author: spatie
+    author: spatie
 ---
 
 # Laravel Query Builder

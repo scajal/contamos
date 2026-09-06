@@ -30,10 +30,13 @@ Derive table, primary-key, and foreign-key column names from the model or relati
 Declare `strict_types=1` in every PHP file. Do not omit it.
 
 ## Core domain vs top-level modules
+
 Put domain feature modules under `app/Modules/Core/{Module}/`. Keep Authentication and Support at `app/Modules/` root.
 
 ## Eager-load at the call site
+
 Eager-load relations with per-query `->with()` or `->load()`. Do not set model-level `$with`.
 
 ## CarbonImmutable dates
+
 Application dates are CarbonImmutable. Typehint and construct with CarbonImmutable; do not introduce mutable Carbon.

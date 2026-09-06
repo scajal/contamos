@@ -2,8 +2,8 @@ import { Link, usePage } from "@inertiajs/react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
-import { Badge } from "@/components/ui/badge";
 import { ConfirmAction } from "@/components/confirm-action";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";

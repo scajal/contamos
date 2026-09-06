@@ -37,7 +37,10 @@ export default function Edit({ account, currencies, types }: PageProps) {
                 <Sheet {...rootProps}>
                     <SheetContent>
                         <Form
-                            {...accounts.update.form({ team: user?.current_team?.slug ?? "", account: account.id ?? "" })}
+                            {...accounts.update.form({
+                                team: user?.current_team?.slug ?? "",
+                                account: account.id ?? "",
+                            })}
                             className="contents"
                             disableWhileProcessing
                             onSuccess={() => {

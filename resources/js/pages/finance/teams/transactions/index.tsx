@@ -43,8 +43,8 @@ import routes from "@/routes/finance/teams/transactions";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
-import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
+import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 
 type PageFilters = {

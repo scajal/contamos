@@ -294,7 +294,7 @@ const Sidebar = () => {
                                 <DropdownMenuGroup>
                                     <DropdownMenuItem render={<a href={logout.url()} />}>
                                         <LogOutIcon />
-                                        <span>{t("Logout")}</span>
+                                        <span>{t("Log Out")}</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuGroup>
                             </DropdownMenuContent>

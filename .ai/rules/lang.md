@@ -1,7 +1,7 @@
 ---
 paths:
-  - 'lang/*.json'
-  - 'lang/*/validation.php'
+    - "lang/*.json"
+    - "lang/*/validation.php"
 ---
 
 # Lang
@@ -13,4 +13,5 @@ Use full English strings as keys in lang/{locale}.json. Frontend: useLaravelReac
 Spanish UI copy uses tú (Agrega, Ingresa, Selecciona, Edita), not usted.
 
 ## Validation attributes in lang files
+
 Put custom validation attribute labels in lang/{locale}/validation.php under attributes. Do not add Form Request attributes() or messages() methods.

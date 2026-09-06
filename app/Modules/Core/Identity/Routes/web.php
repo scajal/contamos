@@ -67,6 +67,10 @@ Route::as('identity.teams.')
         Route::get('members', [\App\Modules\Core\Identity\Http\Controllers\Team\MemberController::class, 'index'])
             ->name('members.index');
 
+        Route::delete('members/{user}', [\App\Modules\Core\Identity\Http\Controllers\Team\MemberController::class, 'destroy'])
+            ->name('members.destroy')
+            ->scopeBindings();
+
         /*
         |--------------------------------------------------------------------------
         | Invitation routes

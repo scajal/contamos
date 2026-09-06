@@ -57,7 +57,12 @@ export default function Create({ accounts, tags, type }: PageProps) {
                                         </SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-4">
-                                        <Fields accounts={accounts} defaultValues={{ type }} tags={tags} {...formProps} />
+                                        <Fields
+                                            accounts={accounts}
+                                            defaultValues={{ type }}
+                                            tags={tags}
+                                            {...formProps}
+                                        />
                                     </div>
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">

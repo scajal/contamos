@@ -26,7 +26,9 @@ import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 
-type FormProps = Partial<Omit<Transaction, "account" | "currency" | "tags" | "team" | "user"> & { tag_ids: Array<string> }>;
+type FormProps = Partial<
+    Omit<Transaction, "account" | "currency" | "tags" | "team" | "user"> & { tag_ids: Array<string> }
+>;
 
 type Props = FormComponentSlotProps<FormProps> & {
     accounts: Array<Account>;
@@ -80,8 +82,8 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
     /**
      * The tags currently selected for the transaction.
      */
-    const [selectedTags, setSelectedTags] = useState<Array<Tag>>(
-        () => tags.filter((tag) => defaultValues?.tag_ids?.includes(tag.id)),
+    const [selectedTags, setSelectedTags] = useState<Array<Tag>>(() =>
+        tags.filter((tag) => defaultValues?.tag_ids?.includes(tag.id)),
     );
 
     /**
