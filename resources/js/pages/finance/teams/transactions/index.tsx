@@ -225,7 +225,7 @@ const Filters = () => {
                     <span className="sr-only">{t("More filters")}</span>
                     {isFiltered && <span className="bg-primary absolute -top-1 -right-1 size-3 rounded-full" />}
                 </PopoverTrigger>
-                <PopoverContent className="w-fit">
+                <PopoverContent>
                     <PopoverHeader>
                         <PopoverTitle>{t("More filters")}</PopoverTitle>
                     </PopoverHeader>
@@ -234,7 +234,7 @@ const Filters = () => {
                         <Field>
                             <FieldLabel>{t("Type")}</FieldLabel>
                             <Select onValueChange={(value) => setFilters({ type: value })} value={filters.type}>
-                                <SelectTrigger>
+                                <SelectTrigger className="w-full">
                                     <SelectValue>
                                         {(value: TransactionType | null) => `${value ? t(`enums.${value}`) : t("All")}`}
                                     </SelectValue>
@@ -256,7 +256,7 @@ const Filters = () => {
                         <Field>
                             <FieldLabel>{t("Account")}</FieldLabel>
                             <Select onValueChange={(value) => setFilters({ account: value })} value={filters.account}>
-                                <SelectTrigger>
+                                <SelectTrigger className="w-full">
                                     <SelectValue>
                                         {(value: string | null) =>
                                             `${accounts.find((account) => account.id === value)?.name ?? t("All")}`
@@ -280,7 +280,7 @@ const Filters = () => {
                         <Field>
                             <FieldLabel>{t("Currency")}</FieldLabel>
                             <Select onValueChange={(value) => setFilters({ currency: value })} value={filters.currency}>
-                                <SelectTrigger>
+                                <SelectTrigger className="w-full">
                                     <SelectValue>
                                         {(value: string | null) =>
                                             `${currencies.find((currency) => currency.id === value)?.code ?? t("All")}`

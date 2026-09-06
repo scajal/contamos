@@ -194,7 +194,7 @@ const Filters = () => {
                         <Field>
                             <FieldLabel>{t("Type")}</FieldLabel>
                             <Select onValueChange={(value) => setFilters({ type: value })} value={filters.type}>
-                                <SelectTrigger>
+                                <SelectTrigger className="w-full">
                                     <SelectValue>
                                         {(value: AccountType | null) => `${value ? t(`enums.${value}`) : t("All")}`}
                                     </SelectValue>
@@ -219,7 +219,7 @@ const Filters = () => {
                                 onValueChange={(value) => setFilters({ is_active: value })}
                                 value={filters.is_active}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className="w-full">
                                     <SelectValue>
                                         {(value: string | null) =>
                                             `${value === null ? t("All") : value === "true" ? t("Active") : t("Inactive")}`
@@ -240,7 +240,7 @@ const Filters = () => {
                         <Field>
                             <FieldLabel>{t("Currency")}</FieldLabel>
                             <Select onValueChange={(value) => setFilters({ currency: value })} value={filters.currency}>
-                                <SelectTrigger>
+                                <SelectTrigger className="w-full">
                                     <SelectValue>
                                         {(value: string | null) =>
                                             `${currencies.find((currency) => currency.id === value)?.code ?? t("All")}`
@@ -328,6 +328,7 @@ const Listing = () => {
                                         className="rounded-none border-0 border-b last:border-b-0"
                                         key={account.id}
                                         size="sm"
+                                        variant="outline"
                                     >
                                         <ItemMedia variant="icon">
                                             <Icon />

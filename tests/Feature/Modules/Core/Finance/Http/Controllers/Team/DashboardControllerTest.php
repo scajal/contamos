@@ -7,6 +7,7 @@ use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -30,8 +31,10 @@ it('renders the dashboard for a team member', function (): void {
             ->component('finance/teams/dashboard')
             ->has('user')
             ->where('user.id', $user->getKey())
+            ->where('has_accounts', false)
             ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-                ->has('balances', 0)));
+                ->has('balances', 0)
+                ->has('recent_transactions', 0)));
 });
 
 it('renders the signed balance per currency of the active accounts', function (): void {
@@ -52,6 +55,7 @@ it('renders the signed balance per currency of the active accounts', function ()
         ->assertOk()
         ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('finance/teams/dashboard')
+            ->where('has_accounts', true)
             ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->has('balances', 2)
                 ->where('balances.0.code', 'ARS')
@@ -59,7 +63,55 @@ it('renders the signed balance per currency of the active accounts', function ()
                 ->where('balances.0.decimal_places', 2)
                 ->where('balances.0.balance', fn (mixed $balance): bool => (float) $balance === 70.25)
                 ->where('balances.1.code', 'USD')
-                ->where('balances.1.balance', fn (mixed $balance): bool => (float) $balance === -10.0)));
+                ->where('balances.1.balance', fn (mixed $balance): bool => (float) $balance === -10.0)
+                ->has('recent_transactions', 3)
+                ->has('recent_transactions.0.account')
+                ->has('recent_transactions.0.currency')));
+});
+
+it('does not count inactive accounts toward the empty path', function (): void {
+    [, $team] = actingMember();
+    Account::factory()->bank()->inactive()->for($team)->create();
+
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getKey()]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->where('has_accounts', false));
+});
+
+it('renders the eight most recent transactions of the active accounts', function (): void {
+    [$user, $team] = actingMember();
+    $peso = Currency::factory()->active()->fiat()->create();
+    $active = Account::factory()->bank()->active()->for($team)->create();
+    $inactive = Account::factory()->cash()->inactive()->for($team)->create();
+    $foreign = Account::factory()->bank()->active()->for(Team::factory())->create();
+
+    $transactions = Transaction::factory()
+        ->income()
+        ->for($active)
+        ->for($peso)
+        ->count(9)
+        ->sequence(fn (Sequence $sequence): array => [
+            'occurred_at' => now()->subMinutes($sequence->index),
+            'user_id' => $user->getKey(),
+        ])
+        ->create();
+
+    Transaction::factory()->income()->for($inactive)->for($peso)->create([
+        'occurred_at' => now()->addHour(),
+        'user_id' => $user->getKey(),
+    ]);
+    Transaction::factory()->income()->for($foreign)->for($peso)->create([
+        'occurred_at' => now()->addHour(),
+    ]);
+
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getKey()]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('recent_transactions', 8)
+                ->where('recent_transactions.0.id', $transactions[0]->getKey())
+                ->where('recent_transactions.7.id', $transactions[7]->getKey())));
 });
 
 it('returns 404 when the team does not exist', function (): void {
