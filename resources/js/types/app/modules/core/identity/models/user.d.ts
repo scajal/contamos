@@ -17,5 +17,5 @@ export interface User {
     created_at: string | null;
     updated_at: string | null;
     membership?: Membership | null;
-    teams?: Team[];
+    teams?: Array<Team>;
 }

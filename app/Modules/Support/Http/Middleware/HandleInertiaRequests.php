@@ -59,6 +59,9 @@ class HandleInertiaRequests extends Middleware
         /** @var \App\Modules\Core\Identity\Models\User|null $user */
         $user = $request->user();
 
+        // Load the available teams.
+        $user->loadMissing('teams');
+
         // If the user is an instance of the User model
         // and has a current team, load the current team.
         if ($user instanceof User && isset($user->current_team_id)) {
