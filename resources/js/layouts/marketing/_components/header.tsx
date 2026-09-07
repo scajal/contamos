@@ -15,10 +15,13 @@ import { login } from "@/routes";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 
 import { LanguageSwitcher } from "./language-switcher";
+import { ThemeSwitcher, type Appearance } from "./theme-switcher";
 
 interface HeaderProps {
     alternates: Alternates;
     dashboardUrl: string | null;
+    appearance: Appearance;
+    onAppearanceChange: (appearance: Appearance) => void;
 }
 
 const NAV_ITEMS = [
@@ -31,7 +34,7 @@ const NAV_ITEMS = [
  * The sticky, blurred marketing header: logo, primary nav,
  * language switcher and the guest/auth call to action.
  */
-export const Header = ({ alternates, dashboardUrl }: HeaderProps) => {
+export const Header = ({ alternates, dashboardUrl, appearance, onAppearanceChange }: HeaderProps) => {
     /**
      * Translate the provided string to the current locale.
      */
@@ -73,8 +76,9 @@ export const Header = ({ alternates, dashboardUrl }: HeaderProps) => {
                     ))}
                 </nav>
 
-                <div className="hidden items-center gap-4 md:flex">
+                <div className="hidden items-center gap-3 md:flex">
                     <LanguageSwitcher alternates={alternates} className="flex items-center gap-1" />
+                    <ThemeSwitcher appearance={appearance} onChange={onAppearanceChange} />
                     {cta}
                 </div>
 
@@ -100,7 +104,10 @@ export const Header = ({ alternates, dashboardUrl }: HeaderProps) => {
                                 </SheetClose>
                             ))}
                         </nav>
-                        <LanguageSwitcher alternates={alternates} className="flex items-center gap-2" />
+                        <div className="flex items-center gap-2">
+                            <LanguageSwitcher alternates={alternates} className="flex items-center gap-2" />
+                            <ThemeSwitcher appearance={appearance} onChange={onAppearanceChange} />
+                        </div>
                         {cta}
                     </SheetContent>
                 </Sheet>

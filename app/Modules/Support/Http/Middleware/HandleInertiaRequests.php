@@ -51,6 +51,11 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
 
+            // The marketing site's colour scheme, from an unencrypted
+            // cookie the client writes, so the server renders the right
+            // one on the first paint instead of flashing.
+            'appearance' => fn (): string => $request->cookie('appearance') === 'light' ? 'light' : 'dark',
+
             // The resolved locale, read at render time so it
             // works for SSR requests too.
             'locale' => fn (): string => App::currentLocale(),

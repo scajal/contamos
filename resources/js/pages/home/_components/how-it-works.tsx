@@ -16,7 +16,7 @@ export const HowItWorks = () => {
     const t = useLaravelReactI18n().t;
 
     return (
-        <section className="bg-foreground text-background relative overflow-hidden">
+        <section className="bg-card relative overflow-hidden border-y">
             <div
                 aria-hidden="true"
                 className="bg-primary/10 pointer-events-none absolute top-1/2 left-1/2 size-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
@@ -33,7 +33,7 @@ export const HowItWorks = () => {
                             <span className="font-heading text-primary text-6xl leading-none font-semibold tabular-nums">
                                 {index + 1}
                             </span>
-                            <p className="text-background/90 text-lg font-medium">{t(step)}</p>
+                            <p className="text-lg font-medium">{t(step)}</p>
                         </Reveal>
                     ))}
                 </ol>

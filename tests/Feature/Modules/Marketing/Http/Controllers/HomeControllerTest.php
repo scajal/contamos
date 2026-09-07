@@ -8,6 +8,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 use function Pest\Laravel\get;
 use function Pest\Laravel\withCookie;
 use function Pest\Laravel\withHeaders;
+use function Pest\Laravel\withUnencryptedCookie;
 
 /**
  * Feature tests for \App\Modules\Marketing\Http\Controllers\HomeController.
@@ -41,6 +42,21 @@ describe('index', function (): void {
                 ->where('locale', 'en')
                 ->where('dashboardUrl', null)
                 ->has('plans', 2));
+    });
+
+    it('defaults the marketing appearance to dark', function (): void {
+        get(route('home', ['locale' => 'en']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('appearance', 'dark'));
+    });
+
+    it('reads the appearance from its unencrypted cookie', function (): void {
+        withUnencryptedCookie('appearance', 'light')
+            ->get(route('home', ['locale' => 'en']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('appearance', 'light'));
     });
 
     it('resolves the dashboard url for a member', function (): void {

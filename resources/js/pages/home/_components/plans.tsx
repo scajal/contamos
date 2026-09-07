@@ -42,16 +42,25 @@ export const Plans = ({ plans, dashboardUrl }: PlansProps) => {
                             <TiltCard
                                 className={cn(
                                     "flex h-full flex-col gap-6 p-8 shadow-lg",
-                                    isPro && "bg-foreground text-background border-transparent",
+                                    isPro && "border-primary/50 bg-card ring-primary/20 ring-1",
                                 )}
                             >
+                                {!isPro && (
+                                    <span
+                                        aria-hidden="true"
+                                        className="absolute top-6 right-6 flex size-16 rotate-12 items-center justify-center rounded-full border-2 border-dashed border-rose-500 text-[0.6rem] font-bold tracking-wide text-rose-500 uppercase"
+                                    >
+                                        {t("No card")}
+                                    </span>
+                                )}
+
                                 <h3 className="font-heading text-xl font-semibold">{t(plan.label)}</h3>
 
                                 <ul className="flex flex-col gap-3">
                                     {plan.features.map((feature) => (
                                         <li key={feature.key} className="flex items-center gap-2 text-sm">
                                             <CheckIcon className="text-primary size-4 shrink-0" aria-hidden="true" />
-                                            <span className={isPro ? "text-background/90" : undefined}>
+                                            <span>
                                                 {t(feature.label)}:{" "}
                                                 {feature.limit === null ? t("Unlimited") : feature.limit}
                                             </span>
@@ -65,7 +74,7 @@ export const Plans = ({ plans, dashboardUrl }: PlansProps) => {
                                     size="lg"
                                     className={cn(
                                         "mt-auto",
-                                        isPro && "bg-background text-foreground hover:bg-background/80",
+                                        isPro && "bg-primary text-primary-foreground hover:bg-primary/80",
                                     )}
                                 >
                                     {t(dashboardUrl ? "Go to dashboard" : "Start free")}

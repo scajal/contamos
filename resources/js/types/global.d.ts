@@ -27,6 +27,7 @@ declare module "@inertiajs/core" {
             auth: { canAccessAdministration: boolean };
             user: User | null;
             locale: "en" | "es";
+            appearance: "light" | "dark";
             [key: string]: unknown;
         };
         flashDataType: {

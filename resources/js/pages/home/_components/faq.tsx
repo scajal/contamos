@@ -44,8 +44,19 @@ export const Faq = () => {
     const t = useLaravelReactI18n().t;
 
     return (
-        <section id="faq" aria-labelledby="faq-heading" className="bg-muted/40 border-y">
-            <div className="mx-auto grid max-w-6xl gap-8 px-4 py-20 sm:px-6 sm:py-28 md:grid-cols-[280px_1fr] md:gap-16">
+        <section
+            id="faq"
+            aria-labelledby="faq-heading"
+            className="bg-muted/40 relative overflow-hidden border-y bg-[repeating-linear-gradient(to_bottom,transparent,transparent_31px,var(--border)_32px)]"
+        >
+            <span
+                aria-hidden="true"
+                className="font-heading text-foreground/[0.04] pointer-events-none absolute -top-10 right-[4%] rotate-6 text-[12rem] leading-none font-bold select-none"
+            >
+                ?
+            </span>
+
+            <div className="relative mx-auto grid max-w-6xl gap-8 px-4 py-20 sm:px-6 sm:py-28 md:grid-cols-[280px_1fr] md:gap-16">
                 <h2 id="faq-heading" className="font-heading text-3xl font-semibold tracking-tight md:text-5xl">
                     {t("FAQ")}
                 </h2>

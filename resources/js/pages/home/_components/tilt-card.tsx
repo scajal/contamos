@@ -42,7 +42,7 @@ export const TiltCard = ({ children, className }: { children: ReactNode; classNa
 
     return (
         <m.div
-            className={cn("bg-background rounded-2xl border p-6 shadow-md", className)}
+            className={cn("bg-background relative rounded-2xl border p-6 shadow-md", className)}
             style={reducedMotion ? undefined : { rotateX, rotateY, transformPerspective: 800 }}
             onMouseMove={reducedMotion ? undefined : handleMove}
             onMouseLeave={reducedMotion ? undefined : handleLeave}

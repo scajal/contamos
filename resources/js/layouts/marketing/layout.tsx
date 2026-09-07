@@ -1,23 +1,28 @@
 import { usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { domAnimation, LazyMotion } from "motion/react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
+import { cn } from "@/lib/utils";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 
 import { Footer } from "./_components/footer";
 import { Header } from "./_components/header";
+import type { Appearance } from "./_components/theme-switcher";
 
 interface MarketingPageProps {
     alternates: Alternates;
     dashboardUrl: string | null;
+    appearance: Appearance;
     [key: string]: unknown;
 }
 
 /**
  * The shell for the marketing homepage: skip link, sticky header,
  * `<main>` and footer, wrapped in a LazyMotion feature bundle so
- * sections only pay for the animation features they use.
+ * sections only pay for the animation features they use. The site
+ * owns its own colour scheme (dark by default), independent of the
+ * app's appearance, seeded from the server so it never flashes.
  */
 export const MarketingLayout = ({ children }: { children: ReactNode }) => {
     /**
@@ -28,19 +33,31 @@ export const MarketingLayout = ({ children }: { children: ReactNode }) => {
     /**
      * The page's props.
      */
-    const { alternates, dashboardUrl } = usePage<MarketingPageProps>().props;
+    const { alternates, dashboardUrl, appearance: initialAppearance } = usePage<MarketingPageProps>().props;
+
+    /**
+     * The colour scheme, seeded from the server-read cookie.
+     */
+    const [appearance, setAppearance] = useState<Appearance>(initialAppearance ?? "dark");
 
     return (
         <LazyMotion features={domAnimation}>
-            <a
-                href="#main"
-                className="bg-primary text-primary-foreground sr-only rounded-md px-4 py-2 focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50"
-            >
-                {t("Skip to content")}
-            </a>
-            <Header alternates={alternates} dashboardUrl={dashboardUrl} />
-            <main id="main">{children}</main>
-            <Footer alternates={alternates} />
+            <div className={cn("bg-background text-foreground min-h-screen", appearance === "dark" && "dark")}>
+                <a
+                    href="#main"
+                    className="bg-primary text-primary-foreground sr-only rounded-md px-4 py-2 focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50"
+                >
+                    {t("Skip to content")}
+                </a>
+                <Header
+                    alternates={alternates}
+                    dashboardUrl={dashboardUrl}
+                    appearance={appearance}
+                    onAppearanceChange={setAppearance}
+                />
+                <main id="main">{children}</main>
+                <Footer alternates={alternates} />
+            </div>
         </LazyMotion>
     );
 };

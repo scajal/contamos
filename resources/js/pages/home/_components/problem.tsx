@@ -6,17 +6,16 @@ import { cn } from "@/lib/utils";
 import { Reveal } from "./reveal";
 
 const RECEIPTS = [
-    { tag: "Rent", amount: "€ 950.00", rotate: "-rotate-6", offset: "" },
-    { tag: "Salary", amount: "$ 3,200.00", rotate: "rotate-3", offset: "mt-8 sm:mt-10" },
-    { tag: "Savings", amount: "₿ 0.00042000", rotate: "-rotate-2", offset: "-mt-2 sm:mt-2" },
+    { tag: "Rent", amount: "€ 950.00", rotate: "-rotate-6", offset: "", tape: "bg-amber-300/70" },
+    { tag: "Salary", amount: "$ 3,200.00", rotate: "rotate-3", offset: "mt-8 sm:mt-10", tape: "bg-teal-300/70" },
+    { tag: "Savings", amount: "₿ 0.00042000", rotate: "-rotate-2", offset: "-mt-2 sm:mt-2", tape: "bg-rose-300/70" },
 ] as const;
 
 /**
- * The problem statement: a full-bleed muted band pairing a short,
- * punchy statement with a small pile of scattered, mismatched
- * currency amounts that literalize "messy" — no two receipts align.
- * The receipts drop into place, staggered, as the section scrolls
- * into view.
+ * The problem statement: a full-bleed muted band, ruled like ledger
+ * paper, pairing a short, punchy statement with a small pile of
+ * scattered, taped-down currency receipts that literalize "messy" —
+ * no two receipts align, no two pieces of tape match.
  */
 export const Problem = () => {
     /**
@@ -30,7 +29,10 @@ export const Problem = () => {
     const reducedMotion = useReducedMotion();
 
     return (
-        <section id="product" className="bg-muted/40 border-y">
+        <section
+            id="product"
+            className="bg-muted/40 border-y bg-[repeating-linear-gradient(to_bottom,transparent,transparent_31px,var(--border)_32px)]"
+        >
             <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16">
                 <Reveal as="div" className="max-w-[32ch] text-2xl leading-snug font-medium text-balance md:text-3xl">
                     {t(
@@ -47,11 +49,17 @@ export const Problem = () => {
                             viewport={{ once: true, margin: "-80px" }}
                             transition={{ duration: 0.5, ease: "easeOut", delay: index * 0.12 }}
                             className={cn(
-                                "bg-background w-40 rounded-xl border p-4 shadow-md transition-transform duration-300 hover:rotate-0",
+                                "bg-background relative w-40 rounded-xl border p-4 shadow-md transition-transform duration-300 hover:rotate-0",
                                 receipt.rotate,
                                 receipt.offset,
                             )}
                         >
+                            <span
+                                className={cn(
+                                    "absolute -top-2.5 left-1/2 h-5 w-12 -translate-x-1/2 -rotate-2 rounded-xs shadow-sm",
+                                    receipt.tape,
+                                )}
+                            />
                             <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">
                                 {receipt.tag}
                             </span>

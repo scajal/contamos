@@ -25,6 +25,7 @@ const PILLARS = [
     {
         title: "Balances per currency, not a blended guess.",
         body: "Every account keeps its own currency — see your euros, dollars and bitcoin exactly as they are, not blended into one misleading total.",
+        tab: "bg-amber-400",
         fragment: (
             <div className="flex min-w-0 divide-x overflow-x-auto rounded-sm border">
                 {BALANCES.map((balance) => (
@@ -39,6 +40,7 @@ const PILLARS = [
     {
         title: "One ledger for the whole household.",
         body: "Every transaction from every account lands in the same timeline, so nothing gets lost between apps or spreadsheets.",
+        tab: "bg-teal-400",
         fragment: (
             <div className="min-w-0 overflow-x-auto rounded-sm border">
                 <TableComponent>
@@ -66,6 +68,7 @@ const PILLARS = [
     {
         title: "Tags that answer your questions.",
         body: "Tag every expense once and filter your history in seconds — no more scrolling to remember where the money went.",
+        tab: "bg-rose-400",
         fragment: (
             <div className="flex flex-wrap gap-2 p-1">
                 {TAGS.map((tag, index) => (
@@ -100,6 +103,7 @@ export const Pillars = () => {
                 {PILLARS.map((pillar, index) => (
                     <Reveal key={pillar.title} className="grid gap-6 py-10 md:grid-cols-2 md:items-center">
                         <div className={cn("flex flex-col gap-3", index % 2 === 1 && "md:order-2")}>
+                            <span aria-hidden="true" className={cn("h-1.5 w-8 rounded-full", pillar.tab)} />
                             <p className="max-w-[36ch] text-xl font-medium text-balance md:text-2xl">
                                 {t(pillar.title)}
                             </p>

@@ -19,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(
         fn (Middleware $middleware): Middleware => $middleware
-            ->encryptCookies()
+            ->encryptCookies(except: ['appearance'])
             ->preventRequestForgery(except: ['paddle/*'])
             ->redirectUsersTo(fn (Request $request): string => app(ResolveAuthenticationRedirect::class)->fromRequest($request))
             ->web(append: [

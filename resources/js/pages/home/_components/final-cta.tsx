@@ -3,6 +3,7 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { Button } from "@/components/ui/button";
 import { login } from "@/routes";
 
+import { Coin } from "./coin";
 import { Reveal } from "./reveal";
 
 interface FinalCtaProps {
@@ -23,11 +24,13 @@ export const FinalCta = ({ dashboardUrl }: FinalCtaProps) => {
         <section className="bg-primary relative overflow-hidden">
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -top-16 -right-16 size-72 rotate-12 rounded-[3rem] border-8 border-zinc-950/10 sm:size-96"
+                className="border-primary-foreground/15 pointer-events-none absolute -top-16 -right-16 size-72 rotate-12 rounded-[3rem] border-8 sm:size-96"
             />
+            <Coin src="/images/coins/moneybag.webp" size={104} className="-bottom-6 -left-6 -rotate-6" />
+            <Coin src="/images/coins/euro.webp" size={72} className="right-[20%] bottom-6 rotate-6" />
 
             <Reveal className="relative mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-16 sm:px-6 sm:py-24">
-                <h2 className="font-heading text-3xl font-semibold tracking-tight text-zinc-950 md:text-5xl">
+                <h2 className="font-heading text-primary-foreground text-3xl font-semibold tracking-tight md:text-5xl">
                     {t("Know what you have, together.")}
                 </h2>
                 <Button
