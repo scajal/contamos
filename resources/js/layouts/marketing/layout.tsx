@@ -6,7 +6,6 @@ import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 
-import { Footer } from "./_components/footer";
 import { Header } from "./_components/header";
 import type { Appearance } from "./_components/theme-switcher";
 
@@ -18,9 +17,9 @@ interface MarketingPageProps {
 }
 
 /**
- * The shell for the marketing homepage: skip link, sticky header,
- * `<main>` and footer, wrapped in a LazyMotion feature bundle so
- * sections only pay for the animation features they use. The site
+ * The shell for the marketing homepage: skip link, sticky header and
+ * `<main>`, wrapped in a LazyMotion feature bundle so sections only
+ * pay for the animation features they use. The site
  * owns its own colour scheme (dark by default), independent of the
  * app's appearance, seeded from the server so it never flashes.
  */
@@ -56,7 +55,6 @@ export const MarketingLayout = ({ children }: { children: ReactNode }) => {
                     onAppearanceChange={setAppearance}
                 />
                 <main id="main">{children}</main>
-                <Footer alternates={alternates} />
             </div>
         </LazyMotion>
     );

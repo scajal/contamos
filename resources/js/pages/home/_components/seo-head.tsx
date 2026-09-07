@@ -3,25 +3,10 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 
-const FAQ = [
-    "Is Hormiga free?",
-    "Yes. The Free plan covers a household getting started, with one account, one member and 100 transactions a month, no card required.",
-    "Which currencies can I use?",
-    "Any fiat currency or bitcoin you add to your team. Hormiga tracks balances per currency and keeps FX and crypto quotes up to date automatically.",
-    "Can I share it with my partner or family?",
-    "Yes. Invite them to your team and everyone logs transactions into the same shared ledger.",
-    "Does it connect to my bank?",
-    "No. Hormiga is manual by design, so every entry is a deliberate choice, not an imported guess.",
-    "Can I switch languages?",
-    "Yes. Switch between English and Spanish at any time from the language switcher.",
-    "What happens when I hit the free limits?",
-    "You can keep using what you've already added. Upgrade to Pro whenever your household needs more accounts, members or transactions.",
-] as const;
-
 /**
  * Localized <title>, meta description, canonical/hreflang, Open Graph,
- * Twitter card and JSON-LD (Organization, WebApplication, FAQPage) for
- * the marketing homepage.
+ * Twitter card and JSON-LD (Organization, WebApplication) for the
+ * marketing homepage.
  */
 export const SeoHead = ({ alternates }: { alternates: Alternates }) => {
     /**
@@ -59,25 +44,6 @@ export const SeoHead = ({ alternates }: { alternates: Alternates }) => {
                     price: "0",
                     priceCurrency: "USD",
                 },
-            },
-            {
-                "@type": "FAQPage",
-                mainEntity: FAQ.reduce<Array<Record<string, unknown>>>((questions, value, index) => {
-                    if (index % 2 !== 0) {
-                        return questions;
-                    }
-
-                    questions.push({
-                        "@type": "Question",
-                        name: t(value),
-                        acceptedAnswer: {
-                            "@type": "Answer",
-                            text: t(FAQ[index + 1] ?? ""),
-                        },
-                    });
-
-                    return questions;
-                }, []),
             },
         ],
     };

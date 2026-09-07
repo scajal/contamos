@@ -41,7 +41,7 @@ describe('index', function (): void {
                 ->where('user', null)
                 ->where('locale', 'en')
                 ->where('dashboardUrl', null)
-                ->has('plans', 2));
+                ->missing('plans'));
     });
 
     it('defaults the marketing appearance to dark', function (): void {
