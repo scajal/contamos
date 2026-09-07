@@ -1,4 +1,6 @@
+import BorderBeam from "border-beam";
 import { useLaravelReactI18n } from "laravel-react-i18n";
+import { ArrowRightIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { login } from "@/routes";
@@ -38,14 +40,18 @@ export const Header = ({ alternates, dashboardUrl, appearance, onAppearanceChang
                 <div className="flex items-center gap-1 sm:gap-3">
                     <LanguageSwitcher alternates={alternates} className="flex items-center gap-1" />
                     <ThemeSwitcher appearance={appearance} onChange={onAppearanceChange} />
-                    <Button
-                        nativeButton={false}
-                        render={<a href={dashboardUrl ?? login.url()} />}
-                        size="lg"
-                        className="max-sm:h-8 max-sm:px-2.5 max-sm:text-xs"
-                    >
-                        {t(dashboardUrl ? "Go to dashboard" : "Start now")}
-                    </Button>
+                    <BorderBeam>
+                        <Button
+                            className="max-sm:h-8 max-sm:px-2.5 max-sm:text-xs"
+                            nativeButton={false}
+                            render={<a href={dashboardUrl ?? login.url()} />}
+                            size="lg"
+                            variant="outline"
+                        >
+                            {t("Log in")}
+                            <ArrowRightIcon />
+                        </Button>
+                    </BorderBeam>
                 </div>
             </div>
         </header>
