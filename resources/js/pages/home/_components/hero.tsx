@@ -1,3 +1,4 @@
+import BorderBeam from "border-beam";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ArrowRightIcon } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
@@ -63,9 +64,16 @@ export const Hero = ({ dashboardUrl }: HeroProps) => {
                     transition={{ duration: 0.7, ease: "easeOut", delay: 0.24 }}
                     className="flex flex-col items-center gap-4"
                 >
-                    <Button nativeButton={false} render={<a href={dashboardUrl ?? login.url()} />} size="lg">
-                        {t("Start")} <ArrowRightIcon />
-                    </Button>
+                    <BorderBeam>
+                        <Button
+                            nativeButton={false}
+                            render={<a href={dashboardUrl ?? login.url()} />}
+                            size="lg"
+                            variant="outline"
+                        >
+                            {t("Start")} <ArrowRightIcon />
+                        </Button>
+                    </BorderBeam>
                     {!dashboardUrl && (
                         <p className="text-muted-foreground text-sm">{t("Free plan. No card required.")}</p>
                     )}

@@ -1,6 +1,12 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
+import { cn } from "@/lib/utils";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
+
+const LOCALES = [
+    { locale: "en", label: "EN" },
+    { locale: "es", label: "ES" },
+] as const;
 
 interface LanguageSwitcherProps {
     alternates: Alternates;
@@ -8,36 +14,38 @@ interface LanguageSwitcherProps {
 }
 
 /**
- * Full-page links to the English/Spanish canonical homepages so <html lang>,
- * SSR translations, canonical tags and the locale cookie all resync in one request.
+ * A segmented toggle of full-page links to the English/Spanish canonical
+ * homepages, so `<html lang>`, SSR translations, canonical tags and the
+ * locale cookie all resync in one request.
  */
 export const LanguageSwitcher = ({ alternates, className }: LanguageSwitcherProps) => {
     /**
      * The current locale.
      */
-    const locale = useLaravelReactI18n().currentLocale();
+    const current = useLaravelReactI18n().currentLocale();
 
     return (
-        <div className={className} aria-label="Language">
-            <a
-                href={alternates.en}
-                hrefLang="en"
-                aria-current={locale === "en" ? "true" : undefined}
-                className="text-muted-foreground hover:text-foreground aria-current:text-foreground rounded-md px-1.5 py-1 text-sm font-medium transition-colors"
-            >
-                EN
-            </a>
-            <span aria-hidden="true" className="text-muted-foreground">
-                /
-            </span>
-            <a
-                href={alternates.es}
-                hrefLang="es"
-                aria-current={locale === "es" ? "true" : undefined}
-                className="text-muted-foreground hover:text-foreground aria-current:text-foreground rounded-md px-1.5 py-1 text-sm font-medium transition-colors"
-            >
-                ES
-            </a>
+        <div className={cn("bg-muted/70 flex items-center rounded-full p-0.5", className)} aria-label="Language">
+            {LOCALES.map(({ locale, label }) => {
+                const active = current === locale;
+
+                return (
+                    <a
+                        key={locale}
+                        href={alternates[locale]}
+                        hrefLang={locale}
+                        aria-current={active ? "true" : undefined}
+                        className={cn(
+                            "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                            active
+                                ? "bg-background text-foreground shadow-sm"
+                                : "text-muted-foreground hover:text-foreground",
+                        )}
+                    >
+                        {label}
+                    </a>
+                );
+            })}
         </div>
     );
 };

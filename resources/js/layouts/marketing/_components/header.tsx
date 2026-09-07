@@ -1,4 +1,3 @@
-import BorderBeam from "border-beam";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ArrowRightIcon } from "lucide-react";
 
@@ -17,8 +16,13 @@ interface HeaderProps {
 }
 
 /**
- * The sticky, blurred marketing header: logo, language and theme
- * switchers, and the guest/auth call to action.
+ * The marketing header, built as a floating pill rather than a bar: it
+ * detaches from the top edge, keeps its own border, blur and shadow,
+ * and so reads as an object resting on the stage — the same language as
+ * the 3D props and the balances panel. It is kept nearly opaque on
+ * purpose: at lower opacities the dark ledger card scrolling behind it
+ * turns the pill grey and muddies the wordmark. The outer band stays
+ * click-through so only the pill itself catches the pointer.
  */
 export const Header = ({ alternates, dashboardUrl, appearance, onAppearanceChange }: HeaderProps) => {
     /**
@@ -27,31 +31,31 @@ export const Header = ({ alternates, dashboardUrl, appearance, onAppearanceChang
     const { t, currentLocale } = useLaravelReactI18n();
 
     return (
-        <header className="bg-background/80 supports-backdrop-filter:bg-background/60 sticky top-0 z-40 border-b border-transparent backdrop-blur-md">
-            <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
+        <header className="pointer-events-none sticky top-0 z-40 px-4 pt-4 sm:px-6">
+            <div className="bg-background/95 supports-backdrop-filter:bg-background/85 pointer-events-auto mx-auto flex h-14 max-w-3xl items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-4 shadow-lg backdrop-blur-xl sm:pl-5">
                 <a
                     href={alternates[currentLocale() as "en" | "es"] ?? alternates.en}
-                    className="flex items-center gap-2"
+                    className="flex shrink-0 items-center gap-2"
                 >
-                    <img src="/images/iso-logo.png" alt="Hormiga" width={28} height={28} className="size-7" />
-                    <span className="font-heading text-lg font-semibold tracking-tight">Hormiga</span>
+                    <img src="/images/iso-logo.png" alt="Hormiga" width={24} height={24} className="size-6" />
+                    <span className="font-heading text-base font-semibold tracking-tight">Hormiga</span>
                 </a>
 
-                <div className="flex items-center gap-1 sm:gap-3">
-                    <LanguageSwitcher alternates={alternates} className="flex items-center gap-1" />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                    <LanguageSwitcher alternates={alternates} />
                     <ThemeSwitcher appearance={appearance} onChange={onAppearanceChange} />
-                    <BorderBeam>
-                        <Button
-                            className="max-sm:h-8 max-sm:px-2.5 max-sm:text-xs"
-                            nativeButton={false}
-                            render={<a href={dashboardUrl ?? login.url()} />}
-                            size="lg"
-                            variant="ghost"
-                        >
-                            {t("Log in")}
-                            <ArrowRightIcon />
-                        </Button>
-                    </BorderBeam>
+
+                    <span aria-hidden="true" className="bg-border mx-0.5 h-5 w-px max-sm:hidden" />
+
+                    <Button
+                        className="rounded-full max-sm:px-3 max-sm:text-xs"
+                        nativeButton={false}
+                        render={<a href={dashboardUrl ?? login.url()} />}
+                        size="sm"
+                    >
+                        {t("Log in")}
+                        <ArrowRightIcon />
+                    </Button>
                 </div>
             </div>
         </header>

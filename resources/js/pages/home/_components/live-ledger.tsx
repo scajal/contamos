@@ -1,3 +1,4 @@
+import NumberFlow from "@number-flow/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { m, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
 import { useEffect, useState } from "react";
@@ -80,8 +81,8 @@ const balancesAfter = (count: number): Record<Currency, number> => {
 
 /**
  * The hero's one kinetic object: a dark ledger card where demo
- * transactions across EUR, USD and BTC type in one by one while
- * per-currency balance chips re-settle. Every row is present from the
+ * transactions across EUR, USD and BTC type in one by one while the
+ * per-currency balance chips roll to their new totals, digit by digit. Every row is present from the
  * first frame (as a dimmed placeholder) so the card never reads as
  * empty mid-sequence. On pointer devices the card tilts and glows
  * toward the cursor. Renders statically for reduced-motion visitors
@@ -209,8 +210,18 @@ export const LiveLedger = () => {
                             className="border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 tabular-nums"
                         >
                             <span className="mr-1.5 text-zinc-500">{currency}</span>
-                            {balances[currency] < 0 ? "-" : ""}
-                            {formatAmount(String(balances[currency]), "en", { symbol, decimal_places: decimalPlaces })}
+                            <NumberFlow
+                                value={balances[currency]}
+                                locales="en"
+                                format={{
+                                    minimumFractionDigits: decimalPlaces,
+                                    maximumFractionDigits: decimalPlaces,
+                                }}
+                                prefix={`${symbol} `}
+                                spinTiming={{ duration: 900, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}
+                                transformTiming={{ duration: 600, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}
+                                willChange
+                            />
                         </Badge>
                     ))}
                 </div>

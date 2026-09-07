@@ -2,6 +2,7 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { MoonIcon, SunIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export type Appearance = "light" | "dark";
 
@@ -28,7 +29,7 @@ export const ThemeSwitcher = ({ appearance, onChange, className }: ThemeSwitcher
         <Button
             variant="ghost"
             size="icon-sm"
-            className={className}
+            className={cn("rounded-full", className)}
             aria-label={t(next === "dark" ? "Switch to dark theme" : "Switch to light theme")}
             onClick={() => {
                 document.cookie = `appearance=${next}; path=/; max-age=31536000; samesite=lax`;

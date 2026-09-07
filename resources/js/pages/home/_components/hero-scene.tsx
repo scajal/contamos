@@ -117,6 +117,25 @@ const DRIFT = 110;
  * its depth — the near pieces swing a long way, the far ones barely
  * stir — and that difference in speed is what reads as depth.
  */
+/**
+ * Build a piece's CSS filter. The blur comes first so the shadow is cast
+ * from the already-hazy silhouette, and the shadow itself grows with
+ * depth: far pieces get a tight, faint one, near pieces a long soft one.
+ *
+ * The renders arrive without a shadow of their own — removing their white
+ * backgrounds took the baked one with it — so this is what gives them
+ * volume and lifts them off the floor grid.
+ */
+const filterFor = ({ blur, depth }: SceneObject): string => {
+    const offset = Math.round(4 + depth * 14);
+    const spread = Math.round(6 + depth * 20);
+    const alpha = (0.25 + depth * 0.2).toFixed(2);
+
+    return [blur ? `blur(${blur}px)` : "", `drop-shadow(0 ${offset}px ${spread}px rgb(0 0 0 / ${alpha}))`]
+        .filter(Boolean)
+        .join(" ");
+};
+
 const SceneObjectLayer = ({
     object,
     pointerX,
@@ -146,7 +165,7 @@ const SceneObjectLayer = ({
                 style={{
                     width: object.size,
                     height: object.size,
-                    filter: object.blur ? `blur(${object.blur}px)` : undefined,
+                    filter: filterFor(object),
                     opacity: object.opacity,
                 }}
             />
