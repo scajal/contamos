@@ -15,9 +15,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Laravel\Paddle\Billable;
+use Laravel\Paddle\Cashier;
 use Laravel\Pennant\Concerns\HasFeatures;
 
 /**
@@ -27,7 +29,10 @@ use Laravel\Pennant\Concerns\HasFeatures;
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Account> $accounts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Billing\Models\Transaction> $billingTransactions
+ * @property-read \App\Modules\Billing\Models\Customer|null $customer
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team\TeamInvitation> $invitations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Billing\Models\Subscription> $subscriptions
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Tag> $tags
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction> $transactions
  * @property-read \App\Modules\Core\Identity\Models\Membership|null $membership
@@ -171,6 +176,29 @@ class Team extends Model
     public function plan(): Plan
     {
         return $this->subscribedToProduct(Plan::Pro->productId()) ? Plan::Pro : Plan::Free;
+    }
+
+    /**
+     * Generate a redirection to the customer portal.
+     */
+    public function redirectToCustomerPortal(): RedirectResponse
+    {
+        // Generate a customer for the team if it doesn't exist.
+        if (! ($customer = $this->customer)) {
+            $customer = $this->createAsCustomer();
+        }
+
+        // Generate the corresponding payload.
+        $payload = ($subscription = $this->subscription())
+            ? ['subscription_ids' => $subscription->paddle_id]
+            : null;
+
+        // Generate the Cashier session for the
+        // customer.
+        /** @var \App\Modules\Billing\Models\Customer $customer */
+        $session = Cashier::api('POST', "customers/{$customer->paddle_id}/portal-sessions", $payload)->json('data');
+
+        return redirect()->away($session['urls']['general']['overview']);
     }
 
     /**

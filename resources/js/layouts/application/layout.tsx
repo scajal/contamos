@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { logout } from "@/routes";
+import subscriptions from "@/routes/billing/teams/subscriptions";
 import administration from "@/routes/filament/administration";
 import accounts from "@/routes/finance/teams/accounts";
 import dashboard from "@/routes/finance/teams/dashboard";
@@ -252,7 +253,11 @@ const Sidebar = () => {
                     <SidebarGroupLabel>{t("Team")}</SidebarGroupLabel>
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <SidebarMenuButton render={<Link href="/" />}>
+                            <SidebarMenuButton
+                                render={
+                                    <Link href={subscriptions.index.url({ team: user?.current_team?.slug ?? "" })} />
+                                }
+                            >
                                 <CreditCardIcon />
                                 <span>{t("Billing")}</span>
                             </SidebarMenuButton>

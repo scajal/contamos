@@ -3,8 +3,9 @@
 namespace App\Modules\Billing\Enums;
 
 use App\Modules\Core\Identity\Models\Team;
+use Filament\Support\Contracts\HasLabel;
 
-enum Feature: string
+enum Feature: string implements HasLabel
 {
     /**
      * Represents the add accounts feature.
@@ -32,6 +33,18 @@ enum Feature: string
             // For now, all the features are enabled if the limit is null
             // or if the current usage is less than the limit.
             default => (is_int($limit = $this->limitOn($team->plan()))) ? $this->usage($team) < $limit : true,
+        };
+    }
+
+    /**
+     * Get the label for the feature.
+     */
+    public function getLabel(): string
+    {
+        return match ($this) {
+            self::AddAccounts => trans('Accounts'),
+            self::AddMembers => trans('Members'),
+            self::AddTransactions => trans('Transactions (per month)'),
         };
     }
 
