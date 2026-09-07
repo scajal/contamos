@@ -26,6 +26,7 @@ declare module "@inertiajs/core" {
         sharedPageProps: {
             auth: { canAccessAdministration: boolean };
             user: User | null;
+            locale: "en" | "es";
             [key: string]: unknown;
         };
         flashDataType: {

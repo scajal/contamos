@@ -5,6 +5,7 @@ namespace App\Modules\Support\Http\Middleware;
 use App\Modules\Core\Identity\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Inertia\Inertia;
 use Inertia\Middleware;
 
@@ -18,6 +19,15 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    /**
+     * The page components that should not be rendered
+     * server-side. Marketing pages are the only ones
+     * that need SSR (for SEO), so the rest opt out.
+     *
+     * @var array<int, string>
+     */
+    protected $withoutSsr = ['teams/*', 'invitations/*', 'administration/*'];
 
     /**
      * Determines the current asset version.
@@ -40,6 +50,10 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
+
+            // The resolved locale, read at render time so it
+            // works for SSR requests too.
+            'locale' => fn (): string => App::currentLocale(),
 
             // The authentication status.
             'auth' => [

@@ -1,11 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+/*
+|--------------------------------------------------------------------------
+| Marketing routes
+|--------------------------------------------------------------------------
+|
+| This file contains the routes for the marketing homepage.
+|
+*/
 
-/**
- * Fallback
- */
-Route::get('/', fn () => to_route('login'));
+require __DIR__.'/../app/Modules/Marketing/Routes/web.php';
 
 /*
 |--------------------------------------------------------------------------

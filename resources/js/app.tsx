@@ -41,14 +41,16 @@ void createInertiaApp({
      * app root (inside PageContext) on first paint, enabling direct modal URL visits.
      */
     setup({ el, App, props }) {
-        const locale =
-            (typeof document !== "undefined" ? (document.documentElement.getAttribute("lang") as string) : null) ||
-            "en";
+        const locale = (props.initialPage.props.locale as string | undefined) ?? "en";
 
         // Create the app to render.
         const app = (
             <StrictMode>
-                <I18nProvider locale={locale} fallbackLocale="en" files={import.meta.glob("/lang/*.json")}>
+                <I18nProvider
+                    locale={locale}
+                    fallbackLocale="en"
+                    files={import.meta.glob("/lang/*.json", { eager: true })}
+                >
                     <TooltipProvider>
                         {renderApp(App as unknown as Parameters<typeof renderApp>[0], props as ModalPageProps)}
                         <Toaster />

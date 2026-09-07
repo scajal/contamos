@@ -60,11 +60,6 @@ function fakeWorkOsAuthentication(string $workosId, string $email): void
     });
 }
 
-it('redirects the root path to login', function (): void {
-    get('/')
-        ->assertRedirectToRoute('login');
-});
-
 describe('login', function (): void {
     it('redirects guests to the WorkOS authorize url', function (): void {
         get(route('login'))

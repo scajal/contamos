@@ -1,0 +1,13 @@
+# Hormiga
+
+Hormiga is a personal finance manager for households sharing money across
+multiple currencies. Teams keep accounts, cards and cash in one shared
+ledger, log income and expense transactions with tags, and see balances
+per currency, including fiat and bitcoin, without converting everything
+into a single blended number. Currency and crypto exchange rates sync
+automatically. Free plan available, no card required; Pro removes the
+free plan's account, member and transaction limits.
+
+- Homepage (English): http://127.0.0.1:8000/en
+- Homepage (Spanish): http://127.0.0.1:8000/es
+- Sign up / log in: http://127.0.0.1:8000/login

@@ -68,7 +68,7 @@ export default defineConfig({
         }),
         inertia(),
         laravel({
-            input: ["resources/css/app.css", "resources/js/app.tsx", "resources/css/filament/administration/theme.css"],
+            input: ["resources/css/app.css", "resources/js/app.tsx", "resources/css/administration/theme.css"],
             refresh: true,
         }),
         react(),

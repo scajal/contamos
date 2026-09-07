@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Authentication\Actions;
 
+use App\Modules\Core\Identity\Models\User;
 use Illuminate\Http\Request;
 
 class ResolveAuthenticationRedirect
@@ -23,6 +24,15 @@ class ResolveAuthenticationRedirect
         /** @var \App\Modules\Core\Identity\Models\User $user */
         $user = $request->user();
 
+        return $this->forUser($user);
+    }
+
+    /**
+     * Resolve the redirect URL for the given user, without
+     * touching the request's session.
+     */
+    public function forUser(User $user): string
+    {
         // If the user doesn't have a team, redirect to the
         // team creation page.
         if ($user->teams->isEmpty()) {
@@ -30,7 +40,7 @@ class ResolveAuthenticationRedirect
         }
 
         // Otherwise, redirect to the dashboard.
-        return route('finance.teams.dashboard.index', ['team' => $user->teams->first()->getRouteKey()]);
+        return route('finance.teams.dashboard.index', ['team' => ($user->currentTeam ?? $user->teams->first())->getRouteKey()]);
     }
 
     /**

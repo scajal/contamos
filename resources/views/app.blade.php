@@ -8,6 +8,8 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+        <link rel="preconnect" href="https://api.fontshare.com">
+        <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
         <link href="https://api.fontshare.com/v2/css?f[]=switzer@1,2&display=swap" rel="stylesheet" />
 
         @viteReactRefresh
@@ -15,7 +17,9 @@
         <x-inertia::head>
             <title>{{ config('app.name', 'Laravel') }}</title>
         </x-inertia::head>
-        @paddleJS
+        @if ($page['component'] === 'billing/teams/subscriptions/subscribe')
+            @paddleJS
+        @endif
     </head>
     <body class="font-sans antialiased">
         @inertia

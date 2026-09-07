@@ -30,6 +30,7 @@
         "lodash": "^4.18.1",
         "lucide-react": "^1.39.0",
         "metal-fx": "^1.0.4",
+        "motion": "^13.2.0",
         "react": "^19.2.8",
         "react-day-picker": "^10.0.1",
         "react-dom": "^19.2.8",
