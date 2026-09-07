@@ -33,7 +33,7 @@ export const Hero = ({ dashboardUrl }: HeroProps) => {
     const reducedMotion = useReducedMotion();
 
     return (
-        <section className="bg-background relative overflow-hidden">
+        <section className="relative">
             <HeroScene />
 
             <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center gap-8 px-4 pt-20 pb-28 text-center sm:px-6 sm:pt-28">

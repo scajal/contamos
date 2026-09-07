@@ -155,9 +155,10 @@ const SceneObjectLayer = ({
 };
 
 /**
- * The hero's stage: a room with a vanishing-point floor, a glow at the
- * horizon, and the product's 3D props arranged in depth around the
- * headline — some behind the copy, the nearest ones in front of it.
+ * The hero's props: a glow at the horizon and the product's 3D pieces
+ * arranged in depth around the headline — some behind the copy, the
+ * nearest ones in front of it. The floor they stand on is rendered by
+ * StageFloor, one level up, so it can span past this section.
  */
 export const HeroScene = () => {
     /**
@@ -188,12 +189,7 @@ export const HeroScene = () => {
     }, [pointerX, pointerY, reducedMotion]);
 
     return (
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-            {/** Floor: a grid in perspective, fading into the background. */}
-            <div className="absolute inset-x-0 bottom-0 h-[360px] [perspective:520px]">
-                <div className="size-full origin-bottom [transform:rotateX(76deg)] [background-image:linear-gradient(to_right,color-mix(in_oklch,var(--color-foreground)_14%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklch,var(--color-foreground)_14%,transparent)_1px,transparent_1px)] [mask-image:linear-gradient(to_top,black_5%,transparent_70%)] [background-size:72px_72px]" />
-            </div>
-
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
             {/** Horizon glow. */}
             <div className="bg-primary/20 absolute bottom-[240px] left-1/2 h-56 w-[70%] -translate-x-1/2 rounded-[100%] blur-[110px]" />
 

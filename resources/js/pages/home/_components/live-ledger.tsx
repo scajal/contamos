@@ -125,7 +125,7 @@ export const LiveLedger = () => {
         useTransform(pointerY, (value) => `${value * 100}%`),
         springs,
     );
-    const spotlight = useMotionTemplate`radial-gradient(320px circle at ${spotlightX} ${spotlightY}, color-mix(in oklch, var(--color-primary) 25%, transparent), transparent 70%)`;
+    const spotlight = useMotionTemplate`radial-gradient(320px circle at ${spotlightX} ${spotlightY}, color-mix(in oklch, var(--primary) 25%, transparent), transparent 70%)`;
 
     /**
      * Whether the pointer is currently over the card, gating the
