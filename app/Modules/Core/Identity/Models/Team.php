@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Models;
 
+use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Laravel\Paddle\Billable;
+use Laravel\Pennant\Concerns\HasFeatures;
 
 /**
  * @property string $id
@@ -50,6 +52,7 @@ class Team extends Model
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Identity\Models\TeamFactory> */
     use HasFactory;
 
+    use HasFeatures;
     use HasUlids;
 
     /**
@@ -160,6 +163,14 @@ class Team extends Model
     public function paddleName(): ?string
     {
         return $this->name;
+    }
+
+    /**
+     * Get the current plan of the team.
+     */
+    public function plan(): Plan
+    {
+        return $this->subscribedToProduct(Plan::Pro->productId()) ? Plan::Pro : Plan::Free;
     }
 
     /**
