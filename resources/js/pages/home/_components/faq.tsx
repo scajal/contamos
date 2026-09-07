@@ -30,7 +30,9 @@ const QUESTIONS = [
 ] as const;
 
 /**
- * Frequently asked questions, as a keyboard/ARIA-correct accordion.
+ * Frequently asked questions: a two-column layout, heading pinned
+ * left like the other sections, accordion in the wide column, so the
+ * left edge stays aligned with the rest of the page's max-w-6xl grid.
  */
 export const Faq = () => {
     /**
@@ -39,21 +41,23 @@ export const Faq = () => {
     const t = useLaravelReactI18n().t;
 
     return (
-        <section id="faq" aria-labelledby="faq-heading" className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-24">
-            <h2 id="faq-heading" className="font-heading text-3xl font-semibold tracking-tight md:text-5xl">
-                {t("FAQ")}
-            </h2>
+        <section id="faq" aria-labelledby="faq-heading" className="bg-muted/40 border-y">
+            <div className="mx-auto grid max-w-6xl gap-8 px-4 py-20 sm:px-6 sm:py-28 md:grid-cols-[280px_1fr] md:gap-16">
+                <h2 id="faq-heading" className="font-heading text-3xl font-semibold tracking-tight md:text-5xl">
+                    {t("FAQ")}
+                </h2>
 
-            <Accordion className="mt-10">
-                {QUESTIONS.map(({ question, answer }) => (
-                    <AccordionItem key={question} value={question}>
-                        <AccordionTrigger className="text-base font-medium">{t(question)}</AccordionTrigger>
-                        <AccordionContent>
-                            <p className="text-muted-foreground">{t(answer)}</p>
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
+                <Accordion className="max-w-2xl">
+                    {QUESTIONS.map(({ question, answer }) => (
+                        <AccordionItem key={question} value={question}>
+                            <AccordionTrigger className="text-base font-medium">{t(question)}</AccordionTrigger>
+                            <AccordionContent>
+                                <p className="text-muted-foreground">{t(answer)}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+            </div>
         </section>
     );
 };
