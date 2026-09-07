@@ -237,7 +237,7 @@ export const LiveLedger = () => {
                                 <span
                                     className={cn(
                                         "shrink-0 text-sm font-medium tabular-nums",
-                                        transaction.kind === "income" ? "text-primary" : "text-zinc-400",
+                                        transaction.kind === "income" ? "text-green-500" : "text-rose-500",
                                     )}
                                 >
                                     {transaction.kind === "income" ? "+" : "-"}{" "}

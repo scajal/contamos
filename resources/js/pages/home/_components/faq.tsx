@@ -2,6 +2,8 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
+import { Reveal } from "./reveal";
+
 const QUESTIONS = [
     {
         question: "Is Hormiga free?",
@@ -33,6 +35,7 @@ const QUESTIONS = [
  * Frequently asked questions: a two-column layout, heading pinned
  * left like the other sections, accordion in the wide column, so the
  * left edge stays aligned with the rest of the page's max-w-6xl grid.
+ * Questions stagger into place as the section scrolls into view.
  */
 export const Faq = () => {
     /**
@@ -48,13 +51,15 @@ export const Faq = () => {
                 </h2>
 
                 <Accordion className="max-w-2xl">
-                    {QUESTIONS.map(({ question, answer }) => (
-                        <AccordionItem key={question} value={question}>
-                            <AccordionTrigger className="text-base font-medium">{t(question)}</AccordionTrigger>
-                            <AccordionContent>
-                                <p className="text-muted-foreground">{t(answer)}</p>
-                            </AccordionContent>
-                        </AccordionItem>
+                    {QUESTIONS.map(({ question, answer }, index) => (
+                        <Reveal key={question} delay={index * 0.06}>
+                            <AccordionItem value={question}>
+                                <AccordionTrigger className="text-base font-medium">{t(question)}</AccordionTrigger>
+                                <AccordionContent>
+                                    <p className="text-muted-foreground">{t(answer)}</p>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Reveal>
                     ))}
                 </Accordion>
             </div>

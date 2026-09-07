@@ -1,59 +1,88 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
 import { Badge } from "@/components/ui/badge";
+import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+
+import { Reveal } from "./reveal";
+import { TiltCard } from "./tilt-card";
+
+const BALANCES = [
+    { code: "EUR", amount: "€ 1,250.40" },
+    { code: "USD", amount: "$ 4,800.00" },
+    { code: "BTC", amount: "₿ 0.00310000" },
+] as const;
+
+const LEDGER_ROWS = [
+    { label: "Apartment rent", amount: "- € 950.00", kind: "expense" },
+    { label: "Monthly salary", amount: "+ $ 3,200.00", kind: "income" },
+    { label: "Supermarket", amount: "- $ 85.40", kind: "expense" },
+] as const;
+
+const TAGS = ["Groceries", "Rent", "Savings", "Salary", "Utilities", "Transport"] as const;
 
 const PILLARS = [
     {
         title: "Balances per currency, not a blended guess.",
+        body: "Every account keeps its own currency — see your euros, dollars and bitcoin exactly as they are, not blended into one misleading total.",
         fragment: (
-            <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">EUR</span>
-                    <span className="font-medium tabular-nums">€ 1,250.40</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">USD</span>
-                    <span className="font-medium tabular-nums">$ 4,800.00</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">BTC</span>
-                    <span className="font-medium tabular-nums">₿ 0.00310000</span>
-                </div>
+            <div className="flex min-w-0 divide-x overflow-x-auto rounded-sm border">
+                {BALANCES.map((balance) => (
+                    <div key={balance.code} className="flex min-w-28 flex-1 flex-col gap-1 p-4">
+                        <span className="text-muted-foreground text-sm">{balance.code}</span>
+                        <span className="text-lg font-medium tabular-nums">{balance.amount}</span>
+                    </div>
+                ))}
             </div>
         ),
     },
     {
         title: "One ledger for the whole household.",
+        body: "Every transaction from every account lands in the same timeline, so nothing gets lost between apps or spreadsheets.",
         fragment: (
-            <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="min-w-0 truncate">Apartment rent</span>
-                    <span className="text-muted-foreground shrink-0 tabular-nums">- € 950.00</span>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="min-w-0 truncate">Monthly salary</span>
-                    <span className="text-primary shrink-0 tabular-nums">+ $ 3,200.00</span>
-                </div>
+            <div className="min-w-0 overflow-x-auto rounded-sm border">
+                <TableComponent>
+                    <TableBody>
+                        {LEDGER_ROWS.map((row) => (
+                            <TableRow key={row.label}>
+                                <TableCell>{row.label}</TableCell>
+                                <TableCell className="text-right">
+                                    <span
+                                        className={cn(
+                                            "font-medium tabular-nums",
+                                            row.kind === "expense" ? "text-destructive" : "text-success",
+                                        )}
+                                    >
+                                        {row.amount}
+                                    </span>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </TableComponent>
             </div>
         ),
     },
     {
         title: "Tags that answer your questions.",
+        body: "Tag every expense once and filter your history in seconds — no more scrolling to remember where the money went.",
         fragment: (
-            <div className="flex flex-wrap gap-2">
-                <Badge>Groceries</Badge>
-                <Badge variant="secondary">Rent</Badge>
-                <Badge variant="secondary">Savings</Badge>
-                <Badge variant="secondary">Salary</Badge>
+            <div className="flex flex-wrap gap-2 p-1">
+                {TAGS.map((tag, index) => (
+                    <Badge key={tag} variant={index === 0 ? "default" : "secondary"}>
+                        {tag}
+                    </Badge>
+                ))}
             </div>
         ),
     },
 ] as const;
 
 /**
- * The three pillars, as an editorial two-column list with small
- * product fragments framed like real UI instead of an identical
- * card grid.
+ * The three pillars, as an editorial zigzag list: text and fragment
+ * swap sides on alternating rows, each fragment reusing the app's own
+ * balance-strip and table components (not a bespoke look-alike), and
+ * each card tilts gently toward the cursor for a light 3D presence.
  */
 export const Pillars = () => {
     /**
@@ -68,11 +97,16 @@ export const Pillars = () => {
             </h2>
 
             <div className="mt-12 flex flex-col divide-y">
-                {PILLARS.map((pillar) => (
-                    <div key={pillar.title} className="grid gap-6 py-10 md:grid-cols-2 md:items-center">
-                        <p className="max-w-[36ch] text-xl font-medium text-balance md:text-2xl">{t(pillar.title)}</p>
-                        <div className="bg-muted/30 rounded-2xl border p-5">{pillar.fragment}</div>
-                    </div>
+                {PILLARS.map((pillar, index) => (
+                    <Reveal key={pillar.title} className="grid gap-6 py-10 md:grid-cols-2 md:items-center">
+                        <div className={cn("flex flex-col gap-3", index % 2 === 1 && "md:order-2")}>
+                            <p className="max-w-[36ch] text-xl font-medium text-balance md:text-2xl">
+                                {t(pillar.title)}
+                            </p>
+                            <p className="text-muted-foreground max-w-[42ch] text-sm">{t(pillar.body)}</p>
+                        </div>
+                        <TiltCard className={index % 2 === 1 ? "md:order-1" : undefined}>{pillar.fragment}</TiltCard>
+                    </Reveal>
                 ))}
             </div>
         </section>
