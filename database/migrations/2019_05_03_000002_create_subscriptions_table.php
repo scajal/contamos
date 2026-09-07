@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('billing_subscriptions', function (Blueprint $table): void {
             $table->id();
-            $table->morphs('billable');
+            $table->ulidMorphs('billable');
             $table->timestamp('ends_at')->nullable();
             $table->string('paddle_id')->unique();
             $table->timestamp('paused_at')->nullable();

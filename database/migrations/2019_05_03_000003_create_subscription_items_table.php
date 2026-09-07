@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Billing\Models\Subscription;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,14 +14,14 @@ return new class extends Migration
     {
         Schema::create('billing_subscription_items', function (Blueprint $table): void {
             $table->id();
-            $table->string('product_id');
             $table->string('price_id');
+            $table->string('product_id');
             $table->integer('quantity');
             $table->string('status');
-            $table->foreignId('subscription_id');
+            $table->foreignIdFor(Subscription::class);
             $table->timestamps();
 
-            $table->unique(['subscription_id', 'price_id']);
+            $table->unique([new Subscription()->getForeignKey(), 'price_id']);
         });
     }
 

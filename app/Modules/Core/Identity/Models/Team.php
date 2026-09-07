@@ -17,7 +17,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Laravel\Paddle\Billable;
-use Laravel\Pennant\Concerns\HasFeatures;
 
 /**
  * @property string $id
@@ -51,7 +50,6 @@ class Team extends Model
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\Modules\Core\Identity\Models\TeamFactory> */
     use HasFactory;
 
-    use HasFeatures;
     use HasUlids;
 
     /**

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('billing_customers', function (Blueprint $table): void {
             $table->id();
-            $table->morphs('billable');
+            $table->ulidMorphs('billable');
             $table->string('email');
             $table->string('name');
             $table->string('paddle_id')->unique();
