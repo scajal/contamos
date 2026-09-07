@@ -146,7 +146,7 @@ export const ApplicationLayout = ({
                                 <DropdownMenuTrigger render={<Button />}>
                                     <span>
                                         {t("Create")}
-                                        <span className="max-sm:hidden">{t("transaction")}</span>
+                                        <span className="ml-1 max-sm:hidden">{t("transaction")}</span>
                                     </span>
                                     <ChevronDownIcon className="transition-transform in-data-popup-open:rotate-180" />
                                 </DropdownMenuTrigger>
