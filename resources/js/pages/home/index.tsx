@@ -4,6 +4,7 @@ import { MarketingLayout } from "@/layouts/marketing/layout";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 
 import { Balances } from "./_components/balances";
+import { Features } from "./_components/features";
 import { Hero } from "./_components/hero";
 import { SeoHead } from "./_components/seo-head";
 import { StageFloor } from "./_components/stage-floor";
@@ -30,6 +31,8 @@ const Home = ({ dashboardUrl, alternates }: HomeProps) => {
                 <Hero dashboardUrl={dashboardUrl} />
                 <Balances />
             </div>
+
+            <Features />
         </>
     );
 };

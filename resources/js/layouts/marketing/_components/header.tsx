@@ -46,7 +46,7 @@ export const Header = ({ alternates, dashboardUrl, appearance, onAppearanceChang
                             nativeButton={false}
                             render={<a href={dashboardUrl ?? login.url()} />}
                             size="lg"
-                            variant="outline"
+                            variant="ghost"
                         >
                             {t("Log in")}
                             <ArrowRightIcon />
