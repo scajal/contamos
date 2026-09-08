@@ -9,8 +9,8 @@ Before planning or editing, find the row whose globs match the file's path and r
 | resources/js/layouts/application/** | .ai/rules/application.md |
 | app/Modules/Authentication/** | .ai/rules/authentication.md |
 | bootstrap/app.php | .ai/rules/bootstrap.md |
-| app/Modules/Core/Catalog/** | .ai/rules/catalog.md |
 | app/Modules/Core/Catalog/Services/** | .ai/rules/catalog-quote-services.md |
+| app/Modules/Core/Catalog/** | .ai/rules/catalog.md |
 | resources/js/pages/finance/**/_components/fields.tsx | .ai/rules/components.md |
 | app/Modules/**/Http/Controllers/** | .ai/rules/controllers.md |
 | app/Modules/Core/**/*.php | .ai/rules/core.md |

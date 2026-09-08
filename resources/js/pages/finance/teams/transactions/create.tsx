@@ -1,5 +1,6 @@
 import { Form, router, usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
+import { useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ type PageProps = {
     type: TransactionType;
 };
 
-export default function Create({ accounts, tags, type }: PageProps) {
+export default function Create({ accounts, tags, type: initialType }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -30,6 +31,11 @@ export default function Create({ accounts, tags, type }: PageProps) {
      * The page's props.
      */
     const { user } = usePage().props;
+
+    /**
+     * Income or expense, toggled in the form without leaving the sheet.
+     */
+    const [type, setType] = useState(initialType);
 
     return (
         <Modal>
@@ -55,23 +61,27 @@ export default function Create({ accounts, tags, type }: PageProps) {
                                     <SheetHeader>
                                         <SheetTitle>{t("Register an :name", { name: t(type) })}</SheetTitle>
                                         <SheetDescription>
-                                            {type === "income"
-                                                ? t("Record money coming into an account.")
-                                                : t("Record money leaving an account.")}
+                                            {accounts.length === 1
+                                                ? t("In :name", { name: accounts[0].name })
+                                                : type === "income"
+                                                  ? t("Record money coming into an account.")
+                                                  : t("Record money leaving an account.")}
                                         </SheetDescription>
                                     </SheetHeader>
-                                    <div className="min-h-0 flex-1 overflow-y-auto px-4">
+                                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4">
                                         <Fields
                                             accounts={accounts}
-                                            defaultValues={{ type }}
+                                            defaultValues={{ type: initialType }}
+                                            onTypeChange={setType}
                                             tags={tags}
+                                            type={type}
                                             {...formProps}
                                         />
                                     </div>
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
                                             {formProps.processing && <Spinner data-icon="inline-start" />}
-                                            {t("Save")}
+                                            {t("Register this :name", { name: t(type) })}
                                         </Button>
                                     </SheetFooter>
                                 </Fragment>

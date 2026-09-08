@@ -54,7 +54,7 @@ class TransactionController
     {
         return Inertia::modal('finance/teams/transactions/create', [
             'accounts' => $team->accounts()->isActive()->with(['currencies' => function (Relation $currencies): void {
-                $currencies->isActive(); // @phpstan-ignore-line argument.type
+                $currencies->isActive()->with('quotes'); // @phpstan-ignore-line argument.type
             }])->get(),
             'tags' => $team->tags()->isActive()->orderBy('name')->get(),
             'type' => $type,

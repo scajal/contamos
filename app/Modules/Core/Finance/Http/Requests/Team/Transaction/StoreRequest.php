@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Http\Requests\Team\Transaction;
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
@@ -96,9 +97,30 @@ class StoreRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'occurred_at' => $this->occurredAtInUtc() ?? $this->input('occurred_at'),
-            'quote' => ($quote = $this->input('quote')) ? $quote : $this->currency()?->currentQuote?->rate,
+            'occurred_at' => $occurredAt = $this->occurredAtInUtc() ?? $this->input('occurred_at'),
+            'quote' => ($quote = $this->input('quote')) ? $quote : $this->quoteAsOfOccurredAt($occurredAt)?->rate,
         ]);
+    }
+
+    /**
+     * Get the latest quote observed at or before the transaction instant.
+     */
+    protected function quoteAsOfOccurredAt(mixed $occurredAt): ?Quote
+    {
+        // If the occurred at is not a string or is an empty string, return null.
+        if (! is_string($occurredAt) || $occurredAt === '') {
+            return null;
+        }
+
+        // Parse the occurred at value and convert to UTC.
+        try {
+            $at = CarbonImmutable::parse($occurredAt);
+        } catch (InvalidFormatException) {
+            return null;
+        }
+
+        // Get the quote for the currency at the occurred at value.
+        return $this->currency()?->quoteAsOf($at);
     }
 
     /**

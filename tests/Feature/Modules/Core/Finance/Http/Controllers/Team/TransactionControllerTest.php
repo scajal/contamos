@@ -225,6 +225,7 @@ describe('create', function (): void {
     it('renders the create transaction modal for each type', function (TransactionType $type): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create();
+        $quote = Quote::factory()->for($currency)->create(['observed_at' => '2024-06-01 00:00:00', 'rate' => '1.5']);
         $inactiveCurrency = Currency::factory()->inactive()->fiat()->create();
         $account = Account::factory()->bank()->active()->for($team)->create();
         $account->currencies()->attach([$currency->getKey(), $inactiveCurrency->getKey()]);
@@ -244,6 +245,8 @@ describe('create', function (): void {
                 ->where('accounts.0.id', $account->getKey())
                 ->has('accounts.0.currencies', 1)
                 ->where('accounts.0.currencies.0.id', $currency->getKey())
+                ->has('accounts.0.currencies.0.quotes', 1)
+                ->where('accounts.0.currencies.0.quotes.0.id', $quote->getKey())
                 ->has('tags', 1)
                 ->where('tags.0.id', $tag->getKey())
                 ->where('type', $type->value));
@@ -370,7 +373,115 @@ describe('store', function (): void {
             ->assertInvalid(['tag_ids.0']);
     });
 
-    it('defaults the quote from the currency current quote when omitted', function (): void {
+    it('defaults the quote from the rate as of occurred_at when omitted', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        Quote::factory()->for($currency)->create([
+            'observed_at' => '2024-06-01 00:00:00',
+            'rate' => '1.5',
+        ]);
+        Quote::factory()->for($currency)->create([
+            'observed_at' => '2024-06-15 00:00:00',
+            'rate' => '2',
+        ]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $payload = transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'occurred_at' => '2024-06-01 12:00:00',
+        ]);
+        unset($payload['quote']);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), $payload)
+            ->assertRedirect();
+
+        expect(Transaction::query()->sole()->quote)->toBe('1.500000000000000000');
+    });
+
+    it('rejects an omitted quote when no rate exists as of occurred_at', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        Quote::factory()->for($currency)->create([
+            'observed_at' => '2024-06-15 00:00:00',
+            'rate' => '2',
+        ]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $payload = transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'occurred_at' => '2024-01-01 12:00:00',
+        ]);
+        unset($payload['quote']);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), $payload)
+            ->assertRedirect()
+            ->assertInvalid(['quote']);
+    });
+
+    it('ignores quotes observed after occurred_at when defaulting the rate', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        Quote::factory()->for($currency)->create([
+            'observed_at' => '2024-06-01 00:00:00',
+            'rate' => '1.5',
+        ]);
+        Quote::factory()->for($currency)->create([
+            'observed_at' => '2024-07-01 00:00:00',
+            'rate' => '3',
+        ]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $payload = transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'occurred_at' => '2024-06-15 12:00:00',
+        ]);
+        unset($payload['quote']);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), $payload)
+            ->assertRedirect();
+
+        expect(Transaction::query()->sole()->quote)->toBe('1.500000000000000000');
+    });
+
+    it('defaults the quote as of a datetime-local occurred_at', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        Quote::factory()->for($currency)->create([
+            'observed_at' => '2026-09-06 00:00:00',
+            'rate' => '40',
+        ]);
+        Quote::factory()->for($currency)->create([
+            'observed_at' => '2026-09-07 00:00:00',
+            'rate' => '41',
+        ]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $payload = transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'occurred_at' => '2026-09-06T12:21',
+            'timezone' => 'America/Argentina/Buenos_Aires',
+        ]);
+        unset($payload['quote']);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), $payload)
+            ->assertRedirect();
+
+        expect(Transaction::query()->sole()->quote)->toBe('40.000000000000000000');
+    });
+
+    it('keeps a submitted quote instead of the as-of rate', function (): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
         Quote::factory()->for($currency)->create([
@@ -380,17 +491,15 @@ describe('store', function (): void {
         $account = Account::factory()->bank()->active()->for($team)->create();
         $account->currencies()->attach($currency);
 
-        $payload = transactionPayload([
-            $account->getForeignKey() => $account->getKey(),
-            $currency->getForeignKey() => $currency->getKey(),
-        ]);
-        unset($payload['quote']);
-
         $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
-            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), $payload)
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'quote' => '41.25',
+            ]))
             ->assertRedirect();
 
-        expect(Transaction::query()->sole()->quote)->toBe('1.500000000000000000');
+        expect(Transaction::query()->sole()->quote)->toBe('41.250000000000000000');
     });
 
     it('rejects a currency that is not attached to the account', function (): void {

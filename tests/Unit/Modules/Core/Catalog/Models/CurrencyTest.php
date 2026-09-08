@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Core\Identity\Models\User;
+use Carbon\CarbonImmutable;
 
 /**
  * Unit tests for \App\Modules\Core\Catalog\Models\Currency.
@@ -51,6 +52,29 @@ it('returns no current quote when every quote is in the future', function (): vo
     Quote::factory()->for($currency)->create(['observed_at' => '2024-07-01 00:00:00', 'rate' => '3']);
 
     expect($currency->currentQuote)->toBeNull();
+});
+
+it('returns the latest quote observed at or before the given instant', function (): void {
+    $currency = Currency::factory()->create();
+    Quote::factory()->for($currency)->create(['observed_at' => '2024-01-01 00:00:00', 'rate' => '1']);
+    $asOf = Quote::factory()->for($currency)->create(['observed_at' => '2024-06-01 00:00:00', 'rate' => '1.5']);
+    Quote::factory()->for($currency)->create(['observed_at' => '2024-06-15 00:00:00', 'rate' => '2']);
+
+    expect($currency->quoteAsOf(CarbonImmutable::parse('2024-06-01 12:00:00'))?->is($asOf))->toBeTrue();
+});
+
+it('returns no quote as of an instant before every observation', function (): void {
+    $currency = Currency::factory()->create();
+    Quote::factory()->for($currency)->create(['observed_at' => '2024-06-15 00:00:00', 'rate' => '2']);
+
+    expect($currency->quoteAsOf(CarbonImmutable::parse('2024-01-01 00:00:00')))->toBeNull();
+});
+
+it('uses the previous observation when no quote exists on that day', function (): void {
+    $currency = Currency::factory()->create();
+    $friday = Quote::factory()->for($currency)->create(['observed_at' => '2024-06-14 00:00:00', 'rate' => '40']);
+
+    expect($currency->quoteAsOf(CarbonImmutable::parse('2024-06-15 12:00:00'))?->is($friday))->toBeTrue();
 });
 
 it('exposes the recorder of a quote', function (): void {

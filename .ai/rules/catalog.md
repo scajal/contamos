@@ -9,9 +9,9 @@ paths:
 
 Persist and pass monetary amounts as major-unit decimal strings (`decimal:18` casts). Do not introduce Brick Money objects or minor-unit integers.
 
-## Current quote is the latest observed at or before now
+## Quote as of a moment is the latest observed at or before that moment
 
-`Currency::currentQuote` is a has-one-of-many on `observed_at` constrained to `observed_at <= now()`. Future quotes are ignored.
+`Currency::quoteAsOf($at)` is the latest quote with `observed_at <= $at`. Quotes after that instant are ignored. `currentQuote` is the same relation constrained to `now()`. Transaction store defaults a blank quote from `quoteAsOf(occurred_at)`, not from `currentQuote`.
 
 ## Scheduled quotes come from QuoteProviders
 

@@ -163,7 +163,7 @@ return [
         'address' => 'dirección',
         'affiliate_url' => 'URL de afiliado',
         'age' => 'edad',
-        'amount' => 'cantidad',
+        'amount' => 'monto',
         'announcement' => 'anuncio',
         'area' => 'área',
         'audience_prize' => 'premio del público',

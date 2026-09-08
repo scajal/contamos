@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Core\Catalog\Models;
 
 use App\Modules\Core\Catalog\Enums\Currency\CurrencyType;
@@ -89,6 +91,8 @@ class Currency extends Model
     /**
      * Get the current quote for the currency.
      *
+     * This is {@see self::quoteAsOf()} constrained to now.
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne<\App\Modules\Core\Catalog\Models\Currency\Quote, $this>
      */
     public function currentQuote(): HasOne
@@ -96,6 +100,22 @@ class Currency extends Model
         return $this
             ->hasOne(Quote::class)
             ->ofMany(['observed_at' => 'max'], fn (Builder $query): Builder => $query->where('observed_at', '<=', CarbonImmutable::now()));
+    }
+
+    /**
+     * Get the latest quote observed at or before the given instant.
+     *
+     * Quotes observed after `$at` are ignored.
+     */
+    public function quoteAsOf(CarbonImmutable $at): ?Quote
+    {
+        /** @var \App\Modules\Core\Catalog\Models\Currency\Quote|null $quote */
+        $quote = $this->quotes()
+            ->where('observed_at', '<=', $at)
+            ->orderByDesc('observed_at')
+            ->first();
+
+        return $quote;
     }
 
     /**

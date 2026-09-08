@@ -6,7 +6,6 @@ import {
     ArrowLeftRightIcon,
     ArrowUpIcon,
     BanknoteIcon,
-    ChevronDownIcon,
     ChevronsUpDownIcon,
     CreditCardIcon,
     LayoutDashboardIcon,
@@ -142,49 +141,39 @@ export const ApplicationLayout = ({
                             ) : null}
                         </div>
                         {user?.current_team && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger render={<Button />}>
-                                    <span>
-                                        {t("Create")}
-                                        <span className="ml-1 max-sm:hidden">{t("transaction")}</span>
-                                    </span>
-                                    <ChevronDownIcon className="transition-transform in-data-popup-open:rotate-180" />
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-max min-w-(--anchor-width)">
-                                    <DropdownMenuGroup>
-                                        <DropdownMenuItem
-                                            render={
-                                                <ModalLink
-                                                    href={transactions.create.url({
-                                                        team: user.current_team.slug,
-                                                        type: "income",
-                                                    })}
-                                                >
-                                                    <ArrowDownIcon />
-                                                    <span className="whitespace-nowrap">
-                                                        {t("Register an :name", { name: t("income") })}
-                                                    </span>
-                                                </ModalLink>
-                                            }
-                                        />
-                                        <DropdownMenuItem
-                                            render={
-                                                <ModalLink
-                                                    href={transactions.create.url({
-                                                        team: user.current_team.slug,
-                                                        type: "expense",
-                                                    })}
-                                                >
-                                                    <ArrowUpIcon />
-                                                    <span className="whitespace-nowrap">
-                                                        {t("Register an :name", { name: t("expense") })}
-                                                    </span>
-                                                </ModalLink>
-                                            }
-                                        />
-                                    </DropdownMenuGroup>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <div className="flex gap-1.5">
+                                <Button
+                                    nativeButton={false}
+                                    render={
+                                        <ModalLink
+                                            href={transactions.create.url({
+                                                team: user.current_team.slug,
+                                                type: "income",
+                                            })}
+                                        >
+                                            <ArrowDownIcon data-icon="inline-start" />
+                                            {t("enums.income")}
+                                        </ModalLink>
+                                    }
+                                    size="sm"
+                                    variant="outline"
+                                />
+                                <Button
+                                    nativeButton={false}
+                                    render={
+                                        <ModalLink
+                                            href={transactions.create.url({
+                                                team: user.current_team.slug,
+                                                type: "expense",
+                                            })}
+                                        >
+                                            <ArrowUpIcon data-icon="inline-start" />
+                                            {t("enums.expense")}
+                                        </ModalLink>
+                                    }
+                                    size="sm"
+                                />
+                            </div>
                         )}
                     </div>
                 </header>
