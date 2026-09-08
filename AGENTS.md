@@ -1,3 +1,41 @@
+<!-- bmad:context -->
+<!-- Verified 2026-09-08 against 73eff50fd20c. Managed by bmad-project-context; edits inside this block are replaced on refresh. Keep anything you want preserved outside the markers. -->
+
+## contamos
+
+Contamos is a shared ledger for people who share money. Laravel 13, PHP 8.4, Inertia + React, Filament at `/administration`, pnpm. Project conventions live in `.ai/rules/`; Laravel Boost guidelines live in the `<laravel-boost-guidelines>` region below. There is no `docs/` tree.
+
+## Policy
+
+- Follow every `.ai/rules` file that applies to the paths in scope. Do not write code until those rules are loaded.
+- Do not add top-level directories or change Composer/npm dependencies without approval.
+- Do not create documentation files unless asked.
+- Do not delete tests without approval.
+- Do not add verification scripts or tinker when tests already cover the behavior.
+- Do not put project instructions inside `<laravel-boost-guidelines>` — `php artisan boost:update` (Composer `post-update-cmd`) replaces that region in `AGENTS.md` and `CLAUDE.md`. Use this block or the `record-rule` MCP tool.
+- Do not hand-edit `resources/js/actions`, `resources/js/routes`, or `resources/js/wayfinder` — they are generated and gitignored.
+
+## Where things are
+
+- Before planning or editing: open `.ai/rules/index.md`, read every listed file whose globs match the paths in scope, and grep `.ai/rules` for keywords the glob misses.
+- New durable project rules: Boost MCP `record-rule` (writes `.ai/rules/`), never personal memory.
+- Feature code: `app/Modules/{Module}/` (Core domain under `app/Modules/Core/`; Authentication and Support at `app/Modules/` root).
+- Domain skills: `**/skills/**` — activate the matching skill when working in that domain.
+
+## Running and verifying
+
+- Runtime is PHP 8.4 (CI). Confirm installed majors with `composer show --direct` or `package.json` before using a package API.
+- Iterate with `php artisan test --compact` plus a path or `--filter`. `composer test` also runs Rector, Pint `--test`, and PHPStan.
+- After PHP edits, run `vendor/bin/pint --dirty --format agent`.
+- New tests: `php artisan make:test --pest {Name}` — do not put `Feature/` or `Unit/` in `{Name}`.
+- If a UI change is not visible, ask to run `pnpm run dev` or `composer run dev`.
+
+## Known pitfalls
+
+- `boost:update` rewrites only the tagged Boost region; keep this block above those tags in both `AGENTS.md` and `CLAUDE.md` so Claude Code, Codex, and Cursor all see it.
+
+<!-- /bmad:context -->
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
