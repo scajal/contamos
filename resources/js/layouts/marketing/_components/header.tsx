@@ -3,6 +3,7 @@ import { ArrowRightIcon } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { login } from "@/routes";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 
@@ -39,22 +40,22 @@ export const Header = ({ alternates, dashboardUrl, appearance, onAppearanceChang
                     className="flex shrink-0 items-center gap-2"
                 >
                     <BrandMark />
-                    <span className="font-heading text-base font-semibold tracking-tight">contamos</span>
+                    <span className="font-heading text-base font-semibold tracking-tight">
+                        {import.meta.env.VITE_APP_NAME}
+                    </span>
                 </a>
 
                 <div className="flex items-center gap-1.5 sm:gap-2">
                     <LanguageSwitcher alternates={alternates} />
                     <ThemeSwitcher appearance={appearance} onChange={onAppearanceChange} />
-
-                    <span aria-hidden="true" className="bg-border mx-0.5 h-5 w-px max-sm:hidden" />
-
+                    <Separator orientation="vertical" />
                     <Button
                         className="rounded-full max-sm:px-3 max-sm:text-xs"
                         nativeButton={false}
                         render={<a href={dashboardUrl ?? login.url()} />}
                         size="sm"
                     >
-                        {t("Log in")}
+                        {dashboardUrl ? t("Go to dashboard") : t("Log in")}
                         <ArrowRightIcon />
                     </Button>
                 </div>

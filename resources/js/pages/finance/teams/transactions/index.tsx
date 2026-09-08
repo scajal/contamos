@@ -143,13 +143,15 @@ const CreateTransactionMenu = ({ className }: { className?: string }) => {
                     className="transition-transform in-data-popup-open:rotate-180"
                 />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-max min-w-(--anchor-width)">
                 <DropdownMenuGroup>
                     <DropdownMenuItem
                         render={
                             <ModalLink href={routes.create.url({ team, type: "income" })}>
                                 <ArrowDownIcon />
-                                <span>{t("Register an :name", { name: t("income") })}</span>
+                                <span className="whitespace-nowrap">
+                                    {t("Register an :name", { name: t("income") })}
+                                </span>
                             </ModalLink>
                         }
                     />
@@ -157,7 +159,9 @@ const CreateTransactionMenu = ({ className }: { className?: string }) => {
                         render={
                             <ModalLink href={routes.create.url({ team, type: "expense" })}>
                                 <ArrowUpIcon />
-                                <span>{t("Register an :name", { name: t("expense") })}</span>
+                                <span className="whitespace-nowrap">
+                                    {t("Register an :name", { name: t("expense") })}
+                                </span>
                             </ModalLink>
                         }
                     />
@@ -387,35 +391,36 @@ const Listing = () => {
 
     return (
         <Deferred data="transactions" fallback={<SkeletonGroup />}>
-            <InfiniteScroll data="transactions" onlyNext>
-                {!transactions?.data?.length ? (
-                    <div className="overflow-hidden rounded-sm border">
-                        <Empty>
-                            <EmptyHeader>
-                                <EmptyMedia variant="icon">
-                                    {isFiltered ? <SearchXIcon /> : <CircleDashedIcon />}
-                                </EmptyMedia>
-                                <EmptyTitle>
-                                    {isFiltered
-                                        ? t("No results for the current filters")
-                                        : t("No :name yet", { name: t("transactions") })}
-                                </EmptyTitle>
-                                <EmptyDescription>
-                                    {isFiltered
-                                        ? t("Try adjusting or clearing the filters.")
-                                        : t("Add a new :name to get started.", {
-                                              name: t("transaction"),
-                                          })}
-                                </EmptyDescription>
-                            </EmptyHeader>
-                            {!isFiltered ? (
-                                <EmptyContent>
-                                    <CreateTransactionMenu />
-                                </EmptyContent>
-                            ) : null}
-                        </Empty>
-                    </div>
-                ) : (
+            <div>
+                <InfiniteScroll data="transactions" onlyNext>
+                    {!transactions?.data?.length ? (
+                        <div className="overflow-hidden rounded-sm border">
+                            <Empty>
+                                <EmptyHeader>
+                                    <EmptyMedia variant="icon">
+                                        {isFiltered ? <SearchXIcon /> : <CircleDashedIcon />}
+                                    </EmptyMedia>
+                                    <EmptyTitle>
+                                        {isFiltered
+                                            ? t("No results for the current filters")
+                                            : t("No :name yet", { name: t("transactions") })}
+                                    </EmptyTitle>
+                                    <EmptyDescription>
+                                        {isFiltered
+                                            ? t("Try adjusting or clearing the filters.")
+                                            : t("Add a new :name to get started.", {
+                                                  name: t("transaction"),
+                                              })}
+                                    </EmptyDescription>
+                                </EmptyHeader>
+                                {!isFiltered ? (
+                                    <EmptyContent>
+                                        <CreateTransactionMenu />
+                                    </EmptyContent>
+                                ) : null}
+                            </Empty>
+                        </div>
+                    ) : (
                     [...grouped].map(([date, items]) => (
                         <Fragment key={date}>
                             <Item className="p-0 pb-4 not-first:mt-4">
@@ -495,14 +500,15 @@ const Listing = () => {
                         </Fragment>
                     ))
                 )}
-            </InfiniteScroll>
+                </InfiniteScroll>
+            </div>
         </Deferred>
     );
 };
 
 const SkeletonGroup = () => {
     return (
-        <Fragment>
+        <div>
             <Item className="p-0 pb-4">
                 <ItemHeader>
                     <Skeleton className="h-4 w-32" />
@@ -531,7 +537,7 @@ const SkeletonGroup = () => {
                     </TableBody>
                 </TableComponent>
             </div>
-        </Fragment>
+        </div>
     );
 };
 

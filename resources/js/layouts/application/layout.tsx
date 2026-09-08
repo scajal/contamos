@@ -150,7 +150,7 @@ export const ApplicationLayout = ({
                                     </span>
                                     <ChevronDownIcon className="transition-transform in-data-popup-open:rotate-180" />
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-auto min-w-(--anchor-width)">
+                                <DropdownMenuContent align="end" className="w-max min-w-(--anchor-width)">
                                     <DropdownMenuGroup>
                                         <DropdownMenuItem
                                             render={
@@ -161,7 +161,9 @@ export const ApplicationLayout = ({
                                                     })}
                                                 >
                                                     <ArrowDownIcon />
-                                                    <span>{t("Register an :name", { name: t("income") })}</span>
+                                                    <span className="whitespace-nowrap">
+                                                        {t("Register an :name", { name: t("income") })}
+                                                    </span>
                                                 </ModalLink>
                                             }
                                         />
@@ -174,7 +176,9 @@ export const ApplicationLayout = ({
                                                     })}
                                                 >
                                                     <ArrowUpIcon />
-                                                    <span>{t("Register an :name", { name: t("expense") })}</span>
+                                                    <span className="whitespace-nowrap">
+                                                        {t("Register an :name", { name: t("expense") })}
+                                                    </span>
                                                 </ModalLink>
                                             }
                                         />
@@ -219,7 +223,9 @@ const Sidebar = () => {
                 <SidebarGroup>
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <SidebarMenuButton render={<Link href="/" />}>
+                            <SidebarMenuButton
+                                render={<Link href={dashboard.index.url({ team: user?.current_team?.slug ?? "" })} />}
+                            >
                                 <LayoutDashboardIcon />
                                 <span>{t("Dashboard")}</span>
                             </SidebarMenuButton>
