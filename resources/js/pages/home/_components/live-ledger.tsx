@@ -1,11 +1,18 @@
 import NumberFlow from "@number-flow/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { m, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
+import {
+    AnimatePresence,
+    m,
+    useMotionTemplate,
+    useMotionValue,
+    useReducedMotion,
+    useSpring,
+    useTransform,
+} from "motion/react";
 import { useEffect, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { cn, formatAmount } from "@/lib/utils";
 
 type Currency = "EUR" | "USD" | "BTC";
@@ -20,11 +27,23 @@ interface DemoTransaction {
     kind: "income" | "expense";
 }
 
+/** One transaction currently on the ledger, keyed so repeats animate apart. */
+interface LedgerEntry {
+    key: number;
+    transaction: DemoTransaction;
+}
+
 const CURRENCIES: Array<{ currency: Currency; symbol: string; decimalPlaces: number }> = [
     { currency: "EUR", symbol: "€", decimalPlaces: 2 },
     { currency: "USD", symbol: "$", decimalPlaces: 2 },
     { currency: "BTC", symbol: "₿", decimalPlaces: 8 },
 ];
+
+const OPENING_BALANCES: Record<Currency, number> = { EUR: 1250.4, USD: 4800, BTC: 0.0031 };
+
+/** How many rows the ledger holds at most, and the fewest it drops to. */
+const MAX_ROWS = 4;
+const MIN_ROWS = 2;
 
 const TRANSACTIONS: Array<DemoTransaction> = [
     {
@@ -63,16 +82,54 @@ const TRANSACTIONS: Array<DemoTransaction> = [
         amount: "0.00042000",
         kind: "income",
     },
+    {
+        currency: "EUR",
+        symbol: "€",
+        decimalPlaces: 2,
+        tag: "Trip",
+        label: "Train to Porto",
+        amount: "-64.20",
+        kind: "expense",
+    },
+    {
+        currency: "USD",
+        symbol: "$",
+        decimalPlaces: 2,
+        tag: "Freelance",
+        label: "Invoice #204",
+        amount: "780.00",
+        kind: "income",
+    },
+    {
+        currency: "EUR",
+        symbol: "€",
+        decimalPlaces: 2,
+        tag: "Bills",
+        label: "Electricity",
+        amount: "-112.75",
+        kind: "expense",
+    },
+    {
+        currency: "BTC",
+        symbol: "₿",
+        decimalPlaces: 8,
+        tag: "Savings",
+        label: "Weekly buy",
+        amount: "0.00018000",
+        kind: "income",
+    },
 ];
 
 /**
- * Compute the running balance per currency after the given
- * number of demo transactions have been applied.
+ * The running balance per currency once every entry on the ledger has
+ * been applied. Removing an entry therefore puts the balance back
+ * exactly where it was, the same way deleting a transaction does in the
+ * app itself.
  */
-const balancesAfter = (count: number): Record<Currency, number> => {
-    const balances: Record<Currency, number> = { EUR: 1250.4, USD: 4800, BTC: 0.0031 };
+const balancesOf = (entries: Array<LedgerEntry>): Record<Currency, number> => {
+    const balances: Record<Currency, number> = { ...OPENING_BALANCES };
 
-    for (const transaction of TRANSACTIONS.slice(0, count)) {
+    for (const { transaction } of entries) {
         balances[transaction.currency] += Number(transaction.amount);
     }
 
@@ -80,13 +137,16 @@ const balancesAfter = (count: number): Record<Currency, number> => {
 };
 
 /**
- * The hero's one kinetic object: a dark ledger card where demo
- * transactions across EUR, USD and BTC type in one by one while the
- * per-currency balance chips roll to their new totals, digit by digit. Every row is present from the
- * first frame (as a dimmed placeholder) so the card never reads as
- * empty mid-sequence. On pointer devices the card tilts and glows
- * toward the cursor. Renders statically for reduced-motion visitors
- * and is keyboard-replayable.
+ * Pick a random item from the list.
+ */
+const sample = <T,>(items: Array<T>): T => items[Math.floor(Math.random() * items.length)];
+
+/**
+ * The hero's one kinetic object: a dark ledger card that never settles.
+ * Transactions arrive and are taken away again at random, forever, with
+ * the per-currency chips rolling to each new total. Renders as a still
+ * ledger for reduced-motion visitors. On pointer devices the card tilts
+ * and glows toward the cursor.
  */
 export const LiveLedger = () => {
     /**
@@ -100,14 +160,13 @@ export const LiveLedger = () => {
     const reducedMotion = useReducedMotion();
 
     /**
-     * How many demo transactions have appeared so far.
+     * The transactions currently on the ledger. Seeded deterministically
+     * so the server and the client agree on the first paint; the loop
+     * only starts randomising once mounted.
      */
-    const [visible, setVisible] = useState(reducedMotion ? TRANSACTIONS.length : 0);
-
-    /**
-     * A key that, when changed, restarts the reveal sequence.
-     */
-    const [run, setRun] = useState(0);
+    const [entries, setEntries] = useState<Array<LedgerEntry>>(() =>
+        TRANSACTIONS.slice(0, MAX_ROWS).map((transaction, key) => ({ key, transaction })),
+    );
 
     /**
      * The pointer's position over the card, normalized to 0-1,
@@ -155,23 +214,47 @@ export const LiveLedger = () => {
 
     useEffect(() => {
         if (reducedMotion) {
-            setVisible(TRANSACTIONS.length);
-
             return;
         }
 
-        setVisible(0);
+        let timer: number;
+        let nextKey = MAX_ROWS;
 
-        const timers = TRANSACTIONS.map((_, index) =>
-            window.setTimeout(() => setVisible(index + 1), 500 + index * 1000),
-        );
+        // One step of the loop: add a transaction or take one away, then
+        // schedule the next step after an uneven pause so the ledger
+        // never falls into an obvious rhythm.
+        const step = () => {
+            setEntries((current) => {
+                const adding =
+                    current.length <= MIN_ROWS || (current.length < MAX_ROWS && Math.random() < 0.55);
 
-        return () => {
-            timers.forEach(window.clearTimeout);
+                if (!adding) {
+                    const victim = sample(current);
+
+                    return current.filter((entry) => entry.key !== victim.key);
+                }
+
+                // Only offer transactions that are not already on the
+                // ledger, so a row never appears twice.
+                const present = new Set(current.map((entry) => entry.transaction.label));
+                const available = TRANSACTIONS.filter((transaction) => !present.has(transaction.label));
+
+                if (available.length === 0) {
+                    return current;
+                }
+
+                return [{ key: nextKey++, transaction: sample(available) }, ...current];
+            });
+
+            timer = window.setTimeout(step, 1300 + Math.random() * 1100);
         };
-    }, [reducedMotion, run]);
 
-    const balances = balancesAfter(visible);
+        timer = window.setTimeout(step, 1400);
+
+        return () => window.clearTimeout(timer);
+    }, [reducedMotion]);
+
+    const balances = balancesOf(entries);
 
     return (
         <m.div
@@ -209,7 +292,7 @@ export const LiveLedger = () => {
                             variant="outline"
                             className="border-zinc-800 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 tabular-nums"
                         >
-                            <span className="mr-1.5 text-zinc-500">{currency}</span>
+                            <span className="mr-1.5 text-zinc-400">{currency}</span>
                             <NumberFlow
                                 value={balances[currency]}
                                 locales="en"
@@ -226,64 +309,60 @@ export const LiveLedger = () => {
                     ))}
                 </div>
 
-                {/** Transaction rows: always present, dimmed until revealed */}
-                <div className="flex flex-col gap-2">
-                    {TRANSACTIONS.map((transaction, index) => {
-                        const revealed = index < visible;
-
-                        return (
+                {/**
+                 * Transaction rows. The height is reserved for a full
+                 * ledger so the card — and the hero around it — never
+                 * resizes as rows come and go. Each row animates its own
+                 * height rather than using layout projection, which the
+                 * page's `domAnimation` feature bundle does not carry.
+                 *
+                 * The gap between rows is top padding inside each
+                 * animated wrapper, not a flex gap or a margin, so it
+                 * collapses along with the row's height instead of
+                 * leaving a hole behind. The container pulls the first
+                 * row's padding back off the top.
+                 */}
+                <div className="-mt-2 flex min-h-[236px] flex-col">
+                    <AnimatePresence initial={false}>
+                        {entries.map(({ key, transaction }) => (
                             <m.div
-                                key={`${transaction.currency}-${index}-${run}`}
-                                initial={reducedMotion ? false : { opacity: 0, y: 10 }}
-                                animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0.16, y: 0 }}
-                                transition={{ type: "spring", stiffness: 260, damping: 24 }}
-                                className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3"
+                                key={key}
+                                initial={reducedMotion ? false : { opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+                                className="overflow-hidden"
                             >
-                                <div className="flex min-w-0 items-center gap-3">
-                                    <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
-                                        {transaction.tag}
-                                    </span>
-                                    <span className="truncate text-sm text-zinc-300">{transaction.label}</span>
+                                <div className="pt-2">
+                                    <div className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
+                                                {transaction.tag}
+                                            </span>
+                                            <span className="truncate text-sm text-zinc-300">
+                                                {transaction.label}
+                                            </span>
+                                        </div>
+                                        {/* rose-400, not rose-500: the 500 lands at 4.13:1 on the row fill, under AA. */}
+                                        <span
+                                            className={cn(
+                                                "shrink-0 text-sm font-medium tabular-nums",
+                                                transaction.kind === "income" ? "text-green-500" : "text-rose-400",
+                                            )}
+                                        >
+                                            {transaction.kind === "income" ? "+" : "-"}{" "}
+                                            {formatAmount(transaction.amount, "en", {
+                                                symbol: transaction.symbol,
+                                                decimal_places: transaction.decimalPlaces,
+                                            })}
+                                        </span>
+                                    </div>
                                 </div>
-                                <span
-                                    className={cn(
-                                        "shrink-0 text-sm font-medium tabular-nums",
-                                        transaction.kind === "income" ? "text-green-500" : "text-rose-500",
-                                    )}
-                                >
-                                    {transaction.kind === "income" ? "+" : "-"}{" "}
-                                    {formatAmount(transaction.amount, "en", {
-                                        symbol: transaction.symbol,
-                                        decimal_places: transaction.decimalPlaces,
-                                    })}
-                                </span>
                             </m.div>
-                        );
-                    })}
+                        ))}
+                    </AnimatePresence>
                 </div>
             </div>
-
-            <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setRun((value) => value + 1)}
-                aria-label={t("Replay")}
-                className="absolute top-6 right-6 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-100 sm:top-7 sm:right-7"
-            >
-                <RefreshIcon />
-            </Button>
         </m.div>
     );
 };
-
-/**
- * A small refresh glyph for the replay control, drawn inline so the
- * ledger doesn't pull in a full icon set for one shape.
- */
-const RefreshIcon = () => (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-4">
-        <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M13.5 2.5v3.6h-3.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-);

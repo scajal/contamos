@@ -54,7 +54,7 @@ export const Hero = ({ dashboardUrl }: HeroProps) => {
                     className="text-muted-foreground max-w-[46ch] text-lg"
                 >
                     {t(
-                        "No more guessing, no spreadsheets, no arguing about who paid what. Every euro, dollar and bitcoin your household touches lands in one clear picture — so you always know exactly where you stand, together.",
+                        "No more guessing, no spreadsheets, no arguing about who paid what. Every currency your household touches, fiat or crypto, lands in one clear picture — so you always know exactly where you stand, together.",
                     )}
                 </m.p>
 

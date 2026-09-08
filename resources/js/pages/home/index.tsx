@@ -2,22 +2,26 @@ import type React from "react";
 
 import { MarketingLayout } from "@/layouts/marketing/layout";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
+import type { Plans } from "@/types/app/modules/marketing/plans";
 
 import { Balances } from "./_components/balances";
+import { Faq } from "./_components/faq";
 import { Features } from "./_components/features";
 import { Hero } from "./_components/hero";
+import { Pricing } from "./_components/pricing";
 import { SeoHead } from "./_components/seo-head";
 import { StageFloor } from "./_components/stage-floor";
 
 interface HomeProps {
     dashboardUrl: string | null;
     alternates: Alternates;
+    plans: Plans;
 }
 
-const Home = ({ dashboardUrl, alternates }: HomeProps) => {
+const Home = ({ dashboardUrl, alternates, plans }: HomeProps) => {
     return (
         <>
-            <SeoHead alternates={alternates} />
+            <SeoHead alternates={alternates} plans={plans} />
 
             {/*
              * The opening act shares one stage: the floor grid runs behind
@@ -33,6 +37,10 @@ const Home = ({ dashboardUrl, alternates }: HomeProps) => {
             </div>
 
             <Features />
+
+            <Pricing plans={plans} dashboardUrl={dashboardUrl} />
+
+            <Faq dashboardUrl={dashboardUrl} />
         </>
     );
 };

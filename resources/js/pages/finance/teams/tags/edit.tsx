@@ -3,8 +3,15 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import tags from "@/routes/finance/teams/tags";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
@@ -30,8 +37,8 @@ export default function Edit({ tag }: PageProps) {
     return (
         <Modal>
             {({ rootProps }) => (
-                <Sheet {...rootProps}>
-                    <SheetContent>
+                <Dialog {...rootProps}>
+                    <DialogContent>
                         <Form
                             {...tags.update.form({ team: user?.current_team?.slug ?? "", tag: tag.id })}
                             className="contents"
@@ -44,24 +51,24 @@ export default function Edit({ tag }: PageProps) {
                         >
                             {(formProps) => (
                                 <Fragment>
-                                    <SheetHeader>
-                                        <SheetTitle>{t("Edit :name", { name: t("tag") })}</SheetTitle>
-                                        <SheetDescription>{t("Edit the tag.")}</SheetDescription>
-                                    </SheetHeader>
-                                    <div className="min-h-0 flex-1 overflow-y-auto px-4">
+                                    <DialogHeader>
+                                        <DialogTitle>{t("Edit :name", { name: t("tag") })}</DialogTitle>
+                                        <DialogDescription>{t("Edit the tag.")}</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="flex-1">
                                         <Fields defaultValues={tag} {...formProps} />
                                     </div>
-                                    <SheetFooter>
+                                    <DialogFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
                                             {formProps.processing && <Spinner data-icon="inline-start" />}
                                             {t("Save")}
                                         </Button>
-                                    </SheetFooter>
+                                    </DialogFooter>
                                 </Fragment>
                             )}
                         </Form>
-                    </SheetContent>
-                </Sheet>
+                    </DialogContent>
+                </Dialog>
             )}
         </Modal>
     );

@@ -72,7 +72,7 @@ export const Balances = () => {
     };
 
     return (
-        <section id="product" className="relative">
+        <section id="product" className="relative scroll-mt-28">
             <m.div
                 initial={reducedMotion ? false : { opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -86,7 +86,7 @@ export const Balances = () => {
                     </h2>
                     <p className="text-muted-foreground max-w-[44ch]">
                         {t(
-                            "Every account keeps its own currency — see your euros, dollars and bitcoin exactly as they are, not blended into one misleading total.",
+                            "Every account keeps its own currency — see your euros, dollars and crypto exactly as they are, not blended into one misleading total.",
                         )}
                     </p>
                 </div>

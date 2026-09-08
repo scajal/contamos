@@ -22,7 +22,7 @@ const FEATURES: Array<Feature> = [
     {
         icon: CoinsIcon,
         title: "Accounts that hold more than one currency.",
-        body: "Bank, cash or crypto — each account keeps your euros, dollars and bitcoin side by side, with its own balance for each one.",
+        body: "Bank, cash or crypto — each account holds every currency you enable on it side by side, with its own balance for each one.",
         span: "sm:col-span-2 lg:col-span-6",
         banner: true,
     },
@@ -79,7 +79,7 @@ export const Features = () => {
     const reducedMotion = useReducedMotion();
 
     return (
-        <section id="features" className="relative bg-zinc-950 text-zinc-50">
+        <section id="features" className="relative scroll-mt-28 bg-zinc-950 text-zinc-50">
             <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
                 <m.div
                     initial={reducedMotion ? false : { opacity: 0, y: 24 }}
