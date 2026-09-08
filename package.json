@@ -2,7 +2,7 @@
     "$schema": "https://www.schemastore.org/package.json",
     "name": "@qube/hormiga",
     "private": true,
-    "description": "Hormiga, your personal finance manager.",
+    "description": "Contamos, one shared ledger for everyone you share money with.",
     "type": "module",
     "scripts": {
         "build": "vp build",

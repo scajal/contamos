@@ -28,8 +28,8 @@ const FEATURES: Array<Feature> = [
     },
     {
         icon: UsersIcon,
-        title: "One ledger, the whole household.",
-        body: "Invite whoever lives with you by email. Everyone writes to the same ledger and sees who recorded what.",
+        title: "One ledger, everyone writing to it.",
+        body: "Invite whoever shares money with you by email. Everyone writes to the same ledger and sees who recorded what.",
         span: "lg:col-span-2",
     },
     {
@@ -96,7 +96,7 @@ export const Features = () => {
                     </h2>
                     <p className="max-w-[54ch] text-lg text-zinc-400">
                         {t(
-                            "Not a spreadsheet with a nicer skin. Accounts that speak several currencies, a ledger the whole household writes to, and every rate kept exactly as it was.",
+                            "Not a spreadsheet with a nicer skin. Accounts that speak several currencies, a ledger everyone writes to, and every rate kept exactly as it was.",
                         )}
                     </p>
                 </m.div>
@@ -136,9 +136,7 @@ export const Features = () => {
                                 >
                                     {t(feature.title)}
                                 </h3>
-                                <p className="max-w-[62ch] text-sm leading-relaxed text-zinc-400">
-                                    {t(feature.body)}
-                                </p>
+                                <p className="max-w-[62ch] text-sm leading-relaxed text-zinc-400">{t(feature.body)}</p>
                             </div>
                         </m.article>
                     ))}

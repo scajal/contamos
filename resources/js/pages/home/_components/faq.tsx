@@ -20,7 +20,7 @@ export const QUESTIONS: Array<{ question: string; answer: string }> = [
         answer: "No. The free plan stays free, and nothing asks for a card until you decide you want Pro.",
     },
     {
-        question: "How do I share it with the person I live with?",
+        question: "How do I share it with someone?",
         answer: "Invite them by email. The link works for seven days, and once they accept you both write to the same ledger and can see who recorded what.",
     },
     {
@@ -99,12 +99,8 @@ export const Faq = ({ dashboardUrl }: FaqProps) => {
                     className="mx-auto mt-14 max-w-3xl rounded-none border-0 sm:mt-16"
                 >
                     {QUESTIONS.map(({ question, answer }) => (
-                        <AccordionItem
-                            key={question}
-                            value={question}
-                            className="border-b data-open:bg-transparent"
-                        >
-                            <AccordionTrigger className="**:data-[slot=accordion-trigger-icon]:hidden group items-center px-0 py-6 hover:no-underline">
+                        <AccordionItem key={question} value={question} className="border-b data-open:bg-transparent">
+                            <AccordionTrigger className="group items-center px-0 py-6 hover:no-underline **:data-[slot=accordion-trigger-icon]:hidden">
                                 <span className="font-heading text-lg font-semibold tracking-tight sm:text-xl">
                                     {t(question)}
                                 </span>

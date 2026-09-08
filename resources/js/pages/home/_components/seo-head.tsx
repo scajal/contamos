@@ -28,7 +28,7 @@ export const SeoHead = ({ alternates, plans }: { alternates: Alternates; plans: 
 
     const title = t("Money, shared. Every currency, one ledger.");
     const description = t(
-        "Hormiga keeps your household's accounts, cards and currencies in one shared ledger, so you always know what you actually have. Free to start, no card required.",
+        "Contamos keeps your accounts, cards and currencies in one shared ledger, whoever you share money with, so you always know what you actually have. Free to start, no card required.",
     );
 
     /**
@@ -71,13 +71,13 @@ export const SeoHead = ({ alternates, plans }: { alternates: Alternates; plans: 
         "@graph": [
             {
                 "@type": "Organization",
-                name: "Hormiga",
+                name: "Contamos",
                 url: alternates.default,
                 logo: `${alternates.default}/images/iso-logo.png`,
             },
             {
                 "@type": "WebApplication",
-                name: "Hormiga",
+                name: "Contamos",
                 applicationCategory: "FinanceApplication",
                 operatingSystem: "Web",
                 url: canonical,

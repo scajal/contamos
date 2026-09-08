@@ -46,11 +46,13 @@ export const Footer = ({ alternates, dashboardUrl, appearance, onAppearanceChang
                 <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between sm:gap-16">
                     <div className="flex max-w-[38ch] flex-col gap-3">
                         <a href={home} className="flex w-fit items-center gap-2">
-                            <img src="/images/iso-logo.png" alt="Hormiga" width={24} height={24} className="size-6" />
-                            <span className="font-heading text-base font-semibold tracking-tight">Hormiga</span>
+                            <img src="/images/iso-logo.png" alt="Contamos" width={24} height={24} className="size-6" />
+                            <span className="font-heading text-base font-semibold tracking-tight">Contamos</span>
                         </a>
                         <p className="text-muted-foreground text-sm leading-relaxed">
-                            {t("One shared ledger for the whole household, in every currency your money actually lives in.")}
+                            {t(
+                                "One shared ledger for everyone you share money with, in every currency it actually lives in.",
+                            )}
                         </p>
                     </div>
 
@@ -74,7 +76,7 @@ export const Footer = ({ alternates, dashboardUrl, appearance, onAppearanceChang
                 </div>
 
                 <div className="mt-12 flex flex-col-reverse items-start gap-4 border-t pt-8 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-muted-foreground text-sm">© {new Date().getFullYear()} Hormiga</p>
+                    <p className="text-muted-foreground text-sm">© {new Date().getFullYear()} Contamos</p>
 
                     <div className="flex items-center gap-2">
                         <LanguageSwitcher alternates={alternates} />

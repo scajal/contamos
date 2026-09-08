@@ -1,12 +1,13 @@
-# Hormiga
+# Contamos
 
-Hormiga is a personal finance manager for households sharing money across
-multiple currencies. Teams keep accounts, cards and cash in one shared
-ledger, log income and expense transactions with tags, and see balances
-per currency, including fiat and bitcoin, without converting everything
-into a single blended number. Currency and crypto exchange rates sync
-automatically. Free plan available, no card required; Pro removes the
-free plan's account, member and transaction limits.
+Contamos is a shared ledger for people who share money: couples, flatmates,
+families, side projects or any group with a common pot. A ledger keeps
+accounts, cards and cash across multiple currencies, logs income and
+expense transactions with tags, and shows balances per currency, fiat and
+crypto alike, without converting everything into a single blended number.
+Every transaction stores the exchange rate of the day it happened. Free
+plan available, no card required; Pro removes the free plan's account,
+member and transaction limits.
 
 - Homepage (English): http://127.0.0.1:8000/en
 - Homepage (Spanish): http://127.0.0.1:8000/es

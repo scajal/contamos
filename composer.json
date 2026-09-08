@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "qube/hormiga",
     "type": "project",
-    "description": "Hormiga, your personal finance manager.",
+    "description": "Contamos, one shared ledger for everyone you share money with.",
     "license": "UNLICENSED",
     "require": {
         "php": "^8.3",

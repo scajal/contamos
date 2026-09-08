@@ -69,7 +69,7 @@ export const Pricing = ({ plans, dashboardUrl }: PricingProps) => {
 
     const proFeatures = [
         t("Unlimited accounts"),
-        t("Unlimited people in the household"),
+        t("Unlimited people"),
         t("Unlimited transactions"),
         t("Everything in the free plan"),
         t("Cancel whenever you want"),
@@ -91,7 +91,7 @@ export const Pricing = ({ plans, dashboardUrl }: PricingProps) => {
                         {t("Pricing")}
                     </span>
                     <h2 className="font-heading max-w-[18ch] text-[clamp(2rem,4vw,3.25rem)] leading-[1.05] font-semibold tracking-tight text-balance">
-                        {t("Start free. Pay only when your household outgrows it.")}
+                        {t("Start free. Pay only when your group outgrows it.")}
                     </h2>
 
                     <CycleToggle cycle={cycle} onChange={setCycle} saving={saving} />
@@ -116,7 +116,7 @@ export const Pricing = ({ plans, dashboardUrl }: PricingProps) => {
                         name={t("Pro")}
                         price={price ?? t("See pricing")}
                         cadence={price ? (cycle === "monthly" ? t("per month") : t("per year")) : null}
-                        description={t("For a household that shares everything, in every currency.")}
+                        description={t("For everyone who shares money, in every currency.")}
                         features={proFeatures}
                         href={href}
                         cta={t("Start")}
@@ -261,13 +261,7 @@ const PlanCard = ({
             ))}
         </ul>
 
-        <Button
-            className="mt-auto w-full"
-            nativeButton={false}
-            render={<a href={href} />}
-            size="lg"
-            variant={variant}
-        >
+        <Button className="mt-auto w-full" nativeButton={false} render={<a href={href} />} size="lg" variant={variant}>
             {cta}
         </Button>
     </m.article>

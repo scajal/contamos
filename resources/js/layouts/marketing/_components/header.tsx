@@ -37,8 +37,8 @@ export const Header = ({ alternates, dashboardUrl, appearance, onAppearanceChang
                     href={alternates[currentLocale() as "en" | "es"] ?? alternates.en}
                     className="flex shrink-0 items-center gap-2"
                 >
-                    <img src="/images/iso-logo.png" alt="Hormiga" width={24} height={24} className="size-6" />
-                    <span className="font-heading text-base font-semibold tracking-tight">Hormiga</span>
+                    <img src="/images/iso-logo.png" alt="Contamos" width={24} height={24} className="size-6" />
+                    <span className="font-heading text-base font-semibold tracking-tight">Contamos</span>
                 </a>
 
                 <div className="flex items-center gap-1.5 sm:gap-2">
