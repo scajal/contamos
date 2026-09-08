@@ -17,6 +17,10 @@ Place parent-owned Models, Controllers, Actions, and Requests under a parent seg
 
 Query and persist with Eloquent in controllers and Actions. Do not add Repositories, Queries, Data/DTO classes, or domain Events/Listeners.
 
+## No Gates or Policies
+
+Do not add Policy classes or `Gate::define`. Do not call `$this->authorize()`, `Gate::authorize()`, `$user->can()`, `can` middleware, `#[Authorize]`, or Blade `@can`.
+
 ## Method-inject collaborators
 
 Method-inject Actions and other collaborators. Use `#[CurrentUser]` and `#[RouteParameter]` when the container should resolve the user or a route model. Do not call `app()`, `resolve()`, or `App::make()` in module code.
@@ -40,3 +44,7 @@ Eager-load relations with per-query `->with()` or `->load()`. Do not set model-l
 ## CarbonImmutable dates
 
 Application dates are CarbonImmutable. Typehint and construct with CarbonImmutable; do not introduce mutable Carbon.
+
+## Typed config helper
+
+Read config with `config()->string(...)`. Do not use `Config::` or untyped `config('key')` for string values.

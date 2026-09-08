@@ -1,6 +1,6 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
-    "name": "@qube/hormiga",
+    "name": "@qube/contamos",
     "private": true,
     "description": "Contamos, one shared ledger for everyone you share money with.",
     "type": "module",
