@@ -3,6 +3,23 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+/* Switzer, the heading face, self-hosted from Fontshare (ITF Free Font License, see resources/fonts/switzer/LICENSE.txt). */
+@font-face {
+    font-family: "Switzer";
+    src: url("../fonts/switzer/Switzer-Variable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Switzer";
+    src: url("../fonts/switzer/Switzer-VariableItalic.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @source '../views';

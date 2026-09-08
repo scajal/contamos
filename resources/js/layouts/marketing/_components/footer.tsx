@@ -1,5 +1,6 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
+import { BrandMark } from "@/components/brand-mark";
 import { login } from "@/routes";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 
@@ -46,8 +47,8 @@ export const Footer = ({ alternates, dashboardUrl, appearance, onAppearanceChang
                 <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between sm:gap-16">
                     <div className="flex max-w-[38ch] flex-col gap-3">
                         <a href={home} className="flex w-fit items-center gap-2">
-                            <img src="/images/iso-logo.png" alt="Contamos" width={24} height={24} className="size-6" />
-                            <span className="font-heading text-base font-semibold tracking-tight">Contamos</span>
+                            <BrandMark />
+                            <span className="font-heading text-base font-semibold tracking-tight">contamos</span>
                         </a>
                         <p className="text-muted-foreground text-sm leading-relaxed">
                             {t(

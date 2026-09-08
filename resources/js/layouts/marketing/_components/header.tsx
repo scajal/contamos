@@ -1,6 +1,7 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ArrowRightIcon } from "lucide-react";
 
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { login } from "@/routes";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
@@ -37,8 +38,8 @@ export const Header = ({ alternates, dashboardUrl, appearance, onAppearanceChang
                     href={alternates[currentLocale() as "en" | "es"] ?? alternates.en}
                     className="flex shrink-0 items-center gap-2"
                 >
-                    <img src="/images/iso-logo.png" alt="Contamos" width={24} height={24} className="size-6" />
-                    <span className="font-heading text-base font-semibold tracking-tight">Contamos</span>
+                    <BrandMark />
+                    <span className="font-heading text-base font-semibold tracking-tight">contamos</span>
                 </a>
 
                 <div className="flex items-center gap-1.5 sm:gap-2">

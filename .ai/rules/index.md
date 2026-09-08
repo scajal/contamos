@@ -19,6 +19,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | resources/js/pages/finance/teams/** | .ai/rules/finance-teams.md |
 | resources/js/pages/finance/** | .ai/rules/finance.md |
 | app/Modules/Core/Identity/Models/Team.php | .ai/rules/identity-models.md |
+| resources/js/layouts/marketing/**, resources/js/components/brand-mark.tsx, public/favicon.svg, public/images/** | .ai/rules/images.md |
 | resources/js/**, resources/js/**/*.tsx | .ai/rules/js.md |
 | lang/*.json, lang/*/validation.php | .ai/rules/lang.md |
 | resources/js/pages/home/**, resources/js/layouts/marketing/**, lang/*.json | .ai/rules/marketing.md |
