@@ -17,3 +17,6 @@ Wrap deferred index listings in `<Deferred data="…" fallback={<Skeleton… />}
 ## Stacked Item rows need outline for dividers
 
 Item defaults to border-transparent, so `border-b` on stacked rows is invisible. For Item lists inside a bordered container (accounts, tags, currency/tag pickers), use variant="outline" with `rounded-none border-0 border-b last:border-b-0` — the same pattern as accounts/index and tags/index. Do not rely on TableRow borders after migrating a list to Item.
+
+## Sheet body padding matches header and footer
+Inertia modal Sheets use SheetHeader/SheetFooter (p-6). The scrollable body between them is px-6, not px-4, so fields line up with the title and actions. Do not change the mobile sidebar Sheet (p-0).

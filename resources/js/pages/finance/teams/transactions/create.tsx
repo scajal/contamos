@@ -68,7 +68,7 @@ export default function Create({ accounts, tags, type: initialType }: PageProps)
                                                   : t("Record money leaving an account.")}
                                         </SheetDescription>
                                     </SheetHeader>
-                                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4">
+                                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
                                         <Fields
                                             accounts={accounts}
                                             defaultValues={{ type: initialType }}

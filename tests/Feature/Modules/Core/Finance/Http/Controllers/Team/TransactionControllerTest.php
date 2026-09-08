@@ -566,8 +566,38 @@ describe('show', function (): void {
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('finance/teams/transactions/show')
                 ->where('transaction.id', $transaction->getKey())
+                ->where('transaction.user.id', $user->getKey())
+                ->where('transaction.user.name', $user->name)
+                ->where('transaction.account.name', $account->name)
+                ->has('transaction.currency')
                 ->has('transaction.tags', 1)
                 ->where('transaction.tags.0.id', $tag->getKey()));
+    });
+
+    it('renders the transaction modal when nobody is recorded', function (): void {
+        [, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $transaction = Transaction::factory()->income()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'description' => null,
+            'team_id' => $team->getKey(),
+            'user_id' => null,
+        ]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.transactions.show', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->component('finance/teams/transactions/show')
+                ->where('transaction.id', $transaction->getKey())
+                ->where('transaction.user', null)
+                ->where('transaction.description', null)
+                ->has('transaction.tags', 0));
     });
 
     it('returns 404 when the transaction belongs to another team', function (): void {
