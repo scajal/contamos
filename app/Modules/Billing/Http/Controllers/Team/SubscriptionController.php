@@ -3,7 +3,6 @@
 namespace App\Modules\Billing\Http\Controllers\Team;
 
 use App\Modules\Billing\Enums\BillingCycle;
-use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Identity\Models\Team;
 use Illuminate\Http\RedirectResponse;
@@ -19,26 +18,7 @@ class SubscriptionController
      */
     public function index(Team $team): Response
     {
-        // The current plan of the team.
-        $plan = $team->plan();
-
-        // Get the current subscription of the team
-        // to the plan.
-        /** @var \App\Modules\Billing\Models\Subscription\SubscriptionItem|null $subscription */
-        $subscription = $team->subscription()?->items()->first();
-
         return Inertia::render('billing/teams/subscriptions/index', [
-            'plan' => [
-                'features' => collect($plan->features())->map(fn (Feature $feature): array => [
-                    'limit' => $feature->limitOn($plan),
-                    'name' => $feature->getLabel(),
-                    'usage' => $feature->usage($team),
-                    'value' => $feature->value,
-                ]),
-                'name' => $plan->getLabel(),
-                'subscription' => $subscription ? ['status' => $subscription->status] : null,
-                'value' => $team->plan()->value,
-            ],
             'team' => $team,
             'transactions' => Inertia::defer(
                 fn (): LengthAwarePaginator => $team

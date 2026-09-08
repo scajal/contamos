@@ -30,9 +30,8 @@ enum Feature: string implements HasLabel
     public function enabled(Team $team): bool
     {
         return match ($this) {
-            // For now, all the features are enabled if the limit is null
-            // or if the current usage is less than the limit.
-            default => (is_int($limit = $this->limitOn($team->plan()))) ? $this->usage($team) < $limit : true,
+            // For now, all the features are enabled.
+            default => true,
         };
     }
 

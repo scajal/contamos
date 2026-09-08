@@ -51,26 +51,12 @@ import { Pagination as PaginationComponent, PaginationContent, PaginationItem } 
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import subscriptions from "@/routes/billing/teams/subscriptions";
-import { Feature } from "@/types/app/modules/billing/enums/feature";
-import { type Plan as TPlan } from "@/types/app/modules/billing/enums/plan";
 import { Transaction } from "@/types/app/modules/billing/models/transaction";
 import { Team } from "@/types/app/modules/core/identity/models/team";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 
 type PageProps = {
-    plan: {
-        features: Array<{
-            limit: number;
-            name: string;
-            usage: number;
-            value: Feature;
-        }>;
-        name: string;
-        subscription?: {
-            status: string;
-        };
-        value: TPlan;
-    };
+    plan: any;
     team: Team;
     transactions: LengthAwarePaginator<Transaction>;
 };
@@ -84,7 +70,7 @@ const Index = () => {
             {/** Content */}
             <div className="flex flex-col gap-8">
                 {/** Current plan */}
-                <Plan />
+                {/** <Plan /> */}
                 {/** Transactions */}
                 <Transactions />
             </div>
@@ -131,7 +117,7 @@ const Plan = () => {
 
             <Item variant="muted">
                 <ItemContent>
-                    {plan.features.map((feature) => (
+                    {plan?.features?.map((feature) => (
                         <Item key={feature.value}>
                             <ItemMedia variant="icon">
                                 <CheckCircleIcon className="text-primary" />

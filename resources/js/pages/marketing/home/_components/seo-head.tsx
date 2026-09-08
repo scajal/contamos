@@ -2,7 +2,6 @@ import { Head } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
-import type { Plans } from "@/types/app/modules/marketing/plans";
 
 import { QUESTIONS } from "./faq";
 
@@ -15,45 +14,47 @@ import { QUESTIONS } from "./faq";
  * from — the FAQ list and the Paddle-previewed prices — so what search
  * engines are told can never drift from what a visitor is shown.
  */
-export const SeoHead = ({ alternates, plans }: { alternates: Alternates; plans: Plans }) => {
+export const SeoHead = ({ alternates }: { alternates: Alternates }) => {
     /**
      * Translate the provided string to the current locale.
      */
     const { t, currentLocale } = useLaravelReactI18n();
 
-    const locale = currentLocale();
-    const canonical = alternates[locale as "en" | "es"] ?? alternates.en;
-    const ogLocale = locale === "es" ? "es_ES" : "en_US";
-    const alternateOgLocale = locale === "es" ? "en_US" : "es_ES";
+    /**
+     * The canonical URL for the page.
+     */
+    const canonical = alternates[currentLocale() as "en" | "es"] ?? alternates.en;
 
+    /**
+     * The locale for the Open Graph tags.
+     */
+    const ogLocale = currentLocale() === "es" ? "es_ES" : "en_US";
+
+    /**
+     * The alternate locale for the Open Graph tags.
+     */
+    const alternateOgLocale = currentLocale() === "es" ? "en_US" : "es_ES";
+
+    /**
+     * The title for the page.
+     */
     const title = t("Money, shared. Every currency, one ledger.");
+
+    /**
+     * The description for the page.
+     */
     const description = t(
         "Contamos keeps your accounts, cards and currencies in one shared ledger, whoever you share money with, so you always know what you actually have. Free to start, no card required.",
     );
 
     /**
-     * The free plan is always offered; Pro joins it only when Paddle
-     * actually returned a price, so a failed preview publishes no
-     * amount rather than a wrong one.
+     * The offers for the page.
      */
-    const paidOffers =
-        plans.pro.monthlyAmount === null
-            ? []
-            : [
-                  {
-                      "@type": "Offer",
-                      name: "Pro",
-                      price: (plans.pro.monthlyAmount / 100).toFixed(2),
-                      priceCurrency: "USD",
-                      url: canonical,
-                  },
-              ];
+    const allOffers = [{ "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD", url: canonical }];
 
-    const allOffers = [
-        { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD", url: canonical },
-        ...paidOffers,
-    ];
-
+    /**
+     * The offers for the page.
+     */
     const offers =
         allOffers.length === 1
             ? allOffers[0]
@@ -66,6 +67,9 @@ export const SeoHead = ({ alternates, plans }: { alternates: Alternates; plans: 
                   offers: allOffers,
               };
 
+    /**
+     * The JSON-LD for the page.
+     */
     const jsonLd = {
         "@context": "https://schema.org",
         "@graph": [
@@ -97,12 +101,10 @@ export const SeoHead = ({ alternates, plans }: { alternates: Alternates; plans: 
     return (
         <Head title={title}>
             <meta name="description" content={description} />
-
             <link rel="canonical" href={canonical} />
             <link rel="alternate" hrefLang="en" href={alternates.en} />
             <link rel="alternate" hrefLang="es" href={alternates.es} />
             <link rel="alternate" hrefLang="x-default" href={alternates.default} />
-
             <meta property="og:type" content="website" />
             <meta property="og:title" content={title} />
             <meta property="og:description" content={description} />
@@ -110,9 +112,7 @@ export const SeoHead = ({ alternates, plans }: { alternates: Alternates; plans: 
             <meta property="og:locale" content={ogLocale} />
             <meta property="og:locale:alternate" content={alternateOgLocale} />
             <meta property="og:image" content={`${alternates.default}/images/og.png`} />
-
             <meta name="twitter:card" content="summary_large_image" />
-
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         </Head>
     );

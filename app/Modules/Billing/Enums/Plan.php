@@ -24,17 +24,7 @@ enum Plan: string implements HasLabel
     public function features(): array
     {
         return [
-            // This feature indicates if the
-            // team is currently able to add accounts.
-            Feature::AddAccounts,
-
-            // This feature indicates if the
-            // team is currently able to add members.
-            Feature::AddMembers,
-
-            // This feature indicates if the
-            // team is currently able to add transactions.
-            Feature::AddTransactions,
+            //
         ];
     }
 
