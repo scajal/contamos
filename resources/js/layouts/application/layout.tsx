@@ -12,6 +12,7 @@ import {
     LogOutIcon,
     MailIcon,
     PlusIcon,
+    SettingsIcon,
     ShieldCheckIcon,
     TagIcon,
     UsersIcon,
@@ -56,6 +57,7 @@ import transactions from "@/routes/finance/teams/transactions";
 import teams from "@/routes/identity/teams";
 import invitations from "@/routes/identity/teams/invitations";
 import members from "@/routes/identity/teams/members";
+import settings from "@/routes/identity/teams/settings";
 
 const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/accounts", title: "Accounts" },
@@ -64,6 +66,7 @@ const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/tags", title: "Tags" },
     { prefix: "identity/teams/invitations", title: "Invitations" },
     { prefix: "identity/teams/members", title: "Members" },
+    { prefix: "identity/teams/settings", title: "Configuration" },
 ];
 
 /**
@@ -271,6 +274,14 @@ const Sidebar = () => {
                             >
                                 <MailIcon />
                                 <span>{t("Invitations")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                render={<Link href={settings.index.url({ team: user?.current_team?.slug ?? "" })} />}
+                            >
+                                <SettingsIcon />
+                                <span>{t("Configuration")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>

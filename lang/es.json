@@ -1,4 +1,10 @@
 {
+    "Changing the name also changes the slug, so the team's links will change.": "Cambiar el nombre también cambia el slug, por lo que los enlaces del equipo cambiarán.",
+    "Configuration": "Configuración",
+    "Edit the team.": "Edita el nombre del equipo.",
+    "Manage your team's details.": "Administra los datos de tu equipo.",
+    "Slug": "Slug",
+    "The name and address of your team.": "El nombre y la dirección de tu equipo.",
     "$0": "$0",
     "Accounts per team": "Cuentas por equipo",
     "Activating your subscription…": "Activando tu suscripción…",

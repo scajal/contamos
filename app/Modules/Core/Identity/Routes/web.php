@@ -103,4 +103,22 @@ Route::as('identity.teams.')
         Route::delete('invitations/{invitation}', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'destroy'])
             ->name('invitations.destroy')
             ->scopeBindings();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Setting routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the team settings.
+        |
+        */
+
+        Route::get('settings', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'index'])
+            ->name('settings.index');
+
+        Route::get('settings/edit', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'edit'])
+            ->name('settings.edit');
+
+        Route::patch('settings', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'update'])
+            ->name('settings.update');
     });

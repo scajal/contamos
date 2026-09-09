@@ -1,4 +1,10 @@
 {
+    "Changing the name also changes the slug, so the team's links will change.": "Changing the name also changes the slug, so the team's links will change.",
+    "Configuration": "Configuration",
+    "Edit the team.": "Edit the team.",
+    "Manage your team's details.": "Manage your team's details.",
+    "Slug": "Slug",
+    "The name and address of your team.": "The name and address of your team.",
     "Accounts per team": "Accounts per team",
     "Activating your subscription…": "Activating your subscription…",
     "(and :count more error)": "(and :count more error)",
