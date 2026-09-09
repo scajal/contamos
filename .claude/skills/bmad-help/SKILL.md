@@ -1,6 +1,6 @@
 ---
 name: bmad-help
-description: 'Analyzes current state and user query to answer BMad questions or recommend the next skill(s) to use. Use when user asks for help, bmad help, what to do next, or what to start with in BMad'
+description: "Analyzes current state and user query to answer BMad questions or recommend the next skill(s) to use. Use when user asks for help, bmad help, what to do next, or what to start with in BMad"
 ---
 
 # BMad Help
@@ -37,19 +37,23 @@ module,skill,display-name,menu-code,description,action,args,phase,preceded-by,fo
 ```
 
 **Phases** determine the high-level flow:
+
 - `anytime` — available regardless of workflow state
 - Skills group into folders (`plan`, `ship`; some modules use numbered phases) and flow in order; naming varies by module
 
 **Sequencing** determines recommended ordering within and across phases (these are soft suggestions, not hard gates — see `required` for gating):
+
 - `preceded-by` — skills that should ideally complete before this one
 - `followed-by` — skills that should ideally run after this one
 - Format: `skill-name` for single-action skills, `skill-name:action` for multi-action skills
 
 **Required gates**:
+
 - `required=true` items must complete before the user can meaningfully proceed to later phases
 - A phase with no required items is entirely optional — recommend it but be clear about what's actually required next
 
 **Completion detection**:
+
 - Search resolved output paths for `outputs` patterns and fuzzy-match found files to catalog rows
 - Treat a matching output as evidence that the skill started, not that it completed
 - Inspect matched artifacts for explicit completion evidence, such as final status or finalization markers; a draft or incomplete marker means the skill is still in progress
@@ -61,6 +65,7 @@ module,skill,display-name,menu-code,description,action,args,phase,preceded-by,fo
 ## Response Format
 
 For each recommended item, present:
+
 - `[menu-code]` **Display name** — e.g., "[PR] PRD"
 - Skill name in backticks — e.g., `bmad-prd`
 - For multi-action skills: action invocation context — e.g., "dev lets run a code review!"

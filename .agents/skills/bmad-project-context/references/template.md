@@ -13,7 +13,7 @@ Terse imperative lines under plain headings. No prose beyond Orientation, no int
 
 ## Worked example
 
-````markdown
+```markdown
 <!-- bmad:context -->
 <!-- Verified 2026-08-08 against a1b2c3d. Managed by bmad-project-context; edits inside this block are replaced on refresh. Keep anything you want preserved outside the markers. -->
 
@@ -50,6 +50,6 @@ Payment processing for Acme storefronts. TypeScript/Node, pnpm, Postgres. Planni
 - Use vitest matchers, not jest — agents repeatedly add jest syntax here.
 
 <!-- /bmad:context -->
-````
+```
 
 Fill the provenance line with the real date and the commit SHA verified against. Refresh diffs from that SHA.

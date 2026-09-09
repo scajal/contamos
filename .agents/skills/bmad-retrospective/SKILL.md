@@ -19,7 +19,7 @@ Every finding you report carries a source reference (file, line, commit, or log)
 
 Interactive by default. With `-H`/`--headless`: skip every confirmation, take the epic from the invocation (falling back to detection only if none was supplied), never open the team discussion, render the verdict on the evidence alone, and record each assumption made without the user (which epic was selected, the machine verdict, each proposed item) into the retrospective document's Assumptions section so the audit trail survives. The Phase 4 acceptance fail-safe still applies in headless runs.
 
-For automation, `-H <epic>` — an explicit epic in headless mode — is the stable orchestrator-facing interface. Pass the same number to `detect-epic --epic <N>` so the unfinished-story gate is script-backed (see Inputs). Epic auto-detection is a human convenience, not an automation contract: unflagged `detect-epic` returns the highest epic with *any* `done` story, and stories-mode projects have no `sprint-status.yaml` to detect from.
+For automation, `-H <epic>` — an explicit epic in headless mode — is the stable orchestrator-facing interface. Pass the same number to `detect-epic --epic <N>` so the unfinished-story gate is script-backed (see Inputs). Epic auto-detection is a human convenience, not an automation contract: unflagged `detect-epic` returns the highest epic with _any_ `done` story, and stories-mode projects have no `sprint-status.yaml` to detect from.
 
 ## On Activation
 
@@ -34,14 +34,14 @@ Run these in order before the retrospective begins:
 
 ## Inputs
 
-| Input | Where | Use |
-|-------|-------|-----|
-| epic | invocation argument, or detected from sprint status | which epic to retro |
-| spec folder | invocation argument, or found under the spec roots | the stories-mode epic: `SPEC.md`, ordered `stories.yaml`, `stories/<id>-*.md` |
-| sprint status | `{implementation_artifacts}/sprint-status.yaml` | epic detection + final status update |
-| architecture / prd | `{planning_artifacts}/*architecture*`, `*prd*` | context for judging as-built vs intended |
-| previous retro (optional) | `{implementation_artifacts}/**/epic-{{prev}}-retro-*.md` | check whether last epic's actions landed |
-| session logs (optional) | conversation/session records for the epic's stories | process lessons; record the gap when absent |
+| Input                     | Where                                                    | Use                                                                           |
+| ------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| epic                      | invocation argument, or detected from sprint status      | which epic to retro                                                           |
+| spec folder               | invocation argument, or found under the spec roots       | the stories-mode epic: `SPEC.md`, ordered `stories.yaml`, `stories/<id>-*.md` |
+| sprint status             | `{implementation_artifacts}/sprint-status.yaml`          | epic detection + final status update                                          |
+| architecture / prd        | `{planning_artifacts}/*architecture*`, `*prd*`           | context for judging as-built vs intended                                      |
+| previous retro (optional) | `{implementation_artifacts}/**/epic-{{prev}}-retro-*.md` | check whether last epic's actions landed                                      |
+| session logs (optional)   | conversation/session records for the epic's stories      | process lessons; record the gap when absent                                   |
 
 An epic reaches this skill in one of two shapes, and they are peers. **Sprint mode** reads `sprint-status.yaml`. **Stories mode** reads a spec folder holding `SPEC.md`, an ordered `stories.yaml`, and `stories/<id>-*.md` artifacts — the shape an unattended run leaves behind. Resolve which applies first: a named folder is stories mode whether or not sprint status exists; a named epic number is sprint mode; with neither, use sprint mode when `sprint-status.yaml` exists, and otherwise look for spec folders under `{output_folder}/specs`, `{planning_artifacts}`, and `{implementation_artifacts}`. Ask the user which to retro when there is more than one, and never choose silently; headless, stop and require an explicit folder.
 
@@ -54,7 +54,7 @@ Determine the epic and its unfinished-story list from `sprint_status.py detect-e
 
 If the script exits non-zero it emits `{"ok": false, "error": ...}` instead of a detection — the normal path for a stories-mode project with no `sprint-status.yaml`, and for a file that does not parse: surface that error verbatim — or, if the script produced no JSON at all, whatever it wrote to stderr — and ask the user which epic to retro; headless, stop and report. Without a readable sprint-status file there is no `pending_stories` list; record that the completeness check did not run and continue only if the user (or headless Assumptions trail) accepts proceeding without it.
 
-Then check the epic is actually finished before Phase 1. A successful detect carries `pending_stories` — the selected epic's story keys whose status is not `done`, in file order, scoped to that epic alone (an unfinished story in some *other* epic is out of scope for this retrospective). When the list is non-empty, interactively list those stories and ask whether to retro an unfinished epic: if the user declines, stop and report — do not enter Phase 1; if they accept, record the stories they accepted proceeding over in the document's Epic summary. Headless, proceed and record the same list in the Assumptions section — do not invent a confirmation. Either way the list sits in the document, and Phase 4's machine verdict is **rejected** when any story remained unfinished (see `references/acceptance-verdict.md`); a human may override interactively.
+Then check the epic is actually finished before Phase 1. A successful detect carries `pending_stories` — the selected epic's story keys whose status is not `done`, in file order, scoped to that epic alone (an unfinished story in some _other_ epic is out of scope for this retrospective). When the list is non-empty, interactively list those stories and ask whether to retro an unfinished epic: if the user declines, stop and report — do not enter Phase 1; if they accept, record the stories they accepted proceeding over in the document's Epic summary. Headless, proceed and record the same list in the Assumptions section — do not invent a confirmation. Either way the list sits in the document, and Phase 4's machine verdict is **rejected** when any story remained unfinished (see `references/acceptance-verdict.md`); a human may override interactively.
 
 ## Working state and resumption
 
@@ -86,9 +86,9 @@ Skip by default; never runs headless. When the user asks to "discuss it as a tea
 
 ### Phase 4 — Decide
 
-- **Action items** — compile fix-now findings and process lessons into specific, owned action items. Fixes and spec reconciliations are *proposed here*, not auto-applied; the human decides what to execute.
-- **Acceptance verdict** — judge the final state against the epic's declared acceptance criteria (profile it from the diff and stories if none were declared): **accepted**, **accepted-with-open-items**, or **rejected** — one spelling, everywhere a machine reads it. Unfinished stories in `pending_stories` force the machine verdict to **rejected**. A human decision always overrides. An epic that fails its criteria with no human decision is recorded as *not accepted* — never as silently accepted. Load `references/acceptance-verdict.md` for the rubric, the finding-routing dispositions, and the previous-retro follow-through record — the per-item evidence Phase 5's status offer reads.
+- **Action items** — compile fix-now findings and process lessons into specific, owned action items. Fixes and spec reconciliations are _proposed here_, not auto-applied; the human decides what to execute.
+- **Acceptance verdict** — judge the final state against the epic's declared acceptance criteria (profile it from the diff and stories if none were declared): **accepted**, **accepted-with-open-items**, or **rejected** — one spelling, everywhere a machine reads it. Unfinished stories in `pending_stories` force the machine verdict to **rejected**. A human decision always overrides. An epic that fails its criteria with no human decision is recorded as _not accepted_ — never as silently accepted. Load `references/acceptance-verdict.md` for the rubric, the finding-routing dispositions, and the previous-retro follow-through record — the per-item evidence Phase 5's status offer reads.
 
 ### Phase 5 — Finalize
 
-Finalize the retrospective document and update sprint status. Load `references/retro-document.md` for the document's sections and the exact `sprint_status.py update` invocation that marks the retro key `done`, appends the action items, and validates the write. Where the Phase 4 follow-through has evidence a *previous* epic's action item landed, offer `--set-action-status` and pass only the transitions the user confirms — the evidence justifies proposing a transition, and only the user's confirmation justifies writing it; a headless run records the transitions it would have proposed and does not pass the flag at all. In stories mode, finalize `{spec-folder}/RETROSPECTIVE.md` and stop there: no `sprint_status.py` call, no sprint-status file created, and no edits to `SPEC.md`, `stories.yaml`, or any story artifact. Then, if `{workflow.on_complete}` is non-empty, follow it as the final instruction.
+Finalize the retrospective document and update sprint status. Load `references/retro-document.md` for the document's sections and the exact `sprint_status.py update` invocation that marks the retro key `done`, appends the action items, and validates the write. Where the Phase 4 follow-through has evidence a _previous_ epic's action item landed, offer `--set-action-status` and pass only the transitions the user confirms — the evidence justifies proposing a transition, and only the user's confirmation justifies writing it; a headless run records the transitions it would have proposed and does not pass the flag at all. In stories mode, finalize `{spec-folder}/RETROSPECTIVE.md` and stop there: no `sprint_status.py` call, no sprint-status file created, and no edits to `SPEC.md`, `stories.yaml`, or any story artifact. Then, if `{workflow.on_complete}` is non-empty, follow it as the final instruction.

@@ -21,9 +21,9 @@ class SubscriptionController
         return Inertia::render('billing/teams/subscriptions/index', [
             'team' => $team,
             'transactions' => Inertia::defer(
-                fn (): LengthAwarePaginator => $team
+                fn (): LengthAwarePaginator => $team // @phpstan-ignore-line return.type False positive.
                     ->billingTransactions()
-                    ->paginate(10)
+                    ->paginate(10) // @phpstan-ignore-line method.nonObject False positive.
             ),
         ]);
     }

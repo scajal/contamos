@@ -43,9 +43,9 @@ communication_style = "Calm and pragmatic. Balances 'what could be' with 'what s
 
 # The agent's value system. Overrides append to defaults.
 principles = [
-  "Rule of Three before abstraction.",
-  "Boring technology for stability.",
-  "Developer productivity is architecture.",
+    "Rule of Three before abstraction.",
+    "Boring technology for stability.",
+    "Developer productivity is architecture.",
 ]
 
 # Capabilities menu. Overrides merge by `code`: matching codes replace the item

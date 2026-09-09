@@ -12,11 +12,11 @@ Any pressable element. Instant feedback that the interface heard the user.
 
 ```css
 .button {
-  transition: transform 160ms var(--ease-out);
+    transition: transform 160ms var(--ease-out);
 }
 
 .button:active {
-  transform: scale(0.97);
+    transform: scale(0.97);
 }
 ```
 
@@ -32,16 +32,16 @@ Scales out of its trigger, not out of thin air.
 
 ```css
 .popover {
-  transform-origin: var(--transform-origin); /* Base UI supplies this */
-  transition:
-    opacity 200ms var(--ease-out),
-    transform 200ms var(--ease-out);
+    transform-origin: var(--transform-origin); /* Base UI supplies this */
+    transition:
+        opacity 200ms var(--ease-out),
+        transform 200ms var(--ease-out);
 }
 
 .popover[data-starting-style],
 .popover[data-ending-style] {
-  opacity: 0;
-  transform: scale(0.95);
+    opacity: 0;
+    transform: scale(0.95);
 }
 ```
 
@@ -55,21 +55,21 @@ Same shape as a popover, faster, plus the detail most implementations miss.
 
 ```css
 .tooltip {
-  transform-origin: var(--transform-origin);
-  transition:
-    transform 125ms var(--ease-out),
-    opacity 125ms var(--ease-out);
+    transform-origin: var(--transform-origin);
+    transition:
+        transform 125ms var(--ease-out),
+        opacity 125ms var(--ease-out);
 }
 
 .tooltip[data-starting-style],
 .tooltip[data-ending-style] {
-  opacity: 0;
-  transform: scale(0.97);
+    opacity: 0;
+    transform: scale(0.97);
 }
 
 /* Once one tooltip is open, neighbours open instantly */
 .tooltip[data-instant] {
-  transition-duration: 0ms;
+    transition-duration: 0ms;
 }
 ```
 
@@ -83,20 +83,20 @@ The one popover that stays centered.
 
 ```css
 .modal {
-  transform-origin: center; /* exempt — not anchored to a trigger */
-  transition:
-    opacity 250ms var(--ease-out),
-    transform 250ms var(--ease-out);
+    transform-origin: center; /* exempt — not anchored to a trigger */
+    transition:
+        opacity 250ms var(--ease-out),
+        transform 250ms var(--ease-out);
 }
 
 .modal[data-starting-style],
 .modal[data-ending-style] {
-  opacity: 0;
-  transform: scale(0.96);
+    opacity: 0;
+    transform: scale(0.96);
 }
 
 .backdrop {
-  transition: opacity 250ms var(--ease-out);
+    transition: opacity 250ms var(--ease-out);
 }
 ```
 
@@ -108,12 +108,12 @@ Animate the backdrop's opacity alongside it so they read as one surface.
 
 ```css
 .drawer {
-  transform: translateY(0);
-  transition: transform 500ms var(--ease-drawer);
+    transform: translateY(0);
+    transition: transform 500ms var(--ease-drawer);
 }
 
 .drawer[data-closed] {
-  transform: translateY(100%);
+    transform: translateY(100%);
 }
 ```
 
@@ -127,16 +127,16 @@ Add drag and it becomes a gesture problem — see **Drag to dismiss** below.
 
 ```css
 .toast {
-  opacity: 1;
-  transform: translateY(0);
-  transition:
-    opacity 400ms ease,
-    transform 400ms ease;
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity 400ms ease,
+        transform 400ms ease;
 
-  @starting-style {
-    opacity: 0;
-    transform: translateY(100%);
-  }
+    @starting-style {
+        opacity: 0;
+        transform: translateY(100%);
+    }
 }
 ```
 
@@ -144,7 +144,9 @@ Add drag and it becomes a gesture problem — see **Drag to dismiss** below.
 - If `@starting-style` isn't available, fall back to the mount flag:
 
 ```jsx
-useEffect(() => { setMounted(true); }, []);
+useEffect(() => {
+    setMounted(true);
+}, []);
 // <div data-mounted={mounted}>
 ```
 
@@ -156,10 +158,10 @@ When toasts stack and the list reflows, the opacity change has to work against t
 
 ```css
 .content {
-  overflow: hidden;
-  transition:
-    height 200ms var(--ease-out),
-    opacity 200ms var(--ease-out);
+    overflow: hidden;
+    transition:
+        height 200ms var(--ease-out),
+        opacity 200ms var(--ease-out);
 }
 ```
 
@@ -173,20 +175,26 @@ For a list or grid the user sees occasionally — not for a list they scroll pas
 
 ```css
 .item {
-  opacity: 0;
-  transform: translateY(8px);
-  animation: fadeIn 300ms var(--ease-out) forwards;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: fadeIn 300ms var(--ease-out) forwards;
 }
 
-.item:nth-child(2) { animation-delay: 50ms; }
-.item:nth-child(3) { animation-delay: 100ms; }
-.item:nth-child(4) { animation-delay: 150ms; }
+.item:nth-child(2) {
+    animation-delay: 50ms;
+}
+.item:nth-child(3) {
+    animation-delay: 100ms;
+}
+.item:nth-child(4) {
+    animation-delay: 150ms;
+}
 
 @keyframes fadeIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 ```
 
@@ -200,17 +208,17 @@ For destructive actions where a plain click is too easy to fire by accident.
 
 ```css
 .overlay {
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 200ms var(--ease-out); /* release: snappy */
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 200ms var(--ease-out); /* release: snappy */
 }
 
 .button:active .overlay {
-  clip-path: inset(0 0 0 0);
-  transition: clip-path 2s linear;             /* press: slow and deliberate */
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 2s linear; /* press: slow and deliberate */
 }
 
 .button:active {
-  transform: scale(0.97);
+    transform: scale(0.97);
 }
 ```
 
@@ -226,8 +234,8 @@ Duplicate the tab list. Style the copy as the active state — different backgro
 
 ```css
 .tabs-active-copy {
-  clip-path: inset(0 60% 0 20%); /* driven by the active tab's position */
-  transition: clip-path 250ms var(--ease-in-out);
+    clip-path: inset(0 60% 0 20%); /* driven by the active tab's position */
+    transition: clip-path 250ms var(--ease-in-out);
 }
 ```
 
@@ -241,12 +249,12 @@ Marketing surfaces only. Don't do this to functional UI a user visits daily.
 
 ```css
 .reveal {
-  clip-path: inset(0 0 100% 0);
-  transition: clip-path 600ms var(--ease-in-out);
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path 600ms var(--ease-in-out);
 }
 
 .reveal[data-visible] {
-  clip-path: inset(0 0 0 0);
+    clip-path: inset(0 0 0 0);
 }
 ```
 
@@ -264,7 +272,7 @@ const timeTaken = Date.now() - dragStartTime.current;
 const velocity = Math.abs(swipeAmount) / timeTaken;
 
 if (Math.abs(swipeAmount) >= SWIPE_THRESHOLD || velocity > 0.11) {
-  dismiss();
+    dismiss();
 }
 ```
 
@@ -295,14 +303,14 @@ When two states overlap visibly during a transition and no amount of easing or d
 
 ```css
 .content {
-  transition:
-    filter 200ms ease,
-    opacity 200ms ease;
+    transition:
+        filter 200ms ease,
+        opacity 200ms ease;
 }
 
 .content.transitioning {
-  filter: blur(2px);
-  opacity: 0.7;
+    filter: blur(2px);
+    opacity: 0.7;
 }
 ```
 
@@ -315,10 +323,11 @@ Without blur the eye reads two distinct objects swapping. Blur blends them into 
 When the motion needs JS control but not a dependency, WAAPI gives you CSS-grade performance:
 
 ```js
-element.animate(
-  [{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0 0)' }],
-  { duration: 1000, fill: 'forwards', easing: 'cubic-bezier(0.77, 0, 0.175, 1)' }
-);
+element.animate([{ clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0 0)" }], {
+    duration: 1000,
+    fill: "forwards",
+    easing: "cubic-bezier(0.77, 0, 0.175, 1)",
+});
 ```
 
 Hardware-accelerated, interruptible, no bundle cost.

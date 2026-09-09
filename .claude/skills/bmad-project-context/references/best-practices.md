@@ -4,7 +4,7 @@ Rules for deciding what goes in the block, for judging what a repo already has, 
 
 ## The test
 
-Not *could an agent derive this* but *what does it cost when it doesn't*: how much exploration finding it takes, how likely the agent is to search the right place in time rather than guess, whether it is available at the point of use or only after the mistake, what a retrieval failure costs — a wasted search, or corrupt data — and whether it is a rule that must hold or a detail the code already shows.
+Not _could an agent derive this_ but _what does it cost when it doesn't_: how much exploration finding it takes, how likely the agent is to search the right place in time rather than guess, whether it is available at the point of use or only after the mistake, what a retrieval failure costs — a wasted search, or corrupt data — and whether it is a rule that must hold or a detail the code already shows.
 
 A line that stops the same rediscovery every session earns its place, derivable or not. A stored copy of what the agent reads more accurately first-hand does not — it rots, and it is charged every session.
 
@@ -23,16 +23,16 @@ Prefer prohibitions to advice, and name the permitted alternative in the same li
 
 ## Exclude
 
-| | Why |
-|---|---|
-| Repo overviews, directory trees, stack lists | Derived fresh, more accurately; stored copies rot |
-| Anything included for being interesting | Interest is not need |
-| Style rules an agent self-enforces | Belongs in a formatter, linter, hook, or CI check — propose the check instead |
-| Platitudes | Already the default |
+|                                                                     | Why                                                                                                                                                                                            |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repo overviews, directory trees, stack lists                        | Derived fresh, more accurately; stored copies rot                                                                                                                                              |
+| Anything included for being interesting                             | Interest is not need                                                                                                                                                                           |
+| Style rules an agent self-enforces                                  | Belongs in a formatter, linter, hook, or CI check — propose the check instead                                                                                                                  |
+| Platitudes                                                          | Already the default                                                                                                                                                                            |
 | Transcribed command lists whose obvious invocation is already right | Read from `package.json`, a `Makefile`, or CI config; a copy drifts the moment a script is renamed. The right command to use, and any command the obvious guess gets wrong, are admitted above |
-| Pasted code, changelog content, fast-changing facts | Stale immediately |
-| Aspirational state | Describe what is; intent belongs in specs |
-| History and edit narration | Git holds it; state present truth |
+| Pasted code, changelog content, fast-changing facts                 | Stale immediately                                                                                                                                                                              |
+| Aspirational state                                                  | Describe what is; intent belongs in specs                                                                                                                                                      |
+| History and edit narration                                          | Git holds it; state present truth                                                                                                                                                              |
 
 ## Retire
 

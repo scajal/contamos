@@ -20,7 +20,7 @@ headless: true | false
 
 Keep `verdict` in sync with the Acceptance verdict section below. Do not encode the verdict in the sprint-status retro key — that key's value stays `done` so the existing lifecycle consumers (sprint planning's `optional ↔ done` transition, status TUIs) keep working unchanged.
 
-That holds for a **rejected** epic too: the update below marks the retro key `done` whichever way the verdict went, because `done` there means *the retrospective ran*, not *the epic passed*. The script writes no verdict of any kind into `sprint-status.yaml` — there is no `retro_verdict` key and `--verdict` is only echoed back in the result JSON — so a gate or orchestrator that acts on the verdict **must** read this document's frontmatter. Reading sprint-status alone cannot tell a rejected epic from an accepted one.
+That holds for a **rejected** epic too: the update below marks the retro key `done` whichever way the verdict went, because `done` there means _the retrospective ran_, not _the epic passed_. The script writes no verdict of any kind into `sprint-status.yaml` — there is no `retro_verdict` key and `--verdict` is only echoed back in the result JSON — so a gate or orchestrator that acts on the verdict **must** read this document's frontmatter. Reading sprint-status alone cannot tell a rejected epic from an accepted one.
 
 Sections:
 
@@ -59,7 +59,7 @@ It sets `development_status["epic-{{epic_number}}-retrospective"]` to `done`, ap
 - `retro_key_found: false` → the retro key was absent, so nothing was marked done; the document still saved, but tell the user sprint-status needs a manual retro entry.
 - `retro_key_found: null` → `--set-retro-done` was not passed, so the key was never looked for. Distinct from `false`, which is a real absence the user needs to be told about.
 
-Moving a *previous* epic's action items off `open` is recorded in the retro document either way. When the Phase 4 follow-through has evidence an item landed, or the user says one did, offer to update the sprint-status entries too and run `--set-action-status` with exactly what the user confirms — that flag is the only supported way to change a status; hand-editing never is. It can be passed in the same invocation as the update above, or run on its own:
+Moving a _previous_ epic's action items off `open` is recorded in the retro document either way. When the Phase 4 follow-through has evidence an item landed, or the user says one did, offer to update the sprint-status entries too and run `--set-action-status` with exactly what the user confirms — that flag is the only supported way to change a status; hand-editing never is. It can be passed in the same invocation as the update above, or run on its own:
 
 ```
 uv run --no-cache {skill-root}/scripts/sprint_status.py update \

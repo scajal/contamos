@@ -1,14 +1,14 @@
 ---
-title: '{research_type} research: {research_topic}'
-type: '{research_type}'
-topic: '{research_topic}'
-decision: '{decision}'
-source: '{source}'
+title: "{research_type} research: {research_topic}"
+type: "{research_type}"
+topic: "{research_topic}"
+decision: "{decision}"
+source: "{source}"
 status: draft
-preset: '{preset}'
-validation: '{validation}'
-created: '{date}'
-updated: '{date}'
+preset: "{preset}"
+validation: "{validation}"
+created: "{date}"
+updated: "{date}"
 ---
 
 # {research_type} research: {research_topic}

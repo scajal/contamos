@@ -43,9 +43,9 @@ For each finding:
 - **Check the claim.** Go to the cited file and line. Does the problem the reviewer describes actually happen? Read surrounding code and callers until you can say yes or no. A nearby issue does not answer this one. Judge whether the bug is real, not whether the suggested fix sounds good. Code that fails loudly on a state you have not shown the program can reach is correct, not a bug.
 
 - **Pick one verdict:**
-  - `high` (intolerable), `medium` (tolerable), or `low` (cosmetic or negligible) — the problem is real. Rate it by harm to users or developers. For developer-only issues, say where it will hurt. Vague complaints like "this is messy" are not `high`/`medium`/`low` — use `false` or `maybe-false`. When unsure how bad, pick the higher grade.
-  - `false` — you checked and the problem does not happen. Say what you found that disproves it.
-  - `maybe-false` — you could not tell. Say what you would need to check. Use this only when the code and diff are not enough to decide.
+    - `high` (intolerable), `medium` (tolerable), or `low` (cosmetic or negligible) — the problem is real. Rate it by harm to users or developers. For developer-only issues, say where it will hurt. Vague complaints like "this is messy" are not `high`/`medium`/`low` — use `false` or `maybe-false`. When unsure how bad, pick the higher grade.
+    - `false` — you checked and the problem does not happen. Say what you found that disproves it.
+    - `maybe-false` — you could not tell. Say what you would need to check. Use this only when the code and diff are not enough to decide.
 
 - Write down every finding with its verdict and evidence. Do not drop any.
 
@@ -61,13 +61,13 @@ For each group:
 - **HALT** — Same as patch, but the smallest fix is not that simple. Stop and ask the user before continuing.
 - **defer** — Everything else: old bugs not caused by this change, ideas for later, groups where every member is `maybe-false` and would be `medium` or `high` if true (record that severity marked unverified, and what would prove it; if it would only be `low`, reject it), or fixes that would edit CLAUDE.md, AGENTS.md, rules, or specs. Add one entry to `{{.implementation_artifacts}}/deferred-work.md`:
 
-  ```markdown
-  - source_spec: `{spec_file}`
-    summary: <one sentence>
-    evidence: <why this is real; for maybe-false, what would prove it>
-  ```
+    ```markdown
+    - source_spec: `{spec_file}`
+      summary: <one sentence>
+      evidence: <why this is real; for maybe-false, what would prove it>
+    ```
 
-  Do not edit old entries or check for duplicates.
+    Do not edit old entries or check for duplicates.
 
 ### Finalize Spec
 

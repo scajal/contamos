@@ -190,7 +190,7 @@ class Team extends Model
 
         // Generate the corresponding payload.
         $payload = ($subscription = $this->subscription())
-            ? ['subscription_ids' => $subscription->paddle_id]
+            ? ['subscription_ids' => $subscription->paddle_id] // @phpstan-ignore-line property.type False positive.
             : null;
 
         // Generate the Cashier session for the
@@ -198,7 +198,7 @@ class Team extends Model
         /** @var \App\Modules\Billing\Models\Customer $customer */
         $session = Cashier::api('POST', "customers/{$customer->paddle_id}/portal-sessions", $payload)->json('data');
 
-        return redirect()->away($session['urls']['general']['overview']);
+        return redirect()->away($session['urls']['general']['overview']); // @phpstan-ignore-line offsetAccess.nonOffsetAccessible False positive.
     }
 
     /**

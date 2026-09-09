@@ -8,6 +8,7 @@ A brief secondary deletion check runs as Step 4 when the diff removes code.
 A claims check runs as Step 5.
 
 **Inputs:**
+
 - **content** — Content to review, or a path to read it from: diff, full file, or function
 - **also_consider** (optional) — Areas to keep in mind during review alongside normal edge-case analysis
 - **claims_file** — Path to the spec this change was built from. Do NOT read it before Step 5: the path tracing in Steps 2–3 must finish before the claims are seen.
@@ -15,7 +16,6 @@ A claims check runs as Step 5.
 **MANDATORY: Execute steps in the Execution section IN EXACT ORDER. DO NOT skip steps or change the sequence. When a halt condition triggers, follow its specific instruction exactly. Each action within a step is a REQUIRED action to complete that step.**
 
 **Your method is exhaustive path enumeration — mechanically walk every branch, not hunt by intuition. Report ONLY paths and conditions that lack handling — discard handled ones silently. Do NOT editorialize or add filler. Do not assign severity labels, rankings, or priority levels.**
-
 
 ## EXECUTION
 
@@ -54,27 +54,28 @@ Load `references/claims-check.md` and follow it.
 
 Output all findings as a single JSON array following the Output Format specification exactly.
 
-
 ## OUTPUT FORMAT
 
 Return ONLY a valid JSON array of objects. Each edge-case finding contains exactly these four fields:
 
 ```json
-[{
-  "location": "file:start-end (or file:line when single line, or file:hunk when exact line unavailable)",
-  "trigger_condition": "one-line description (max 15 words)",
-  "guard_snippet": "minimal code sketch that closes the gap (single-line escaped string, no raw newlines or unescaped quotes)",
-  "potential_consequence": "what could actually go wrong (max 15 words)"
-}]
+[
+    {
+        "location": "file:start-end (or file:line when single line, or file:hunk when exact line unavailable)",
+        "trigger_condition": "one-line description (max 15 words)",
+        "guard_snippet": "minimal code sketch that closes the gap (single-line escaped string, no raw newlines or unescaped quotes)",
+        "potential_consequence": "what could actually go wrong (max 15 words)"
+    }
+]
 ```
 
 No extra text, no explanations, no markdown wrapping. An empty array `[]` is valid when nothing is found. Deletion findings from Step 4 and claim findings from Step 5, if any, go in the same array with the extra fields defined in `references/deletion-check.md` and `references/claims-check.md`.
 
-
 ## HALT CONDITIONS
 
 - If no content is supplied, or it is empty, unreadable, or cannot be decoded as text, return `[{"location":"N/A","trigger_condition":"Input empty or undecodable","guard_snippet":"Provide valid content to review","potential_consequence":"Review skipped — no analysis performed"}]` and stop
-<reference path="references/deletion-check.md">
+  <reference path="references/deletion-check.md">
+
 # Deletion Check
 
 Secondary pass for the Edge Case Hunter — runs only when the diff removed meaningful code. Subordinate to the edge-case pass; findings are usually few or none.
@@ -91,6 +92,7 @@ For a deletion finding the standard fields read as: `location` = the removed ite
 Add nothing if nothing qualifies.
 </reference>
 <reference path="references/claims-check.md">
+
 # Claims Check
 
 Final pass for the Edge Case Hunter. Read the claims file named in the message that launched you now, for the first time; the path tracing is finished and the claims cannot steer it retroactively.

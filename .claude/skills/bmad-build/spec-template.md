@@ -1,9 +1,9 @@
 ---
-title: '{title}'
-type: 'feature' # feature | bugfix | refactor | chore
-created: '{date}'
-status: 'draft' # draft | ready-for-dev | in-progress | in-review | done
-route: '' # oneshot | dispatch — set by step-02's route gate after design
+title: "{title}"
+type: "feature" # feature | bugfix | refactor | chore
+created: "{date}"
+status: "draft" # draft | ready-for-dev | in-progress | in-review | done
+route: "" # oneshot | dispatch — set by step-02's route gate after design
 review_loop_iteration: 0 # incremented by step-04 before each review loopback
 context: [] # optional: `{project-root}/`-prefixed paths to project-wide standards/docs the implementation agent should load. Keep short — only what isn't already distilled into the spec body.
 ---
@@ -36,10 +36,10 @@ context: [] # optional: `{project-root}/`-prefixed paths to project-wide standar
 
 <!-- If no meaningful I/O scenarios exist, DELETE THIS ENTIRE SECTION. Do not write "N/A" or "None". -->
 
-| Scenario | Input / State | Expected Output / Behavior | Error Handling |
-|----------|--------------|---------------------------|----------------|
-| HAPPY_PATH | INPUT | OUTCOME | N/A |
-| ERROR_CASE | INPUT | OUTCOME | ERROR_HANDLING |
+| Scenario   | Input / State | Expected Output / Behavior | Error Handling |
+| ---------- | ------------- | -------------------------- | -------------- |
+| HAPPY_PATH | INPUT         | OUTCOME                    | N/A            |
+| ERROR_CASE | INPUT         | OUTCOME                    | ERROR_HANDLING |
 
 </frozen-after-approval>
 
@@ -69,9 +69,11 @@ context: [] # optional: `{project-root}/`-prefixed paths to project-wide standar
 <!-- If step-02's route gate reported all facts clean (route: 'oneshot'), DELETE THIS ENTIRE SECTION. -->
 
 **Execution:**
+
 - [ ] `FILE` -- ACTION -- RATIONALE
 
 **Acceptance Criteria:**
+
 - Given PRECONDITION, when ACTION, then EXPECTED_RESULT
 
 ## Implementation Notes
@@ -105,7 +107,9 @@ DESIGN_RATIONALE_AND_EXAMPLES
 <!-- How the agent confirms its own work. Prefer CLI commands. When no CLI check applies, state what to inspect manually. -->
 
 **Commands:**
+
 - `COMMAND` -- expected: SUCCESS_CRITERIA
 
 **Manual checks (if no CLI):**
+
 - WHAT_TO_INSPECT_AND_EXPECTED_STATE

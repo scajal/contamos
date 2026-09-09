@@ -201,10 +201,10 @@ The final {planning_artifacts}/epics.md must follow this structure exactly:
 3. **FR Coverage Map** showing requirement to epic mapping
 4. **Epic List** with approved epic structure
 5. **Epic sections** for each epic (N = 1, 2, 3...)
-   - Epic title and goal
-   - All stories for that epic (M = 1, 2, 3...)
-     - Story title and user story
-     - Acceptance Criteria using Given/When/Then format
+    - Epic title and goal
+    - All stories for that epic (M = 1, 2, 3...)
+        - Story title and user story
+        - Acceptance Criteria using Given/When/Then format
 
 ### 7. Present FINAL MENU OPTIONS
 

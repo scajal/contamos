@@ -1,5 +1,5 @@
 ---
-deferred_work_file: '{implementation_artifacts}/deferred-work.md'
+deferred_work_file: "{implementation_artifacts}/deferred-work.md"
 ---
 
 # Step 4: Present and Act
@@ -57,6 +57,7 @@ If `patch` findings exist (including any resolved from step 4), HALT. Ask the us
 If `spec_file` is set, present all three options:
 
 > **How would you like to handle the `<P>` `patch` findings?**
+>
 > 1. **Apply every patch** — fix all of them now, no per-finding confirmation. Defer and decision-needed items are not touched.
 > 2. **Leave as action items** — they are already in the story file
 > 3. **Walk through each patch** — show details for each before deciding
@@ -64,6 +65,7 @@ If `spec_file` is set, present all three options:
 If `spec_file` is **not** set, present only options 1 and 2 (omit "Leave as action items" — findings were not written to a file):
 
 > **How would you like to handle the `<P>` `patch` findings?**
+>
 > 1. **Apply every patch** — fix all of them now, no per-finding confirmation. Defer and decision-needed items are not touched.
 > 2. **Walk through each patch** — show details for each before deciding
 
@@ -73,7 +75,7 @@ If `spec_file` is **not** set, present only options 1 and 2 (omit "Leave as acti
 - **Leave as action items** (only when `spec_file` is set): Done — findings are already written to the story.
 - **Walk through each patch**: Present each finding with full detail, diff context, and suggested fix. After walkthrough, re-offer the applicable options above.
 
-  **HALT** — I am waiting for your numbered choice. Do not proceed until you select an option.
+    **HALT** — I am waiting for your numbered choice. Do not proceed until you select an option.
 
 **✅ Code review actions complete**
 
@@ -121,6 +123,7 @@ If `{sprint_status}` file does not exist, note that story status was updated in 
 Present the user with follow-up options:
 
 > **What would you like to do next?**
+>
 > 1. **Start the next story** — run `dev-story` to pick up the next `ready-for-dev` story
 > 2. **Re-run code review** — address findings and review again
 > 3. **Done** — end the workflow

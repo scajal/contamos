@@ -10,28 +10,28 @@ The conversation context before this skill was triggered IS your starting point 
 
 1. **Explicit argument**
    Did the user pass a PR, commit SHA, branch, or spec file this message?
-   - PR reference → resolve to branch/commit via `gh pr view`. If resolution fails, ask for a SHA or branch.
-   - Spec file, commit, or branch → use directly.
+    - PR reference → resolve to branch/commit via `gh pr view`. If resolution fails, ask for a SHA or branch.
+    - Spec file, commit, or branch → use directly.
 
 2. **Recent conversation**
    Do the last few messages reveal what change the user wants reviewed? Look for spec paths, commit refs, branches, PRs, or descriptions of a change. Use the same routing as above.
 
 3. **Sprint tracking**
    Check for a sprint status file (`*sprint-status*`) in `{implementation_artifacts}` or `{planning_artifacts}`. If found, scan for stories with status `review`:
-   - Exactly one → suggest it and confirm with the user.
-   - Multiple → present as numbered options.
-   - None → fall through.
+    - Exactly one → suggest it and confirm with the user.
+    - Multiple → present as numbered options.
+    - None → fall through.
 
 4. **Current git state**
    Check current branch and HEAD. Confirm: "I see HEAD is `<short-sha>` on `<branch>` — is this the change you want to review?"
 
 5. **Ask**
    If none of the above identified a change, ask:
-   - What changed and why?
-   - Which commit, branch, or PR should I look at?
-   - Do you have a spec, bug report, or anything else that explains what this change is supposed to do?
+    - What changed and why?
+    - Which commit, branch, or PR should I look at?
+    - Do you have a spec, bug report, or anything else that explains what this change is supposed to do?
 
-   If after 3 exchanges you still can't identify a change, HALT.
+    If after 3 exchanges you still can't identify a change, HALT.
 
 Never ask extra questions beyond what the cascade prescribes. If a step above already identified the change, skip the remaining steps.
 

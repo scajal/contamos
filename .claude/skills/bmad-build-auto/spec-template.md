@@ -1,8 +1,8 @@
 ---
-title: '{title}'
-type: 'feature' # feature | bugfix | refactor | chore
-created: '{date}'
-status: 'draft' # draft | ready-for-dev | in-progress | in-review | done | blocked
+title: "{title}"
+type: "feature" # feature | bugfix | refactor | chore
+created: "{date}"
+status: "draft" # draft | ready-for-dev | in-progress | in-review | done | blocked
 review_loop_iteration: 0 # incremented by step-04 before each review loopback
 followup_review_recommended: false # set by step-04 on status: done — true if the LLM decided another review pass is worthwhile
 context: [] # optional: `{project-root}/`-prefixed paths to project-wide standards/docs the implementation agent should load. Keep short — only what isn't already distilled into the spec body.
@@ -37,10 +37,10 @@ deferred: [] # append-only machine-readable deferred review findings; each item 
 
 <!-- If no meaningful I/O scenarios exist, DELETE THIS ENTIRE SECTION. Do not write "N/A" or "None". -->
 
-| Scenario | Input / State | Expected Output / Behavior | Error Handling |
-|----------|--------------|---------------------------|----------------|
-| HAPPY_PATH | INPUT | OUTCOME | No error expected |
-| ERROR_CASE | INPUT | OUTCOME | ERROR_HANDLING |
+| Scenario   | Input / State | Expected Output / Behavior | Error Handling    |
+| ---------- | ------------- | -------------------------- | ----------------- |
+| HAPPY_PATH | INPUT         | OUTCOME                    | No error expected |
+| ERROR_CASE | INPUT         | OUTCOME                    | ERROR_HANDLING    |
 
 </intent-contract>
 
@@ -58,9 +58,11 @@ deferred: [] # append-only machine-readable deferred review findings; each item 
 <!-- AC covers system-level behaviors not captured by the I/O Matrix. Do not duplicate I/O scenarios here. -->
 
 **Execution:**
+
 - `FILE` -- ACTION -- RATIONALE
 
 **Acceptance Criteria:**
+
 - Given PRECONDITION, when ACTION, then EXPECTED_RESULT
 
 ## Spec Change Log
@@ -90,7 +92,9 @@ DESIGN_RATIONALE_AND_EXAMPLES
 <!-- How the agent confirms its own work. Prefer CLI commands. When no CLI check applies, state what to inspect manually. -->
 
 **Commands:**
+
 - `COMMAND` -- expected: SUCCESS_CRITERIA
 
 **Manual checks (if no CLI):**
+
 - WHAT_TO_INSPECT_AND_EXPECTED_STATE

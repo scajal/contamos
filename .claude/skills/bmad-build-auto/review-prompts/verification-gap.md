@@ -85,13 +85,13 @@ Emit each verification-gap finding as one block. No general advice, no severity 
 - **Changed surface:** the exact behavior or contract that changed — `file:line`.
 - **Impacted consumer or site:** named concretely with `file:line` (e.g. "the `createInvoice` mutation used by the billing dashboard at `billing/dashboard.ts:88`," not "callers of this function").
 - **Existing test evidence:**
-  - `Regression gap`: what the relevant test actually asserts, with `file:line`; or, if none, the symbol/import-reference searches run and their result.
-  - `Missing-adoption gap`: tests for the impacted site, and whether any assert it adopts the new behavior.
-  - `Broken-verification gap`: the apparent test or verification path, and why it does not count.
+    - `Regression gap`: what the relevant test actually asserts, with `file:line`; or, if none, the symbol/import-reference searches run and their result.
+    - `Missing-adoption gap`: tests for the impacted site, and whether any assert it adopts the new behavior.
+    - `Broken-verification gap`: the apparent test or verification path, and why it does not count.
 - **Missing verification:** the precise assertion or check that's absent.
 - **Demonstration:**
-  - `Regression gap` / `Broken-verification gap`: the concrete regression that would ship undetected, and why the tests you checked would not fail.
-  - `Missing-adoption gap`: the case the site mishandles by not adopting the new behavior, and that none of the tests you read assert adoption.
+    - `Regression gap` / `Broken-verification gap`: the concrete regression that would ship undetected, and why the tests you checked would not fail.
+    - `Missing-adoption gap`: the case the site mishandles by not adopting the new behavior, and that none of the tests you read assert adoption.
 - **Consequence:** the concrete thing that ships wrong — a regression the checked evidence would not catch, or a site that should use the new behavior and doesn't.
 - **Disposition:** `patch` — name the test to add, fit to the repo's own way of verifying (don't impose a generic test pyramid) — or `defer` when the gap is real but not worth closing as part of this change, with one sentence of why.
 ```

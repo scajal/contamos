@@ -22,9 +22,9 @@ Display: `Orientation → [Walkthrough] → Detail Pass → Testing`
 
 1. Get the diff against the appropriate baseline (same rules as step 1).
 2. Identify concerns by reading the diff for cohesive design intents:
-   - Functional groupings — what user-facing behavior does each cluster of changes support?
-   - Architectural layers — does the change cross boundaries (API → service → data)?
-   - Design decisions — where did the author choose between alternatives?
+    - Functional groupings — what user-facing behavior does each cluster of changes support?
+    - Architectural layers — does the change cross boundaries (API → service → data)?
+    - Design decisions — where did the author choose between alternatives?
 3. For each concern, identify the key code locations as `path:line` stops.
 
 ### Order for Comprehension

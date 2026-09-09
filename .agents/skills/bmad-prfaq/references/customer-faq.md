@@ -30,9 +30,9 @@ Present the questions and work through answers with the user:
 
 1. **Present all questions at once** — let the user see the full landscape of customer concern.
 2. **Work through answers together.** The user drafts (or you draft and they react). For each answer:
-   - Is it honest? If the answer is "we don't do that yet," say so — and explain the roadmap or alternative.
-   - Is it specific? "We have enterprise-grade security" is not an answer. What certifications? What encryption? What SLA?
-   - Would a customer believe it? Marketing language in FAQ answers destroys credibility.
+    - Is it honest? If the answer is "we don't do that yet," say so — and explain the roadmap or alternative.
+    - Is it specific? "We have enterprise-grade security" is not an answer. What certifications? What encryption? What SLA?
+    - Would a customer believe it? Marketing language in FAQ answers destroys credibility.
 3. **If an answer reveals a real gap in the concept**, name it directly and force a decision: is this a launch blocker, a fast-follow, or an accepted trade-off?
 4. **The user can add their own questions too.** Often they know the scary questions better than anyone.
 

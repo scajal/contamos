@@ -25,17 +25,14 @@ on_complete = ""
 # override TOML to seed an org-specific canonical aesthetic.
 # Each entry: `file:PATH` (or bare relative path, resolved skill-relative).
 design_md_examples = [
-  "assets/design-example-mobile.md",
-  "assets/design-example-shadcn.md",
-  "assets/design-example-editorial.md",
+    "assets/design-example-mobile.md",
+    "assets/design-example-shadcn.md",
+    "assets/design-example-editorial.md",
 ]
 
 # Reference EXPERIENCE.md spines for the behavioral/flow/IA layer. Each entry:
 # `file:PATH` (or bare relative path, resolved skill-relative).
-experience_md_examples = [
-  "assets/experience-example-mobile.md",
-  "assets/experience-example-shadcn.md",
-]
+experience_md_examples = ["assets/experience-example-mobile.md", "assets/experience-example-shadcn.md"]
 
 # Design handoff targets — external tools that can take over the design /
 # visual identity work. The user runs the tool externally and saves outputs
@@ -45,7 +42,7 @@ experience_md_examples = [
 # Default: Google Stitch (emits DESIGN.md + per-screen HTML). Other producers:
 # Vercel v0, Figma, Galileo, Anima, internal generators.
 design_handoffs = [
-  "Google Stitch (https://stitch.withgoogle.com) — emits DESIGN.md + per-screen HTML. Paste assembled prompt; save outputs to {doc_workspace}.",
+    "Google Stitch (https://stitch.withgoogle.com) — emits DESIGN.md + per-screen HTML. Paste assembled prompt; save outputs to {doc_workspace}.",
 ]
 
 # HTML skeleton filled in by the validation synthesis pass.
@@ -67,10 +64,10 @@ run_folder_pattern = "ux-{project_name}-{date}"
 # {doc_workspace}/.working/; finalize promotes those with lasting reference
 # value to mockups/ or wireframes/. See references/creative-tools.md.
 creative_tools = [
-  "file:assets/color-themes.md",
-  "file:assets/design-directions.md",
-  "file:assets/excalidraw-wireframe.md",
-  "file:assets/key-screens.md",
+    "file:assets/color-themes.md",
+    "file:assets/design-directions.md",
+    "file:assets/excalidraw-wireframe.md",
+    "file:assets/key-screens.md",
 ]
 
 # Polish passes applied to DESIGN.md and EXPERIENCE.md at finalize.
@@ -79,9 +76,7 @@ creative_tools = [
 # The default entry runs bmad-review's two editorial lenses in order:
 # structure, then prose on top of the structure findings. The `lenses=` suffix
 # names them; drop it to let bmad-review pick what fits the content.
-doc_standards = [
-  "skill:bmad-review lenses=structure,prose",
-]
+doc_standards = ["skill:bmad-review lenses=structure,prose"]
 
 # Information retrieval registry. Consulted on demand when the conversation
 # surfaces a matching need. Distinct from creative_tools (artifact production).

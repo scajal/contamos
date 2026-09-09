@@ -25,6 +25,7 @@ composer require inertiaui/modal
 ```
 
 Then link the frontend package:
+
 ```bash
 
 # Vue
@@ -54,33 +55,34 @@ npm install @inertiaui/modal-react
 ### Vue
 
 ```js
-import { renderApp } from '@inertiaui/modal-vue'
+import { renderApp } from "@inertiaui/modal-vue";
 
 createInertiaApp({
     setup({ el, App, props, plugin }) {
         createApp({ render: renderApp(App, props) })
             .use(plugin)
-            .mount(el)
-    }
-})
+            .mount(el);
+    },
+});
 ```
 
 ### React
 
 ```jsx
-import { renderApp } from '@inertiaui/modal-react'
+import { renderApp } from "@inertiaui/modal-react";
 
 createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
         root.render(renderApp(App, props));
-    }
+    },
 });
 ```
 
 ### Tailwind CSS 4
 
 Add to your CSS file:
+
 ```css
 /* Vue */
 @source "../node_modules/@inertiaui/modal-vue/src";
@@ -149,6 +151,7 @@ return Inertia::modal('EditUser', ['user' => $user])
 ### Redirector
 
 The package extends Laravel's redirector so `back()` respects modal base URLs. Disable via config:
+
 ```php
 // config/inertiaui-modal.php
 return [
@@ -175,16 +178,19 @@ Modal::excludeMiddlewareOnBaseUrl([
 ### `ModalLink` Component
 
 Basic usage:
+
 ```vue
 <!-- Vue -->
 <ModalLink href="/users/create">Create User</ModalLink>
 ```
+
 ```jsx
 // React
 <ModalLink href="/users/create">Create User</ModalLink>
 ```
 
 With props:
+
 ```vue
 <!-- Vue -->
 <ModalLink
@@ -212,8 +218,8 @@ With props:
 <ModalLink
     href="/users/create"
     method="post"
-    data={{ default_name: 'John Doe' }}
-    headers={{ 'X-Header': 'Value' }}
+    data={{ default_name: "John Doe" }}
+    headers={{ "X-Header": "Value" }}
     as="button"
     navigate={true}
     slideover
@@ -237,14 +243,16 @@ With props:
 <ModalLink href="/users/create" prefetch="click">Create User</ModalLink>
 <ModalLink href="/users/create" prefetch="mount">Create User</ModalLink>
 <ModalLink href="/users/create" :prefetch="['hover', 'click']">Create User</ModalLink>
-<ModalLink href="/users/create" :prefetch="true">Create User</ModalLink> <!-- same as "hover" -->
+<ModalLink href="/users/create" :prefetch="true">Create User</ModalLink>
+<!-- same as "hover" -->
 <ModalLink href="/users/create" prefetch="hover" :cache-for="60000">Create User</ModalLink>
 ```
 
 Programmatic prefetch:
+
 ```js
-import { prefetch } from '@inertiaui/modal-vue' // or modal-react
-prefetch('/users/create')
+import { prefetch } from "@inertiaui/modal-vue"; // or modal-react
+prefetch("/users/create");
 ```
 
 #### Custom Tag / Component
@@ -268,11 +276,7 @@ prefetch('/users/create')
 
 ```jsx
 // React
-<ModalLink>
-    {({ loading }) => (
-        <span>{loading ? 'Loading...' : 'Open Modal'}</span>
-    )}
-</ModalLink>
+<ModalLink>{({ loading }) => <span>{loading ? "Loading..." : "Open Modal"}</span>}</ModalLink>
 ```
 
 #### ModalLink Events
@@ -288,6 +292,7 @@ prefetch('/users/create')
 ### `Modal` Component
 
 Basic usage:
+
 ```vue
 <!-- Vue -->
 <Modal>
@@ -321,8 +326,8 @@ Basic usage:
     {({ close, reload, emit, getParentModal, getChildModal }) => (
         <>
             <button onClick={close}>Close</button>
-            <button onClick={() => reload({ only: ['users'] })}>Refresh</button>
-            <button onClick={() => emit('userCreated', user)}>Save</button>
+            <button onClick={() => reload({ only: ["users"] })}>Refresh</button>
+            <button onClick={() => emit("userCreated", user)}>Save</button>
         </>
     )}
 </Modal>
@@ -342,9 +347,15 @@ Basic usage:
 <!-- Vue -->
 <script setup>
 const modalRef = ref(null);
-function closeModal() { modalRef.value.close(); }
-function reloadData() { modalRef.value.reload({ only: ['users'] }); }
-function emitEvent() { modalRef.value.emit('userCreated', user); }
+function closeModal() {
+    modalRef.value.close();
+}
+function reloadData() {
+    modalRef.value.reload({ only: ["users"] });
+}
+function emitEvent() {
+    modalRef.value.emit("userCreated", user);
+}
 </script>
 <template>
     <Modal ref="modalRef"><!-- ... --></Modal>
@@ -354,8 +365,10 @@ function emitEvent() { modalRef.value.emit('userCreated', user); }
 ```jsx
 // React
 const modalRef = useRef(null);
-function closeModal() { modalRef.current.close(); }
-<Modal ref={modalRef}>{/* ... */}</Modal>
+function closeModal() {
+    modalRef.current.close();
+}
+<Modal ref={modalRef}>{/* ... */}</Modal>;
 ```
 
 ### `HeadlessModal` Component
@@ -363,6 +376,7 @@ function closeModal() { modalRef.current.close(); }
 For building custom modal UIs. Provides all modal functionality without default styling.
 
 Available props/slot props:
+
 - `afterLeave` — function to call after leave transition
 - `close` — function to close the modal
 - `config` — configuration passed to the modal
@@ -381,27 +395,29 @@ Available props/slot props:
 ### `useModal` Hook / Composable
 
 Access modal context from child components:
+
 ```vue
 <!-- Vue -->
 <script setup>
-import { useModal } from '@inertiaui/modal-vue'
-const { props, close, reload, emit } = useModal()
+import { useModal } from "@inertiaui/modal-vue";
+const { props, close, reload, emit } = useModal();
 </script>
 ```
 
 ```jsx
 // React
-import { useModal } from '@inertiaui/modal-react'
-const { props, close, reload, emit } = useModal()
+import { useModal } from "@inertiaui/modal-react";
+const { props, close, reload, emit } = useModal();
 ```
 
 ### `Deferred` Component
 
 Import from modal package (not Inertia) when used inside modals:
+
 ```vue
 <!-- Vue -->
 <script setup>
-import { Deferred, Modal } from '@inertiaui/modal-vue'
+import { Deferred, Modal } from "@inertiaui/modal-vue";
 </script>
 <template>
     <Modal>
@@ -415,17 +431,18 @@ import { Deferred, Modal } from '@inertiaui/modal-vue'
 
 ```jsx
 // React
-import { Deferred, Modal } from '@inertiaui/modal-react'
+import { Deferred, Modal } from "@inertiaui/modal-react";
 <Modal>
     <Deferred data="lines" fallback={<p>Loading...</p>}>
         <InvoiceLines lines={lines} />
     </Deferred>
-</Modal>
+</Modal>;
 ```
 
 ### `WhenVisible` Component
 
 Import from modal package when used inside modals:
+
 ```vue
 <!-- Vue -->
 import { WhenVisible, Modal } from '@inertiaui/modal-vue'
@@ -443,40 +460,44 @@ import { WhenVisible, Modal } from '@inertiaui/modal-vue'
 
 ```js
 // Vue — standalone function
-import { visitModal } from '@inertiaui/modal-vue'
-visitModal('/users/create')
+import { visitModal } from "@inertiaui/modal-vue";
+visitModal("/users/create");
 
 // React — from useModalStack hook
-import { useModalStack } from '@inertiaui/modal-react'
-const { visitModal } = useModalStack()
-visitModal('/users/create')
+import { useModalStack } from "@inertiaui/modal-react";
+const { visitModal } = useModalStack();
+visitModal("/users/create");
 ```
 
 Options:
+
 ```js
-visitModal('/users/create', {
-    method: 'post',
+visitModal("/users/create", {
+    method: "post",
     navigate: true,
-    data: { default_name: 'John Doe' },
-    headers: { 'X-Header': 'Value' },
+    data: { default_name: "John Doe" },
+    headers: { "X-Header": "Value" },
     config: {
         slideover: true,
     },
     listeners: {
-        userCreated(user) { console.log(user) }
+        userCreated(user) {
+            console.log(user);
+        },
     },
     onStart: () => {},
     onSuccess: () => {},
     onError: () => {},
     onClose: () => {},
     onAfterLeave: () => {},
-    queryStringArrayFormat: 'brackets', // or 'indices'
-})
+    queryStringArrayFormat: "brackets", // or 'indices'
+});
 ```
 
 ### Local Modals
 
 Open without a server request using `#` prefix:
+
 ```vue
 <!-- Vue -->
 <ModalLink href="#confirm-action">Perform Action</ModalLink>
@@ -484,13 +505,15 @@ Open without a server request using `#` prefix:
 ```
 
 Pass props to local modals:
+
 ```js
-visitModal('#confirm-action', {
-    props: { message: 'Are you sure?', itemId: 123 }
-})
+visitModal("#confirm-action", {
+    props: { message: "Are you sure?", itemId: 123 },
+});
 ```
 
 Access in modal slot:
+
 ```vue
 <Modal name="confirm-action" v-slot="{ message, itemId }">
     <p>{{ message }}</p>
@@ -501,24 +524,24 @@ Access in modal slot:
 
 ```js
 // Reload all
-reload()
+reload();
 
 // Reload specific
-reload({ only: ['permissions'] })
-reload({ except: ['roles'] })
+reload({ only: ["permissions"] });
+reload({ except: ["roles"] });
 
 // With data and headers
-reload({ data: { email: 'test@example.com' } })
-reload({ headers: { 'X-Custom': 'value' } })
+reload({ data: { email: "test@example.com" } });
+reload({ headers: { "X-Custom": "value" } });
 
 // With lifecycle events
 reload({
-    only: ['permissions'],
+    only: ["permissions"],
     onStart: () => {},
     onSuccess: (response) => {},
     onError: (error) => {},
     onFinish: () => {},
-})
+});
 ```
 
 ## Event Bus
@@ -541,22 +564,27 @@ reload({
 
 ```jsx
 // React (on ModalLink)
-<ModalLink href="/modal" onIncreaseBy={handleIncrease}>Open</ModalLink>
+<ModalLink href="/modal" onIncreaseBy={handleIncrease}>
+    Open
+</ModalLink>
 ```
 
 ### Programmatic Listeners
 
 ```js
-visitModal('/users/create', {
+visitModal("/users/create", {
     listeners: {
-        increaseBy(amount) { console.log(amount) }
-    }
-})
+        increaseBy(amount) {
+            console.log(amount);
+        },
+    },
+});
 ```
 
 ## Nested / Stacked Modals
 
 Just use `ModalLink` inside a `Modal` — it automatically stacks:
+
 ```vue
 <Modal>
     <ModalLink href="/modal-2">Open Modal 2</ModalLink>
@@ -580,10 +608,11 @@ Just use `ModalLink` inside a `Modal` — it automatically stacks:
 ### Form Submissions in Nested Modals
 
 Use Axios (not Inertia router) to avoid closing all modals:
+
 ```js
-Axios.post('/submit-form', data).then(() => {
-    modalRef.value.close() // closes only current modal
-})
+Axios.post("/submit-form", data).then(() => {
+    modalRef.value.close(); // closes only current modal
+});
 ```
 
 ## Configuration
@@ -591,39 +620,39 @@ Axios.post('/submit-form', data).then(() => {
 ### Global Config
 
 ```js
-import { putConfig, getConfig, resetConfig } from '@inertiaui/modal-vue'
+import { putConfig, getConfig, resetConfig } from "@inertiaui/modal-vue";
 
-putConfig({ modal: { closeButton: false } })
-putConfig('modal.closeButton', false) // dot notation
+putConfig({ modal: { closeButton: false } });
+putConfig("modal.closeButton", false); // dot notation
 
-const value = getConfig('modal.maxWidth')
-const all = getConfig() // entire config
+const value = getConfig("modal.maxWidth");
+const all = getConfig(); // entire config
 
-resetConfig() // reset to defaults
+resetConfig(); // reset to defaults
 ```
 
 ### All Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `type` | `'modal'` | `'modal'` or `'slideover'` |
-| `navigate` | `false` | Use browser history for modal URLs |
-| `useNativeDialog` | `true` | Use native `<dialog>` element |
-| `appElement` | `'#app'` | Selector for aria-hidden when modal opens. Set to `null` to disable |
-| `modal.closeButton` | `true` | Show close button |
-| `modal.closeExplicitly` | `false` | Disable both backdrop click and Esc |
-| `modal.closeOnClickOutside` | `true` | Close on backdrop click |
-| `modal.maxWidth` | `'2xl'` | Max width: `sm` `md` `lg` `xl` `2xl` `3xl` `4xl` `5xl` `6xl` `7xl` |
-| `modal.paddingClasses` | `'p-4 sm:p-6'` | Padding CSS classes |
-| `modal.panelClasses` | `'bg-white rounded'` | Panel CSS classes |
-| `modal.position` | `'center'` | Position: `bottom` `center` `top` |
-| `slideover.closeButton` | `true` | Show close button |
-| `slideover.closeExplicitly` | `false` | Disable both backdrop click and Esc |
-| `slideover.closeOnClickOutside` | `true` | Close on backdrop click |
-| `slideover.maxWidth` | `'md'` | Max width |
-| `slideover.paddingClasses` | `'p-4 sm:p-6'` | Padding CSS classes |
-| `slideover.panelClasses` | `'bg-white min-h-screen'` | Panel CSS classes |
-| `slideover.position` | `'right'` | Position: `left` `right` |
+| Option                          | Default                   | Description                                                         |
+| ------------------------------- | ------------------------- | ------------------------------------------------------------------- |
+| `type`                          | `'modal'`                 | `'modal'` or `'slideover'`                                          |
+| `navigate`                      | `false`                   | Use browser history for modal URLs                                  |
+| `useNativeDialog`               | `true`                    | Use native `<dialog>` element                                       |
+| `appElement`                    | `'#app'`                  | Selector for aria-hidden when modal opens. Set to `null` to disable |
+| `modal.closeButton`             | `true`                    | Show close button                                                   |
+| `modal.closeExplicitly`         | `false`                   | Disable both backdrop click and Esc                                 |
+| `modal.closeOnClickOutside`     | `true`                    | Close on backdrop click                                             |
+| `modal.maxWidth`                | `'2xl'`                   | Max width: `sm` `md` `lg` `xl` `2xl` `3xl` `4xl` `5xl` `6xl` `7xl`  |
+| `modal.paddingClasses`          | `'p-4 sm:p-6'`            | Padding CSS classes                                                 |
+| `modal.panelClasses`            | `'bg-white rounded'`      | Panel CSS classes                                                   |
+| `modal.position`                | `'center'`                | Position: `bottom` `center` `top`                                   |
+| `slideover.closeButton`         | `true`                    | Show close button                                                   |
+| `slideover.closeExplicitly`     | `false`                   | Disable both backdrop click and Esc                                 |
+| `slideover.closeOnClickOutside` | `true`                    | Close on backdrop click                                             |
+| `slideover.maxWidth`            | `'md'`                    | Max width                                                           |
+| `slideover.paddingClasses`      | `'p-4 sm:p-6'`            | Padding CSS classes                                                 |
+| `slideover.panelClasses`        | `'bg-white min-h-screen'` | Panel CSS classes                                                   |
+| `slideover.position`            | `'right'`                 | Position: `left` `right`                                            |
 
 ## Styling
 
@@ -631,28 +660,30 @@ resetConfig() // reset to defaults
 
 All classes are prefixed with `im-`:
 
-| Class | Description |
-|-------|-------------|
-| `im-dialog` | The dialog element |
-| `im-close-button` | Close button |
-| `im-backdrop` | Backdrop (only when `useNativeDialog: false`) |
-| `im-modal-container` | Screen-filling modal container |
-| `im-modal-positioner` | Vertical position container |
-| `im-modal-wrapper` | Max-width container |
-| `im-modal-content` | Modal content |
-| `im-slideover-container` | Screen-filling slideover container |
-| `im-slideover-positioner` | Vertical position container |
-| `im-slideover-wrapper` | Max-width container |
-| `im-slideover-content` | Slideover content |
+| Class                     | Description                                   |
+| ------------------------- | --------------------------------------------- |
+| `im-dialog`               | The dialog element                            |
+| `im-close-button`         | Close button                                  |
+| `im-backdrop`             | Backdrop (only when `useNativeDialog: false`) |
+| `im-modal-container`      | Screen-filling modal container                |
+| `im-modal-positioner`     | Vertical position container                   |
+| `im-modal-wrapper`        | Max-width container                           |
+| `im-modal-content`        | Modal content                                 |
+| `im-slideover-container`  | Screen-filling slideover container            |
+| `im-slideover-positioner` | Vertical position container                   |
+| `im-slideover-wrapper`    | Max-width container                           |
+| `im-slideover-content`    | Slideover content                             |
 
 ### Native Dialog Backdrop
 
 When `useNativeDialog: true` (default), style the backdrop with CSS:
+
 ```css
 dialog.im-dialog::backdrop {
     background-color: rgba(0, 0, 0, 0.5);
 }
 ```
+
 Tailwind CSS cannot target `::backdrop` — use plain CSS.
 
 ## Custom App Mounting
@@ -662,48 +693,56 @@ For more control, use `ModalRoot`/`ModalStackProvider` and `initFromPageProps` d
 ### React
 
 ```jsx
-import { ModalStackProvider, initFromPageProps, setPageLayout } from '@inertiaui/modal-react'
+import { ModalStackProvider, initFromPageProps, setPageLayout } from "@inertiaui/modal-react";
 
 // Layout component
 function ModalLayout({ children }) {
-    return <>{children}<ModalRoot /></>
+    return (
+        <>
+            {children}
+            <ModalRoot />
+        </>
+    );
 }
 
 createInertiaApp({
-    resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx'))
-        .then(setPageLayout(ModalLayout)),
+    resolve: (name) =>
+        resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob("./Pages/**/*.jsx")).then(
+            setPageLayout(ModalLayout),
+        ),
     setup({ el, App, props }) {
         const root = createRoot(el);
-        initFromPageProps(props)
+        initFromPageProps(props);
         root.render(
             <ModalStackProvider>
                 <App {...props} />
-            </ModalStackProvider>
+            </ModalStackProvider>,
         );
-    }
+    },
 });
 ```
 
 ### Vue
 
 ```js
-import { ModalRoot, initFromPageProps } from '@inertiaui/modal-vue'
+import { ModalRoot, initFromPageProps } from "@inertiaui/modal-vue";
 
 createInertiaApp({
     setup({ el, App, props, plugin }) {
-        initFromPageProps(props)
+        initFromPageProps(props);
         createApp({ render: () => h(ModalRoot, () => h(App, props)) })
             .use(plugin)
-            .mount(el)
-    }
-})
+            .mount(el);
+    },
+});
 ```
 
 ## TypeScript
 
 Both packages include type definitions:
+
 ```ts
-import type { ModalConfig, ModalTypeConfig, VisitOptions, ReloadOptions, PrefetchOption } from '@inertiaui/modal-vue'
+import type { ModalConfig, ModalTypeConfig, VisitOptions, ReloadOptions, PrefetchOption } from "@inertiaui/modal-vue";
 // or from '@inertiaui/modal-react'
 ```
 

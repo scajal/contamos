@@ -51,6 +51,7 @@ Treat every entry in `{workflow.persistent_facts}` as foundational context you c
 ### Step 4: Load Config
 
 Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
+
 - Use `{user_name}` for greeting
 - Use `{communication_language}` for all communications
 - Use `{document_output_language}` for output documents
@@ -72,10 +73,12 @@ Activation is complete. If `activation_steps_prepend` or `activation_steps_appen
 1. **Resume detection:** Check if `{planning_artifacts}/prfaq-{project_name}.md` already exists. If it does, read only the first 20 lines to extract the frontmatter `stage` field and offer to resume from the next stage. Do not read the full document. If the user confirms, route directly to that stage's reference file.
 
 2. **Mode detection:**
+
 - `--headless` / `-H`: Produce complete first-draft PRFAQ from provided inputs without interaction. Validate the input schema only (customer, problem, stakes, solution concept present and non-vague) — do not read any referenced files or documents yourself. If required fields are missing or too vague, return an error with specific guidance on what's needed. Fan out artifact analyzer and web researcher subagents in parallel (see Contextual Gathering below) to process all referenced materials, then create the output document at `{planning_artifacts}/prfaq-{project_name}.md` using `./assets/prfaq-template.md` and route to `./references/press-release.md`.
 - Default: Full interactive coaching — the gauntlet.
 
 **Headless input schema:**
+
 - **Required:** customer (specific persona), problem (concrete), stakes (why it matters), solution (concept)
 - **Optional:** competitive context, technical constraints, team/org context, target market, existing research
 
@@ -100,6 +103,7 @@ When the user gets stuck, offer concrete suggestions based on what they've share
 **Concept type detection:** Early in the conversation, identify whether this is a commercial product, internal tool, open-source project, or community/nonprofit initiative. Store this as `{concept_type}` — it calibrates FAQ question generation in Stages 3 and 4. Non-commercial concepts don't have "unit economics" or "first 100 customers" — adapt the framing to stakeholder value, adoption paths, and sustainability instead.
 
 **Essentials to capture before progressing:**
+
 - Who is the customer/user? (specific persona, not "everyone")
 - What is their problem? (concrete and felt, not abstract)
 - Why does this matter to them? (stakes and consequences)
@@ -113,8 +117,8 @@ When the user gets stuck, offer concrete suggestions based on what they've share
 
 1. **Ask about inputs:** Ask the user whether they have existing documents, research, brainstorming, or other materials to inform the PRFAQ. Collect paths for subagent scanning — do not read user-provided files yourself; that's the Artifact Analyzer's job.
 2. **Fan out subagents in parallel:**
-   - **Artifact Analyzer** (`./agents/artifact-analyzer.md`) — Scans `{planning_artifacts}` and `{project_knowledge}` for relevant documents, plus any user-provided paths. Receives the product intent summary so it knows what's relevant.
-   - **Web Researcher** (`./agents/web-researcher.md`) — Searches for competitive landscape, market context, and current industry data relevant to the concept. Receives the product intent summary.
+    - **Artifact Analyzer** (`./agents/artifact-analyzer.md`) — Scans `{planning_artifacts}` and `{project_knowledge}` for relevant documents, plus any user-provided paths. Receives the product intent summary so it knows what's relevant.
+    - **Web Researcher** (`./agents/web-researcher.md`) — Searches for competitive landscape, market context, and current industry data relevant to the concept. Receives the product intent summary.
 3. **Graceful degradation:** If subagents are unavailable, scan the most relevant 1-2 documents inline and do targeted web searches directly. Never block the workflow.
 4. **Merge findings** with what the user shared. Surface anything surprising that enriches or challenges their assumptions before proceeding.
 
@@ -126,10 +130,10 @@ When the user gets stuck, offer concrete suggestions based on what they've share
 
 ## Stages
 
-| # | Stage | Purpose | Location |
-|---|-------|---------|----------|
-| 1 | Ignition | Raw concept, enforce customer-first thinking | SKILL.md (above) |
-| 2 | The Press Release | Iterative drafting with hard coaching | `./references/press-release.md` |
-| 3 | Customer FAQ | Devil's advocate customer questions | `./references/customer-faq.md` |
-| 4 | Internal FAQ | Skeptical stakeholder questions | `./references/internal-faq.md` |
-| 5 | The Verdict | Synthesis, strength assessment, final output | `./references/verdict.md` |
+| #   | Stage             | Purpose                                      | Location                        |
+| --- | ----------------- | -------------------------------------------- | ------------------------------- |
+| 1   | Ignition          | Raw concept, enforce customer-first thinking | SKILL.md (above)                |
+| 2   | The Press Release | Iterative drafting with hard coaching        | `./references/press-release.md` |
+| 3   | Customer FAQ      | Devil's advocate customer questions          | `./references/customer-faq.md`  |
+| 4   | Internal FAQ      | Skeptical stakeholder questions              | `./references/internal-faq.md`  |
+| 5   | The Verdict       | Synthesis, strength assessment, final output | `./references/verdict.md`       |

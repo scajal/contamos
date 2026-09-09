@@ -173,10 +173,10 @@ Load ../templates/epics-template.md and initialize {planning_artifacts}/epics.md
 1. Copy the entire template to {planning_artifacts}/epics.md
 2. Replace {{project_name}} with the actual project name
 3. Replace placeholder sections with extracted requirements:
-   - {{fr_list}} → extracted FRs
-   - {{nfr_list}} → extracted NFRs
-   - {{additional_requirements}} → extracted additional requirements (from Architecture)
-   - {{ux_design_requirements}} → extracted UX Design Requirements (if UX document exists)
+    - {{fr_list}} → extracted FRs
+    - {{nfr_list}} → extracted NFRs
+    - {{additional_requirements}} → extracted additional requirements (from Architecture)
+    - {{ux_design_requirements}} → extracted UX Design Requirements (if UX document exists)
 4. Leave {{requirements_coverage_map}} and {{epics_list}} as placeholders for now
 
 ### 8. Present Extracted Requirements

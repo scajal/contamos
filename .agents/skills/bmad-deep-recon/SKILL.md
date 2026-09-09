@@ -13,8 +13,8 @@ Three services, freely combined — each detailed in its reference: **Draft** a 
 
 **Epistemics — two standing rules, inherited verbatim by every subagent you spawn:**
 
-1. **Never conclude from training data alone.** What you already know proposes hypotheses, queries, and structure; conclusions require evidence retrieved or imported *this run*. A claim you cannot evidence is stated as an unverified belief or not at all.
-2. **The research firewall.** Project context — briefs, PRDs, code, memory, `{workflow.persistent_facts}` — shapes *what to ask*, never *what is true*. It is inadmissible as evidence: every claim in a research artifact traces to a digest or import file with a source. Research subagents receive only their brief — no project files, no ambient context — unless the plan explicitly grants a named document.
+1. **Never conclude from training data alone.** What you already know proposes hypotheses, queries, and structure; conclusions require evidence retrieved or imported _this run_. A claim you cannot evidence is stated as an unverified belief or not at all.
+2. **The research firewall.** Project context — briefs, PRDs, code, memory, `{workflow.persistent_facts}` — shapes _what to ask_, never _what is true_. It is inadmissible as evidence: every claim in a research artifact traces to a digest or import file with a source. Research subagents receive only their brief — no project files, no ambient context — unless the plan explicitly grants a named document.
 
 ## How you work
 
@@ -55,12 +55,12 @@ Orthogonal to type is the **decision shape**: **explore** (the default — under
 
 Route on the detected intent and load only what it names. Every intent shares the run-folder workspace shape — `brief.md`, `imports/`, `digests/`, `research.md`, `.memlog.md` — and ends per `references/finalize.md`.
 
-| Intent | What it does | Load |
-| --- | --- | --- |
-| Draft | Compose a deep-research prompt for the user's own tool, carrying the pack's craft | `references/draft.md` |
-| Process | File a finished report, extract its claims, distill the downstream summary | `references/process.md` |
-| Run | Native research: resolve effort, hold the plan gate — the one hard stop — then run the loop | `references/run.md`, then `references/verification.md` + `references/synthesis.md` |
-| Refresh / Deepen | Update or extend an existing run folder | `references/lifecycle.md` |
+| Intent           | What it does                                                                                | Load                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Draft            | Compose a deep-research prompt for the user's own tool, carrying the pack's craft           | `references/draft.md`                                                              |
+| Process          | File a finished report, extract its claims, distill the downstream summary                  | `references/process.md`                                                            |
+| Run              | Native research: resolve effort, hold the plan gate — the one hard stop — then run the loop | `references/run.md`, then `references/verification.md` + `references/synthesis.md` |
+| Refresh / Deepen | Update or extend an existing run folder                                                     | `references/lifecycle.md`                                                          |
 
 ## Headless Mode
 
@@ -68,14 +68,14 @@ When invoked headless, do not ask. Bare research defaults to **run**; a named re
 
 ```json
 {
-  "status": "complete",
-  "intent": "run",
-  "type": "market",
-  "report": "{doc_workspace}/research.md",
-  "memlog": "{doc_workspace}/.memlog.md",
-  "claims": {"verified": 12, "unverified": 3, "overturned": 0},
-  "open_questions": [],
-  "external_handoffs": []
+    "status": "complete",
+    "intent": "run",
+    "type": "market",
+    "report": "{doc_workspace}/research.md",
+    "memlog": "{doc_workspace}/.memlog.md",
+    "claims": { "verified": 12, "unverified": 3, "overturned": 0 },
+    "open_questions": [],
+    "external_handoffs": []
 }
 ```
 

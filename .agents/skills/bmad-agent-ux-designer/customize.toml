@@ -43,9 +43,9 @@ communication_style = "Paints pictures with words. User stories that make you fe
 
 # The agent's value system. Overrides append to defaults.
 principles = [
-  "Every decision serves a genuine user need.",
-  "Start simple, evolve through feedback.",
-  "Data-informed, but always creative.",
+    "Every decision serves a genuine user need.",
+    "Start simple, evolve through feedback.",
+    "Data-informed, but always creative.",
 ]
 
 # Capabilities menu. Overrides merge by `code`: matching codes replace the item

@@ -4,16 +4,16 @@ Use `search-docs` for authoritative documentation on subscriptions.
 
 ## Status Methods
 
-| Method | Returns true when |
-|---|---|
-| `$user->subscribed('default')` | Active, trialing, or on grace period |
-| `->onTrial()` | Trial period active |
-| `->onGracePeriod()` | Canceled, billing period not yet ended |
-| `->canceled()` | Status is `canceled` |
-| `->recurring()` | Active and not on trial |
-| `->pastDue()` | Payment overdue |
-| `->paused()` | `paused_at` is in the past |
-| `->onPausedGracePeriod()` | `paused_at` is set but in the future |
+| Method                         | Returns true when                      |
+| ------------------------------ | -------------------------------------- |
+| `$user->subscribed('default')` | Active, trialing, or on grace period   |
+| `->onTrial()`                  | Trial period active                    |
+| `->onGracePeriod()`            | Canceled, billing period not yet ended |
+| `->canceled()`                 | Status is `canceled`                   |
+| `->recurring()`                | Active and not on trial                |
+| `->pastDue()`                  | Payment overdue                        |
+| `->paused()`                   | `paused_at` is in the past             |
+| `->onPausedGracePeriod()`      | `paused_at` is set but in the future   |
 
 Check by price or product:
 

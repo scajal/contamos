@@ -225,8 +225,7 @@ export const LiveLedger = () => {
         // never falls into an obvious rhythm.
         const step = () => {
             setEntries((current) => {
-                const adding =
-                    current.length <= MIN_ROWS || (current.length < MAX_ROWS && Math.random() < 0.55);
+                const adding = current.length <= MIN_ROWS || (current.length < MAX_ROWS && Math.random() < 0.55);
 
                 if (!adding) {
                     const victim = sample(current);
@@ -339,9 +338,7 @@ export const LiveLedger = () => {
                                             <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
                                                 {transaction.tag}
                                             </span>
-                                            <span className="truncate text-sm text-zinc-300">
-                                                {transaction.label}
-                                            </span>
+                                            <span className="truncate text-sm text-zinc-300">{transaction.label}</span>
                                         </div>
                                         {/* rose-400, not rose-500: the 500 lands at 4.13:1 on the row fill, under AA. */}
                                         <span

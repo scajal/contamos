@@ -1,32 +1,12 @@
 import { Deferred, usePage } from "@inertiajs/react";
-import { ModalLink } from "@inertiaui/modal-react";
-import { BorderBeam } from "border-beam";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import {
-    ArrowUpRightFromSquareIcon,
-    CheckCircleIcon,
-    ChevronDownIcon,
-    CircleDashedIcon,
-    MoreHorizontalIcon,
-    PrinterIcon,
-    ReceiptTextIcon,
-    SparklesIcon,
-    XIcon,
-} from "lucide-react";
+import { CircleDashedIcon, MoreHorizontalIcon, PrinterIcon, ReceiptTextIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { PaginationControls } from "@/components/pagination-controls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -35,20 +15,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import {
-    Item,
-    ItemActions,
-    ItemContent,
-    ItemDescription,
-    ItemGroup,
-    ItemHeader,
-    ItemMedia,
-    ItemTitle,
-} from "@/components/ui/item";
-import { Modal } from "@/components/ui/modal";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import subscriptions from "@/routes/billing/teams/subscriptions";
 import { Transaction } from "@/types/app/modules/billing/models/transaction";
 import { Team } from "@/types/app/modules/core/identity/models/team";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
@@ -88,144 +57,6 @@ const Header = () => {
             <h1 className="text-2xl font-medium">{t("Billing")}</h1>
             <p className="text-muted-foreground text-sm">{t("Manage your team's billing and subscription.")}</p>
         </header>
-    );
-};
-
-const Plan = () => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    /**
-     * The page's props.
-     */
-    const { plan, team } = usePage<PageProps>().props;
-
-    return (
-        <Item className="bg-background" variant="outline">
-            <ItemContent>
-                <ItemHeader>
-                    <ItemTitle>{t("Plan :name", { name: plan.name })}</ItemTitle>
-                    {plan.subscription && <Badge>{plan.subscription.status}</Badge>}
-                </ItemHeader>
-                <ItemDescription>{t("The plan your team is currently subscribed to.")}</ItemDescription>
-            </ItemContent>
-
-            <Item variant="muted">
-                <ItemContent>
-                    {plan?.features?.map((feature) => (
-                        <Item key={feature.value}>
-                            <ItemMedia variant="icon">
-                                <CheckCircleIcon className="text-primary" />
-                            </ItemMedia>
-                            <ItemContent>
-                                <ItemHeader>
-                                    <ItemTitle>{feature.name}</ItemTitle>
-                                    <ItemDescription>{`${feature.usage} / ${feature.limit ?? t("Unlimited")}`}</ItemDescription>
-                                </ItemHeader>
-                            </ItemContent>
-                        </Item>
-                    ))}
-                </ItemContent>
-            </Item>
-            <ItemActions className="w-full justify-end">
-                {/** Upgrade to pro */}
-                {plan.value === "free" && <UpgradeToPro />}
-
-                {/** Pro actions */}
-                {plan.value === "pro" && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button variant="outline" />}>
-                            <span>{t("Manage")}</span>
-                            <ChevronDownIcon className="transition-transform in-data-popup-open:rotate-180" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-auto min-w-(--anchor-width)">
-                            <DropdownMenuItem
-                                render={
-                                    <a
-                                        href={subscriptions.redirectToCustomerPortal.url({ team: team.slug })}
-                                        target="_blank"
-                                    />
-                                }
-                            >
-                                <ArrowUpRightFromSquareIcon />
-                                <span>{t("Customer portal")}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem variant="destructive">
-                                <XIcon />
-                                <span>{t("Cancel")}</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
-            </ItemActions>
-        </Item>
-    );
-};
-
-const UpgradeToPro = () => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    /**
-     * The page's props.
-     */
-    const { team } = usePage<PageProps>().props;
-
-    return (
-        <Fragment>
-            <BorderBeam colorVariant="sunset">
-                <Button
-                    render={
-                        <ModalLink href="#upgrade-to-pro">
-                            <SparklesIcon />
-                            <span>{t("Upgrade to Pro")}</span>
-                        </ModalLink>
-                    }
-                    variant="outline"
-                />
-            </BorderBeam>
-            <Modal name="upgrade-to-pro">
-                {({ close, isOpen }) => (
-                    <Dialog open={isOpen} onOpenChange={close}>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>{t("Upgrade to Pro")}</DialogTitle>
-                                <DialogDescription>
-                                    {t("Choose the billing cycle for your subscription.")}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter className="*:flex-1">
-                                <Button
-                                    render={
-                                        <ModalLink
-                                            href={subscriptions.subscribe.url({ team: team.slug, cycle: "monthly" })}
-                                        >
-                                            <span>{t("Monthly")}</span>
-                                        </ModalLink>
-                                    }
-                                />
-                                <Button
-                                    render={
-                                        <ModalLink
-                                            href={subscriptions.subscribe.url({ team: team.slug, cycle: "yearly" })}
-                                        >
-                                            <span>{t("Yearly")}</span>
-                                        </ModalLink>
-                                    }
-                                    variant="outline"
-                                />
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                )}
-            </Modal>
-        </Fragment>
     );
 };
 

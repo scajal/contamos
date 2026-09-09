@@ -3,7 +3,7 @@ name: inertia-modal-development
 description: Build and work with inertiaui/modal features including opening routes in modals/slideovers, configuring modal behavior, prefetching, local modals, nested modals, event communication, and headless mode. Supports both React and Vue.
 license: MIT
 metadata:
-  author: Inertia UI
+    author: Inertia UI
 ---
 
 # Inertia Modal Development
@@ -44,6 +44,7 @@ return Inertia::modal('EditUser', [
 ```
 
 With a base route (enables URL changes and browser history):
+
 ```php
 return Inertia::modal('EditUser', ['user' => $user])
     ->baseRoute('users.index');
@@ -55,22 +56,22 @@ Use `renderApp` in your `app.js`/`app.jsx`:
 
 ```js
 // Vue
-import { renderApp } from '@inertiaui/modal-vue'
+import { renderApp } from "@inertiaui/modal-vue";
 createInertiaApp({
     setup({ el, App, props, plugin }) {
         createApp({ render: renderApp(App, props) })
             .use(plugin)
-            .mount(el)
-    }
-})
+            .mount(el);
+    },
+});
 
 // React
-import { renderApp } from '@inertiaui/modal-react'
+import { renderApp } from "@inertiaui/modal-react";
 createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
         root.render(renderApp(App, props));
-    }
+    },
 });
 ```
 
@@ -108,48 +109,49 @@ createInertiaApp({
 
 ```js
 // Vue
-import { visitModal } from '@inertiaui/modal-vue'
-visitModal('/users/create')
+import { visitModal } from "@inertiaui/modal-vue";
+visitModal("/users/create");
 
 // React
-const { visitModal } = useModalStack()
-visitModal('/users/create')
+const { visitModal } = useModalStack();
+visitModal("/users/create");
 ```
 
 ### Configuration
 
 ```js
-import { putConfig } from '@inertiaui/modal-vue' // or modal-react
+import { putConfig } from "@inertiaui/modal-vue"; // or modal-react
 
 putConfig({
-    type: 'modal',
+    type: "modal",
     navigate: false,
     useNativeDialog: true,
-    appElement: '#app',
+    appElement: "#app",
     modal: {
         closeButton: true,
         closeExplicitly: false,
         closeOnClickOutside: true,
-        maxWidth: '2xl',
-        paddingClasses: 'p-4 sm:p-6',
-        panelClasses: 'bg-white rounded',
-        position: 'center',
+        maxWidth: "2xl",
+        paddingClasses: "p-4 sm:p-6",
+        panelClasses: "bg-white rounded",
+        position: "center",
     },
     slideover: {
         closeButton: true,
         closeExplicitly: false,
         closeOnClickOutside: true,
-        maxWidth: 'md',
-        paddingClasses: 'p-4 sm:p-6',
-        panelClasses: 'bg-white min-h-screen',
-        position: 'right',
+        maxWidth: "md",
+        paddingClasses: "p-4 sm:p-6",
+        panelClasses: "bg-white min-h-screen",
+        position: "right",
     },
-})
+});
 ```
 
 ## Do and Don't
 
 Do:
+
 - Always use `Inertia::modal()` (not `Inertia::render()`) when opening routes as modals.
 - Always call `renderApp` or set up `ModalRoot`/`ModalStackProvider` in your app entry point.
 - Use the `navigate` prop on `ModalLink` (or global config) when you want URL changes and browser history.
@@ -158,6 +160,7 @@ Do:
 - Import `Deferred` and `WhenVisible` from the modal package (not Inertia) when used inside modals.
 
 Don't:
+
 - Don't forget to set up the `renderApp` helper or `ModalRoot` component — modals won't work without it.
 - Don't use `Inertia::render()` for modal routes — use `Inertia::modal()`.
 - Don't use `router.post()` (Inertia router) in nested modals — it navigates to the base route and closes all modals. Use Axios instead.

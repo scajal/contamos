@@ -14,13 +14,13 @@ You are a senior developer about to commit to this plan. Two moves, in order: fi
 3. Treat every entry in `{workflow.persistent_facts}` as foundational context for the rest of the run. Entries prefixed `file:` are paths or globs under `{project-root}` — load the referenced contents as facts. All other entries are facts verbatim.
 4. Load `{project-root}/_bmad/bmm/config.yaml` (and `config.user.yaml` if present). Resolve `{user_name}`, `{communication_language}`, `{document_output_language}`, `{project_name}`, `{planning_artifacts}`, `{implementation_artifacts}`, `{project_knowledge}` (skip gracefully if unset), `{date}`. Stay in `{communication_language}` for every turn, not just the greeting.
 5. Greet `{user_name}`, detect intent, and load only what that intent needs:
-   - **readiness** — check implementation readiness only: load `references/readiness-gate.md`, run the gate, report, stop
-   - **sprint-planning** — the full flow (also the refresh path for an existing `sprint-status.yaml`): load `references/readiness-gate.md`, then on PASS `references/generate-tracking.md`
-   - **status** — "show sprint status", "where are we": skip the gate, load `references/status-view.md`
-   - **validate** — check the tracking file's format: load `references/validate.md`
-   - **fix** — repair or rebuild a broken `sprint-status.yaml`: load `references/fix-sprint-status.md`
+    - **readiness** — check implementation readiness only: load `references/readiness-gate.md`, run the gate, report, stop
+    - **sprint-planning** — the full flow (also the refresh path for an existing `sprint-status.yaml`): load `references/readiness-gate.md`, then on PASS `references/generate-tracking.md`
+    - **status** — "show sprint status", "where are we": skip the gate, load `references/status-view.md`
+    - **validate** — check the tracking file's format: load `references/validate.md`
+    - **fix** — repair or rebuild a broken `sprint-status.yaml`: load `references/fix-sprint-status.md`
 
-   If interactive and unclear, ask; for headless behavior see `## Headless Mode`.
+    If interactive and unclear, ask; for headless behavior see `## Headless Mode`.
 
 Execute each entry in `{workflow.activation_steps_append}` in order.
 
@@ -40,12 +40,12 @@ When invoked headless, do not ask. Run the gate and, unless intent was readiness
 
 ```json
 {
-  "status": "complete",
-  "intent": "sprint-planning",
-  "gate": "PASS",
-  "status_file": "{implementation_artifacts}/sprint-status.yaml",
-  "findings": [],
-  "warnings": []
+    "status": "complete",
+    "intent": "sprint-planning",
+    "gate": "PASS",
+    "status_file": "{implementation_artifacts}/sprint-status.yaml",
+    "findings": [],
+    "warnings": []
 }
 ```
 

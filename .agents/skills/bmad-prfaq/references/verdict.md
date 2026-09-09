@@ -44,6 +44,7 @@ purpose: "Token-efficient context for downstream PRD creation"
 ```
 
 **Distillate content:** Dense bullet points grouped by theme. Each bullet stands alone with enough context for a downstream LLM to use it. Include:
+
 - Rejected framings and why they were dropped
 - Requirements signals captured during coaching
 - Technical context, constraints, and platform preferences
@@ -63,14 +64,15 @@ purpose: "Token-efficient context for downstream PRD creation"
 **Recommended next step:** Use the PRFAQ and detail pack as input for PRD creation. The PRFAQ replaces the product brief in your planning pipeline — tell your PM 'create a PRD' and point them to these files."
 
 **Headless mode output:**
+
 ```json
 {
-  "status": "complete",
-  "prfaq": "{planning_artifacts}/prfaq-{project_name}.md",
-  "distillate": "{planning_artifacts}/prfaq-{project_name}-distillate.md",
-  "verdict": "forged|needs-heat|cracked",
-  "key_risks": ["top unresolved items"],
-  "open_questions": ["unresolved items from FAQs"]
+    "status": "complete",
+    "prfaq": "{planning_artifacts}/prfaq-{project_name}.md",
+    "distillate": "{planning_artifacts}/prfaq-{project_name}-distillate.md",
+    "verdict": "forged|needs-heat|cracked",
+    "key_risks": ["top unresolved items"],
+    "open_questions": ["unresolved items from FAQs"]
 }
 ```
 

@@ -2,7 +2,7 @@
 name: seo
 description: Audit, plan, and implement SEO improvements across technical SEO, on-page optimization, structured data, Core Web Vitals, and content strategy. Use when the user wants better search visibility, SEO remediation, schema markup, sitemap/robots work, or keyword mapping.
 metadata:
-  origin: ECC
+    origin: ECC
 ---
 
 # SEO
@@ -12,6 +12,7 @@ Improve search visibility through technical correctness, performance, and conten
 ## When to Use
 
 Use this skill when:
+
 - auditing crawlability, indexability, canonicals, or redirects
 - improving title tags, meta descriptions, and heading structure
 - adding or validating structured data
@@ -114,17 +115,17 @@ Action + topic + value proposition + one supporting detail
 
 ```json
 {
-  "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": "Page Title Here",
-  "author": {
-    "@type": "Person",
-    "name": "Author Name"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "Brand Name"
-  }
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Page Title Here",
+    "author": {
+        "@type": "Person",
+        "name": "Author Name"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "Brand Name"
+    }
 }
 ```
 
@@ -139,13 +140,13 @@ Fix: Generate a unique title per product using the product name and primary cate
 
 ## Anti-Patterns
 
-| Anti-pattern | Fix |
-| --- | --- |
-| keyword stuffing | write for users first |
-| thin near-duplicate pages | consolidate or differentiate them |
-| schema for content that is not actually present | match schema to reality |
-| content advice without checking the actual page | read the real page first |
-| generic “improve SEO” outputs | tie every recommendation to a page or asset |
+| Anti-pattern                                    | Fix                                         |
+| ----------------------------------------------- | ------------------------------------------- |
+| keyword stuffing                                | write for users first                       |
+| thin near-duplicate pages                       | consolidate or differentiate them           |
+| schema for content that is not actually present | match schema to reality                     |
+| content advice without checking the actual page | read the real page first                    |
+| generic “improve SEO” outputs                   | tie every recommendation to a page or asset |
 
 ## Related Skills
 

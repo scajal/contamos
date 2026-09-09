@@ -460,9 +460,7 @@ const Listing = () => {
                                                     <TableCell className={TRANSACTION_COLUMNS.tags}>
                                                         <TagsCell tags={transaction.tags ?? []} />
                                                     </TableCell>
-                                                    <TableCell
-                                                        className={cn("text-right", TRANSACTION_COLUMNS.amount)}
-                                                    >
+                                                    <TableCell className={cn("text-right", TRANSACTION_COLUMNS.amount)}>
                                                         <span
                                                             className={cn(
                                                                 "font-medium tabular-nums",
