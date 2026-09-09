@@ -6,7 +6,7 @@ use App\Modules\Core\Identity\Models\Team;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
- * Feature tests for \App\Modules\Core\Identity\Http\Controllers\Team\SettingController.
+ * Feature tests for \App\Modules\Core\Identity\Http\Controllers\TeamController.
  */
 describe('index', function (): void {
     it('redirects guests to login', function (): void {
@@ -31,7 +31,7 @@ describe('index', function (): void {
         $this->get(route('identity.teams.settings.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-                ->component('identity/teams/settings/index')
+                ->component('identity/teams/index')
                 ->has('user')
                 ->where('team.id', $team->getKey())
                 ->where('team.name', 'Acme Family')
@@ -64,7 +64,7 @@ describe('edit', function (): void {
             ->get(route('identity.teams.settings.edit', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-                ->component('identity/teams/settings/edit')
+                ->component('identity/teams/edit')
                 ->where('team.id', $team->getKey())
                 ->where('team.name', $team->name));
     });

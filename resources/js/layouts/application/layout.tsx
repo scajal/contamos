@@ -66,7 +66,7 @@ const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/tags", title: "Tags" },
     { prefix: "identity/teams/invitations", title: "Invitations" },
     { prefix: "identity/teams/members", title: "Members" },
-    { prefix: "identity/teams/settings", title: "Configuration" },
+    { prefix: "identity/teams/index", title: "Configuration" },
 ];
 
 /**
