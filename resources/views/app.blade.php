@@ -17,9 +17,6 @@
         <x-inertia::head>
             <title>{{ config('app.name', 'Laravel') }}</title>
         </x-inertia::head>
-        @if ($page['component'] === 'billing/teams/subscriptions/subscribe')
-            @paddleJS
-        @endif
     </head>
     <body class="font-sans antialiased">
         @inertia

@@ -11,6 +11,7 @@ declare global {
             Environment: {
                 set: (environment: "sandbox" | "production") => void;
             };
+            Initialize: (options: { token: string }) => void;
         };
     }
 }

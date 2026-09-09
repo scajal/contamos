@@ -40,7 +40,14 @@ class SubscriptionController
     {
         return Inertia::modal('billing/teams/subscriptions/subscribe', [
             'checkout' => $team->checkout(Plan::Pro->priceId($cycle)),
-        ]);
+            // Paddle.js is loaded by the page itself, so it needs
+            // the client-side settings the Blade directive used to
+            // inline.
+            'paddle' => [
+                'token' => config()->string('cashier.client_side_token', ''),
+                'sandbox' => config()->boolean('cashier.sandbox', false),
+            ],
+        ])->baseRoute('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]);
     }
 
     /**
@@ -58,6 +65,10 @@ class SubscriptionController
                 'pro' => $feature->limitOn(Plan::Pro),
             ])->values(),
             'plan' => $team->plan(),
+            'prices' => [
+                BillingCycle::Monthly->value => Plan::Pro->price(BillingCycle::Monthly),
+                BillingCycle::Yearly->value => Plan::Pro->price(BillingCycle::Yearly),
+            ],
         ])->baseRoute('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]);
     }
 
