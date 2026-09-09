@@ -221,7 +221,7 @@ function ComboboxChips({
     <ComboboxPrimitive.Chips
       data-slot="combobox-chips"
       className={cn(
-        "flex min-h-9 flex-wrap items-center gap-1.5 rounded-3xl border border-transparent bg-input/50 bg-clip-padding px-3 py-1.5 text-sm transition-[color,box-shadow,background-color] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30 has-aria-invalid:border-destructive has-aria-invalid:ring-3 has-aria-invalid:ring-destructive/20 has-data-[slot=combobox-chip]:px-1.5 dark:has-aria-invalid:border-destructive/50 dark:has-aria-invalid:ring-destructive/40",
+        "relative flex min-h-9 flex-wrap items-center gap-x-1.5 gap-y-2 rounded-3xl border border-transparent bg-input/50 bg-clip-padding px-3 py-1.5 text-sm transition-[color,box-shadow,background-color] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30 has-aria-invalid:border-destructive has-aria-invalid:ring-3 has-aria-invalid:ring-destructive/20 has-data-[slot=combobox-chip]:pr-1.5 has-[[data-slot=input-group-addon]]:pl-9 dark:has-aria-invalid:border-destructive/50 dark:has-aria-invalid:ring-destructive/40 [&_[data-slot=input-group-addon]]:absolute [&_[data-slot=input-group-addon]]:top-1.5 [&_[data-slot=input-group-addon]]:left-0 [&_[data-slot=input-group-addon]]:h-[calc(--spacing(5.5))] [&_[data-slot=input-group-addon]]:py-0 has-data-[slot=combobox-chip]:[&_[data-slot=combobox-chip-input]]:min-w-0",
         className
       )}
       {...props}
@@ -267,7 +267,10 @@ function ComboboxChipsInput({
   return (
     <ComboboxPrimitive.Input
       data-slot="combobox-chip-input"
-      className={cn("min-w-16 flex-1 outline-none", className)}
+      className={cn(
+        "h-[calc(--spacing(5.5))] min-w-16 flex-1 border-0 bg-transparent p-0 outline-none placeholder:text-muted-foreground",
+        className
+      )}
       {...props}
     />
   )

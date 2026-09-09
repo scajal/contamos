@@ -1,4 +1,4 @@
-import { Deferred, Link, usePage } from "@inertiajs/react";
+import { Deferred, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { BorderBeam } from "border-beam";
 import { format } from "date-fns";
@@ -7,8 +7,6 @@ import {
     ArrowUpRightFromSquareIcon,
     CheckCircleIcon,
     ChevronDownIcon,
-    ChevronLeftIcon,
-    ChevronRightIcon,
     CircleDashedIcon,
     MoreHorizontalIcon,
     PrinterIcon,
@@ -18,6 +16,7 @@ import {
 } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
+import { PaginationControls } from "@/components/pagination-controls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,7 +46,6 @@ import {
     ItemTitle,
 } from "@/components/ui/item";
 import { Modal } from "@/components/ui/modal";
-import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import subscriptions from "@/routes/billing/teams/subscriptions";
@@ -300,7 +298,10 @@ const Transactions = () => {
                                 ))}
                             </ItemGroup>
                         </div>
-                        <Pagination />
+                        <PaginationControls
+                            nextUrl={transactions?.next_page_url}
+                            previousUrl={transactions?.prev_page_url}
+                        />
                     </div>
                 )}
             </Deferred>
@@ -322,48 +323,6 @@ const SkeletonRows = () => {
                 </div>
             ))}
         </div>
-    );
-};
-
-const Pagination = () => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    /**
-     * The page's props.
-     */
-    const { transactions } = usePage<PageProps>().props;
-
-    return (
-        <PaginationComponent>
-            <PaginationContent>
-                <PaginationItem>
-                    <Button
-                        disabled={!transactions?.prev_page_url}
-                        nativeButton={false}
-                        render={<Link href={transactions?.prev_page_url ?? undefined} />}
-                        variant="ghost"
-                    >
-                        <ChevronLeftIcon data-icon="inline-start" />
-                        <span>{t("Previous")}</span>
-                    </Button>
-                </PaginationItem>
-                <PaginationItem>
-                    <Button
-                        disabled={!transactions?.next_page_url}
-                        nativeButton={false}
-                        render={<Link href={transactions?.next_page_url ?? undefined} />}
-                        variant="ghost"
-                    >
-                        <span>{t("Next")}</span>
-                        <ChevronRightIcon data-icon="inline-end" />
-                    </Button>
-                </PaginationItem>
-            </PaginationContent>
-        </PaginationComponent>
     );
 };
 

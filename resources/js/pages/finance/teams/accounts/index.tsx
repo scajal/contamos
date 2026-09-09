@@ -5,8 +5,6 @@ import {
     BanknoteIcon,
     BitcoinIcon,
     CheckIcon,
-    ChevronLeftIcon,
-    ChevronRightIcon,
     CircleDashedIcon,
     LandmarkIcon,
     ListFilterPlusIcon,
@@ -19,6 +17,7 @@ import {
     type LucideIcon,
 } from "lucide-react";
 
+import { PaginationControls } from "@/components/pagination-controls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +31,6 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
-import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -404,7 +402,7 @@ const Listing = () => {
                             })}
                         </ItemGroup>
                     </div>
-                    <Pagination />
+                    <PaginationControls nextUrl={accounts?.next_page_url} previousUrl={accounts?.prev_page_url} />
                 </div>
             )}
         </Deferred>
@@ -425,48 +423,6 @@ const SkeletonRows = () => {
                 </div>
             ))}
         </div>
-    );
-};
-
-const Pagination = () => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    /**
-     * The page's props.
-     */
-    const { accounts } = usePage<PageProps>().props;
-
-    return (
-        <PaginationComponent>
-            <PaginationContent>
-                <PaginationItem>
-                    <Button
-                        disabled={!accounts?.prev_page_url}
-                        nativeButton={false}
-                        render={<Link href={accounts?.prev_page_url ?? undefined} />}
-                        variant="ghost"
-                    >
-                        <ChevronLeftIcon data-icon="inline-start" />
-                        <span>{t("Previous")}</span>
-                    </Button>
-                </PaginationItem>
-                <PaginationItem>
-                    <Button
-                        disabled={!accounts?.next_page_url}
-                        nativeButton={false}
-                        render={<Link href={accounts?.next_page_url ?? undefined} />}
-                        variant="ghost"
-                    >
-                        <span>{t("Next")}</span>
-                        <ChevronRightIcon data-icon="inline-end" />
-                    </Button>
-                </PaginationItem>
-            </PaginationContent>
-        </PaginationComponent>
     );
 };
 

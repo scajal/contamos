@@ -503,7 +503,7 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, onTypeChange,
                         onOpenChange={(open, details) => {
                             if (
                                 !open &&
-                                details.reason === "outsidePress" &&
+                                details.reason === "outside-press" &&
                                 details.event.target instanceof Element &&
                                 details.event.target.closest("[data-slot=combobox-content]")
                             ) {
@@ -544,10 +544,10 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, onTypeChange,
                                 >
                                     <ComboboxChips
                                         aria-invalid={invalid("tag_ids")}
-                                        className="w-full has-[[data-slot=input-group-addon]]:pl-0"
+                                        className="w-full"
                                         ref={tagsAnchor}
                                     >
-                                        <InputGroupAddon className="self-start">
+                                        <InputGroupAddon>
                                             <TagIcon />
                                         </InputGroupAddon>
                                         <ComboboxValue>
@@ -555,7 +555,10 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, onTypeChange,
                                                 <ComboboxChip key={tag.id}>{tag.name}</ComboboxChip>
                                             ))}
                                         </ComboboxValue>
-                                        <ComboboxChipsInput id="transaction-tags" placeholder={t("Select tags")} />
+                                        <ComboboxChipsInput
+                                            id="transaction-tags"
+                                            placeholder={selectedTags.length > 0 ? undefined : t("Select tags")}
+                                        />
                                     </ComboboxChips>
                                     <ComboboxContent anchor={tagsAnchor}>
                                         <ComboboxEmpty>{t("No tags found")}</ComboboxEmpty>

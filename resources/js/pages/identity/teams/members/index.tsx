@@ -2,8 +2,6 @@ import { Deferred, Link, usePage } from "@inertiajs/react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
-    ChevronLeftIcon,
-    ChevronRightIcon,
     CircleDashedIcon,
     LogOutIcon,
     MoreHorizontalIcon,
@@ -15,6 +13,7 @@ import {
 import { useState } from "react";
 
 import { ConfirmAction } from "@/components/confirm-action";
+import { PaginationControls } from "@/components/pagination-controls";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,6 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/
 import { Field, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
-import { Pagination as PaginationComponent, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
@@ -285,7 +283,7 @@ const Listing = () => {
                             ))}
                         </ItemGroup>
                     </div>
-                    <Pagination />
+                    <PaginationControls nextUrl={members?.next_page_url} previousUrl={members?.prev_page_url} />
                 </div>
             )}
         </Deferred>
@@ -305,48 +303,6 @@ const SkeletonRows = () => {
                 </div>
             ))}
         </div>
-    );
-};
-
-const Pagination = () => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    /**
-     * The page's props.
-     */
-    const { members } = usePage<PageProps>().props;
-
-    return (
-        <PaginationComponent>
-            <PaginationContent>
-                <PaginationItem>
-                    <Button
-                        disabled={!members?.prev_page_url}
-                        nativeButton={false}
-                        render={<Link href={members?.prev_page_url ?? undefined} />}
-                        variant="ghost"
-                    >
-                        <ChevronLeftIcon data-icon="inline-start" />
-                        <span>{t("Previous")}</span>
-                    </Button>
-                </PaginationItem>
-                <PaginationItem>
-                    <Button
-                        disabled={!members?.next_page_url}
-                        nativeButton={false}
-                        render={<Link href={members?.next_page_url ?? undefined} />}
-                        variant="ghost"
-                    >
-                        <span>{t("Next")}</span>
-                        <ChevronRightIcon data-icon="inline-end" />
-                    </Button>
-                </PaginationItem>
-            </PaginationContent>
-        </PaginationComponent>
     );
 };
 

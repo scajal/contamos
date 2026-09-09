@@ -160,12 +160,8 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                     }}
                     value={selectedCurrencies}
                 >
-                    <ComboboxChips
-                        aria-invalid={invalid("currency_ids")}
-                        className="w-full has-[[data-slot=input-group-addon]]:pl-0"
-                        ref={currenciesAnchor}
-                    >
-                        <InputGroupAddon className="self-start">
+                    <ComboboxChips aria-invalid={invalid("currency_ids")} className="w-full" ref={currenciesAnchor}>
+                        <InputGroupAddon>
                             <CoinsIcon />
                         </InputGroupAddon>
                         <ComboboxValue>
@@ -176,7 +172,7 @@ export const Fields = ({ currencies: listOfCurrencies, defaultValues, errors, in
                         <ComboboxChipsInput
                             disabled={!type || isLocked("currency_ids")}
                             id="account-currencies"
-                            placeholder={t("Select currencies")}
+                            placeholder={selectedCurrencies.length > 0 ? undefined : t("Select currencies")}
                         />
                     </ComboboxChips>
                     <ComboboxContent anchor={currenciesAnchor}>

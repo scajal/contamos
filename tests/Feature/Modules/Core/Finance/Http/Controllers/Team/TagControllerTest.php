@@ -40,6 +40,20 @@ describe('index', function (): void {
                     ->where('tags.data.0.name', 'Comida')));
     });
 
+    it('exposes pagination urls so the first page can disable previous', function (): void {
+        [$user, $team] = actingMember();
+        Tag::factory()->active()->for($team)->count(11)->create();
+
+        $this->get(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('tags.prev_page_url', null)
+                    ->where('tags.next_page_url', fn (mixed $url): bool => is_string($url) && $url !== '')
+                    ->where('tags.current_page', 1)
+                    ->where('tags.last_page', 2)));
+    });
+
     it('filters tags by activity and search', function (): void {
         [$user, $team] = actingMember();
         $matching = Tag::factory()->active()->for($team)->create(['name' => 'Comida']);

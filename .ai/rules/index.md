@@ -36,6 +36,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Modules/Support/** | .ai/rules/support.md |
 | app/Modules/Core/Finance/**, app/Modules/Core/Identity/** | .ai/rules/teams.md |
 | app/Modules/Core/Finance/Http/Requests/Team/Transaction/** | .ai/rules/transaction.md |
+| resources/js/pages/finance/teams/transactions/** | .ai/rules/transactions.md |
 | resources/js/components/ui/button.tsx, resources/js/components/ui/table.tsx | .ai/rules/ui.md |
 | tests/Unit/** | .ai/rules/unit.md |
 | .github/workflows/** | .ai/rules/workflows.md |

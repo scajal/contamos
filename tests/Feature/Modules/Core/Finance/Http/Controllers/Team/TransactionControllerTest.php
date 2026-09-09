@@ -46,6 +46,8 @@ describe('index', function (): void {
             'user_id' => $user->getKey(),
             'description' => 'Lunch',
         ]);
+        $tag = Tag::factory()->active()->for($team)->create();
+        $transaction->tags()->attach($tag->getKey());
 
         $this->get(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
@@ -58,7 +60,10 @@ describe('index', function (): void {
                 ->has('filters')
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('transactions.data', 1)
-                    ->where('transactions.data.0.id', $transaction->getKey())));
+                    ->where('transactions.data.0.id', $transaction->getKey())
+                    ->has('transactions.data.0.tags', 1)
+                    ->where('transactions.data.0.tags.0.id', $tag->getKey())
+                    ->where('transactions.data.0.tags.0.name', $tag->name)));
     });
 
     it('filters transactions by type, account, currency, search, and date range', function (): void {

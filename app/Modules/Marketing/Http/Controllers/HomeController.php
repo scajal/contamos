@@ -8,7 +8,6 @@ use App\Modules\Authentication\Actions\ResolveAuthenticationRedirect;
 use App\Modules\Core\Identity\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,7 +26,7 @@ class HomeController
     /**
      * Show the marketing homepage.
      */
-    public function index(Request $request, #[CurrentUser] User $user, ResolveAuthenticationRedirect $redirect): Response
+    public function index(#[CurrentUser] ?User $user, ResolveAuthenticationRedirect $redirect): Response
     {
         return Inertia::render('marketing/home/index', [
             'dashboardUrl' => $user instanceof User ? $redirect->forUser($user) : null,

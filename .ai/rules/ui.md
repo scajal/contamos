@@ -12,4 +12,4 @@ Button with nativeButton={false} (Inertia Link, ModalLink, <a>) cannot use the H
 
 ## Tables scroll horizontally on mobile
 
-Do not use table-fixed or overflow-hidden around Table. The Table container is overflow-x-auto with min-w-0; the table itself is min-w-max so columns size to content and the wrapper scrolls instead of clipping or overlapping cells. Keep min-w-0 on flex ancestors (layout content, table wrappers) so the scrollport can shrink below the table's min-content width.
+Do not use overflow-hidden around Table. Prefer auto-sized columns with overflow-x-auto and min-w-0 on wrappers so the scrollport can shrink below the table's min-content width. Exception: day-grouped transaction tables use table-fixed with shared column widths (and a min-w floor) so columns align across separate day tables while still scrolling on narrow viewports.

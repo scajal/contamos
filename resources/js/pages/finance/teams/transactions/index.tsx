@@ -70,6 +70,20 @@ type PageProps = {
 const DATE_FORMAT = "yyyy-MM-dd";
 
 /**
+ * Shared column widths so day-grouped tables stay aligned.
+ * Fixed layout + identical widths keep columns consistent across separate tables.
+ */
+const TRANSACTION_TABLE_CLASS = "table-fixed min-w-[44rem]";
+const TRANSACTION_COLUMNS = {
+    time: "w-16",
+    account: "w-40",
+    description: "w-48",
+    tags: "w-36",
+    amount: "w-36",
+    actions: "w-12",
+} as const;
+
+/**
  * Parse a URL date into a Date, if any.
  */
 const toDate = (value: string | null): Date | undefined => (value ? parse(value, DATE_FORMAT, new Date()) : undefined);
@@ -418,29 +432,37 @@ const Listing = () => {
                                     </ItemHeader>
                                 </Item>
                                 <div className="min-w-0 overflow-x-auto rounded-sm border">
-                                    <TableComponent>
+                                    <TableComponent className={TRANSACTION_TABLE_CLASS}>
                                         <TableBody>
                                             {items.map((transaction) => (
                                                 <TableRow key={transaction.id}>
-                                                    <TableCell className="text-muted-foreground w-16 tabular-nums">
+                                                    <TableCell
+                                                        className={cn(
+                                                            "text-muted-foreground tabular-nums",
+                                                            TRANSACTION_COLUMNS.time,
+                                                        )}
+                                                    >
                                                         {format(new Date(transaction.occurred_at), "HH:mm")}
                                                     </TableCell>
-                                                    <TableCell>{transaction.account?.name ?? "-"}</TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-col gap-1">
-                                                            <span>{transaction.description ?? ""}</span>
-                                                            {(transaction.tags ?? []).length > 0 ? (
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {(transaction.tags ?? []).map((tag) => (
-                                                                        <Badge key={tag.id} variant="outline">
-                                                                            {tag.name}
-                                                                        </Badge>
-                                                                    ))}
-                                                                </div>
-                                                            ) : null}
-                                                        </div>
+                                                    <TableCell className={TRANSACTION_COLUMNS.account}>
+                                                        <TruncatedText
+                                                            className="w-full"
+                                                            fallback="-"
+                                                            value={transaction.account?.name}
+                                                        />
                                                     </TableCell>
-                                                    <TableCell className="text-right">
+                                                    <TableCell className={TRANSACTION_COLUMNS.description}>
+                                                        <TruncatedText
+                                                            className="w-full"
+                                                            value={transaction.description}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className={TRANSACTION_COLUMNS.tags}>
+                                                        <TagsCell tags={transaction.tags ?? []} />
+                                                    </TableCell>
+                                                    <TableCell
+                                                        className={cn("text-right", TRANSACTION_COLUMNS.amount)}
+                                                    >
                                                         <span
                                                             className={cn(
                                                                 "font-medium tabular-nums",
@@ -452,7 +474,9 @@ const Listing = () => {
                                                             {`${transaction.type === "income" ? "+" : "-"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
                                                         </span>
                                                     </TableCell>
-                                                    <TableCell className="w-12 text-right">
+                                                    <TableCell
+                                                        className={cn("text-right", TRANSACTION_COLUMNS.actions)}
+                                                    >
                                                         <DropdownMenu>
                                                             <DropdownMenuTrigger
                                                                 render={<Button size="icon" variant="ghost" />}
@@ -502,28 +526,102 @@ const SkeletonGroup = () => {
                 </ItemHeader>
             </Item>
             <div className="min-w-0 overflow-x-auto rounded-sm border">
-                <TableComponent>
+                <TableComponent className={TRANSACTION_TABLE_CLASS}>
                     <TableBody>
                         {[0, 1, 2].map((row) => (
                             <TableRow key={row}>
-                                <TableCell className="w-16">
+                                <TableCell className={TRANSACTION_COLUMNS.time}>
                                     <Skeleton className="h-4 w-10" />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className={TRANSACTION_COLUMNS.account}>
                                     <Skeleton className="h-4 w-32" />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className={TRANSACTION_COLUMNS.description}>
                                     <Skeleton className="h-4 w-48" />
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className={TRANSACTION_COLUMNS.tags}>
+                                    <Skeleton className="h-4 w-20" />
+                                </TableCell>
+                                <TableCell className={cn("text-right", TRANSACTION_COLUMNS.amount)}>
                                     <Skeleton className="ml-auto h-4 w-20" />
                                 </TableCell>
-                                <TableCell className="w-12" />
+                                <TableCell className={TRANSACTION_COLUMNS.actions} />
                             </TableRow>
                         ))}
                     </TableBody>
                 </TableComponent>
             </div>
+        </div>
+    );
+};
+
+const TruncatedText = ({
+    className,
+    fallback = "",
+    value,
+}: {
+    className?: string;
+    fallback?: string;
+    value?: string | null;
+}) => {
+    const text = value || fallback;
+
+    if (!text) {
+        return null;
+    }
+
+    return (
+        <span className={cn("block truncate", className)} title={text}>
+            {text}
+        </span>
+    );
+};
+
+const TagsCell = ({ tags }: { tags: Tag[] }) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    if (tags.length === 0) {
+        return null;
+    }
+
+    const [first, ...remaining] = tags;
+
+    return (
+        <div className="flex items-center gap-1">
+            <Badge className="max-w-28" variant="outline">
+                <span className="truncate" title={first.name}>
+                    {first.name}
+                </span>
+            </Badge>
+            {remaining.length > 0 ? (
+                <Popover>
+                    <PopoverTrigger
+                        aria-label={t("Show :count more tags", { count: remaining.length })}
+                        closeDelay={150}
+                        delay={200}
+                        openOnHover
+                        render={<Button className="text-xs tabular-nums" size="icon-xs" variant="outline" />}
+                    >
+                        {`+${remaining.length}`}
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-auto max-w-64 gap-2 p-3">
+                        <PopoverTitle className="sr-only">{t("Tags")}</PopoverTitle>
+                        <div className="flex flex-wrap gap-1">
+                            {remaining.map((tag) => (
+                                <Badge key={tag.id} className="max-w-52" variant="outline">
+                                    <span className="truncate" title={tag.name}>
+                                        {tag.name}
+                                    </span>
+                                </Badge>
+                            ))}
+                        </div>
+                    </PopoverContent>
+                </Popover>
+            ) : null}
         </div>
     );
 };

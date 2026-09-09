@@ -42,7 +42,7 @@ describe('index', function (): void {
         get(route('home', ['locale' => 'en']))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-                ->component('home/index')
+                ->component('marketing/home/index')
                 ->where('user', null)
                 ->where('locale', 'en')
                 ->where('dashboardUrl', null));
