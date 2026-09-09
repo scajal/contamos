@@ -103,13 +103,13 @@ class BillingServiceProvider extends ServiceProvider
      */
     protected function routeTeam(Request $request): ?Team
     {
-        // If the route has no team, return null.
-        if (! ($team = $request->route('team')) instanceof Team) {
-            return null;
+        // Team routes carry the bound team.
+        if (($team = $request->route('team')) instanceof Team) {
+            return $team;
         }
 
-        // If the route has an invitation, return the invited team.
-        // Otherwise, return the route team.
-        return ($invitation = $request->route('invitation')) instanceof TeamInvitation ? $invitation->team : $team;
+        // Invitation routes sit outside the team group, so the
+        // team comes from the invitation instead.
+        return ($invitation = $request->route('invitation')) instanceof TeamInvitation ? $invitation->team : null;
     }
 }

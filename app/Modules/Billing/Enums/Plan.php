@@ -32,7 +32,7 @@ enum Plan: string implements HasLabel
     public function features(): array
     {
         return collect(Feature::cases())
-            ->mapWithKeys(fn (Feature $feature): array => [$feature->value => $feature->limitOn($this)])
+            ->mapWithKeys(fn (Feature $feature) => [$feature->value => $feature->limitOn($this)])
             ->toArray();
     }
 

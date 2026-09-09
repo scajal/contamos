@@ -8,28 +8,168 @@ use App\Modules\Billing\Enums\BillingCycle;
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
 use App\Modules\Billing\Http\Requests\Team\Subscription\UpgradeRequest;
+use App\Modules\Billing\Models\Subscription;
+use App\Modules\Billing\Models\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 use InertiaUI\Modal\Modal;
+use Laravel\Paddle\Payment;
+use Laravel\Pennant\Feature as Pennant;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class SubscriptionController
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Team $team): Response
+    public function index(Team $team, Request $request): Response
     {
         return Inertia::render('billing/teams/subscriptions/index', [
+            // Whether the team just came back from checkout. The page
+            // polls the plan until the webhook flips it to Pro.
+            'activating' => $request->boolean('activating'),
+            'plan' => $this->plan($team),
+            'renewal' => Inertia::defer(fn (): ?array => $this->renewal($team)),
             'team' => $team,
-            'transactions' => Inertia::defer(
-                fn (): LengthAwarePaginator => $team // @phpstan-ignore-line return.type False positive.
-                    ->billingTransactions()
-                    ->paginate(10) // @phpstan-ignore-line method.nonObject False positive.
-            ),
+            'transactions' => Inertia::defer(function () use ($team): LengthAwarePaginator {
+                /** @var \Illuminate\Database\Eloquent\Relations\MorphMany<\App\Modules\Billing\Models\Transaction, \App\Modules\Core\Identity\Models\Team> $transactions */
+                $transactions = $team->billingTransactions();
+
+                return $transactions
+                    ->latest('billed_at')
+                    ->paginate(10);
+            }),
         ]);
+    }
+
+    /**
+     * Summarise the team's plan for the page: which plan, where the
+     * subscription is in its lifecycle, and how much of each limit
+     * the team is using. A free team can sit above the free limits
+     * after an earlier Pro period; nothing is removed, it just
+     * cannot add more.
+     *
+     * @return array{name: string, status: string, cycle: string|null, ends_at: string|null, trial_ends_at: string|null, limits: array<int, array{feature: string, label: string, usage: int, free: int|null, pro: int|null}>}
+     */
+    protected function plan(Team $team): array
+    {
+        $plan = $team->plan();
+        $subscription = $this->subscription($team);
+
+        return [
+            'name' => $plan->value,
+            'status' => $this->status($plan, $subscription),
+            'cycle' => $this->cycle($subscription)?->value,
+            'ends_at' => $subscription?->ends_at?->toIso8601String(),
+            'trial_ends_at' => $subscription?->trial_ends_at?->toIso8601String(),
+            'limits' => $this->limits($team),
+        ];
+    }
+
+    /**
+     * The team's default subscription, typed to the module's model.
+     */
+    protected function subscription(Team $team): ?Subscription
+    {
+        $subscription = $team->subscription();
+
+        return $subscription instanceof Subscription ? $subscription : null;
+    }
+
+    /**
+     * Where the subscription is in its lifecycle. A cancelled
+     * subscription stays Pro until the paid period ends, which
+     * is the grace period.
+     */
+    protected function status(Plan $plan, ?Subscription $subscription): string
+    {
+        if ($plan === Plan::Free || ! $subscription instanceof Subscription) {
+            return 'free';
+        }
+
+        return match (true) {
+            (bool) $subscription->onGracePeriod() => 'grace',
+            (bool) $subscription->pastDue() => 'past_due',
+            (bool) $subscription->paused() => 'paused',
+            (bool) $subscription->onTrial() => 'trialing',
+            default => 'active',
+        };
+    }
+
+    /**
+     * The billing cycle of the subscription, worked out from
+     * which Pro price it carries.
+     */
+    protected function cycle(?Subscription $subscription): ?BillingCycle
+    {
+        if (! $subscription instanceof Subscription) {
+            return null;
+        }
+
+        foreach (BillingCycle::cases() as $cycle) {
+            if ($subscription->hasPrice(Plan::Pro->priceId($cycle))) {
+                return $cycle;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The team-scoped features with the team's usage and the limit
+     * on each plan, in the order the upgrade modal lists them.
+     *
+     * @return array<int, array{feature: string, label: string, usage: int, free: int|null, pro: int|null}>
+     */
+    protected function limits(Team $team): array
+    {
+        $limits = [];
+
+        foreach ([Feature::AddAccounts, Feature::AddMembers] as $feature) {
+            /** @var \App\Modules\Billing\Features\AddAccounts|\App\Modules\Billing\Features\AddMembers $instance */
+            $instance = Pennant::instance($feature);
+
+            $limits[] = [
+                'feature' => $feature->value,
+                'label' => $feature->getLabel(),
+                'usage' => $instance->usage($team),
+                'free' => $feature->limitOn(Plan::Free),
+                'pro' => $feature->limitOn(Plan::Pro),
+            ];
+        }
+
+        return $limits;
+    }
+
+    /**
+     * The next payment Paddle has scheduled, if any. This is a
+     * Paddle round trip, so it is deferred and a failure just
+     * hides the line.
+     *
+     * @return array{amount: string, date: string}|null
+     */
+    protected function renewal(Team $team): ?array
+    {
+        // The subscription is nullable because the team may not
+        // have a subscription yet, in which case the renewal is
+        // not applicable.
+        if (! ($subscription = $this->subscription($team)) instanceof Subscription || ! (bool) $subscription->recurring()) {
+            return null;
+        }
+
+        /** @var \Laravel\Paddle\Payment|null $payment */
+        if (! ($payment = rescue(fn (): ?Payment => $subscription->nextPayment(), null, false)) instanceof Payment) {
+            return null;
+        }
+
+        return [
+            'amount' => $payment->amount(),
+            'date' => $payment->date()->toIso8601String(),
+        ];
     }
 
     /**
@@ -39,7 +179,10 @@ class SubscriptionController
     public function subscribe(Team $team, BillingCycle $cycle): Modal
     {
         return Inertia::modal('billing/teams/subscriptions/subscribe', [
-            'checkout' => $team->checkout(Plan::Pro->priceId($cycle)),
+            // After paying, Paddle sends the browser back to the billing
+            // page, which polls until the webhook activates the plan.
+            'checkout' => $team->checkout(Plan::Pro->priceId($cycle))
+                ->returnTo(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey(), 'activating' => 1])),
             // Paddle.js is loaded by the page itself, so it needs
             // the client-side settings the Blade directive used to
             // inline.
@@ -70,6 +213,19 @@ class SubscriptionController
                 BillingCycle::Yearly->value => Plan::Pro->price(BillingCycle::Yearly),
             ],
         ])->baseRoute('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]);
+    }
+
+    /**
+     * Redirect to the PDF invoice Paddle issued for the transaction.
+     */
+    public function invoice(Team $team, Transaction $billingTransaction): RedirectResponse
+    {
+        $url = $billingTransaction->invoicePdf();
+
+        // Paddle only issues invoices for completed transactions.
+        abort_if(! is_string($url), HttpResponse::HTTP_NOT_FOUND);
+
+        return redirect()->away($url);
     }
 
     /**

@@ -67,6 +67,9 @@ enum Feature: string implements HasLabel
      */
     public function limitOn(Plan $plan): ?int
     {
-        return Pennant::instance($this)->limitOn($plan);
+        /** @var \App\Modules\Billing\Features\AddAccounts|\App\Modules\Billing\Features\AddMembers|\App\Modules\Billing\Features\AddTeams $feature */
+        $feature = Pennant::instance($this);
+
+        return $feature->limitOn($plan);
     }
 }

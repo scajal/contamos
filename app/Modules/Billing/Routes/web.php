@@ -40,6 +40,10 @@ Route::as('billing.teams.')
             ->whereIn('cycle', BillingCycle::cases())
             ->name('subscriptions.subscribe');
 
+        Route::get('billing/transactions/{billingTransaction}/invoice', [\App\Modules\Billing\Http\Controllers\Team\SubscriptionController::class, 'invoice'])
+            ->name('subscriptions.invoice')
+            ->scopeBindings();
+
         Route::get('billing/upgrade', [\App\Modules\Billing\Http\Controllers\Team\SubscriptionController::class, 'upgrade'])
             ->name('subscriptions.upgrade');
     });

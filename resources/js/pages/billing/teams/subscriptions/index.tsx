@@ -1,7 +1,16 @@
-import { Deferred, usePage } from "@inertiajs/react";
+import { Deferred, router, usePage, usePoll } from "@inertiajs/react";
+import { ModalLink } from "@inertiaui/modal-react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CircleDashedIcon, MoreHorizontalIcon, PrinterIcon, ReceiptTextIcon } from "lucide-react";
+import {
+    AlertTriangleIcon,
+    CircleDashedIcon,
+    MoreHorizontalIcon,
+    PrinterIcon,
+    ReceiptTextIcon,
+    SparklesIcon,
+} from "lucide-react";
+import { useEffect, useRef } from "react";
 import { Fragment } from "react/jsx-runtime";
 
 import { PaginationControls } from "@/components/pagination-controls";
@@ -17,13 +26,19 @@ import {
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "@/components/ui/toast";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import subscriptions from "@/routes/billing/teams/subscriptions";
 import { Transaction } from "@/types/app/modules/billing/models/transaction";
+import { PlanSummary, Renewal } from "@/types/app/modules/billing/plan-summary";
 import { Team } from "@/types/app/modules/core/identity/models/team";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 
 type PageProps = {
-    plan: any;
+    activating: boolean;
+    plan: PlanSummary;
+    renewal: Renewal | null;
     team: Team;
     transactions: LengthAwarePaginator<Transaction>;
 };
@@ -36,8 +51,10 @@ const Index = () => {
 
             {/** Content */}
             <div className="flex flex-col gap-8">
+                {/** Activation */}
+                <Activation />
                 {/** Current plan */}
-                {/** <Plan /> */}
+                <CurrentPlan />
                 {/** Transactions */}
                 <Transactions />
             </div>
@@ -60,6 +77,203 @@ const Header = () => {
     );
 };
 
+/**
+ * Shown after coming back from checkout while the plan is still
+ * Free. Polls the plan until Paddle's webhook flips it to Pro,
+ * then says so once.
+ */
+const Activation = () => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { activating, plan, team } = usePage<PageProps>().props;
+
+    /**
+     * Whether we are still waiting for the webhook.
+     */
+    const waiting = activating && plan.name !== "pro";
+
+    /**
+     * Whether the page was ever waiting, so the welcome
+     * only fires on the transition to Pro.
+     */
+    const wasWaiting = useRef(waiting);
+
+    usePoll(3000, { only: ["plan", "renewal"] }, { autoStart: waiting });
+
+    useEffect(() => {
+        if (wasWaiting.current && !waiting && plan.name === "pro") {
+            wasWaiting.current = false;
+            toast.add({ description: t("You are on Pro now.") });
+            router.replace({ url: subscriptions.index.url({ team: team.slug }) });
+        }
+    }, [waiting, plan.name, t, team.slug]);
+
+    if (!waiting) {
+        return null;
+    }
+
+    return (
+        <div className="flex items-center gap-3 rounded-sm border px-4 py-3">
+            <Spinner />
+            <div className="flex flex-col">
+                <p className="text-sm font-medium">{t("Activating your subscription…")}</p>
+                <p className="text-muted-foreground text-sm">{t("This usually takes a few seconds.")}</p>
+            </div>
+        </div>
+    );
+};
+
+const CurrentPlan = () => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { locale, plan, renewal, team } = usePage<PageProps>().props;
+
+    /**
+     * Format a date for the current locale.
+     */
+    const date = (value: string) => new Date(value).toLocaleDateString(locale, { dateStyle: "long" });
+
+    /**
+     * What the team holds above the Free plan limits, left
+     * over from an earlier Pro period.
+     */
+    const overLimits =
+        plan.name === "free" ? plan.limits.filter((row) => row.free !== null && row.usage > row.free) : [];
+
+    /**
+     * The line under the plan name, by lifecycle state.
+     */
+    const detail = (() => {
+        switch (plan.status) {
+            case "free":
+                return t("You are on the Free plan.");
+            case "grace":
+                return plan.ends_at ? t("Your subscription ends on :date.", { date: date(plan.ends_at) }) : null;
+            case "past_due":
+                return t("Your last payment failed. Update your payment method to keep Pro.");
+            case "paused":
+                return t("Your subscription is paused.");
+            case "trialing":
+                return plan.trial_ends_at ? t("Your trial ends on :date.", { date: date(plan.trial_ends_at) }) : null;
+            default:
+                return renewal
+                    ? t("Next payment of :amount on :date.", { amount: renewal.amount, date: date(renewal.date) })
+                    : null;
+        }
+    })();
+
+    return (
+        <Fragment>
+            <header className="flex flex-col gap-1">
+                <h1 className="font-medium">{t("Current plan")}</h1>
+                <p className="text-muted-foreground text-sm">{t("What your team is on and when it renews.")}</p>
+            </header>
+            <div className="flex flex-col gap-4 rounded-sm border p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                            <span className="font-heading text-lg font-medium">
+                                {plan.name === "pro" ? t("Pro") : t("Free")}
+                            </span>
+                            {plan.cycle && (
+                                <Badge variant="secondary">
+                                    {plan.cycle === "yearly" ? t("Billed yearly") : t("Billed monthly")}
+                                </Badge>
+                            )}
+                            {plan.status === "grace" && <Badge variant="outline">{t("Cancelled")}</Badge>}
+                            {plan.status === "past_due" && <Badge variant="destructive">{t("Payment failed")}</Badge>}
+                            {plan.status === "paused" && <Badge variant="outline">{t("Paused")}</Badge>}
+                        </div>
+                        {plan.status === "active" ? (
+                            <Deferred data="renewal" fallback={<Skeleton className="h-4 w-56" />}>
+                                {detail ? <p className="text-muted-foreground text-sm">{detail}</p> : null}
+                            </Deferred>
+                        ) : detail ? (
+                            <p className="text-muted-foreground text-sm">{detail}</p>
+                        ) : null}
+                    </div>
+                    <PlanActions />
+                </div>
+                {overLimits.length > 0 && (
+                    <div className="flex gap-3 rounded-sm border border-amber-500/40 bg-amber-500/5 p-3">
+                        <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <div className="flex flex-col gap-2 text-sm">
+                            <p>
+                                {t(
+                                    "Your team is over the Free plan limits. Nothing was removed, but you cannot add more until you upgrade.",
+                                )}
+                            </p>
+                            <ul className="text-muted-foreground flex flex-col gap-0.5">
+                                {overLimits.map((row) => (
+                                    <li key={row.feature}>
+                                        {row.label}: {row.usage} / {row.free}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </Fragment>
+    );
+
+    /**
+     * The action that fits the lifecycle state. Upgrading opens
+     * the modal; everything else goes through Paddle's portal.
+     */
+    function PlanActions() {
+        const portal = subscriptions.redirectToCustomerPortal.url({ team: team.slug });
+
+        switch (plan.status) {
+            case "free":
+                return (
+                    <Button
+                        nativeButton={false}
+                        render={
+                            <ModalLink href={subscriptions.upgrade.url({ team: team.slug })}>
+                                <SparklesIcon data-icon="inline-start" />
+                                {t("Upgrade to Pro")}
+                            </ModalLink>
+                        }
+                    />
+                );
+            case "grace":
+            case "paused":
+                return (
+                    <Button nativeButton={false} render={<a href={portal} />}>
+                        {t("Resume subscription")}
+                    </Button>
+                );
+            case "past_due":
+                return (
+                    <Button nativeButton={false} render={<a href={portal} />}>
+                        {t("Update payment method")}
+                    </Button>
+                );
+            default:
+                return (
+                    <Button nativeButton={false} render={<a href={portal} />} variant="outline">
+                        {t("Manage billing")}
+                    </Button>
+                );
+        }
+    }
+};
+
 const Transactions = () => {
     /**
      * Translate the provided string
@@ -70,7 +284,7 @@ const Transactions = () => {
     /**
      * The page's props.
      */
-    const { transactions } = usePage<PageProps>().props;
+    const { team, transactions } = usePage<PageProps>().props;
 
     return (
         <Fragment>
@@ -117,7 +331,19 @@ const Transactions = () => {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuGroup>
-                                                        <DropdownMenuItem render={<a href="/" />}>
+                                                        <DropdownMenuItem
+                                                            disabled={!transaction.invoice_number}
+                                                            render={
+                                                                <a
+                                                                    href={subscriptions.invoice.url({
+                                                                        team: team.slug,
+                                                                        billingTransaction: transaction.id,
+                                                                    })}
+                                                                    rel="noreferrer"
+                                                                    target="_blank"
+                                                                />
+                                                            }
+                                                        >
                                                             <PrinterIcon />
                                                             <span>{t("Download invoice")}</span>
                                                         </DropdownMenuItem>

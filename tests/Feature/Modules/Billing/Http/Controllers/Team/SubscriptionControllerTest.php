@@ -5,7 +5,10 @@ declare(strict_types=1);
 use App\Modules\Billing\Enums\BillingCycle;
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
+use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Core\Identity\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -13,6 +16,165 @@ use Inertia\Testing\AssertableInertia as Assert;
 /**
  * Feature tests for \App\Modules\Billing\Http\Controllers\Team\SubscriptionController.
  */
+/**
+ * Record a billed transaction for the team without calling Paddle.
+ *
+ * @param  array<string, mixed>  $overrides
+ */
+function billingTransaction(Team $team, array $overrides = []): \App\Modules\Billing\Models\Transaction
+{
+    /** @var \App\Modules\Billing\Models\Transaction $transaction */
+    $transaction = $team->billingTransactions()->create([
+        'billed_at' => CarbonImmutable::parse('2026-09-01 10:00:00'),
+        'currency' => 'USD',
+        'invoice_number' => 'INV-1',
+        'paddle_id' => 'txn_'.fake()->unique()->lexify('??????'),
+        'status' => 'completed',
+        'tax' => '0.00',
+        'total' => '4.99',
+        ...$overrides,
+    ]);
+
+    return $transaction;
+}
+
+describe('index', function (): void {
+    it('redirects guests to login', function (): void {
+        $team = Team::factory()->create();
+
+        $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]))
+            ->assertRedirectToRoute('login');
+    });
+
+    it('renders a free team with no renewal', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->component('billing/teams/subscriptions/index')
+                ->where('activating', false)
+                ->where('plan.name', Plan::Free->value)
+                ->where('plan.status', 'free')
+                ->where('plan.cycle', null)
+                ->has('plan.limits', 2)
+                ->where('plan.limits.0.feature', Feature::AddAccounts->value)
+                ->where('plan.limits.0.usage', 0)
+                ->where('plan.limits.0.free', 3)
+                ->where('plan.limits.0.pro', null)
+                ->where('plan.limits.1.feature', Feature::AddMembers->value)
+                ->where('plan.limits.1.usage', 1)
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('renewal', null)
+                    ->has('transactions.data', 0)));
+    });
+
+    it('reports usage above the free limits for a downgraded team', function (): void {
+        [$user, $team] = actingMember();
+        Account::factory()->count(4)->active()->for($team)->create();
+        $team->users()->attach(User::factory()->count(2)->create());
+
+        $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('plan.limits.0.usage', 4)
+                ->where('plan.limits.0.free', 3)
+                ->where('plan.limits.1.usage', 3)
+                ->where('plan.limits.1.free', 2));
+    });
+
+    it('renders an active pro team with its cycle and next payment', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        billingTransaction($team);
+
+        Http::fake([
+            '*/subscriptions/*' => Http::response(['data' => ['next_transaction' => [
+                'billing_period' => ['starts_at' => '2026-10-08T10:00:00Z'],
+                'details' => ['totals' => ['grand_total' => '499', 'currency_code' => 'USD']],
+            ]]]),
+        ]);
+
+        $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey(), 'activating' => 1]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('activating', true)
+                ->where('plan.name', Plan::Pro->value)
+                ->where('plan.status', 'active')
+                ->where('plan.cycle', BillingCycle::Monthly->value)
+                ->has('plan.limits', 2)
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('renewal.date', '2026-10-08T10:00:00+00:00')
+                    ->has('renewal.amount')
+                    ->has('transactions.data', 1)
+                    ->where('transactions.data.0.total', '4.99')));
+    });
+
+    it('renders a cancelled pro team on its grace period', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $team->subscription()?->forceFill(['ends_at' => now()->addDays(10)])->save();
+        $team->unsetRelation('subscriptions');
+
+        $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('plan.name', Plan::Pro->value)
+                ->where('plan.status', 'grace')
+                ->has('plan.ends_at')
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('renewal', null)));
+    });
+
+    it('hides the renewal when paddle cannot be reached', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+
+        $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('plan.status', 'active')
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('renewal', null)));
+    });
+});
+
+describe('invoice', function (): void {
+    it('redirects to the invoice pdf', function (): void {
+        [$user, $team] = actingMember();
+        $transaction = billingTransaction($team, ['paddle_id' => 'txn_abc']);
+
+        Http::fake([
+            '*/transactions/txn_abc/invoice' => Http::response(['data' => ['url' => 'https://paddle.test/invoice.pdf']]),
+        ]);
+
+        $this->get(route('billing.teams.subscriptions.invoice', [
+            'team' => $team->getRouteKey(),
+            'billingTransaction' => $transaction->getKey(),
+        ]))->assertRedirect('https://paddle.test/invoice.pdf');
+    });
+
+    it('returns 404 when the transaction has no invoice', function (): void {
+        [$user, $team] = actingMember();
+        $transaction = billingTransaction($team, ['invoice_number' => null]);
+
+        $this->get(route('billing.teams.subscriptions.invoice', [
+            'team' => $team->getRouteKey(),
+            'billingTransaction' => $transaction->getKey(),
+        ]))->assertNotFound();
+    });
+
+    it('scopes the transaction to the route team', function (): void {
+        [$user, $team] = actingMember();
+        $transaction = billingTransaction(Team::factory()->create());
+
+        $this->get(route('billing.teams.subscriptions.invoice', [
+            'team' => $team->getRouteKey(),
+            'billingTransaction' => $transaction->getKey(),
+        ]))->assertNotFound();
+    });
+});
+
 describe('upgrade', function (): void {
     it('redirects guests to login', function (): void {
         $team = Team::factory()->create();
