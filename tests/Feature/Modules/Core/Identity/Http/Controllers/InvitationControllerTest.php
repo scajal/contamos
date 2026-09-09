@@ -38,7 +38,21 @@ describe('show', function (): void {
                 ->where('invitation.accepted_at', null)
                 ->where('invitation.team.name', $invitation->team->name)
                 ->where('invitation.inviter.name', $invitation->inviter->name)
-                ->where('isForCurrentUser', true));
+                ->where('isForCurrentUser', true)
+                ->where('isTeamFull', false));
+    });
+
+    it('flags a full team so the invitee cannot accept', function (): void {
+        $user = User::factory()->create(['email' => 'ada@example.com'])->refresh();
+        $this->actingAs($user);
+        $invitation = TeamInvitation::factory()->create(['email' => 'ada@example.com']);
+        $invitation->team->users()->attach(User::factory()->count(2)->create());
+
+        $this->get(route('identity.invitations.show', ['invitation' => $invitation]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->component('identity/invitations/show')
+                ->where('isTeamFull', true));
     });
 
     it('renders an invitation sent to another email as not for the current user', function (): void {
@@ -84,6 +98,36 @@ describe('accept', function (): void {
             ->and($invitation->fresh()?->isAccepted())->toBeTrue();
 
         assertFlashedToast(trans('Welcome to :team', ['team' => $invitation->team->name]));
+    });
+
+    it('sends the user back to the invitation when the team is full', function (): void {
+        $user = User::factory()->create(['email' => 'ada@example.com'])->refresh();
+        $this->actingAs($user);
+        $invitation = TeamInvitation::factory()->create(['email' => 'ada@example.com']);
+        $invitation->team->users()->attach(User::factory()->count(2)->create());
+
+        $this->post(route('identity.invitations.accept', ['invitation' => $invitation]))
+            ->assertRedirectToRoute('identity.invitations.show', ['invitation' => $invitation]);
+
+        expect($user->fresh()?->belongsToTeam($invitation->team))->toBeFalse()
+            ->and($invitation->fresh()?->isAccepted())->toBeFalse();
+
+        assertFlashedToast(trans('This team has reached its member limit. Ask :inviter to upgrade to Pro to make room for you.', [
+            'inviter' => $invitation->inviter->name,
+        ]));
+    });
+
+    it('lets a member join a full pro team', function (): void {
+        $user = User::factory()->create(['email' => 'ada@example.com'])->refresh();
+        $this->actingAs($user);
+        $invitation = TeamInvitation::factory()->create(['email' => 'ada@example.com']);
+        $invitation->team->users()->attach(User::factory()->count(2)->create());
+        subscribeToPro($invitation->team);
+
+        $this->post(route('identity.invitations.accept', ['invitation' => $invitation]))
+            ->assertRedirectToRoute('finance.teams.dashboard.index', ['team' => $invitation->team->getRouteKey()]);
+
+        expect($user->fresh()?->belongsToTeam($invitation->team))->toBeTrue();
     });
 
     it('keeps a single membership when the user already belongs to the team', function (): void {

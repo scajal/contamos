@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\Account\AccountType;
 use App\Modules\Core\Finance\Models\Team\Account;
@@ -109,6 +110,35 @@ describe('create', function (): void {
 });
 
 describe('store', function (): void {
+    it('redirects to the upgrade modal when the free plan account limit is reached', function (): void {
+        [$user, $team] = actingMember();
+        Account::factory()->count(3)->active()->for($team)->create();
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload())
+            ->assertRedirectToRoute('billing.teams.subscriptions.upgrade', [
+                'team' => $team->getRouteKey(),
+                'feature' => Feature::AddAccounts->value,
+            ]);
+
+        expect(Account::query()->count())->toBe(3);
+    });
+
+    it('lets a pro team create accounts beyond the free limit', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $currency = Currency::factory()->active()->fiat()->create();
+        Account::factory()->count(3)->active()->for($team)->create();
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
+                'currency_ids' => [$currency->getKey()],
+            ]))
+            ->assertRedirect(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]));
+
+        expect(Account::query()->count())->toBe(4);
+    });
+
     it('creates an account and syncs currencies', function (): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create();
@@ -257,6 +287,40 @@ describe('activate', function (): void {
             ->assertRedirect();
 
         assertFlashedToast(trans('Saved'));
+        expect($account->fresh()?->is_active)->toBeTrue();
+    });
+
+    it('redirects to the upgrade modal when reactivating past the free plan account limit', function (): void {
+        [$user, $team] = actingMember();
+        Account::factory()->count(3)->active()->for($team)->create();
+        $account = Account::factory()->inactive()->for($team)->create();
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.accounts.activate', [
+                'team' => $team->getRouteKey(),
+                'account' => $account->getKey(),
+            ]))
+            ->assertRedirectToRoute('billing.teams.subscriptions.upgrade', [
+                'team' => $team->getRouteKey(),
+                'feature' => Feature::AddAccounts->value,
+            ]);
+
+        expect($account->fresh()?->is_active)->toBeFalse();
+    });
+
+    it('lets a pro team reactivate beyond the free limit', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        Account::factory()->count(3)->active()->for($team)->create();
+        $account = Account::factory()->inactive()->for($team)->create();
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.accounts.activate', [
+                'team' => $team->getRouteKey(),
+                'account' => $account->getKey(),
+            ]))
+            ->assertRedirect(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]));
+
         expect($account->fresh()?->is_active)->toBeTrue();
     });
 });

@@ -135,6 +135,18 @@ describe('store', function (): void {
             ->assertRedirectToRoute('login');
     });
 
+    it('lets a free team send invitations beyond its member limit', function (): void {
+        Notification::fake();
+        [$user, $team] = actingMember();
+        TeamInvitation::factory()->count(5)->for($team)->create();
+
+        $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
+            ->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload())
+            ->assertRedirect(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]));
+
+        expect($team->invitations()->count())->toBe(6);
+    });
+
     it('creates an invitation and emails it to the invitee', function (): void {
         Notification::fake();
         $this->travelTo(CarbonImmutable::parse('2026-09-06 12:00:00'));

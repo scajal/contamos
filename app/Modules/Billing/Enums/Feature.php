@@ -1,23 +1,51 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Billing\Enums;
 
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Core\Identity\Models\User;
 use Filament\Support\Contracts\HasLabel;
+use Laravel\Pennant\Feature as Pennant;
 
+/**
+ * The plan-limited features. Each case names a Pennant feature
+ * class under \App\Modules\Billing\Features that owns the per-plan
+ * limit and resolves whether the scope is still under it.
+ */
 enum Feature: string implements HasLabel
 {
     /**
-     * Check if the feature is enabled for the
-     * given team in its current plan, based on the
-     * usage and limit.
+     * Represents adding accounts to a team.
+     *
+     * @see \App\Modules\Billing\Features\AddAccounts
      */
-    public function enabled(Team $team): bool
+    case AddAccounts = 'accounts:create';
+
+    /**
+     * Represents a member joining a team by accepting an
+     * invitation. Invitations themselves are unlimited.
+     *
+     * @see \App\Modules\Billing\Features\AddMembers
+     */
+    case AddMembers = 'members:create';
+
+    /**
+     * Represents creating teams on the free plan. A
+     * user may belong to a limited number of free teams.
+     *
+     * @see \App\Modules\Billing\Features\AddTeams
+     */
+    case AddTeams = 'teams:create';
+
+    /**
+     * Check if the feature is active for the given
+     * scope through Pennant.
+     */
+    public function enabled(Team|User $scope): bool
     {
-        return match ($this) {
-            // For now, all the features are enabled.
-            default => true,
-        };
+        return Pennant::for($scope)->active($this);
     }
 
     /**
@@ -26,29 +54,19 @@ enum Feature: string implements HasLabel
     public function getLabel(): string
     {
         return match ($this) {
-            //
+            self::AddAccounts => trans('Accounts per team'),
+            self::AddMembers => trans('Members per team'),
+            self::AddTeams => trans('Free teams per user'),
         };
     }
 
     /**
-     * For the given plan, return the limit
-     * for the feature we're checking for.
+     * For the given plan, return the limit for the
+     * feature. Null means unlimited. The limit lives on
+     * the Pennant feature class.
      */
     public function limitOn(Plan $plan): ?int
     {
-        return match ($this) {
-            default => null,
-        };
-    }
-
-    /**
-     * For a given team, return the current usage
-     * of the feature we're checking for.
-     */
-    public function usage(Team $team): int
-    {
-        return match ($this) {
-            default => 0,
-        };
+        return Pennant::instance($this)->limitOn($plan);
     }
 }

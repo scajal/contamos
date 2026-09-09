@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Identity\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
+use Laravel\Pennant\Middleware\EnsureFeaturesAreActive;
 use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
 
 /*
@@ -45,11 +47,17 @@ Route::as('finance.teams.')
         Route::get('/accounts', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'index'])
             ->name('accounts.index');
 
-        Route::get('/accounts/create', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'create'])
-            ->name('accounts.create');
+        Route::middleware(EnsureFeaturesAreActive::using(Feature::AddAccounts))->group(function (): void {
+            Route::get('/accounts/create', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'create'])
+                ->name('accounts.create');
 
-        Route::post('/accounts', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'store'])
-            ->name('accounts.store');
+            Route::post('/accounts', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'store'])
+                ->name('accounts.store');
+
+            Route::patch('/accounts/{account}/activate', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'activate'])
+                ->name('accounts.activate')
+                ->scopeBindings();
+        });
 
         Route::get('/accounts/{account}/edit', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'edit'])
             ->name('accounts.edit')
@@ -61,10 +69,6 @@ Route::as('finance.teams.')
 
         Route::patch('/accounts/{account}/deactivate', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'deactivate'])
             ->name('accounts.deactivate')
-            ->scopeBindings();
-
-        Route::patch('/accounts/{account}/activate', [\App\Modules\Core\Finance\Http\Controllers\Team\AccountController::class, 'activate'])
-            ->name('accounts.activate')
             ->scopeBindings();
 
         /*

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Billing\Enums;
 
 use Filament\Support\Contracts\HasLabel;
@@ -17,15 +19,17 @@ enum Plan: string implements HasLabel
     case Pro = 'pro';
 
     /**
-     * Get the features that the plan allows.
+     * Get the features that the plan allows, keyed by
+     * feature value, with the plan's limit for each. A
+     * null limit means unlimited.
      *
-     * @return array<int, \App\Modules\Billing\Enums\Feature>
+     * @return array<string, int|null>
      */
     public function features(): array
     {
-        return [
-            //
-        ];
+        return collect(Feature::cases())
+            ->mapWithKeys(fn (Feature $feature): array => [$feature->value => $feature->limitOn($this)])
+            ->toArray();
     }
 
     /**

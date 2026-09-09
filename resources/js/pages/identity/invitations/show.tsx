@@ -1,7 +1,7 @@
 import { Form, Link, usePage } from "@inertiajs/react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ArrowRightIcon, CheckCircle2Icon, ClockIcon, MailOpenIcon, UserRoundXIcon } from "lucide-react";
+import { ArrowRightIcon, CheckCircle2Icon, ClockIcon, LockIcon, MailOpenIcon, UserRoundXIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { TeamInvitation } from "@/types/app/modules/core/identity/models/team/te
 type PageProps = {
     invitation: TeamInvitation;
     isForCurrentUser: boolean;
+    isTeamFull: boolean;
 };
 
 const Show = () => {
@@ -27,7 +28,7 @@ const Show = () => {
     /**
      * The page's props.
      */
-    const { invitation, isForCurrentUser, user } = usePage<PageProps>().props;
+    const { invitation, isForCurrentUser, isTeamFull, user } = usePage<PageProps>().props;
 
     /**
      * The status of the invitation, derived from
@@ -79,6 +80,12 @@ const Show = () => {
                             {t("Logout")}
                         </Button>
                     </Notice>
+                ) : isTeamFull ? (
+                    <Notice
+                        icon={<LockIcon />}
+                        title={t("This team has reached its member limit.")}
+                        description={t("Ask :inviter to upgrade to Pro to make room for you.", { inviter })}
+                    />
                 ) : (
                     <Fragment>
                         {invitation.expires_at ? (

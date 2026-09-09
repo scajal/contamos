@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -76,8 +77,22 @@ describe('store', function (): void {
             ]);
     });
 
-    it('lets a user who already belongs to a team create another', function (): void {
-        actingMember();
+    it('redirects a user who already has a free team to the upgrade modal', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->from(route('identity.teams.create'))
+            ->post(route('identity.teams.store'), ['name' => 'Second Team'])
+            ->assertRedirectToRoute('billing.teams.subscriptions.upgrade', [
+                'team' => $team->getRouteKey(),
+                'feature' => Feature::AddTeams->value,
+            ]);
+
+        expect(Team::query()->count())->toBe(1);
+    });
+
+    it('lets a user whose team is pro create another team', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
 
         $this->from(route('identity.teams.create'))
             ->post(route('identity.teams.store'), ['name' => 'Second Team'])

@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 use function Pest\Laravel\actingAs;
@@ -73,6 +74,29 @@ function actingMember(): array
     actingAs($user);
 
     return [$user, $team];
+}
+
+/**
+ * Subscribe a \App\Modules\Core\Identity\Models\Team to the pro plan
+ * with an active Paddle subscription, without calling Paddle.
+ */
+function subscribeToPro(Team $team): void
+{
+    /** @var \App\Modules\Billing\Models\Subscription $subscription */
+    $subscription = $team->subscriptions()->create([
+        'type' => 'default',
+        'paddle_id' => 'sub_'.Str::lower(Str::random(12)),
+        'status' => \Laravel\Paddle\Subscription::STATUS_ACTIVE,
+    ]);
+
+    $subscription->items()->create([
+        'product_id' => \App\Modules\Billing\Enums\Plan::Pro->productId(),
+        'price_id' => \App\Modules\Billing\Enums\Plan::Pro->priceId(\App\Modules\Billing\Enums\BillingCycle::Monthly),
+        'status' => \Laravel\Paddle\Subscription::STATUS_ACTIVE,
+        'quantity' => 1,
+    ]);
+
+    $team->unsetRelation('subscriptions');
 }
 
 /**

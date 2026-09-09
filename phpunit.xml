@@ -36,5 +36,8 @@
         <env name="WORKOS_CLIENT_SECRET" value="sk_test"/>
         <env name="WORKOS_API_KEY" value="sk_test"/>
         <env name="WORKOS_REDIRECT_URL" value="http://localhost/authenticate"/>
+        <env name="PRODUCT_PRO_ID" value="pro_test"/>
+        <env name="PRODUCT_PRO_MONTHLY_PRICE" value="pri_monthly_test"/>
+        <env name="PRODUCT_PRO_YEARLY_PRICE" value="pri_yearly_test"/>
     </php>
 </phpunit>

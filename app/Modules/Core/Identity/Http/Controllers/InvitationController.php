@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Http\Controllers;
 
+use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Identity\Actions\User\AcceptInvitation;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
@@ -23,6 +24,7 @@ class InvitationController
         return Inertia::render('identity/invitations/show', [
             'invitation' => $invitation->load(['inviter', 'team']),
             'isForCurrentUser' => $invitation->isFor($user->email),
+            'isTeamFull' => ! Feature::AddMembers->enabled($invitation->team),
         ]);
     }
 

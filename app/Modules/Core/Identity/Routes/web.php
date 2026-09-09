@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Identity\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
+use Laravel\Pennant\Middleware\EnsureFeaturesAreActive;
 use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
 
 /*
@@ -28,11 +30,13 @@ Route::as('identity.')
         |
         */
 
-        Route::get('teams/create', [\App\Modules\Core\Identity\Http\Controllers\User\TeamController::class, 'create'])
-            ->name('teams.create');
+        Route::middleware(EnsureFeaturesAreActive::using(Feature::AddTeams))->group(function (): void {
+            Route::get('teams/create', [\App\Modules\Core\Identity\Http\Controllers\User\TeamController::class, 'create'])
+                ->name('teams.create');
 
-        Route::post('teams', [\App\Modules\Core\Identity\Http\Controllers\User\TeamController::class, 'store'])
-            ->name('teams.store');
+            Route::post('teams', [\App\Modules\Core\Identity\Http\Controllers\User\TeamController::class, 'store'])
+                ->name('teams.store');
+        });
 
         /*
         |--------------------------------------------------------------------------
@@ -48,6 +52,7 @@ Route::as('identity.')
             ->name('invitations.show');
 
         Route::post('invitations/{invitation}/accept', [\App\Modules\Core\Identity\Http\Controllers\InvitationController::class, 'accept'])
+            ->middleware(EnsureFeaturesAreActive::using(Feature::AddMembers))
             ->name('invitations.accept');
     });
 
@@ -83,11 +88,13 @@ Route::as('identity.teams.')
         Route::get('invitations', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'index'])
             ->name('invitations.index');
 
-        Route::get('invitations/create', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'create'])
-            ->name('invitations.create');
+        Route::middleware(EnsureFeaturesAreActive::using(Feature::AddMembers))->group(function (): void {
+            Route::get('invitations/create', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'create'])
+                ->name('invitations.create');
 
-        Route::post('invitations', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'store'])
-            ->name('invitations.store');
+            Route::post('invitations', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'store'])
+                ->name('invitations.store');
+        });
 
         Route::patch('invitations/{invitation}/resend', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'resend'])
             ->name('invitations.resend')

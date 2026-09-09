@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Billing\Http\Controllers\Team;
 
 use App\Modules\Billing\Enums\BillingCycle;
+use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
+use App\Modules\Billing\Http\Requests\Team\Subscription\UpgradeRequest;
 use App\Modules\Core\Identity\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -37,6 +41,24 @@ class SubscriptionController
         return Inertia::modal('billing/teams/subscriptions/subscribe', [
             'checkout' => $team->checkout(Plan::Pro->priceId($cycle)),
         ]);
+    }
+
+    /**
+     * Show the upgrade modal, listing what the pro plan
+     * unlocks. Shown when the team hits a free plan limit.
+     */
+    public function upgrade(Team $team, UpgradeRequest $request): Modal
+    {
+        return Inertia::modal('billing/teams/subscriptions/upgrade', [
+            'feature' => $request->feature(),
+            'features' => collect(Feature::cases())->map(fn (Feature $feature): array => [
+                'feature' => $feature,
+                'label' => $feature->getLabel(),
+                'free' => $feature->limitOn(Plan::Free),
+                'pro' => $feature->limitOn(Plan::Pro),
+            ])->values(),
+            'plan' => $team->plan(),
+        ])->baseRoute('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]);
     }
 
     /**
