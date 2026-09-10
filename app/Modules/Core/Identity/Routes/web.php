@@ -121,4 +121,10 @@ Route::as('identity.teams.')
 
         Route::patch('settings', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'update'])
             ->name('settings.update');
+
+        Route::get('settings/delete', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'delete'])
+            ->name('settings.delete');
+
+        Route::delete('settings', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'destroy'])
+            ->name('settings.destroy');
     });

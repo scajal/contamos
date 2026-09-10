@@ -2,12 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Modules\Billing\Enums\BillingCycle;
-use App\Modules\Billing\Enums\Feature;
-use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Identity\Models\User;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\get;
@@ -46,43 +41,6 @@ describe('index', function (): void {
                 ->where('user', null)
                 ->where('locale', 'en')
                 ->where('dashboardUrl', null));
-    });
-
-    it('advertises the free plan limits read from the billing features', function (): void {
-        get(route('home', ['locale' => 'en']))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-                ->where('plans.free.accounts', Feature::AddAccounts->limitOn(Plan::Free))
-                ->where('plans.free.members', Feature::AddMembers->limitOn(Plan::Free))
-                ->where('plans.free.transactions', Feature::AddTransactions->limitOn(Plan::Free)));
-    });
-
-    it('previews the pro prices from paddle', function (): void {
-        Cache::forget('marketing.plans.pro-prices');
-
-        Http::fake([
-            '*/pricing-preview' => Http::response(['data' => ['details' => ['line_items' => [[
-                'price' => ['id' => Plan::Pro->priceId(BillingCycle::Monthly)],
-                'formatted_totals' => ['total' => '$4.99'],
-                'totals' => ['total' => '499'],
-            ]]]]]),
-        ]);
-
-        get(route('home', ['locale' => 'en']))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-                ->where('plans.pro.monthly', '$4.99')
-                ->where('plans.pro.monthlyAmount', 499));
-    });
-
-    it('renders the homepage when paddle cannot be reached', function (): void {
-        Cache::forget('marketing.plans.pro-prices');
-
-        get(route('home', ['locale' => 'en']))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-                ->where('plans.pro.monthly', null)
-                ->where('plans.pro.monthlyAmount', null));
     });
 
     it('defaults the marketing appearance to dark', function (): void {

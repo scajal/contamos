@@ -175,10 +175,10 @@ class TeamInvitation extends Model
 
     /**
      * Scope the query to invitations in the given status, derived
-     * from the accepted and expiration dates.
+     * from the accepted and expiration dates. An unknown status
+     * leaves the query untouched.
      *
      * @param  \Illuminate\Database\Eloquent\Builder<\App\Modules\Core\Identity\Models\Team\TeamInvitation>  $query
-     * @param  'accepted' | 'expired' | 'pending'  $status
      */
     #[Scope]
     protected function status(Builder $query, string $status): void
@@ -187,6 +187,7 @@ class TeamInvitation extends Model
             'accepted' => $query->whereNotNull('accepted_at'),
             'expired' => $query->whereNull('accepted_at')->where('expires_at', '<=', CarbonImmutable::now()),
             'pending' => $query->whereNull('accepted_at')->where('expires_at', '>', CarbonImmutable::now()),
+            default => $query,
         };
     }
 

@@ -1,7 +1,7 @@
 import { usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { LinkIcon, PencilIcon, TypeIcon } from "lucide-react";
+import { LinkIcon, PencilIcon, TrashIcon, TypeIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import settings from "@/routes/identity/teams/settings";
 import { Team } from "@/types/app/modules/core/identity/models/team";
 
 type PageProps = {
+    subscribed: boolean;
     team: Team;
 };
 
@@ -24,6 +25,8 @@ const Index = () => {
             <div className="flex flex-col gap-8">
                 {/** Details */}
                 <Details />
+                {/** Danger */}
+                <Danger />
             </div>
         </div>
     );
@@ -98,6 +101,53 @@ const Details = () => {
                         </ItemContent>
                     </Item>
                 </ItemGroup>
+            </div>
+        </Fragment>
+    );
+};
+
+const Danger = () => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { subscribed, team } = usePage<PageProps>().props;
+
+    return (
+        <Fragment>
+            <header className="flex flex-col gap-1">
+                <h1 className="text-destructive font-medium">{t("Danger")}</h1>
+                <p className="text-muted-foreground text-sm">{t("Destructive actions that cannot be undone.")}</p>
+            </header>
+            <div className="border-destructive/40 flex flex-wrap items-center justify-between gap-4 rounded-sm border p-4">
+                <div className="flex max-w-lg flex-col gap-1">
+                    <p className="font-medium">{t("Delete team")}</p>
+                    <p className="text-muted-foreground text-sm">
+                        {t(
+                            "Deleting the team permanently removes its accounts, transactions, tags, members, and invitations.",
+                        )}
+                    </p>
+                    {subscribed && (
+                        <p className="text-destructive text-sm">
+                            {t("The Pro subscription is cancelled immediately as well.")}
+                        </p>
+                    )}
+                </div>
+                <Button
+                    nativeButton={false}
+                    render={
+                        <ModalLink href={settings.delete.url({ team: team.slug })}>
+                            <TrashIcon data-icon="inline-start" />
+                            {t("Delete team")}
+                        </ModalLink>
+                    }
+                    variant="destructive"
+                />
             </div>
         </Fragment>
     );

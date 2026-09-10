@@ -92,10 +92,10 @@ class SubscriptionController
         }
 
         return match (true) {
-            (bool) $subscription->onGracePeriod() => 'grace',
-            (bool) $subscription->pastDue() => 'past_due',
-            (bool) $subscription->paused() => 'paused',
-            (bool) $subscription->onTrial() => 'trialing',
+            $subscription->onGracePeriod() => 'grace',
+            $subscription->pastDue() => 'past_due',
+            $subscription->paused() => 'paused',
+            $subscription->onTrial() => 'trialing',
             default => 'active',
         };
     }
@@ -157,12 +157,14 @@ class SubscriptionController
         // The subscription is nullable because the team may not
         // have a subscription yet, in which case the renewal is
         // not applicable.
-        if (! ($subscription = $this->subscription($team)) instanceof Subscription || ! (bool) $subscription->recurring()) {
+        if (! ($subscription = $this->subscription($team)) instanceof Subscription || ! $subscription->recurring()) {
             return null;
         }
 
         /** @var \Laravel\Paddle\Payment|null $payment */
-        if (! ($payment = rescue(fn (): ?Payment => $subscription->nextPayment(), null, false)) instanceof Payment) {
+        $payment = rescue(fn (): ?Payment => $subscription->nextPayment(), null, false);
+
+        if (! $payment instanceof Payment) {
             return null;
         }
 

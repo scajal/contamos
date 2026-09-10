@@ -31,9 +31,14 @@ enum Plan: string implements HasLabel
      */
     public function features(): array
     {
-        return collect(Feature::cases())
-            ->mapWithKeys(fn (Feature $feature) => [$feature->value => $feature->limitOn($this)])
-            ->toArray();
+        /** @var array<string, int|null> $features */
+        $features = [];
+
+        foreach (Feature::cases() as $feature) {
+            $features[$feature->value] = $feature->limitOn($this);
+        }
+
+        return $features;
     }
 
     /**

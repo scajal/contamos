@@ -22,8 +22,6 @@ use Illuminate\Database\Eloquent\Attributes\Table;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Billing\Models\Subscription\SubscriptionItem> $items
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Billing\Models\Transaction> $transactions
  *
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription active()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription canceled()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription expiredTrial()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription newQuery()
@@ -32,14 +30,7 @@ use Illuminate\Database\Eloquent\Attributes\Table;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription notOnPausedGracePeriod()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription notOnTrial()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription notPaused()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription onGracePeriod()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription onPausedGracePeriod()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription onTrial()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription pastDue()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription paused()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription recurring()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Billing\Models\Subscription valid()
  *
  * @mixin \Eloquent
  */
