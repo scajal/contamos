@@ -78,8 +78,8 @@ class TeamController
             $next = $deleteTeam
                 ->by($user)
                 ->using($team);
-        } catch (PaddleException $exception) {
-            report($exception);
+        } catch (PaddleException $paddleException) {
+            report($paddleException);
 
             // Show a failure message.
             Toast::make(trans('The subscription could not be cancelled. Try again.'))

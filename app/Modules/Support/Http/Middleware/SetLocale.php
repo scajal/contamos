@@ -73,6 +73,9 @@ class SetLocale
      */
     protected function locales(): array
     {
-        return Locales::installed()->pluck('code')->toArray();
+        /** @var array<int, string> */
+        $locales = Locales::installed()->pluck('code')->toArray();
+
+        return $locales;
     }
 }

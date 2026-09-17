@@ -77,7 +77,7 @@ abstract class PanelProvider extends \Filament\PanelProvider
         LanguageSwitch::configureUsing(
             fn (LanguageSwitch $switch): LanguageSwitch => $switch->locales(
                 Locales::installed()->pluck('code')->toArray()
-            )->userPreferredLocale(fn (): ?string => request()->cookie('filament_language_switch_locale'))
+            )->userPreferredLocale(fn (): array|string|null => request()->cookie('filament_language_switch_locale'))
         );
     }
 
