@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Administration\Providers;
 
+use BezhanSalleh\LanguageSwitch\LanguageSwitch;
 use Filament\Actions;
 use Filament\Panel;
 use Filament\Support\Assets\Css;
@@ -14,6 +15,7 @@ use Filament\Support\Enums\IconPosition;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
+use LaravelLang\Locales\Facades\Locales;
 
 abstract class PanelProvider extends \Filament\PanelProvider
 {
@@ -74,7 +76,11 @@ abstract class PanelProvider extends \Filament\PanelProvider
      */
     protected function configurePlugins(): void
     {
-        //
+        LanguageSwitch::configureUsing(
+            fn (LanguageSwitch $switch): LanguageSwitch => $switch->locales(
+                Locales::installed()->pluck('code')->toArray()
+            )
+        );
     }
 
     /**
@@ -93,6 +99,7 @@ abstract class PanelProvider extends \Filament\PanelProvider
             ->favicon('favico.ico')
             ->maxContentWidth(Width::Full)
             ->middleware([
+                \App\Modules\Support\Http\Middleware\SetLocale::class,
                 \Illuminate\Cookie\Middleware\EncryptCookies::class,
                 \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
                 \Illuminate\Session\Middleware\StartSession::class,

@@ -21,6 +21,7 @@ class Amount
     {
         /** @var int $decimals */
         $decimals = $options['decimals'] ?? $currency->decimal_places;
+
         /** @var string $locale */
         $locale = $options['locale'] ?? App::getLocale();
 

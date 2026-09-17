@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Modules\Support\Http\Middleware\SetLocale;
 use Illuminate\Support\Facades\Route;
+use LaravelLang\Locales\Facades\Locales;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,5 +18,5 @@ Route::get('/', [\App\Modules\Marketing\Http\Controllers\HomeController::class, 
     ->name('home.redirect');
 
 Route::get('{locale}', [\App\Modules\Marketing\Http\Controllers\HomeController::class, 'index'])
-    ->whereIn('locale', SetLocale::LOCALES)
+    ->whereIn('locale', Locales::installed()->pluck('code')->toArray())
     ->name('home');

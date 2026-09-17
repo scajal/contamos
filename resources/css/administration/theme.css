@@ -2,3 +2,4 @@
 
 @source "../../../app/Modules/Administration/Panels/Administration/**/*";
 @source "../../../resources/views/filament/modules/administration/panels/administration/**/*";
+@source '../../../../vendor/bezhansalleh/filament-language-switch/**/*';

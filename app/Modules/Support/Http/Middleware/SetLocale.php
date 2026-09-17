@@ -8,17 +8,11 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cookie;
+use LaravelLang\Locales\Facades\Locales;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetLocale
 {
-    /**
-     * The locales supported by the application.
-     *
-     * @var array<int, string>
-     */
-    public const array LOCALES = ['en', 'es'];
-
     /**
      * Handle an incoming request.
      *
@@ -26,22 +20,20 @@ class SetLocale
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = static::resolve($request);
+        // Resolve the default locale from the
+        // incoming request.
+        $locale = $this->resolve($request);
 
-        App::setLocale($locale);
+        // If the locale is installed, set it as
+        // the app's locale.
+        if (in_array($locale, $this->locales(), true)) {
+            App::setLocale($locale);
 
-        $response = $next($request);
-
-        // If the route carries an explicit locale segment that differs from the
-        // cookie, persist it for a year so future requests without the segment
-        // (such as in-app pages) keep following the visitor's choice.
-        $routeLocale = $request->route('locale');
-
-        if (is_string($routeLocale) && $routeLocale !== $request->cookie('locale')) {
-            $response->headers->setCookie(Cookie::make('locale', $locale, 60 * 24 * 365));
+            // Set the locale cookie.
+            Cookie::queue(Cookie::make('filament_language_switch_locale', $locale, 60 * 24 * 365));
         }
 
-        return $response;
+        return $next($request);
     }
 
     /**
@@ -49,20 +41,32 @@ class SetLocale
      * then the locale cookie, then the browser's preferred
      * language, then the application's default locale.
      */
-    public static function resolve(Request $request): string
+    public function resolve(Request $request): string
     {
-        $route = $request->route('locale');
-
-        if (is_string($route) && in_array($route, self::LOCALES, true)) {
-            return $route;
+        // First, check if the locale is coming from
+        // the route segment.
+        if (is_string($locale = $request->route('locale'))) {
+            return $locale;
         }
 
-        $cookie = $request->cookie('locale');
-
-        if (is_string($cookie) && in_array($cookie, self::LOCALES, true)) {
+        // Then, check if the locale is coming from
+        // the cookie.
+        if (is_string($cookie = $request->cookie('filament_language_switch_locale'))) {
             return $cookie;
         }
 
-        return $request->getPreferredLanguage(self::LOCALES) ?? config()->string('app.locale');
+        // Finally, get the locale from the browser's preferred
+        // language, or the application's default locale.
+        return $request->getPreferredLanguage($this->locales()) ?? config()->string('app.locale');
+    }
+
+    /**
+     * Get the list of installed locale codes.
+     *
+     * @return array<int, string>
+     */
+    protected function locales(): array
+    {
+        return Locales::installed()->pluck('code')->toArray();
     }
 }
