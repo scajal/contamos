@@ -80,7 +80,7 @@ describe('index', function (): void {
             ->assertOk()
             ->assertSee('lang="es"', false)
             ->assertPlainCookie('filament_language_switch_locale', 'es')
-            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page)
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->where('locale', 'es'));
     });
 

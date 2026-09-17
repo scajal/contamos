@@ -38,9 +38,11 @@ it('prefers the route locale segment over the cookie and queues the cookie', fun
 
     (new SetLocale)->handle($request, fn (Request $request): \Illuminate\Http\Response => response(''));
 
+    expect(App::currentLocale())->toBe('es')
+        ->and(Cookie::hasQueued('filament_language_switch_locale'))->toBeTrue();
+
+    /** @var \Symfony\Component\HttpFoundation\Cookie $cookie */
     $cookie = Cookie::queued('filament_language_switch_locale');
 
-    expect(App::currentLocale())->toBe('es')
-        ->and($cookie)->toBeInstanceOf(\Symfony\Component\HttpFoundation\Cookie::class)
-        ->and($cookie->getValue())->toBe('es');
+    expect($cookie->getValue())->toBe('es');
 });
