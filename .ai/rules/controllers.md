@@ -52,3 +52,6 @@ Put Query Builder `AllowedFilter` definitions on `IndexRequest::filters()`. In t
 ## Soft activation with HasActivation
 
 Models with an on/off flag use Support HasActivation (`is_active`, `activate()` / `deactivate()`, `isActive` scope). Expose activate/deactivate actions. Do not use SoftDeletes or a parallel status enum for that flag.
+
+## Feature enum is the Pennant API
+Gate and check plan limits through the Feature enum (`EnsureFeaturesAreActive::using(Feature::…)`, `Feature::enabled($scope)`, `limitOn($plan)`). Enum values must match the Pennant `#[Name]`. Do not pass feature class names or raw strings at call sites.

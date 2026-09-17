@@ -111,7 +111,7 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@lint:check",
-            "@php artisan test"
+            "@php artisan test --parallel"
         ],
         "test:coverage": [
             "@php vendor/bin/pest --coverage --min=100 --parallel"

@@ -32,3 +32,6 @@ Define local query scopes as `#[Scope]` protected methods on the model. Do not u
 ## Soft activation with HasActivation
 
 Models with an on/off flag use Support HasActivation (`is_active`, `activate()` / `deactivate()`, `isActive` scope). Expose activate/deactivate actions. Do not use SoftDeletes or a parallel status enum for that flag.
+
+## Custom table names via Table attribute
+Declare non-default table names with `#[Table('...')]`. Do not set `protected $table`.

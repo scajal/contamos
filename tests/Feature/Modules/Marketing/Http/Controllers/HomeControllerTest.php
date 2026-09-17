@@ -6,7 +6,6 @@ use App\Modules\Core\Identity\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\get;
-use function Pest\Laravel\withCookie;
 use function Pest\Laravel\withHeaders;
 use function Pest\Laravel\withUnencryptedCookie;
 
@@ -20,7 +19,7 @@ describe('redirect', function (): void {
     });
 
     it('redirects to the homepage of the locale cookie', function (): void {
-        withCookie('locale', 'es')
+        withUnencryptedCookie('filament_language_switch_locale', 'es')
             ->get('/')
             ->assertRedirect('/es');
     });
@@ -80,8 +79,8 @@ describe('index', function (): void {
         get(route('home', ['locale' => 'es']))
             ->assertOk()
             ->assertSee('lang="es"', false)
-            ->assertCookie('locale')
-            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->assertPlainCookie('filament_language_switch_locale', 'es')
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page)
                 ->where('locale', 'es'));
     });
 

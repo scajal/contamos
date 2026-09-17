@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Enums\Transaction;
 
-enum TransactionType: string
+use Filament\Support\Contracts\HasLabel;
+
+enum TransactionType: string implements HasLabel
 {
     /**
      * Represents an expense.
@@ -17,14 +19,13 @@ enum TransactionType: string
     case Income = 'income';
 
     /**
-     * Get the sign for the transaction
-     * type.
+     * Get the label for the transaction type.
      */
-    public function sign(): string
+    public function getLabel(): string
     {
         return match ($this) {
-            self::Expense => '-',
-            self::Income => '+',
+            self::Expense => trans('Expense'),
+            self::Income => trans('Income'),
         };
     }
 
@@ -37,6 +38,18 @@ enum TransactionType: string
         return match ($this) {
             self::Expense => '+',
             self::Income => '-',
+        };
+    }
+
+    /**
+     * Get the sign for the transaction
+     * type.
+     */
+    public function sign(): string
+    {
+        return match ($this) {
+            self::Expense => '-',
+            self::Income => '+',
         };
     }
 }

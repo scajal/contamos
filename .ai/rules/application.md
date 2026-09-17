@@ -16,3 +16,6 @@ SidebarInset, main, and the max-w-5xl content column use min-w-0 so nested overf
 ## Sidebar header is the team switcher
 
 SidebarHeader is the team switcher (avatar initials, muted “Team” label, team name), not a logo. Switching visits finance.teams.dashboard.index with the team slug so EnsureTeamMembership updates current_team.
+
+## Open modal routes with ModalLink
+Open Inertia modal routes with `ModalLink` and a Wayfinder `.url()`. Use `Link` only for full-page visits. Do not point a normal `Link` at a modal route.

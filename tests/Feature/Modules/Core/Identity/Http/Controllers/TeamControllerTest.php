@@ -37,20 +37,9 @@ describe('index', function (): void {
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('identity/teams/index')
                 ->has('user')
-                ->where('subscribed', false)
                 ->where('team.id', $team->getKey())
                 ->where('team.name', 'Acme Family')
                 ->where('team.slug', 'acme-family'));
-    });
-
-    it('flags a subscribed team', function (): void {
-        [$user, $team] = actingMember();
-        subscribeToPro($team);
-
-        $this->get(route('identity.teams.settings.index', ['team' => $team->getRouteKey()]))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-                ->where('subscribed', true));
     });
 });
 
@@ -108,7 +97,10 @@ describe('update', function (): void {
         $team->update(['name' => 'Acme Family']);
 
         $this->from(route('identity.teams.settings.index', ['team' => 'acme-family']))
-            ->patch(route('identity.teams.settings.update', ['team' => 'acme-family']), ['name' => 'Cajal Household'])
+            ->patch(route('identity.teams.settings.update', ['team' => 'acme-family']), [
+                'name' => 'Cajal Household',
+                'slug' => 'cajal-household',
+            ])
             ->assertRedirectToRoute('identity.teams.settings.index', ['team' => 'cajal-household']);
 
         expect($team->fresh()?->name)->toBe('Cajal Household')
@@ -122,19 +114,56 @@ describe('update', function (): void {
         $name = $team->name;
 
         $this->from(route('identity.teams.settings.index', ['team' => $team->getRouteKey()]))
-            ->patch(route('identity.teams.settings.update', ['team' => $team->getRouteKey()]), ['name' => ''])
+            ->patch(route('identity.teams.settings.update', ['team' => $team->getRouteKey()]), [
+                'name' => '',
+                'slug' => $team->slug,
+            ])
             ->assertRedirectToRoute('identity.teams.settings.index', ['team' => $team->getRouteKey()])
             ->assertInvalid(['name']);
 
         expect($team->fresh()?->name)->toBe($name);
     });
 
+    it('requires a handle', function (): void {
+        [$user, $team] = actingMember();
+        $slug = $team->slug;
+
+        $this->from(route('identity.teams.settings.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('identity.teams.settings.update', ['team' => $team->getRouteKey()]), [
+                'name' => $team->name,
+                'slug' => '',
+            ])
+            ->assertRedirectToRoute('identity.teams.settings.index', ['team' => $team->getRouteKey()])
+            ->assertInvalid(['slug']);
+
+        expect($team->fresh()?->slug)->toBe($slug);
+    });
+
     it('rejects a name longer than 255 characters', function (): void {
         [$user, $team] = actingMember();
 
-        $this->patch(route('identity.teams.settings.update', ['team' => $team->getRouteKey()]), ['name' => str_repeat('a', 256)])
+        $this->patch(route('identity.teams.settings.update', ['team' => $team->getRouteKey()]), [
+            'name' => str_repeat('a', 256),
+            'slug' => $team->slug,
+        ])
             ->assertRedirect()
             ->assertInvalid(['name']);
+    });
+
+    it('rejects a handle that is already taken', function (): void {
+        [$user, $team] = actingMember();
+        $slug = $team->slug;
+        Team::factory()->create(['slug' => 'taken']);
+
+        $this->from(route('identity.teams.settings.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('identity.teams.settings.update', ['team' => $team->getRouteKey()]), [
+                'name' => $team->name,
+                'slug' => 'taken',
+            ])
+            ->assertRedirectToRoute('identity.teams.settings.index', ['team' => $team->getRouteKey()])
+            ->assertInvalid(['slug']);
+
+        expect($team->fresh()?->slug)->toBe($slug);
     });
 });
 

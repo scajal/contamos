@@ -21,3 +21,6 @@ Item defaults to border-transparent, so `border-b` on stacked rows is invisible.
 ## Sheet body padding matches header and footer
 
 Inertia modal Sheets use SheetHeader/SheetFooter (p-6). The scrollable body between them is px-6, not px-4, so fields line up with the title and actions. Do not change the mobile sidebar Sheet (p-0).
+
+## Open modal routes with ModalLink
+Open Inertia modal routes with `ModalLink` and a Wayfinder `.url()`. Use `Link` only for full-page visits. Do not point a normal `Link` at a modal route.

@@ -34,3 +34,6 @@ Currency and quote admin UI is Filament under Administration (`filament.administ
 ## Console routes live in modules
 
 Register schedules in the module `Routes/console.php` and require it from `routes/console.php`. Discover Artisan commands via `bootstrap/app.php` `withCommands` pointing at the module Commands directory. Do not add `app/Console`.
+
+## Feature enum is the Pennant API
+Gate and check plan limits through the Feature enum (`EnsureFeaturesAreActive::using(Feature::…)`, `Feature::enabled($scope)`, `limitOn($plan)`). Enum values must match the Pennant `#[Name]`. Do not pass feature class names or raw strings at call sites.
