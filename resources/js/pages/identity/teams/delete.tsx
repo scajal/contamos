@@ -84,9 +84,7 @@ export default function Delete({ subscribed, team }: PageProps) {
                                             <Field data-invalid={invalid("slug") || undefined}>
                                                 <FieldLabel htmlFor="team-slug">
                                                     {before}
-                                                    <span className="text-destructive font-mono font-semibold">
-                                                        {team.slug}
-                                                    </span>
+                                                    <span className="text-destructive">{team.slug}</span>
                                                     {after}
                                                 </FieldLabel>
                                                 <Input
