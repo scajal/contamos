@@ -28,10 +28,3 @@ yarn-error.log
 /.zed
 *ide_helper*
 *superpowers*
-
-# BMAD — generated + personal
-_bmad/config.toml
-_bmad/config.user.toml
-_bmad/**/config.yaml
-_bmad/custom/*.user.toml
-_bmad-output/

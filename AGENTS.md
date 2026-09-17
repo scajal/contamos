@@ -1,9 +1,4 @@
-<!-- bmad:context -->
-<!-- Verified 2026-09-08 against 73eff50fd20c. Managed by bmad-project-context; edits inside this block are replaced on refresh. Keep anything you want preserved outside the markers. -->
-
-## contamos
-
-Contamos is a shared ledger for people who share money. Laravel 13, PHP 8.4, Inertia + React, Filament at `/administration`, pnpm. Project conventions live in `.ai/rules/`; Laravel Boost guidelines live in the `<laravel-boost-guidelines>
+<laravel-boost-guidelines>
 === foundation rules ===
 
 # Laravel Boost Guidelines
