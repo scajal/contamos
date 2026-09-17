@@ -3,7 +3,7 @@ name: cashier-paddle-development
 description: "Handles Laravel Cashier Paddle integration including subscriptions, webhooks, Paddle Checkout, transactions, charges, refunds, trials, proration, pausing, and multiple subscription types. Triggered when a user mentions Cashier, Billable, paddle_id, subscribe(), checkout(), Paddle subscriptions, or billing. Also applies when setting up webhooks, debugging subscribed() returning false, handling grace periods, testing with CashierFake, or troubleshooting subscription sync issues."
 license: MIT
 metadata:
-    author: laravel
+  author: laravel
 ---
 
 # Cashier Paddle Development
@@ -41,7 +41,6 @@ CASHIER_CURRENCY_LOCALE=en
 ### Billable Model
 
 <!-- Add Billable Trait -->
-
 ```php
 use Laravel\Paddle\Billable;
 
@@ -54,7 +53,6 @@ class User extends Authenticatable
 If you bill a non-`User` model, add the `Billable` trait to that model as well:
 
 <!-- Custom Billable Model -->
-
 ```php
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Paddle\Billable;
@@ -70,7 +68,6 @@ No extra Cashier registration call is required for additional billable models.
 Add `@paddleJS` to your layout so Paddle's JavaScript is loaded for the overlay checkout:
 
 <!-- Paddle JS Directive -->
-
 ```blade
 <head>
     @paddleJS
@@ -82,7 +79,6 @@ Add `@paddleJS` to your layout so Paddle's JavaScript is loaded for the overlay 
 Cashier Paddle uses a checkout-based flow. `subscribe()` returns a `Checkout` instance that is passed to a Blade component. There is no direct API call for subscription creation.
 
 <!-- Subscription Checkout Route -->
-
 ```php
 Route::get('/subscribe', function (Request $request) {
     $checkout = $request->user()
@@ -94,7 +90,6 @@ Route::get('/subscribe', function (Request $request) {
 ```
 
 <!-- Subscription Checkout Button -->
-
 ```blade
 <x-paddle-button :checkout="$checkout" class="px-8 py-4">
     Subscribe
@@ -104,7 +99,6 @@ Route::get('/subscribe', function (Request $request) {
 For named subscriptions, pass the desired type as the second argument to `subscribe()`. Cashier stores `custom_data.subscription_type` automatically from that value; if you omit it, the local type defaults to `'default'`.
 
 <!-- Named Subscription Checkout -->
-
 ```php
 $checkout = $request->user()
     ->subscribe('pri_premium_monthly', 'premium')

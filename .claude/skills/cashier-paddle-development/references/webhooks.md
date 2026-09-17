@@ -53,13 +53,10 @@ If `subscription.created` is missing, new subscriptions will never be recorded l
 Use a reverse proxy to expose your local app to Paddle:
 
 ```bash
-
 # Using Expose
-
 expose share http://your-app.test
 
 # Using Ngrok
-
 ngrok http 80
 ```
 
@@ -87,17 +84,17 @@ Event::listen(WebhookReceived::class, function (WebhookReceived $event) {
 
 All available Cashier events:
 
-| Event                  | Dispatched after                          |
-| ---------------------- | ----------------------------------------- |
-| `WebhookReceived`      | Every incoming webhook, before processing |
-| `WebhookHandled`       | After Cashier processes a known event     |
-| `CustomerUpdated`      | `customer.updated`                        |
-| `TransactionCompleted` | `transaction.completed`                   |
-| `TransactionUpdated`   | `transaction.updated`                     |
-| `SubscriptionCreated`  | `subscription.created`                    |
-| `SubscriptionUpdated`  | `subscription.updated`                    |
-| `SubscriptionPaused`   | `subscription.paused`                     |
-| `SubscriptionCanceled` | `subscription.canceled`                   |
+| Event | Dispatched after |
+|---|---|
+| `WebhookReceived` | Every incoming webhook, before processing |
+| `WebhookHandled` | After Cashier processes a known event |
+| `CustomerUpdated` | `customer.updated` |
+| `TransactionCompleted` | `transaction.completed` |
+| `TransactionUpdated` | `transaction.updated` |
+| `SubscriptionCreated` | `subscription.created` |
+| `SubscriptionUpdated` | `subscription.updated` |
+| `SubscriptionPaused` | `subscription.paused` |
+| `SubscriptionCanceled` | `subscription.canceled` |
 
 ## Extending the Webhook Controller
 
@@ -141,11 +138,11 @@ CASHIER_WEBHOOK=https://example.com/my-paddle-webhook-url
 
 Check Paddle's delivery log in Dashboard > Notifications > your endpoint > Recent deliveries. Common HTTP response codes:
 
-| Code | Cause                         | Fix                                                  |
-| ---- | ----------------------------- | ---------------------------------------------------- |
-| 419  | CSRF blocking the request     | Exclude `paddle/*` from CSRF                         |
-| 403  | Signature verification failed | Verify `PADDLE_WEBHOOK_SECRET` matches the dashboard |
-| 404  | Route not found               | Check `php artisan route:list` for `paddle/webhook`  |
-| 500  | Application exception         | Check `storage/logs/laravel.log`                     |
+| Code | Cause | Fix |
+|---|---|---|
+| 419 | CSRF blocking the request | Exclude `paddle/*` from CSRF |
+| 403 | Signature verification failed | Verify `PADDLE_WEBHOOK_SECRET` matches the dashboard |
+| 404 | Route not found | Check `php artisan route:list` for `paddle/webhook` |
+| 500 | Application exception | Check `storage/logs/laravel.log` |
 
 If webhooks arrive but subscription state is stale, check that the `customers` table has a row with `paddle_id` matching the `customer_id` in the payload — `handleSubscriptionCreated` exits early if `findBillable()` returns null.
