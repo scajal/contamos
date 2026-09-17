@@ -111,7 +111,6 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@lint:check",
-            "@test:coverage",
             "@php artisan test --parallel"
         ],
         "test:coverage": [
