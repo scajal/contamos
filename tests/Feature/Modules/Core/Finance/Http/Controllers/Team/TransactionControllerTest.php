@@ -306,6 +306,60 @@ describe('store', function (): void {
         expect(Transaction::query()->sole()->occurred_at->toDateTimeString())->toBe('2026-09-06 15:21:00');
     });
 
+    it('keeps a datetime-local occurred_at when the timezone is invalid', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'occurred_at' => '2026-09-06T12:21',
+                'timezone' => 'Not/AZone',
+            ]))
+            ->assertRedirect();
+
+        expect(Transaction::query()->sole()->occurred_at->toDateTimeString())->toBe('2026-09-06 12:21:00');
+    });
+
+    it('keeps a datetime-local occurred_at when the format is invalid', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'occurred_at' => '2026-09-06 12:21:00',
+                'timezone' => 'UTC',
+            ]))
+            ->assertRedirect();
+
+        expect(Transaction::query()->sole()->occurred_at->toDateTimeString())->toBe('2026-09-06 12:21:00');
+    });
+
+    it('rejects a datetime-local occurred_at that cannot be parsed', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'occurred_at' => '2026-99-99T12:00',
+                'timezone' => 'UTC',
+                'quote' => '',
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['occurred_at']);
+    });
+
     it('attaches tags when creating a transaction', function (): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);

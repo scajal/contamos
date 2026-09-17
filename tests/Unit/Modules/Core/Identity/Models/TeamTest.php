@@ -71,3 +71,9 @@ it('exposes memberships through the users relation', function (): void {
         ->and($team->users()->first()?->membership?->user)->toBeInstanceOf(User::class)
         ->and($team->users()->first()?->membership?->team)->toBeInstanceOf(Team::class);
 });
+
+it('uses the first member email for paddle when nobody is authenticated', function (): void {
+    [$user, $team] = memberWithTeam();
+
+    expect($team->paddleEmail())->toBe($user->email);
+});

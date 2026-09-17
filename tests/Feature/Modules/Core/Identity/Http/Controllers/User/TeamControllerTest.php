@@ -25,6 +25,15 @@ describe('create', function (): void {
                 ->component('identity/users/teams/create')
                 ->has('user'));
     });
+
+    it('forbids creating a team when the user is at the free limit without a current team', function (): void {
+        [$user, $team] = actingMember();
+        $user->forceFill(['current_team_id' => null])->save();
+
+        $this->actingAs($user->fresh())
+            ->get(route('identity.teams.create'))
+            ->assertForbidden();
+    });
 });
 
 describe('store', function (): void {

@@ -9,6 +9,7 @@ use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -136,6 +137,20 @@ describe('index', function (): void {
                 ->where('plan.status', 'active')
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->where('renewal', null)));
+    });
+
+    it('renders an active pro team without a cycle when the price is unknown', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $team->subscription()?->items()->update(['price_id' => 'pri_unknown']);
+        $team->unsetRelation('subscriptions');
+
+        $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('plan.name', Plan::Pro->value)
+                ->where('plan.status', 'active')
+                ->where('plan.cycle', null));
     });
 });
 
@@ -265,6 +280,65 @@ describe('upgrade', function (): void {
             ]))
             ->assertRedirect()
             ->assertInvalid(['feature']);
+    });
+});
+
+describe('redirectToCustomerPortal', function (): void {
+    it('redirects guests to login', function (): void {
+        $team = Team::factory()->create();
+
+        $this->get(route('billing.teams.subscriptions.redirect-to-customer-portal', ['team' => $team->getRouteKey()]))
+            ->assertRedirectToRoute('login');
+    });
+
+    it('forbids users who are not members of the team', function (): void {
+        actingMember();
+        $other = Team::factory()->create();
+
+        $this->get(route('billing.teams.subscriptions.redirect-to-customer-portal', ['team' => $other->getRouteKey()]))
+            ->assertForbidden();
+    });
+
+    it('creates a paddle customer and redirects to the portal', function (): void {
+        [$user, $team] = actingMember();
+        config()->set('cashier.api_key', 'test_key');
+        Http::fake([
+            '*/customers/*/portal-sessions' => Http::response(['data' => [
+                'urls' => ['general' => ['overview' => 'https://paddle.test/portal']],
+            ]]),
+            '*/customers*' => Http::response(['data' => [[
+                'email' => $user->email,
+                'id' => 'ctm_test',
+                'name' => $team->name,
+            ]]]),
+        ]);
+
+        $this->get(route('billing.teams.subscriptions.redirect-to-customer-portal', ['team' => $team->getRouteKey()]))
+            ->assertRedirect('https://paddle.test/portal');
+
+        expect($team->fresh()?->customer?->paddle_id)->toBe('ctm_test');
+    });
+
+    it('includes the subscription on the portal session when the team is subscribed', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $team->customer()->create([
+            'email' => $user->email,
+            'name' => $team->name,
+            'paddle_id' => 'ctm_test',
+        ]);
+        config()->set('cashier.api_key', 'test_key');
+        Http::fake([
+            '*/customers/*/portal-sessions' => Http::response(['data' => [
+                'urls' => ['general' => ['overview' => 'https://paddle.test/portal']],
+            ]]),
+        ]);
+
+        $this->get(route('billing.teams.subscriptions.redirect-to-customer-portal', ['team' => $team->getRouteKey()]))
+            ->assertRedirect('https://paddle.test/portal');
+
+        Http::assertSent(fn (Request $request): bool => str_contains($request->url(), '/portal-sessions')
+            && $request['subscription_ids'] === $team->subscription()?->paddle_id);
     });
 });
 
