@@ -7,8 +7,6 @@ namespace App\Modules\Administration\Providers;
 use BezhanSalleh\LanguageSwitch\LanguageSwitch;
 use Filament\Actions;
 use Filament\Panel;
-use Filament\Support\Assets\Css;
-use Filament\Support\Assets\Js;
 use Filament\Support\Colors\Color;
 use Filament\Support\Components;
 use Filament\Support\Enums\IconPosition;
@@ -90,10 +88,6 @@ abstract class PanelProvider extends \Filament\PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->assets([
-                Css::make('instrument-sans', 'https://fonts.bunny.net/css?family=instrument-sans:400,500,600'),
-                Js::make('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js'),
-            ])
             ->authMiddleware([\Illuminate\Auth\Middleware\Authenticate::class, \Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS::class])
             ->default()
             ->favicon('favico.ico')
