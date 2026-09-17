@@ -79,7 +79,7 @@ abstract class PanelProvider extends \Filament\PanelProvider
         LanguageSwitch::configureUsing(
             fn (LanguageSwitch $switch): LanguageSwitch => $switch->locales(
                 Locales::installed()->pluck('code')->toArray()
-            )
+            )->userPreferredLocale(fn (): ?string => request()->cookie('filament_language_switch_locale'))
         );
     }
 
@@ -99,7 +99,6 @@ abstract class PanelProvider extends \Filament\PanelProvider
             ->favicon('favico.ico')
             ->maxContentWidth(Width::Full)
             ->middleware([
-                \App\Modules\Support\Http\Middleware\SetLocale::class,
                 \Illuminate\Cookie\Middleware\EncryptCookies::class,
                 \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
                 \Illuminate\Session\Middleware\StartSession::class,
@@ -109,6 +108,7 @@ abstract class PanelProvider extends \Filament\PanelProvider
                 \Illuminate\Routing\Middleware\SubstituteBindings::class,
                 \Filament\Http\Middleware\DisableBladeIconComponents::class,
                 \Filament\Http\Middleware\DispatchServingFilamentEvent::class,
+                \App\Modules\Support\Http\Middleware\SetLocale::class,
             ])
             ->sidebarFullyCollapsibleOnDesktop()
             ->spa()

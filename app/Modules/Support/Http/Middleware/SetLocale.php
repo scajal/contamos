@@ -31,6 +31,12 @@ class SetLocale
 
             // Set the locale cookie.
             Cookie::queue(Cookie::make('filament_language_switch_locale', $locale, 60 * 24 * 365));
+
+            // If there's a session instance, set the
+            // locale as the session's preferred locale.
+            if ($request->hasSession()) {
+                $request->session()->put('locale', $locale);
+            }
         }
 
         return $next($request);
