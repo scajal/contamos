@@ -5,13 +5,12 @@ import { LinkIcon, PencilIcon, TrashIcon, TypeIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
-import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import settings from "@/routes/identity/teams/settings";
 import { Team } from "@/types/app/modules/core/identity/models/team";
 
 type PageProps = {
-    subscribed: boolean;
     team: Team;
 };
 
@@ -61,14 +60,29 @@ const Details = () => {
 
     return (
         <Fragment>
-            <div className="flex flex-wrap items-end justify-between gap-4">
-                <header className="flex flex-col gap-1">
-                    <h1 className="font-medium">{t("Details")}</h1>
-                    <p className="text-muted-foreground text-sm">{t("The name and address of your team.")}</p>
+            <div className="flex w-full flex-wrap items-end justify-between gap-4">
+                <header className="flex w-full justify-between gap-1">
+                    <div className="flex flex-col gap-1">
+                        <h1 className="font-medium">{t("Details")}</h1>
+                        <p className="text-muted-foreground text-sm">{t("The name and address of your team.")}</p>
+                    </div>
+
+                    {/** Actions */}
+                    <Button
+                        nativeButton={false}
+                        render={
+                            <ModalLink href={settings.edit.url({ team: team.slug })}>
+                                <PencilIcon data-icon="inline-start" />
+                                {t("Edit")}
+                            </ModalLink>
+                        }
+                        size="sm"
+                        variant="outline"
+                    />
                 </header>
             </div>
             <div className="overflow-hidden rounded-sm border">
-                <ItemGroup className="gap-0">
+                <ItemGroup className="gap-0 has-data-[size=sm]:gap-0">
                     <Item className="rounded-none border-0 border-b last:border-b-0" size="sm" variant="outline">
                         <ItemMedia variant="icon">
                             <TypeIcon />
@@ -77,19 +91,6 @@ const Details = () => {
                             <ItemDescription>{t("Name")}</ItemDescription>
                             <ItemTitle>{team.name}</ItemTitle>
                         </ItemContent>
-                        <ItemActions>
-                            <Button
-                                nativeButton={false}
-                                render={
-                                    <ModalLink href={settings.edit.url({ team: team.slug })}>
-                                        <PencilIcon data-icon="inline-start" />
-                                        {t("Edit")}
-                                    </ModalLink>
-                                }
-                                size="sm"
-                                variant="outline"
-                            />
-                        </ItemActions>
                     </Item>
                     <Item className="rounded-none border-0 border-b last:border-b-0" size="sm" variant="outline">
                         <ItemMedia variant="icon">
@@ -116,7 +117,7 @@ const Danger = () => {
     /**
      * The page's props.
      */
-    const { subscribed, team } = usePage<PageProps>().props;
+    const { team } = usePage<PageProps>().props;
 
     return (
         <Fragment>
@@ -132,11 +133,6 @@ const Danger = () => {
                             "Deleting the team permanently removes its accounts, transactions, tags, members, and invitations.",
                         )}
                     </p>
-                    {subscribed && (
-                        <p className="text-destructive text-sm">
-                            {t("The Pro subscription is cancelled immediately as well.")}
-                        </p>
-                    )}
                 </div>
                 <Button
                     nativeButton={false}

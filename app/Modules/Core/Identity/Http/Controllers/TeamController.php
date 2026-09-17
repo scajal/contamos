@@ -25,9 +25,6 @@ class TeamController
     public function index(Team $team): Response
     {
         return Inertia::render('identity/teams/index', [
-            // Deleting a subscribed team cancels its subscription,
-            // so the page warns about it.
-            'subscribed' => $team->subscribed(),
             'team' => $team,
         ]);
     }
@@ -48,14 +45,14 @@ class TeamController
     public function update(Team $team, UpdateRequest $request): RedirectResponse
     {
         // Update the team with the validated data.
-        $team->update(['name' => $request->validated('name')]);
+        $team->update($request->validated());
 
         // Show a success message.
         Toast::make(trans('Saved'))
             ->flash();
 
-        // Renaming the team regenerates its slug, so the previous
-        // URL no longer resolves. Land on the new one.
+        // The slug might have changed, so land
+        // on the new one.
         return to_route('identity.teams.settings.index', ['team' => $team->getRouteKey()]);
     }
 
@@ -84,6 +81,7 @@ class TeamController
         } catch (PaddleException $exception) {
             report($exception);
 
+            // Show a failure message.
             Toast::make(trans('The subscription could not be cancelled. Try again.'))
                 ->flash();
 

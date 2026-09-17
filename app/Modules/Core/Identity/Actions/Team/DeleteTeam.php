@@ -56,10 +56,13 @@ class DeleteTeam
             $team->users()
                 ->where('current_team_id', $team->getKey())
                 ->each(function (User $member) use ($team): void {
+                    // Get the next team the member is on.
                     $next = $member->teams()
                         ->whereKeyNot($team->getKey())
                         ->first();
 
+                    // If the member is on another team, set it as their
+                    // current team. Otherwise, dissociate them from the team.
                     if ($next instanceof Team) {
                         $member->currentTeam()->associate($next)->save();
                     } else {
@@ -76,12 +79,14 @@ class DeleteTeam
                 }
             }
 
+            // The team's customer is deleted.
             $team->customer()->delete();
 
             // Memberships, accounts, transactions, tags, and
             // invitations cascade from the team.
             $team->delete();
 
+            // Return the user's next team, if any.
             return $user->fresh()?->currentTeam;
         });
     }

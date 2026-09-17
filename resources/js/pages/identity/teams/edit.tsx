@@ -44,7 +44,7 @@ export default function Edit({ team }: PageProps) {
                                         <SheetDescription>{t("Edit the team.")}</SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-6">
-                                        <Fields defaultValues={{ name: team.name }} {...formProps} />
+                                        <Fields defaultValues={team} {...formProps} />
                                     </div>
                                     <SheetFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
