@@ -4,6 +4,7 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
     CircleDashedIcon,
     LogOutIcon,
+    MailIcon,
     MoreHorizontalIcon,
     SearchIcon,
     SearchXIcon,
@@ -31,6 +32,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import invitations from "@/routes/identity/teams/invitations";
 import routes from "@/routes/identity/teams/members";
 import { User } from "@/types/app/modules/core/identity/models/user";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
@@ -64,8 +66,15 @@ const Index = () => {
 
             {/** Content */}
             <div className="flex flex-col gap-4">
-                {/** Filters */}
-                <Filters />
+                {/** Filters and actions */}
+                <div className="flex items-center justify-between gap-2 max-sm:flex-col">
+                    <div className="flex-1 max-sm:w-full">
+                        <Filters />
+                    </div>
+                    <div className="flex justify-end max-sm:order-first max-sm:w-full">
+                        <InvitationsButton className="max-sm:w-full" />
+                    </div>
+                </div>
 
                 {/** Members */}
                 <Listing />
@@ -88,6 +97,32 @@ const Header = () => {
                 {t("People who share this team's accounts and transactions.")}
             </p>
         </header>
+    );
+};
+
+const InvitationsButton = ({ className }: { className?: string }) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { user } = usePage().props;
+
+    return (
+        <Button
+            className={className}
+            nativeButton={false}
+            render={
+                <Link href={invitations.index.url({ team: user?.current_team?.slug ?? "" })}>
+                    <MailIcon data-icon="inline-start" />
+                    {t("Invitations")}
+                </Link>
+            }
+        />
     );
 };
 

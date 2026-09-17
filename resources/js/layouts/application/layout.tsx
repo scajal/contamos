@@ -10,7 +10,6 @@ import {
     CreditCardIcon,
     LayoutDashboardIcon,
     LogOutIcon,
-    MailIcon,
     PlusIcon,
     SettingsIcon,
     ShieldCheckIcon,
@@ -55,7 +54,6 @@ import dashboard from "@/routes/finance/teams/dashboard";
 import tags from "@/routes/finance/teams/tags";
 import transactions from "@/routes/finance/teams/transactions";
 import teams from "@/routes/identity/teams";
-import invitations from "@/routes/identity/teams/invitations";
 import members from "@/routes/identity/teams/members";
 import settings from "@/routes/identity/teams/settings";
 
@@ -266,14 +264,6 @@ const Sidebar = () => {
                             >
                                 <UsersIcon />
                                 <span>{t("Members")}</span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                render={<Link href={invitations.index.url({ team: user?.current_team?.slug ?? "" })} />}
-                            >
-                                <MailIcon />
-                                <span>{t("Invitations")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                         <SidebarMenuItem>
