@@ -82,7 +82,6 @@ class UpdateRequest extends FormRequest
      */
     protected function newlyAttachedCurrencyIds(Account $account): array
     {
-        /** @var mixed $currencyIds */
         if (! is_array($currencyIds = $this->input('currency_ids', []))) {
             return [];
         }

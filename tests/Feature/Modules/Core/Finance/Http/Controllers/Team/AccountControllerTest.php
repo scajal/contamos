@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Core\Finance\Enums\Account\AccountType;
+use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\AccountCurrency;
+use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -239,6 +242,110 @@ describe('store', function (): void {
         expect((float) $transaction->quote)->toBe(1.5)
             ->and((float) $transaction->amount)->toBe(100.0);
     });
+
+    it('creates one opening balance row per currency, resolving the catalog quote and recording the user', function (): void {
+        [$user, $team] = actingMember();
+        $peso = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $dollar = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        Quote::factory()->for($peso)->create(['observed_at' => '2024-06-01 00:00:00', 'rate' => '1.5']);
+        Quote::factory()->for($dollar)->create(['observed_at' => '2024-06-01 00:00:00', 'rate' => '1']);
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
+                'currency_ids' => [$peso->getKey(), $dollar->getKey()],
+                'occurred_at' => '2024-06-01T12:00:00',
+                'opening_balances' => [
+                    $peso->getKey() => '100.50',
+                    $dollar->getKey() => '25',
+                ],
+                'timezone' => 'UTC',
+            ]))
+            ->assertRedirect();
+
+        $account = Account::query()->sole();
+
+        expect($account->transactions()->count())->toBe(2);
+
+        $pesoTransaction = $account->transactions()->where('currency_id', $peso->getKey())->sole();
+        expect($pesoTransaction->type)->toBe(TransactionType::OpeningBalance)
+            ->and((float) $pesoTransaction->amount)->toBe(100.5)
+            ->and($pesoTransaction->decimal_places)->toBe(2)
+            ->and((float) $pesoTransaction->quote)->toBe(1.5)
+            ->and($pesoTransaction->occurred_at->toIso8601String())->toBe('2024-06-01T12:00:00+00:00')
+            ->and($pesoTransaction->user_id)->toBe($user->getKey())
+            ->and((float) $account->currencies()->where('currency_id', $peso->getKey())->sole()->pivot->balance)->toBe(100.5);
+
+        $dollarTransaction = $account->transactions()->where('currency_id', $dollar->getKey())->sole();
+        expect((float) $dollarTransaction->amount)->toBe(25.0)
+            ->and((float) $account->currencies()->where('currency_id', $dollar->getKey())->sole()->pivot->balance)->toBe(25.0);
+    });
+
+    it('creates nothing for an empty or zero opening balance amount', function (): void {
+        [$user, $team] = actingMember();
+        $empty = Currency::factory()->active()->fiat()->create();
+        $zero = Currency::factory()->active()->fiat()->create();
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
+                'currency_ids' => [$empty->getKey(), $zero->getKey()],
+                'opening_balances' => [
+                    $empty->getKey() => '',
+                    $zero->getKey() => '0',
+                ],
+            ]))
+            ->assertRedirect();
+
+        $account = Account::query()->sole();
+        expect($account->transactions()->count())->toBe(0);
+    });
+
+    it('rejects a negative opening balance', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
+                'currency_ids' => [$currency->getKey()],
+                'opening_balances' => [$currency->getKey() => '-10'],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(["opening_balances.{$currency->getKey()}"]);
+
+        expect(Account::query()->count())->toBe(0);
+    });
+
+    it('rejects an opening balance with more decimals than the currency allows', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        Quote::factory()->for($currency)->create(['observed_at' => now()->subDay(), 'rate' => '1']);
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
+                'currency_ids' => [$currency->getKey()],
+                'opening_balances' => [$currency->getKey() => '10.001'],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(["opening_balances.{$currency->getKey()}"]);
+
+        expect(Account::query()->count())->toBe(0);
+    });
+
+    it('rejects an opening balance for a currency that is not in the submitted currency ids', function (): void {
+        [$user, $team] = actingMember();
+        $selected = Currency::factory()->active()->fiat()->create();
+        $other = Currency::factory()->active()->fiat()->create();
+        Quote::factory()->for($other)->create(['observed_at' => now()->subDay(), 'rate' => '1']);
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
+                'currency_ids' => [$selected->getKey()],
+                'opening_balances' => [$other->getKey() => '10'],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['opening_balances']);
+
+        expect(Account::query()->count())->toBe(0);
+    });
 });
 
 describe('edit', function (): void {
@@ -305,6 +412,77 @@ describe('update', function (): void {
         ]), accountPayload([
             'currency_ids' => [$currency->getKey()],
         ]))->assertNotFound();
+    });
+
+    it('creates an opening balance row only for the newly attached currency', function (): void {
+        [$user, $team] = actingMember();
+        $old = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $new = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->for($team)->create();
+        $account->currencies()->attach($old);
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.accounts.update', [
+                'team' => $team->getRouteKey(),
+                'account' => $account->getKey(),
+            ]), accountPayload([
+                'currency_ids' => [$old->getKey(), $new->getKey()],
+                'opening_balances' => [$new->getKey() => '50'],
+                'quotes' => [$new->getKey() => '1'],
+            ]))
+            ->assertRedirect();
+
+        expect($account->transactions()->count())->toBe(1);
+
+        $transaction = $account->transactions()->sole();
+        expect($transaction->currency_id)->toBe($new->getKey())
+            ->and((float) $transaction->amount)->toBe(50.0)
+            ->and((float) $account->currencies()->where('currency_id', $new->getKey())->sole()->pivot->balance)->toBe(50.0);
+    });
+
+    it('rejects an opening balance keyed by an already attached currency', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.accounts.update', [
+                'team' => $team->getRouteKey(),
+                'account' => $account->getKey(),
+            ]), accountPayload([
+                'currency_ids' => [$currency->getKey()],
+                'opening_balances' => [$currency->getKey() => '50'],
+                'quotes' => [$currency->getKey() => '1'],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['opening_balances']);
+
+        expect($account->transactions()->count())->toBe(0);
+    });
+
+    it('leaves existing opening balance rows untouched', function (): void {
+        [$user, $team] = actingMember();
+        $old = Currency::factory()->active()->fiat()->create();
+        $new = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->for($team)->create();
+        $account->currencies()->attach($old, ['balance' => '75']);
+        $existing = Transaction::factory()->openingBalance()->for($account)->for($old)->create(['amount' => '75']);
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.accounts.update', [
+                'team' => $team->getRouteKey(),
+                'account' => $account->getKey(),
+            ]), accountPayload([
+                'currency_ids' => [$old->getKey(), $new->getKey()],
+                'opening_balances' => [$new->getKey() => '25'],
+                'quotes' => [$new->getKey() => '1'],
+            ]))
+            ->assertRedirect();
+
+        expect($existing->fresh()?->amount)->toBe($existing->amount)
+            ->and((float) $account->currencies()->where('currency_id', $old->getKey())->sole()->pivot->balance)->toBe(75.0)
+            ->and($account->transactions()->where('currency_id', $old->getKey())->count())->toBe(1);
     });
 });
 

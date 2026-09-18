@@ -70,6 +70,30 @@ it('renders the signed balance per currency of the active accounts', function ()
                 ->has('recent_transactions.0.currency')));
 });
 
+it('adds an opening balance to the balance per currency and shows it in recent activity', function (): void {
+    [$user, $team] = actingMember();
+    $peso = Currency::factory()->active()->fiat()->create(['code' => 'ARS', 'decimal_places' => 2, 'symbol' => '$']);
+    $active = Account::factory()->bank()->active()->for($team)->create();
+
+    Transaction::factory()->openingBalance()->for($active)->for($peso)->create([
+        'amount' => '100',
+        'occurred_at' => now()->subDay(),
+    ]);
+    Transaction::factory()->expense()->for($active)->for($peso)->create([
+        'amount' => '30',
+        'occurred_at' => now(),
+    ]);
+
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('balances', 1)
+                ->where('balances.0.balance', fn (mixed $balance): bool => (float) $balance === 70.0)
+                ->has('recent_transactions', 2)
+                ->where('recent_transactions.1.type', 'opening_balance')));
+});
+
 it('does not count inactive accounts toward the empty path', function (): void {
     [, $team] = actingMember();
     Account::factory()->bank()->inactive()->for($team)->create();

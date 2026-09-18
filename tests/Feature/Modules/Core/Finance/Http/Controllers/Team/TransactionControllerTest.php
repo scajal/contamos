@@ -600,6 +600,24 @@ describe('store', function (): void {
             ->assertRedirect()
             ->assertInvalid(['amount', 'occurred_at', 'quote', 'type']);
     });
+
+    it('rejects the opening balance type', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'type' => TransactionType::OpeningBalance->value,
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['type']);
+
+        expect(Transaction::query()->count())->toBe(0);
+    });
 });
 
 describe('show', function (): void {
