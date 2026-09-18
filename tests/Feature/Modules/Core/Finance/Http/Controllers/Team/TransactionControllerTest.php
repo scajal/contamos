@@ -688,6 +688,734 @@ describe('show', function (): void {
     });
 });
 
+describe('edit', function (): void {
+    it('renders the edit transaction modal with its accounts and tags', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->active()->for($team)->create();
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        $transaction->attachTags([$tag->getKey()]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.transactions.edit', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->component('finance/teams/transactions/edit')
+                ->where('transaction.id', $transaction->getKey())
+                ->has('accounts', 1)
+                ->where('accounts.0.id', $account->getKey())
+                ->has('tags', 1)
+                ->where('tags.0.id', $tag->getKey()));
+    });
+
+    it('includes the inactive current account and its inactive currency', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->inactive()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        $currency->deactivate();
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.transactions.edit', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('accounts', 1)
+                ->where('accounts.0.id', $account->getKey())
+                ->has('accounts.0.currencies', 1)
+                ->where('accounts.0.currencies.0.id', $currency->getKey()));
+    });
+
+    it('includes an inactive tag currently attached to the transaction', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->active()->for($team)->create();
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        $transaction->attachTags([$tag->getKey()]);
+        $tag->deactivate();
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.transactions.edit', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('tags', 1)
+                ->where('tags.0.id', $tag->getKey()));
+    });
+
+    it('returns 404 when the transaction belongs to another team', function (): void {
+        [$user, $team] = actingMember();
+        $foreign = Transaction::factory()->create();
+
+        $this->get(route('finance.teams.transactions.edit', [
+            'team' => $team->getRouteKey(),
+            'transaction' => $foreign->getKey(),
+        ]))->assertNotFound();
+    });
+});
+
+describe('update', function (): void {
+    it('updates each editable field and flashes Saved', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '89.50']);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'currency_id' => $currency->getKey(),
+            'description' => 'Lunch',
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'amount' => '20.50',
+                'description' => 'Dinner',
+            ]))
+            ->assertRedirect();
+
+        assertFlashedToast(trans('Saved'));
+
+        $updated = $transaction->fresh();
+        expect($updated?->getKey())->toBe($transaction->getKey())
+            ->and($updated?->amount)->toBe('20.500000000000000000')
+            ->and($updated?->description)->toBe('Dinner')
+            ->and($updated?->user?->is($user))->toBeTrue();
+    });
+
+    it('moves the balance when the amount changes', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '89.50']);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'amount' => '20.50',
+            ]))
+            ->assertRedirect();
+
+        expect((float) $account->currencies()->firstOrFail()->pivot->balance)->toBe(79.5);
+    });
+
+    it('moves the balance when the type flips', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '89.50']);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'amount' => '10.50',
+                'type' => TransactionType::Income->value,
+            ]))
+            ->assertRedirect();
+
+        expect((float) $account->currencies()->firstOrFail()->pivot->balance)->toBe(110.5);
+    });
+
+    it('moves the balance when the account changes', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $originAccount = Account::factory()->bank()->active()->for($team)->create();
+        $destinationAccount = Account::factory()->bank()->active()->for($team)->create();
+        $originAccount->currencies()->attach($currency, ['balance' => '89.50']);
+        $destinationAccount->currencies()->attach($currency, ['balance' => '50.00']);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $originAccount->getKey(),
+            'amount' => '10.50',
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $destinationAccount->getForeignKey() => $destinationAccount->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'amount' => '10.50',
+            ]))
+            ->assertRedirect();
+
+        expect((float) $originAccount->currencies()->firstOrFail()->pivot->balance)->toBe(100.0)
+            ->and((float) $destinationAccount->currencies()->firstOrFail()->pivot->balance)->toBe(39.5)
+            ->and($transaction->fresh()?->account_id)->toBe($destinationAccount->getKey());
+    });
+
+    it('moves the balance when the currency changes', function (): void {
+        [$user, $team] = actingMember();
+        $originCurrency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $destinationCurrency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($originCurrency, ['balance' => '89.50']);
+        $account->currencies()->attach($destinationCurrency, ['balance' => '20.00']);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'currency_id' => $originCurrency->getKey(),
+            'decimal_places' => 2,
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $destinationCurrency->getForeignKey() => $destinationCurrency->getKey(),
+                'amount' => '10.50',
+            ]))
+            ->assertRedirect();
+
+        expect((float) $account->currencies()->whereKey($originCurrency->getKey())->firstOrFail()->pivot->balance)->toBe(100.0)
+            ->and((float) $account->currencies()->whereKey($destinationCurrency->getKey())->firstOrFail()->pivot->balance)->toBe(9.5)
+            ->and($transaction->fresh()?->currency_id)->toBe($destinationCurrency->getKey())
+            ->and($transaction->fresh()?->decimal_places)->toBe($destinationCurrency->decimal_places);
+    });
+
+    it('moves the balance correctly when several fields change at once', function (): void {
+        [$user, $team] = actingMember();
+        $originCurrency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $destinationCurrency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $originAccount = Account::factory()->bank()->active()->for($team)->create();
+        $destinationAccount = Account::factory()->bank()->active()->for($team)->create();
+        $originAccount->currencies()->attach($originCurrency, ['balance' => '89.50']);
+        $destinationAccount->currencies()->attach($destinationCurrency, ['balance' => '20.00']);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $originAccount->getKey(),
+            'amount' => '10.50',
+            'currency_id' => $originCurrency->getKey(),
+            'decimal_places' => 2,
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $destinationAccount->getForeignKey() => $destinationAccount->getKey(),
+                $destinationCurrency->getForeignKey() => $destinationCurrency->getKey(),
+                'amount' => '15.00',
+                'type' => TransactionType::Income->value,
+            ]))
+            ->assertRedirect();
+
+        expect((float) $originAccount->currencies()->firstOrFail()->pivot->balance)->toBe(100.0)
+            ->and((float) $destinationAccount->currencies()->firstOrFail()->pivot->balance)->toBe(35.0);
+    });
+
+    it('replaces the tag set', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $old = Tag::factory()->active()->for($team)->create();
+        $new = Tag::factory()->active()->for($team)->create();
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        $transaction->attachTags([$old->getKey()]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'tag_ids' => [$new->getKey()],
+            ]))
+            ->assertRedirect();
+
+        expect($transaction->tags()->pluck($new->qualifyColumn($new->getKeyName()))->all())->toBe([$new->getKey()]);
+    });
+
+    it('keeps a resubmitted already-attached inactive tag', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->active()->for($team)->create();
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        $transaction->attachTags([$tag->getKey()]);
+        $tag->deactivate();
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'tag_ids' => [$tag->getKey()],
+            ]))
+            ->assertRedirect();
+
+        expect($transaction->tags()->pluck($tag->qualifyColumn($tag->getKeyName()))->all())->toBe([$tag->getKey()]);
+    });
+
+    it('allows removing an already-attached inactive tag', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->active()->for($team)->create();
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        $transaction->attachTags([$tag->getKey()]);
+        $tag->deactivate();
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+            ]))
+            ->assertRedirect();
+
+        expect($transaction->tags()->count())->toBe(0);
+    });
+
+    it('rejects an inactive tag that was not attached', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->inactive()->for($team)->create();
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'tag_ids' => [$tag->getKey()],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['tag_ids.0']);
+    });
+
+    it('rejects duplicate tag ids', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->active()->for($team)->create();
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'tag_ids' => [$tag->getKey(), $tag->getKey()],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['tag_ids.0']);
+    });
+
+    it('rejects a tag from another team', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->active()->for(Team::factory())->create();
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'tag_ids' => [$tag->getKey()],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['tag_ids.0']);
+    });
+
+    it('keeps the stored quote when date and currency are unchanged', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => '2024-06-01 12:00:00',
+            'quote' => '2.5',
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $payload = transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'description' => 'Updated description only',
+            'occurred_at' => '2024-06-01 12:00:00',
+        ]);
+        unset($payload['quote']);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), $payload)
+            ->assertRedirect();
+
+        expect($transaction->fresh()?->quote)->toBe('2.500000000000000000');
+    });
+
+    it('defaults a blank quote from the rate as of a new date', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        Quote::factory()->for($currency)->create([
+            'observed_at' => '2024-07-01 00:00:00',
+            'rate' => '3',
+        ]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => '2024-06-01 12:00:00',
+            'quote' => '2.5',
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $payload = transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'occurred_at' => '2024-07-15 12:00:00',
+        ]);
+        unset($payload['quote']);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), $payload)
+            ->assertRedirect();
+
+        expect($transaction->fresh()?->quote)->toBe('3.000000000000000000');
+    });
+
+    it('keeps a submitted quote instead of the as-of rate', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'quote' => '41.25',
+            ]))
+            ->assertRedirect();
+
+        expect($transaction->fresh()?->quote)->toBe('41.250000000000000000');
+    });
+
+    it('rejects a blank quote when no rate exists as of the new date', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => '2024-06-01 12:00:00',
+            'quote' => '2.5',
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $payload = transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'occurred_at' => '2024-01-01 12:00:00',
+        ]);
+        unset($payload['quote']);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), $payload)
+            ->assertRedirect()
+            ->assertInvalid(['quote']);
+    });
+
+    it('converts a datetime-local occurred_at to UTC using the submitted timezone', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'occurred_at' => '2026-09-06T12:21',
+                'timezone' => 'America/Argentina/Buenos_Aires',
+            ]))
+            ->assertRedirect();
+
+        expect($transaction->fresh()?->occurred_at->toDateTimeString())->toBe('2026-09-06 15:21:00');
+    });
+
+    it('rejects an account from another team', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $foreign = Account::factory()->bank()->active()->for(Team::factory())->create();
+        $foreign->currencies()->attach($currency);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $foreign->getForeignKey() => $foreign->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'quote' => '1',
+            ]))
+            ->assertRedirect()
+            ->assertInvalid([$foreign->getForeignKey()]);
+    });
+
+    it('rejects a currency that is not attached to the account', function (): void {
+        [$user, $team] = actingMember();
+        $attached = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $other = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($attached);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $attached->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $other->getForeignKey() => $other->getKey(),
+            ]))
+            ->assertRedirect()
+            ->assertInvalid([$other->getForeignKey()]);
+    });
+
+    it('returns 404 when updating a transaction from another team', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $foreign = Transaction::factory()->create();
+
+        $this->patch(route('finance.teams.transactions.update', [
+            'team' => $team->getRouteKey(),
+            'transaction' => $foreign->getKey(),
+        ]), transactionPayload([
+            $currency->getForeignKey() => $currency->getKey(),
+        ]))->assertNotFound();
+    });
+
+    it('rejects an empty payload', function (): void {
+        [$user, $team] = actingMember();
+        $transaction = Transaction::factory()->expense()->create(['team_id' => $team->getKey()]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), [])
+            ->assertRedirect()
+            ->assertInvalid(['amount', 'occurred_at', 'quote', 'type']);
+    });
+
+    it('allows keeping the opening balance type on an opening balance row', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '100.00']);
+        $transaction = Transaction::factory()->openingBalance()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '100.00',
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'amount' => '100.00',
+                'type' => TransactionType::OpeningBalance->value,
+            ]))
+            ->assertRedirect();
+
+        expect($transaction->fresh()?->type)->toBe(TransactionType::OpeningBalance);
+    });
+
+    it('rejects opening_balance as a new type on an income row', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '100.00']);
+        $transaction = Transaction::factory()->income()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '10.00',
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'type' => TransactionType::OpeningBalance->value,
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['type']);
+    });
+});
+
 describe('destroy', function (): void {
     it('deletes the transaction', function (): void {
         [$user, $team] = actingMember();
