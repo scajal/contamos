@@ -2,9 +2,8 @@
 
 namespace App\Modules\Core\Finance\Actions\Team;
 
-use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
+use App\Modules\Core\Finance\Actions\Team\Concerns\CreatesOpeningBalanceTransactions;
 use App\Modules\Core\Finance\Models\Team\Account;
-use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Exception;
@@ -12,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class CreateAccount
 {
+    use CreatesOpeningBalanceTransactions;
+
     /**
      * The team for which the account will be created.
      */
@@ -41,30 +42,6 @@ class CreateAccount
     }
 
     /**
-     * Create an opening balance transaction for the account
-     * in the given currency.
-     *
-     * @param  array{amount: string, quote: string, occurred_at: string}  $openingBalance
-     */
-    protected function createOpeningBalance(Team $team, Account $account, string $currencyId, array $openingBalance): void
-    {
-        $createTransaction = $this->createTransaction->for($team);
-
-        if ($this->user instanceof User) {
-            $createTransaction = $createTransaction->by($this->user);
-        }
-
-        $createTransaction->using([
-            new Transaction()->account()->getForeignKeyName() => $account->getKey(),
-            'amount' => $openingBalance['amount'],
-            new Transaction()->currency()->getForeignKeyName() => $currencyId,
-            'occurred_at' => $openingBalance['occurred_at'],
-            'quote' => $openingBalance['quote'],
-            'type' => TransactionType::OpeningBalance->value,
-        ]);
-    }
-
-    /**
      * Set the team for which the account will be created.
      */
     public function for(Team $team): self
@@ -80,7 +57,7 @@ class CreateAccount
      *
      * @param  array<string, mixed>  $attributes
      * @param  array<string>  $currencyIds
-     * @param  array<string, array{amount: string, quote: string, occurred_at: string}>  $openingBalances
+     * @param  array<string, \App\Modules\Core\Finance\Objects\OpeningBalance>  $openingBalances
      */
     public function using(array $attributes, array $currencyIds, array $openingBalances = []): Account
     {

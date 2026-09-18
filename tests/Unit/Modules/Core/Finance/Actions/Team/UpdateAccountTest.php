@@ -8,6 +8,7 @@ use App\Modules\Core\Finance\Actions\Team\UpdateAccount;
 use App\Modules\Core\Finance\Enums\Account\AccountType;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Objects\OpeningBalance;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 
@@ -54,7 +55,7 @@ it('creates an opening balance row for a newly attached currency and bumps the p
         ->for($account)
         ->by($user)
         ->using(['name' => 'Checking', 'type' => AccountType::Bank->value], [$currencyId], [
-            $currencyId => ['amount' => '50.00', 'occurred_at' => '2024-01-01T00:00:00+00:00', 'quote' => '1'],
+            $currencyId => new OpeningBalance(amount: '50.00', quote: '1', occurredAt: '2024-01-01T00:00:00+00:00'),
         ]);
 
     $transaction = $updated->transactions()->sole();

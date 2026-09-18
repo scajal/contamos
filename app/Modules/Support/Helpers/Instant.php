@@ -14,7 +14,7 @@ class Instant
 {
     /**
      * Resolve the currency's latest quote observed at or before
-     * the given instant, via {@see Currency::quoteAsOf()}.
+     * the given instant, via {@see \App\Modules\Core\Catalog\Models\Currency::quoteAsOf()}.
      */
     public static function resolveQuote(?Currency $currency, mixed $at): ?Quote
     {

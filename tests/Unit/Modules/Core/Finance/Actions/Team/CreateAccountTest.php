@@ -7,6 +7,7 @@ use App\Modules\Core\Finance\Actions\Team\CreateAccount;
 use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
 use App\Modules\Core\Finance\Enums\Account\AccountType;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
+use App\Modules\Core\Finance\Objects\OpeningBalance;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 
@@ -50,7 +51,7 @@ it('creates an opening balance row per currency and bumps the pivot balance', fu
         ->for($team)
         ->by($user)
         ->using(['name' => 'Checking', 'type' => AccountType::Bank->value], [$currencyId], [
-            $currencyId => ['amount' => '100.00', 'occurred_at' => '2024-01-01T00:00:00+00:00', 'quote' => '1'],
+            $currencyId => new OpeningBalance(amount: '100.00', quote: '1', occurredAt: '2024-01-01T00:00:00+00:00'),
         ]);
 
     $transaction = $account->transactions()->sole();

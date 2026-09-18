@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
 import { cn, formatAmount } from "@/lib/utils";
 import routes from "@/routes/finance/teams/transactions";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
@@ -82,24 +83,6 @@ const TRANSACTION_COLUMNS = {
     amount: "w-36",
     actions: "w-12",
 } as const;
-
-/**
- * The sign shown before a transaction's amount, by type.
- */
-const TRANSACTION_AMOUNT_SIGN: Record<TransactionType, string> = {
-    expense: "-",
-    income: "+",
-    opening_balance: "+",
-};
-
-/**
- * The color of a transaction's amount, by type.
- */
-const TRANSACTION_AMOUNT_COLOR: Record<TransactionType, string> = {
-    expense: "text-destructive",
-    income: "text-success",
-    opening_balance: "text-muted-foreground",
-};
 
 /**
  * Parse a URL date into a Date, if any.

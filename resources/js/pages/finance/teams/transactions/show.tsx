@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
 import { cn, formatAmount } from "@/lib/utils";
 import transactions from "@/routes/finance/teams/transactions";
-import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 
 type PageProps = {
@@ -19,24 +19,6 @@ type PageProps = {
 };
 
 const USD = { decimal_places: 2, symbol: "$" } as const;
-
-/**
- * The sign shown before a transaction's amount, by type.
- */
-const TRANSACTION_AMOUNT_SIGN: Record<TransactionType, string> = {
-    expense: "-",
-    income: "+",
-    opening_balance: "+",
-};
-
-/**
- * The color of a transaction's amount, by type.
- */
-const TRANSACTION_AMOUNT_COLOR: Record<TransactionType, string> = {
-    expense: "text-destructive",
-    income: "text-success",
-    opening_balance: "text-muted-foreground",
-};
 
 export default function Show({ transaction }: PageProps) {
     /**

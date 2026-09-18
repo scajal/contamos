@@ -11,10 +11,10 @@ import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
 import { cn, formatAmount } from "@/lib/utils";
 import accounts from "@/routes/finance/teams/accounts";
 import transactions from "@/routes/finance/teams/transactions";
-import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { AccountBalance } from "@/types/app/modules/core/finance/models/team/account-balance";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 import { Team } from "@/types/app/modules/core/identity/models/team";
@@ -24,24 +24,6 @@ type PageProps = {
     has_accounts: boolean;
     recent_transactions: Array<Transaction>;
     team: Team;
-};
-
-/**
- * The sign shown before a transaction's amount, by type.
- */
-const TRANSACTION_AMOUNT_SIGN: Record<TransactionType, string> = {
-    expense: "-",
-    income: "+",
-    opening_balance: "+",
-};
-
-/**
- * The color of a transaction's amount, by type.
- */
-const TRANSACTION_AMOUNT_COLOR: Record<TransactionType, string> = {
-    expense: "text-destructive",
-    income: "text-success",
-    opening_balance: "text-muted-foreground",
 };
 
 const Dashboard = () => {
