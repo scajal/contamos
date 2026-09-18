@@ -209,6 +209,19 @@ describe('store', function (): void {
             ->assertInvalid(['currency_ids', 'name', 'type']);
     });
 
+    it('rejects currency ids that are not an array', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
+                'currency_ids' => 'not-an-array',
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['currency_ids']);
+
+        expect(Account::query()->count())->toBe(0);
+    });
+
     it('rejects an opening balance for a currency with no quote and no user-typed rate', function (): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create();
@@ -412,6 +425,23 @@ describe('update', function (): void {
         ]), accountPayload([
             'currency_ids' => [$currency->getKey()],
         ]))->assertNotFound();
+    });
+
+    it('rejects currency ids that are not an array', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->for($team)->create(['name' => 'Checking']);
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.accounts.update', [
+                'team' => $team->getRouteKey(),
+                'account' => $account->getKey(),
+            ]), accountPayload([
+                'currency_ids' => 'not-an-array',
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['currency_ids']);
+
+        expect($account->fresh()?->name)->toBe('Checking');
     });
 
     it('creates an opening balance row only for the newly attached currency', function (): void {
