@@ -28,21 +28,41 @@ trait HasTags
             return;
         }
 
-        // Fetch the tags from the database.
+        $this->assertTagsBelongToTeam($tagIds);
+
+        // Attach the tags to the model.
+        $this->tags()->attach($tagIds);
+    }
+
+    /**
+     * Replace the model's tags with the given tags.
+     *
+     * @param  array<int, string>  $tagIds
+     */
+    public function syncTags(array $tagIds): void
+    {
+        $this->assertTagsBelongToTeam($tagIds);
+
+        // Sync the tags to the model.
+        $this->tags()->sync($tagIds);
+    }
+
+    /**
+     * Validate that the given tags belong to the same team as the tagged model.
+     *
+     * @param  array<int, string>  $tagIds
+     */
+    protected function assertTagsBelongToTeam(array $tagIds): void
+    {
         $tags = Tag::query()
             ->whereKey($tagIds)
             ->get();
 
-        // Loop through the tags and validate that they belong
-        // to the same team as the tagged model.
         foreach ($tags as $tag) {
             if ($tag->getAttribute($tag->team()->getForeignKeyName()) !== $this->getAttribute($this->team()->getForeignKeyName())) {
                 throw new InvalidArgumentException('A tag must belong to the same team as the tagged model.');
             }
         }
-
-        // Attach the tags to the model.
-        $this->tags()->attach($tagIds);
     }
 
     /**

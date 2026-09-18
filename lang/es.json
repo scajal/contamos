@@ -184,6 +184,7 @@
     "Edit the tag.": "Edita la etiqueta.",
     "Edit the account.": "Actualiza el nombre y las monedas. El tipo no se puede cambiar.",
     "Edit the currency details.": "Edita los datos de la moneda.",
+    "Edit the transaction.": "Edita la transacción.",
     "Enable": "Habilitar",
     "Encrypted environment file already exists.": "El archivo de entorno cifrado ya existe.",
     "Encrypted environment file not found.": "No se encontró el archivo de entorno cifrado.",

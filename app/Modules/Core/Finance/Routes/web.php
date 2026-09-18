@@ -128,6 +128,14 @@ Route::as('finance.teams.')
             ->name('transactions.show')
             ->scopeBindings();
 
+        Route::get('/transactions/{transaction}/edit', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'edit'])
+            ->name('transactions.edit')
+            ->scopeBindings();
+
+        Route::patch('/transactions/{transaction}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'update'])
+            ->name('transactions.update')
+            ->scopeBindings();
+
         Route::delete('/transactions/{transaction}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'destroy'])
             ->name('transactions.destroy')
             ->scopeBindings();

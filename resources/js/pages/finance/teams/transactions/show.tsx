@@ -1,6 +1,7 @@
 import { Link, usePage } from "@inertiajs/react";
+import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, PencilIcon } from "lucide-react";
 import { useState } from "react";
 
 import { ConfirmAction } from "@/components/confirm-action";
@@ -166,31 +167,44 @@ export default function Show({ transaction }: PageProps) {
                                 </Field>
                             </FieldGroup>
                         </div>
-                        <SheetFooter>
-                            <div className="self-start">
-                                <ConfirmAction
-                                    title={t("Are you sure you want to delete the transaction?")}
-                                    description={t("This action cannot be undone.")}
-                                    confirmLabel={t("Delete")}
-                                    action={
-                                        <Link
-                                            href={transactions.destroy.url({
-                                                team: user?.current_team?.slug ?? "",
-                                                transaction: transaction.id,
-                                            })}
-                                            method="delete"
-                                            onSuccess={() => rootProps.onOpenChange?.(false)}
-                                        />
-                                    }
+                        <SheetFooter className="flex-row justify-between">
+                            <ConfirmAction
+                                title={t("Are you sure you want to delete the transaction?")}
+                                description={t("This action cannot be undone.")}
+                                confirmLabel={t("Delete")}
+                                action={
+                                    <Link
+                                        href={transactions.destroy.url({
+                                            team: user?.current_team?.slug ?? "",
+                                            transaction: transaction.id,
+                                        })}
+                                        method="delete"
+                                        onSuccess={() => rootProps.onOpenChange?.(false)}
+                                    />
+                                }
+                            >
+                                <Button
+                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                    variant="ghost"
                                 >
-                                    <Button
-                                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                        variant="ghost"
+                                    {t("Delete")}
+                                </Button>
+                            </ConfirmAction>
+                            <Button
+                                nativeButton={false}
+                                render={
+                                    <ModalLink
+                                        href={transactions.edit.url({
+                                            team: user?.current_team?.slug ?? "",
+                                            transaction: transaction.id,
+                                        })}
                                     >
-                                        {t("Delete")}
-                                    </Button>
-                                </ConfirmAction>
-                            </div>
+                                        <PencilIcon data-icon="inline-start" />
+                                        {t("Edit")}
+                                    </ModalLink>
+                                }
+                                variant="outline"
+                            />
                         </SheetFooter>
                     </SheetContent>
                 </Sheet>

@@ -31,6 +31,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { TRANSACTION_AMOUNT_COLOR } from "@/lib/transactions";
 import { cn, markFormDirty } from "@/lib/utils";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Quote } from "@/types/app/modules/core/catalog/models/currency/quote";
@@ -48,6 +49,7 @@ type Props = FormComponentSlotProps<FormProps> & {
     defaultValues?: FormProps;
     onTypeChange: (type: TransactionType) => void;
     tags: Array<Tag>;
+    trackTypeChanges?: boolean;
     type: TransactionType;
 };
 
@@ -153,7 +155,16 @@ function ChipSetCheck({ show }: { show: boolean }) {
     return <CheckIcon aria-hidden className="text-success ml-auto size-3.5 shrink-0" data-icon="inline-end" />;
 }
 
-export const Fields = ({ accounts, defaultValues, errors, invalid, onTypeChange, tags, type }: Props) => {
+export const Fields = ({
+    accounts,
+    defaultValues,
+    errors,
+    invalid,
+    onTypeChange,
+    tags,
+    trackTypeChanges = false,
+    type,
+}: Props) => {
     /**
      * Translate the provided string
      * to the current locale.
@@ -271,43 +282,51 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, onTypeChange,
     }, [currency?.id, occurredAt, quoteOverridden]);
 
     useEffect(() => {
-        if (quoteMissing) {
+        if (quoteMissing && quoteValue.trim() === "") {
             setQuoteOpen(true);
         }
-    }, [quoteMissing]);
+    }, [quoteMissing, quoteValue]);
 
     return (
         <FieldGroup className="gap-5" ref={fields}>
             {/** Type */}
             <input name="type" type="hidden" value={type} />
-            <Field>
-                <FieldLabel className="sr-only" id="transaction-type-label">
-                    {t("Type")}
-                </FieldLabel>
-                <ToggleGroup
-                    aria-labelledby="transaction-type-label"
-                    className="w-full"
-                    onValueChange={(value) => {
-                        const nextType = value[0];
+            {type === "income" || type === "expense" ? (
+                <Field>
+                    <FieldLabel className="sr-only" id="transaction-type-label">
+                        {t("Type")}
+                    </FieldLabel>
+                    <ToggleGroup
+                        aria-labelledby="transaction-type-label"
+                        className="w-full"
+                        onValueChange={(value) => {
+                            const nextType = value[0];
 
-                        if (nextType === "income" || nextType === "expense") {
-                            onTypeChange(nextType);
-                        }
-                    }}
-                    spacing={0}
-                    value={[type]}
-                    variant="outline"
-                >
-                    <ToggleGroupItem className="flex-1" value="income">
-                        <span className="text-success">+</span>
-                        {t("enums.income")}
-                    </ToggleGroupItem>
-                    <ToggleGroupItem className="flex-1" value="expense">
-                        <span className="text-destructive">−</span>
-                        {t("enums.expense")}
-                    </ToggleGroupItem>
-                </ToggleGroup>
-            </Field>
+                            if (nextType === "income" || nextType === "expense") {
+                                onTypeChange(nextType);
+
+                                if (trackTypeChanges) {
+                                    markFormDirty(fields.current);
+                                }
+                            }
+                        }}
+                        spacing={0}
+                        value={[type]}
+                        variant="outline"
+                    >
+                        <ToggleGroupItem className="flex-1" value="income">
+                            <span className="text-success">+</span>
+                            {t("enums.income")}
+                        </ToggleGroupItem>
+                        <ToggleGroupItem className="flex-1" value="expense">
+                            <span className="text-destructive">−</span>
+                            {t("enums.expense")}
+                        </ToggleGroupItem>
+                    </ToggleGroup>
+                </Field>
+            ) : (
+                <p className={cn("text-sm font-medium", TRANSACTION_AMOUNT_COLOR[type])}>{t(`enums.${type}`)}</p>
+            )}
 
             {/** Account */}
             {accounts.length === 1 ? (
@@ -381,9 +400,9 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, onTypeChange,
                             autoFocus
                             className={cn(
                                 "h-auto py-2 text-right text-3xl font-semibold tabular-nums md:text-3xl",
-                                type === "income" ? "text-success" : "text-destructive",
+                                TRANSACTION_AMOUNT_COLOR[type],
                             )}
-                            defaultValue={defaultValues?.amount}
+                            defaultValue={defaultValues?.amount ? trimTrailingZeros(defaultValues.amount) : undefined}
                             disabled={!account}
                             id="transaction-amount"
                             inputMode="decimal"

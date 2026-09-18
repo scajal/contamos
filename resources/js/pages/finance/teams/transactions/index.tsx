@@ -9,6 +9,7 @@ import {
     EyeIcon,
     ListFilterPlusIcon,
     MoreHorizontalIcon,
+    PencilIcon,
     SearchIcon,
     SearchXIcon,
     XIcon,
@@ -485,6 +486,19 @@ const Listing = () => {
                                                                             >
                                                                                 <EyeIcon />
                                                                                 <span>{t("View")}</span>
+                                                                            </ModalLink>
+                                                                        }
+                                                                    />
+                                                                    <DropdownMenuItem
+                                                                        render={
+                                                                            <ModalLink
+                                                                                href={routes.edit.url({
+                                                                                    team,
+                                                                                    transaction: transaction.id,
+                                                                                })}
+                                                                            >
+                                                                                <PencilIcon />
+                                                                                <span>{t("Edit")}</span>
                                                                             </ModalLink>
                                                                         }
                                                                     />
