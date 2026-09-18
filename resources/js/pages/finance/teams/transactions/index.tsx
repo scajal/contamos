@@ -36,7 +36,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import { TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
+import {
+    TRANSACTION_AMOUNT_COLOR,
+    TRANSACTION_AMOUNT_SIGN,
+    TRANSACTION_COLUMNS,
+    TRANSACTION_TABLE_CLASS,
+} from "@/lib/transactions";
 import { cn, formatAmount } from "@/lib/utils";
 import routes from "@/routes/finance/teams/transactions";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
@@ -69,20 +74,6 @@ type PageProps = {
  * The date format used in the URL.
  */
 const DATE_FORMAT = "yyyy-MM-dd";
-
-/**
- * Shared column widths so day-grouped tables stay aligned.
- * Fixed layout + identical widths keep columns consistent across separate tables.
- */
-const TRANSACTION_TABLE_CLASS = "table-fixed min-w-[44rem]";
-const TRANSACTION_COLUMNS = {
-    time: "w-16",
-    account: "w-40",
-    description: "w-48",
-    tags: "w-36",
-    amount: "w-36",
-    actions: "w-12",
-} as const;
 
 /**
  * Parse a URL date into a Date, if any.

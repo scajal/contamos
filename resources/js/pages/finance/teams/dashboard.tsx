@@ -11,7 +11,12 @@ import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import { TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
+import {
+    TRANSACTION_AMOUNT_COLOR,
+    TRANSACTION_AMOUNT_SIGN,
+    TRANSACTION_COLUMNS,
+    TRANSACTION_TABLE_CLASS,
+} from "@/lib/transactions";
 import { cn, formatAmount } from "@/lib/utils";
 import accounts from "@/routes/finance/teams/accounts";
 import transactions from "@/routes/finance/teams/transactions";
@@ -172,18 +177,32 @@ const RecentActivity = () => {
                         </ItemHeader>
                     </Item>
                     <div className="min-w-0 overflow-x-auto rounded-sm border">
-                        <TableComponent>
+                        <TableComponent className={TRANSACTION_TABLE_CLASS}>
                             <TableBody>
                                 {items.map((transaction) => (
                                     <TableRow key={transaction.id}>
-                                        <TableCell className="text-muted-foreground w-16 tabular-nums">
+                                        <TableCell
+                                            className={cn(
+                                                "text-muted-foreground tabular-nums",
+                                                TRANSACTION_COLUMNS.time,
+                                            )}
+                                        >
                                             {format(new Date(transaction.occurred_at), "HH:mm")}
                                         </TableCell>
-                                        <TableCell>{transaction.account?.name ?? "-"}</TableCell>
-                                        <TableCell>
-                                            {transaction.description || t(`enums.${transaction.type}`)}
+                                        <TableCell className={TRANSACTION_COLUMNS.account}>
+                                            <span className="block truncate" title={transaction.account?.name ?? "-"}>
+                                                {transaction.account?.name ?? "-"}
+                                            </span>
                                         </TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell className={TRANSACTION_COLUMNS.description}>
+                                            <span
+                                                className="block truncate"
+                                                title={transaction.description || t(`enums.${transaction.type}`)}
+                                            >
+                                                {transaction.description || t(`enums.${transaction.type}`)}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className={cn("text-right", TRANSACTION_COLUMNS.amount)}>
                                             <span
                                                 className={cn(
                                                     "font-medium tabular-nums",
@@ -193,7 +212,7 @@ const RecentActivity = () => {
                                                 {`${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="w-12 text-right">
+                                        <TableCell className={cn("text-right", TRANSACTION_COLUMNS.actions)}>
                                             <Button
                                                 nativeButton={false}
                                                 render={
@@ -335,23 +354,23 @@ const SkeletonActivity = () => {
                 </ItemHeader>
             </Item>
             <div className="min-w-0 overflow-x-auto rounded-sm border">
-                <TableComponent>
+                <TableComponent className={TRANSACTION_TABLE_CLASS}>
                     <TableBody>
                         {[0, 1, 2].map((row) => (
                             <TableRow key={row}>
-                                <TableCell className="w-16">
+                                <TableCell className={TRANSACTION_COLUMNS.time}>
                                     <Skeleton className="h-4 w-10" />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className={TRANSACTION_COLUMNS.account}>
                                     <Skeleton className="h-4 w-32" />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className={TRANSACTION_COLUMNS.description}>
                                     <Skeleton className="h-4 w-48" />
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className={cn("text-right", TRANSACTION_COLUMNS.amount)}>
                                     <Skeleton className="ml-auto h-4 w-20" />
                                 </TableCell>
-                                <TableCell className="w-12" />
+                                <TableCell className={TRANSACTION_COLUMNS.actions} />
                             </TableRow>
                         ))}
                     </TableBody>
