@@ -14,6 +14,7 @@ import { ApplicationLayout } from "@/layouts/application/layout";
 import { cn, formatAmount } from "@/lib/utils";
 import accounts from "@/routes/finance/teams/accounts";
 import transactions from "@/routes/finance/teams/transactions";
+import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { AccountBalance } from "@/types/app/modules/core/finance/models/team/account-balance";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 import { Team } from "@/types/app/modules/core/identity/models/team";
@@ -23,6 +24,24 @@ type PageProps = {
     has_accounts: boolean;
     recent_transactions: Array<Transaction>;
     team: Team;
+};
+
+/**
+ * The sign shown before a transaction's amount, by type.
+ */
+const TRANSACTION_AMOUNT_SIGN: Record<TransactionType, string> = {
+    expense: "-",
+    income: "+",
+    opening_balance: "+",
+};
+
+/**
+ * The color of a transaction's amount, by type.
+ */
+const TRANSACTION_AMOUNT_COLOR: Record<TransactionType, string> = {
+    expense: "text-destructive",
+    income: "text-success",
+    opening_balance: "text-muted-foreground",
 };
 
 const Dashboard = () => {
@@ -179,17 +198,17 @@ const RecentActivity = () => {
                                             {format(new Date(transaction.occurred_at), "HH:mm")}
                                         </TableCell>
                                         <TableCell>{transaction.account?.name ?? "-"}</TableCell>
-                                        <TableCell>{transaction.description ?? ""}</TableCell>
+                                        <TableCell>
+                                            {transaction.description || t(`enums.${transaction.type}`)}
+                                        </TableCell>
                                         <TableCell className="text-right">
                                             <span
                                                 className={cn(
                                                     "font-medium tabular-nums",
-                                                    transaction.type === "expense"
-                                                        ? "text-destructive"
-                                                        : "text-success",
+                                                    TRANSACTION_AMOUNT_COLOR[transaction.type],
                                                 )}
                                             >
-                                                {`${transaction.type === "income" ? "+" : "-"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
+                                                {`${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
                                             </span>
                                         </TableCell>
                                         <TableCell className="w-12 text-right">

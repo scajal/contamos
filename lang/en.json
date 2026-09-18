@@ -74,6 +74,7 @@
     "Bad Gateway": "Bad Gateway",
     "Bad Request": "Bad Request",
     "balances": "balances",
+    "Balance as of": "Balance as of",
     "Balances per currency, not a blended guess.": "Balances per currency, not a blended guess.",
     "Bandwidth Limit Exceeded": "Bandwidth Limit Exceeded",
     "Cancel invitation": "Cancel invitation",

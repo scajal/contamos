@@ -253,6 +253,8 @@ return [
         'quantity' => 'quantity',
         'quote' => 'quote',
         'quote_source' => 'quote source',
+        'quotes' => 'rates',
+        'quotes.*' => 'rate',
         'rate' => 'rate',
         'reason' => 'reason',
         'recaptcha_response_field' => 'recaptcha response field',

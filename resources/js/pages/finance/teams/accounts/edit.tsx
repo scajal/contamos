@@ -48,6 +48,10 @@ export default function Edit({ account, currencies, types }: PageProps) {
                                 router.reload({ only: ["accounts"] });
                             }}
                             options={{ only: ["errors"] }}
+                            transform={(data) => ({
+                                ...data,
+                                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                            })}
                         >
                             {(formProps) => (
                                 <Fragment>
@@ -57,6 +61,9 @@ export default function Edit({ account, currencies, types }: PageProps) {
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-6">
                                         <Fields
+                                            attachedCurrencyIds={
+                                                account.currencies?.map((currency) => currency.id) ?? []
+                                            }
                                             currencies={currencies}
                                             defaultValues={{
                                                 ...account,

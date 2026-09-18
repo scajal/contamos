@@ -56,6 +56,7 @@ class AccountController
         return Inertia::modal('finance/teams/accounts/create', [
             'currencies' => Currency::query()
                 ->isActive()
+                ->with('quotes')
                 ->get(),
             'types' => AccountType::cases(),
         ])->baseRoute('finance.teams.accounts.index', ['team' => $team->getRouteKey()]);
@@ -86,7 +87,7 @@ class AccountController
     {
         return Inertia::modal('finance/teams/accounts/edit', [
             'account' => $account->load('currencies:'.new Currency()->getKeyName()),
-            'currencies' => Currency::query()->get(),
+            'currencies' => Currency::query()->with('quotes')->get(),
             'types' => AccountType::cases(),
         ])->baseRoute('finance.teams.accounts.index', ['team' => $team->getRouteKey()]);
     }

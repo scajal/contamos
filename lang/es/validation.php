@@ -253,6 +253,8 @@ return [
         'quantity' => 'cantidad',
         'quote' => 'cotización',
         'quote_source' => 'origen de cotización',
+        'quotes' => 'tipos de cambio',
+        'quotes.*' => 'tipo de cambio',
         'rate' => 'tipo de cambio',
         'reason' => 'razón',
         'recaptcha_response_field' => 'respuesta del recaptcha',

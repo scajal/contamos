@@ -205,6 +205,40 @@ describe('store', function (): void {
             ->assertRedirect()
             ->assertInvalid(['currency_ids', 'name', 'type']);
     });
+
+    it('rejects an opening balance for a currency with no quote and no user-typed rate', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
+                'currency_ids' => [$currency->getKey()],
+                'opening_balances' => [$currency->getKey() => '100'],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(["opening_balances.{$currency->getKey()}"]);
+
+        expect(Account::query()->count())->toBe(0);
+    });
+
+    it('creates an opening balance using a user-typed rate when no catalog quote exists', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+
+        $this->from(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
+                'currency_ids' => [$currency->getKey()],
+                'opening_balances' => [$currency->getKey() => '100'],
+                'quotes' => [$currency->getKey() => '1.5'],
+            ]))
+            ->assertRedirect();
+
+        $account = Account::query()->sole();
+        $transaction = $account->transactions()->sole();
+
+        expect((float) $transaction->quote)->toBe(1.5)
+            ->and((float) $transaction->amount)->toBe(100.0);
+    });
 });
 
 describe('edit', function (): void {

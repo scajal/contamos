@@ -53,14 +53,31 @@ class StoreRequest extends FormRequest
     }
 
     /**
+     * Get the rate the user typed for the currency, overriding
+     * the catalog quote, if any was submitted.
+     */
+    protected function explicitQuote(string $currencyId): ?string
+    {
+        $quote = $this->input("quotes.{$currencyId}");
+
+        return is_numeric($quote) && (float) $quote > 0 ? (string) $quote : null;
+    }
+
+    /**
      * Reject an opening balance amount for a currency with no
-     * quote observed at or before the resolved occurred at instant.
+     * quote observed at or before the resolved occurred at instant,
+     * unless the user typed one.
      */
     protected function hasQuoteAsOf(Currency $currency): Closure
     {
         return function (string $attribute, mixed $value, Closure $fail) use ($currency): void {
             // Skip empty or non-positive amounts; they create nothing.
             if (! is_numeric($value) || (float) $value <= 0) {
+                return;
+            }
+
+            // Skip when the user typed a rate for this currency.
+            if ($this->explicitQuote((string) $currency->getKey()) !== null) {
                 return;
             }
 
@@ -74,7 +91,7 @@ class StoreRequest extends FormRequest
     /**
      * Get the opening balances to create for the account, keyed
      * by currency id, for currencies with a positive amount and
-     * a resolvable quote.
+     * a resolvable quote, catalog or user-typed.
      *
      * @return array<string, array{amount: string, quote: string, occurred_at: string}>
      */
@@ -93,26 +110,26 @@ class StoreRequest extends FormRequest
         $resolved = [];
 
         foreach ($balances as $currencyId => $amount) {
+            // Skip empty or non-positive amounts; they create nothing.
             if (! is_numeric($amount) || (float) $amount <= 0) {
                 continue;
             }
 
-            $currency = Currency::query()->find($currencyId);
-
-            if (! $currency instanceof Currency) {
+            // If the currency is not found, skip it.
+            if (! ($currency = Currency::query()->find($currencyId)) instanceof Currency) {
                 continue;
             }
 
-            $quote = Instant::resolveQuote($currency, $occurredAt);
-
-            if (! $quote instanceof Quote) {
+            // Resolve the quote, catalog or user-typed.
+            if (($quote = $this->explicitQuote((string) $currencyId) ?? Instant::resolveQuote($currency, $occurredAt)?->rate) === null) {
                 continue;
             }
 
+            // Add the opening balance to the resolved array.
             $resolved[$currencyId] = [
                 'amount' => (string) $amount,
                 'occurred_at' => $occurredAt,
-                'quote' => (string) $quote->rate,
+                'quote' => (string) $quote,
             ];
         }
 
@@ -163,6 +180,10 @@ class StoreRequest extends FormRequest
                 'sometimes',
                 'array:'.implode(',', $this->currencyIds()),
             ],
+            'quotes' => [
+                'sometimes',
+                'array:'.implode(',', $this->currencyIds()),
+            ],
             'type' => [
                 'required',
                 'string',
@@ -170,6 +191,7 @@ class StoreRequest extends FormRequest
             ],
         ];
 
+        // Add rules for each currency.
         foreach ($this->currencyIds() as $currencyId) {
             $currency = Currency::query()->find($currencyId);
 
@@ -178,6 +200,11 @@ class StoreRequest extends FormRequest
                 $currency instanceof Currency ? "decimal:0,{$currency->decimal_places}" : 'decimal:0,18',
                 'gte:0',
                 ...($currency instanceof Currency ? [$this->hasQuoteAsOf($currency)] : []),
+            ];
+
+            $rules["quotes.{$currencyId}"] = [
+                'nullable',
+                'decimal:0,18',
             ];
         }
 
