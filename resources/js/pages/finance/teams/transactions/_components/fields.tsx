@@ -1,8 +1,9 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CalendarIcon, CheckIcon, DollarSignIcon, ListIcon, StickyNoteIcon, TagIcon } from "lucide-react";
+import { CalendarIcon, DollarSignIcon, ListIcon, StickyNoteIcon, TagIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { ChipSetCheck } from "@/components/chip-set-check";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -31,17 +32,25 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { TRANSACTION_AMOUNT_COLOR } from "@/lib/transactions";
+import {
+    TRANSACTION_AMOUNT_COLOR,
+    isSameLocalDay,
+    parseDateTimeLocal,
+    quoteAsOf,
+    toDateTimeLocalValue,
+    trimTrailingZeros,
+    withLocalDate,
+    withLocalTime,
+} from "@/lib/transactions";
 import { cn, markFormDirty } from "@/lib/utils";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
-import { Quote } from "@/types/app/modules/core/catalog/models/currency/quote";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 
 type FormProps = Partial<
-    Omit<Transaction, "account" | "currency" | "tags" | "team" | "user"> & { tag_ids: Array<string> }
+    Omit<Transaction, "account" | "currency" | "tags" | "team" | "transfer" | "user"> & { tag_ids: Array<string> }
 >;
 
 type Props = FormComponentSlotProps<FormProps> & {
@@ -52,108 +61,6 @@ type Props = FormComponentSlotProps<FormProps> & {
     trackTypeChanges?: boolean;
     type: TransactionType;
 };
-
-/**
- * Format a Date as a datetime-local input value (YYYY-MM-DDTHH:mm).
- */
-function toDateTimeLocalValue(value?: string): string {
-    const date = value === undefined ? new Date() : parseDateTimeLocal(value);
-    const resolved = Number.isNaN(date.getTime()) ? new Date() : date;
-    const pad = (part: number) => String(part).padStart(2, "0");
-
-    return `${resolved.getFullYear()}-${pad(resolved.getMonth() + 1)}-${pad(resolved.getDate())}T${pad(resolved.getHours())}:${pad(resolved.getMinutes())}`;
-}
-
-/**
- * Parse a datetime-local string as wall-clock time in the browser timezone.
- */
-function parseDateTimeLocal(value: string): Date {
-    const [datePart, timePart = "00:00"] = value.split("T");
-    const [year, month, day] = datePart.split("-").map(Number);
-    const [hour, minute] = timePart.split(":").map(Number);
-
-    return new Date(year, (month ?? 1) - 1, day ?? 1, hour ?? 0, minute ?? 0);
-}
-
-/**
- * Whether the two dates are the same day in the local timezone.
- */
-function isSameLocalDay(left: Date, right: Date): boolean {
-    return (
-        left.getFullYear() === right.getFullYear() &&
-        left.getMonth() === right.getMonth() &&
-        left.getDate() === right.getDate()
-    );
-}
-
-/**
- * Set the date of the occurred at value to the provided date.
- */
-function withLocalDate(occurredAt: string, date: Date): string {
-    const current = parseDateTimeLocal(occurredAt);
-    const pad = (part: number) => String(part).padStart(2, "0");
-
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(current.getHours())}:${pad(current.getMinutes())}`;
-}
-
-/**
- * Set the time of the occurred at value to the provided time.
- */
-function withLocalTime(occurredAt: string, time: string): string {
-    const [datePart] = occurredAt.split("T");
-
-    return `${datePart}T${time || "00:00"}`;
-}
-
-/**
- * Get the quote for the currency at the provided date.
- */
-function quoteAsOf(currency: Currency | null, at: Date): Quote | null {
-    if (!currency) {
-        return null;
-    }
-
-    const atMs = at.getTime();
-    let best: Quote | null = null;
-    let bestMs = Number.NEGATIVE_INFINITY;
-
-    for (const quote of currency.quotes ?? []) {
-        const observedMs = new Date(quote.observed_at).getTime();
-
-        if (Number.isNaN(observedMs) || observedMs > atMs) {
-            continue;
-        }
-
-        if (observedMs >= bestMs) {
-            best = quote;
-            bestMs = observedMs;
-        }
-    }
-
-    return best;
-}
-
-/**
- * Strip padded decimal:18 zeros so a catalog rate can sit in an input.
- */
-function trimTrailingZeros(value: string): string {
-    if (!value.includes(".")) {
-        return value;
-    }
-
-    return value.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
-}
-
-/**
- * Right-aligned check on a chip whose popover holds a non-default value.
- */
-function ChipSetCheck({ show }: { show: boolean }) {
-    if (!show) {
-        return null;
-    }
-
-    return <CheckIcon aria-hidden className="text-success ml-auto size-3.5 shrink-0" data-icon="inline-end" />;
-}
 
 export const Fields = ({
     accounts,

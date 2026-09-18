@@ -13,9 +13,6 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 /**
  * Feature tests for \App\Modules\Core\Finance\Http\Controllers\Team\TransferController.
- *
- * The modal render cases assert the props only; the ->component(...) assertion
- * needs the page files, which land with the transfer pages.
  */
 
 /**
@@ -70,6 +67,7 @@ describe('create', function (): void {
             ->get(route('finance.teams.transfers.create', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->component('finance/teams/transfers/create')
                 ->has('accounts', 2)
                 ->where('accounts.0.currencies.0.id', $currency->getKey())
                 ->has('tags', 1)
@@ -154,6 +152,7 @@ describe('show', function (): void {
             ->get(route('finance.teams.transfers.show', ['team' => $team->getRouteKey(), 'transfer' => $transfer->getKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->component('finance/teams/transfers/show')
                 ->has('transfer.transactions', 2));
     });
 
@@ -178,6 +177,7 @@ describe('edit', function (): void {
             ->get(route('finance.teams.transfers.edit', ['team' => $team->getRouteKey(), 'transfer' => $transfer->getKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->component('finance/teams/transfers/edit')
                 ->has('accounts', 2)
                 ->where('transfer.id', $transfer->getKey())
                 ->has('transfer.transactions', 2));

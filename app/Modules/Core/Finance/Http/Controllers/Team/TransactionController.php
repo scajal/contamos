@@ -49,7 +49,7 @@ class TransactionController
             'transactions' => Inertia::scroll(
                 fn (): LengthAwarePaginator => QueryBuilder::for($team->transactions(), $request)
                     ->allowedFilters(...$request->filters())
-                    ->with('account', 'currency', 'user', 'tags')
+                    ->with('account', 'currency', 'user', 'tags', 'transfer.transactions.account')
                     ->orderBy('occurred_at', 'desc')
                     ->paginate(10)
                     ->withQueryString(),
