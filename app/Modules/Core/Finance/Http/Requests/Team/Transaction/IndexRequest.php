@@ -36,7 +36,7 @@ class IndexRequest extends FormRequest
     public function filters(): array
     {
         return [
-            AllowedFilter::exact('type'),
+            AllowedFilter::scope('type', 'of_type'),
             AllowedFilter::exact('account', new Transaction()->account()->getForeignKeyName()),
             AllowedFilter::exact('currency', new Transaction()->currency()->getForeignKeyName()),
             AllowedFilter::groupOr('search', [AllowedFilter::exact('id'), AllowedFilter::partial('description')]),
@@ -101,7 +101,7 @@ class IndexRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'string',
-                Rule::enum(TransactionType::class),
+                Rule::in([...array_column(TransactionType::cases(), 'value'), Transaction::TRANSFER_TYPE]),
             ],
             'filter.account' => [
                 'sometimes',

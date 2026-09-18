@@ -8,6 +8,7 @@ use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
+use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Models\Team;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -213,6 +214,44 @@ describe('index', function (): void {
                     ->where('transactions.data.0.id', $matching->getKey())));
     });
 
+    it('filters both transfer legs with the transfer type', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $transfer = Transfer::factory()->for($team)->create();
+        $legs = collect([
+            Transaction::factory()->transferOut(),
+            Transaction::factory()->transferIn(),
+        ])->map(fn (\Database\Factories\Modules\Core\Finance\Models\Team\TransactionFactory $factory): Transaction => $factory->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'transfer_id' => $transfer->getKey(),
+            'user_id' => $user->getKey(),
+        ]));
+        Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->get(route('finance.teams.transactions.index', [
+            'team' => $team->getRouteKey(),
+            'filter' => ['type' => Transaction::TRANSFER_TYPE],
+        ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('filters.type', Transaction::TRANSFER_TYPE)
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('transactions.data', 2)
+                    ->where('transactions.data.0.transfer_id', $transfer->getKey())
+                    ->where('transactions.data.1.transfer_id', $transfer->getKey())));
+
+        expect($legs)->toHaveCount(2);
+    });
+
     it('rejects a tag filter from another team', function (): void {
         [$user, $team] = actingMember();
         $foreign = Tag::factory()->for(Team::factory())->create();
@@ -255,14 +294,22 @@ describe('create', function (): void {
                 ->has('tags', 1)
                 ->where('tags.0.id', $tag->getKey())
                 ->where('type', $type->value));
-    })->with(TransactionType::cases());
+    })->with([
+        'expense' => TransactionType::Expense,
+        'income' => TransactionType::Income,
+    ]);
 
-    it('returns 404 for an unknown transaction type', function (): void {
+    it('returns 404 for a transaction type that cannot be created here', function (string $type): void {
         [$user, $team] = actingMember();
 
-        $this->get('/teams/'.$team->getRouteKey().'/transactions/create/transfer')
+        $this->get('/teams/'.$team->getRouteKey().'/transactions/create/'.$type)
             ->assertNotFound();
-    });
+    })->with([
+        'opening balance' => TransactionType::OpeningBalance->value,
+        'transfer in' => TransactionType::TransferIn->value,
+        'transfer out' => TransactionType::TransferOut->value,
+        'unknown' => 'transfer',
+    ]);
 });
 
 describe('store', function (): void {
@@ -1440,5 +1487,62 @@ describe('destroy', function (): void {
         assertFlashedToast(trans('Deleted'));
         $this->assertModelMissing($transaction);
         expect((float) $account->currencies()->firstOrFail()->pivot->balance)->toBe(100.0);
+    });
+
+    it('refuses to edit, update, or delete a transaction owned by a transfer', function (string $method, string $route, bool $withPayload): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '100.00']);
+        $transfer = Transfer::factory()->for($team)->create();
+        $transaction = Transaction::factory()->transferOut()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '25.00',
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'transfer_id' => $transfer->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->{$method}(route($route, [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getKey(),
+            ]), $withPayload ? transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+            ]) : [])
+            ->assertInvalid(['transfer']);
+
+        $this->assertModelExists($transaction);
+    })->with([
+        'edit' => ['get', 'finance.teams.transactions.edit', false],
+        'update' => ['patch', 'finance.teams.transactions.update', true],
+        'destroy' => ['delete', 'finance.teams.transactions.destroy', false],
+    ]);
+
+    it('refuses to delete a transfer fee row through the transaction routes', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '100.00']);
+        $transfer = Transfer::factory()->for($team)->create();
+        $fee = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '1.50',
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'transfer_id' => $transfer->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->delete(route('finance.teams.transactions.destroy', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $fee->getKey(),
+            ]))
+            ->assertInvalid(['transfer']);
+
+        $this->assertModelExists($fee);
     });
 });

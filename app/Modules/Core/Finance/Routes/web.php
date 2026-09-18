@@ -118,7 +118,7 @@ Route::as('finance.teams.')
             ->name('transactions.index');
 
         Route::get('/transactions/create/{type}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'create'])
-            ->whereIn('type', TransactionType::cases())
+            ->whereIn('type', [TransactionType::Expense->value, TransactionType::Income->value])
             ->name('transactions.create');
 
         Route::post('/transactions', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'store'])
@@ -138,5 +138,36 @@ Route::as('finance.teams.')
 
         Route::delete('/transactions/{transaction}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'destroy'])
             ->name('transactions.destroy')
+            ->scopeBindings();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Transfer routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the transfer management.
+        |
+        */
+
+        Route::get('/transfers/create', [\App\Modules\Core\Finance\Http\Controllers\Team\TransferController::class, 'create'])
+            ->name('transfers.create');
+
+        Route::post('/transfers', [\App\Modules\Core\Finance\Http\Controllers\Team\TransferController::class, 'store'])
+            ->name('transfers.store');
+
+        Route::get('/transfers/{transfer}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransferController::class, 'show'])
+            ->name('transfers.show')
+            ->scopeBindings();
+
+        Route::get('/transfers/{transfer}/edit', [\App\Modules\Core\Finance\Http\Controllers\Team\TransferController::class, 'edit'])
+            ->name('transfers.edit')
+            ->scopeBindings();
+
+        Route::patch('/transfers/{transfer}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransferController::class, 'update'])
+            ->name('transfers.update')
+            ->scopeBindings();
+
+        Route::delete('/transfers/{transfer}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransferController::class, 'destroy'])
+            ->name('transfers.destroy')
             ->scopeBindings();
     });

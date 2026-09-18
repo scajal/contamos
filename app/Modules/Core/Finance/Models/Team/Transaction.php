@@ -42,6 +42,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction occurredFrom(string $date)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction ofType(string $type)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction occurredUntil(string $date)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction withAnyTags(array<int, string>|string $ids)
@@ -51,6 +52,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable('amount', 'decimal_places', 'description', 'occurred_at', 'quote', 'type')]
 class Transaction extends Model
 {
+    /**
+     * The type filter value matching both legs of a transfer.
+     */
+    public const string TRANSFER_TYPE = 'transfer';
+
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
@@ -95,8 +101,8 @@ class Transaction extends Model
         return [
             'amount' => 'decimal:18',
             'decimal_places' => 'integer',
-            'quote' => 'decimal:18',
             'occurred_at' => 'datetime',
+            'quote' => 'decimal:18',
             'type' => TransactionType::class,
         ];
     }
@@ -109,6 +115,22 @@ class Transaction extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    /**
+     * Scope the query to transactions of the given type, where the
+     * transfer value matches both of its legs.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<\App\Modules\Core\Finance\Models\Team\Transaction>  $query
+     */
+    #[Scope]
+    protected function ofType(Builder $query, string $type): void
+    {
+        $query->when(
+            $type === self::TRANSFER_TYPE,
+            fn (Builder $query): Builder => $query->whereIn('type', [TransactionType::TransferOut, TransactionType::TransferIn]),
+            fn (Builder $query): Builder => $query->where('type', $type),
+        );
     }
 
     /**
