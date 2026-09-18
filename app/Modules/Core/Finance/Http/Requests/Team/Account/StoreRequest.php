@@ -33,7 +33,6 @@ class StoreRequest extends FormRequest
      */
     protected function currencyIds(): array
     {
-        /** @var mixed $currencyIds */
         $currencyIds = $this->input('currency_ids', []);
 
         if (! is_array($currencyIds)) {
