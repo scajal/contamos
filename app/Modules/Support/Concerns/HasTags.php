@@ -46,6 +46,30 @@ trait HasTags
     }
 
     /**
+     * Replace the model's tags with the given tags.
+     *
+     * @param  array<int, string>  $tagIds
+     */
+    public function syncTags(array $tagIds): void
+    {
+        // Fetch the tags from the database.
+        $tags = Tag::query()
+            ->whereKey($tagIds)
+            ->get();
+
+        // Loop through the tags and validate that they belong
+        // to the same team as the tagged model.
+        foreach ($tags as $tag) {
+            if ($tag->getAttribute($tag->team()->getForeignKeyName()) !== $this->getAttribute($this->team()->getForeignKeyName())) {
+                throw new InvalidArgumentException('A tag must belong to the same team as the tagged model.');
+            }
+        }
+
+        // Sync the tags to the model.
+        $this->tags()->sync($tagIds);
+    }
+
+    /**
      * Get the tags for the model.
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany<\App\Modules\Core\Finance\Models\Team\Tag, $this>
