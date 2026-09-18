@@ -85,15 +85,13 @@ class Transfer extends Model
      */
     protected function fee(?Transaction $leg): ?Transaction
     {
-        if (! $leg instanceof Transaction) {
-            return null;
-        }
+        $foreignKey = new Transaction()->account()->getForeignKeyName();
 
-        $foreignKey = $leg->account()->getForeignKeyName();
-
+        // A fee always sits on an account, so it never matches a
+        // side the transfer has no leg for.
         return $this->transactions
             ->first(fn (Transaction $transaction): bool => $transaction->type === TransactionType::Expense
-                && $transaction->getAttribute($foreignKey) === $leg->getAttribute($foreignKey));
+                && $transaction->getAttribute($foreignKey) === $leg?->getAttribute($foreignKey));
     }
 
     /**

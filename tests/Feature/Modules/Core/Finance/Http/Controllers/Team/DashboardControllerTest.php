@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Transaction;
+use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Illuminate\Database\Eloquent\Factories\Sequence;
@@ -92,6 +93,39 @@ it('adds an opening balance to the balance per currency and shows it in recent a
                 ->where('balances.0.balance', fn (mixed $balance): bool => (float) $balance === 70.0)
                 ->has('recent_transactions', 2)
                 ->where('recent_transactions.1.type', 'opening_balance')));
+});
+
+it('keeps the balance per currency correct with a transfer and its fees', function (): void {
+    [$user, $team] = actingMember();
+    $peso = Currency::factory()->active()->fiat()->create(['code' => 'ARS', 'decimal_places' => 2, 'symbol' => '$']);
+    $origin = Account::factory()->bank()->active()->for($team)->create();
+    $destination = Account::factory()->cash()->active()->for($team)->create();
+    $transfer = Transfer::factory()->for($team)->create();
+
+    Transaction::factory()->openingBalance()->for($origin)->for($peso)->create([
+        'amount' => '100',
+        'occurred_at' => now()->subDays(2),
+    ]);
+    Transaction::factory()->transferOut()->for($origin)->for($peso)->for($transfer)->create([
+        'amount' => '25',
+        'occurred_at' => now()->subDay(),
+    ]);
+    Transaction::factory()->transferIn()->for($destination)->for($peso)->for($transfer)->create([
+        'amount' => '25',
+        'occurred_at' => now()->subDay(),
+    ]);
+    Transaction::factory()->expense()->for($origin)->for($peso)->for($transfer)->create([
+        'amount' => '1.50',
+        'occurred_at' => now()->subDay(),
+    ]);
+
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('balances', 1)
+                ->where('balances.0.balance', fn (mixed $balance): bool => (float) $balance === 98.5)
+                ->has('recent_transactions', 4)));
 });
 
 it('does not count inactive accounts toward the empty path', function (): void {

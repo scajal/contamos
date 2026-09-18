@@ -108,10 +108,8 @@ trait ResolvesTransferInputs
      */
     public function tagIds(): array
     {
-        if (! is_array($tagIds = $this->safe(['tag_ids'])['tag_ids'] ?? [])) {
-            return [];
-        }
+        $tagIds = $this->safe(['tag_ids'])['tag_ids'] ?? [];
 
-        return array_values(array_filter($tagIds, is_string(...)));
+        return is_array($tagIds) ? array_values(array_filter($tagIds, is_string(...))) : [];
     }
 }
