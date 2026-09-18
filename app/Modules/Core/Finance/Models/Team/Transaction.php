@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property numeric $quote
  * @property string $team_id
  * @property \App\Modules\Core\Finance\Enums\Transaction\TransactionType $type
+ * @property string|null $transfer_id
  * @property string|null $user_id
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
@@ -34,6 +35,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Tag> $tags
  * @property-read \App\Modules\Core\Identity\Models\Team $team
+ * @property-read \App\Modules\Core\Finance\Models\Team\Transfer|null $transfer
  * @property-read \App\Modules\Core\Identity\Models\User|null $user
  *
  * @method static \Database\Factories\Modules\Core\Finance\Models\Team\TransactionFactory factory($count = null, $state = [])
@@ -139,6 +141,16 @@ class Transaction extends Model
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * Get the transfer that owns the transaction.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Finance\Models\Team\Transfer, $this>
+     */
+    public function transfer(): BelongsTo
+    {
+        return $this->belongsTo(Transfer::class);
     }
 
     /**

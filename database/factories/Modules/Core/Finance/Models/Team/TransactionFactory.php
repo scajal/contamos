@@ -82,6 +82,28 @@ class TransactionFactory extends Factory
     }
 
     /**
+     * Indicate that the transaction type is
+     * \App\Modules\Core\Finance\Enums\Transaction\TransactionType::TransferIn.
+     */
+    public function transferIn(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => TransactionType::TransferIn,
+        ]);
+    }
+
+    /**
+     * Indicate that the transaction type is
+     * \App\Modules\Core\Finance\Enums\Transaction\TransactionType::TransferOut.
+     */
+    public function transferOut(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => TransactionType::TransferOut,
+        ]);
+    }
+
+    /**
      * Copy the team key from the nested \App\Modules\Core\Finance\Models\Team\Account.
      *
      * @param  array<string, mixed>  $attributes

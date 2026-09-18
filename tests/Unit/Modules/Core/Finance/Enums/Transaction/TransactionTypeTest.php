@@ -16,4 +16,6 @@ it('translates the transaction type label', function (TransactionType $type, str
     'expense' => [TransactionType::Expense, 'Expense'],
     'income' => [TransactionType::Income, 'Income'],
     'opening balance' => [TransactionType::OpeningBalance, 'Opening balance'],
+    'transfer in' => [TransactionType::TransferIn, 'Transfer in'],
+    'transfer out' => [TransactionType::TransferOut, 'Transfer out'],
 ]);
