@@ -7,14 +7,18 @@ namespace App\Modules\Core\Finance\Http\Controllers\Team;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
 use App\Modules\Core\Finance\Actions\Team\DeleteTransaction;
+use App\Modules\Core\Finance\Actions\Team\UpdateTransaction;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\IndexRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\StoreRequest;
+use App\Modules\Core\Finance\Http\Requests\Team\Transaction\UpdateRequest;
+use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -95,6 +99,53 @@ class TransactionController
         return Inertia::modal('finance/teams/transactions/show', [
             'transaction' => $transaction->load('account', 'currency', 'user', 'tags'),
         ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getRouteKey()]);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Team $team, Transaction $transaction): Modal
+    {
+        $transaction->load('account', 'currency', 'user', 'tags');
+
+        return Inertia::modal('finance/teams/transactions/edit', [
+            'accounts' => $team->accounts()
+                ->where(fn (Builder $accounts): Builder => $accounts->isActive()->orWhereKey($transaction->account_id))
+                ->with(['currencies' => function (Relation $currencies) use ($transaction): void {
+                    $currencies->where(fn (Builder $query): Builder => $query->isActive()->orWhereKey($transaction->currency_id))->with('quotes'); // @phpstan-ignore-line argument.type
+                }])
+                ->get(),
+            'tags' => $team->tags()
+                ->where(fn (Builder $tags): Builder => $tags->isActive()->orWhereIn(new Tag()->getKeyName(), $transaction->tags->pluck(new Tag()->getKeyName())))
+                ->orderBy('name')
+                ->get(),
+            'transaction' => $transaction,
+        ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getRouteKey()]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Team $team, Transaction $transaction, UpdateRequest $request, UpdateTransaction $updateTransaction): RedirectResponse
+    {
+        // Update the transaction.
+        $updateTransaction
+            ->for($team)
+            ->using($transaction, $request->safe([
+                (new Transaction)->account()->getForeignKeyName(),
+                'amount',
+                (new Transaction)->currency()->getForeignKeyName(),
+                'description',
+                'occurred_at',
+                'quote',
+                'type',
+            ]), $request->tagIds());
+
+        // Flash a success message to the session.
+        Toast::make(trans('Saved'))
+            ->flash();
+
+        return back();
     }
 
     /**

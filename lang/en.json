@@ -146,6 +146,7 @@
     "Edit the tag.": "Edit the tag.",
     "Edit the account.": "Update the name and currencies. The type cannot be changed.",
     "Edit the currency details.": "Edit the currency details.",
+    "Edit the transaction.": "Edit the transaction.",
     "Enable": "Enable",
     "Encrypted environment file already exists.": "Encrypted environment file already exists.",
     "Encrypted environment file not found.": "Encrypted environment file not found.",
