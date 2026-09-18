@@ -235,6 +235,8 @@ return [
         'number' => 'number',
         'observed_at' => 'date',
         'occurred_at' => 'date',
+        'opening_balances' => 'opening balances',
+        'opening_balances.*' => 'opening balance',
         'password' => 'password',
         'password_confirmation' => 'password confirmation',
         'phone' => 'phone',

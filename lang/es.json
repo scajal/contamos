@@ -294,6 +294,7 @@
     "No :name yet": "Aún no hay :name",
     "No Content": "Sin contenido",
     "No currencies found": "No se encontraron monedas",
+    "No exchange rate exists for :currency as of the selected date.": "No existe un tipo de cambio para :currency a la fecha seleccionada.",
     "No more guessing, no spreadsheets, no arguing about who paid what. Every currency you share, fiat or crypto, lands in one clear picture — so you always know exactly where you stand, together.": "Nada de adivinar, hojas de cálculo ni discusiones sobre quién pagó qué. Cada moneda que compartes, fiat o cripto, entra en una sola imagen clara, para que siempre sepas exactamente cómo estás.",
     "No tags found": "No se encontraron etiquetas",
     "No rate for :date. We need it to save.": "No hay tasa para el :date. Sin esto no podemos guardar.",

@@ -235,6 +235,8 @@ return [
         'number' => 'número',
         'observed_at' => 'fecha',
         'occurred_at' => 'fecha',
+        'opening_balances' => 'saldos iniciales',
+        'opening_balances.*' => 'saldo inicial',
         'password' => 'contraseña',
         'password_confirmation' => 'confirmación de la contraseña',
         'phone' => 'teléfono',
