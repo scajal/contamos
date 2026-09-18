@@ -16,3 +16,6 @@ Set Action context with fluent `for($model)` and `by($user)` when an owner or ac
 ## Name write Actions Create or Update
 
 Name transactional write Actions `Create{Resource}` or `Update{Resource}`. Do not use `Store`, `Save`, or `Handle` prefixes for those writes.
+
+## Guard Action context with Exception
+When `using(...)` runs without the `for()` / `by()` context it needs, throw a base `Exception` with a full-sentence message. Do not add custom exception classes for Action guards.

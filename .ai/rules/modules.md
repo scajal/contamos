@@ -48,3 +48,6 @@ Application dates are CarbonImmutable. Typehint and construct with CarbonImmutab
 ## Typed config helper
 
 Read config with `config()->string(...)`. Do not use `Config::` or untyped `config('key')` for string values.
+
+## Str helpers over native string functions
+Use `Str::` static helpers for string work: `Str::lower`, `Str::upper`, `Str::trim`, `Str::substr`, `Str::length`, `Str::position`, `Str::contains`, `Str::startsWith`, `Str::replace`, `Str::ucfirst`. Do not reach for the native PHP equivalents.

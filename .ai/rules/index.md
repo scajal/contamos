@@ -22,6 +22,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Modules/Billing/Features/** | .ai/rules/features.md |
 | resources/js/pages/finance/teams/** | .ai/rules/finance-teams.md |
 | resources/js/pages/finance/** | .ai/rules/finance.md |
+| app/Modules/**/Http/** | .ai/rules/http.md |
 | app/Modules/Core/Identity/Models/Team.php | .ai/rules/identity-models.md |
 | resources/js/layouts/marketing/**, resources/js/components/brand-mark.tsx, public/favicon.svg, public/images/** | .ai/rules/images.md |
 | resources/js/**, resources/js/**/*.tsx | .ai/rules/js.md |
