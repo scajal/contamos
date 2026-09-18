@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
 import { cn, formatAmount } from "@/lib/utils";
 import transactions from "@/routes/finance/teams/transactions";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
@@ -30,11 +31,6 @@ export default function Show({ transaction }: PageProps) {
      * The page's props.
      */
     const { user } = usePage().props;
-
-    /**
-     * Whether this transaction is an expense.
-     */
-    const isExpense = transaction.type === "expense";
 
     /**
      * The currency of the movement, when the relation loaded.
@@ -94,10 +90,10 @@ export default function Show({ transaction }: PageProps) {
                                     <p
                                         className={cn(
                                             "text-2xl font-semibold tabular-nums",
-                                            isExpense ? "text-destructive" : "text-success",
+                                            TRANSACTION_AMOUNT_COLOR[transaction.type],
                                         )}
                                     >
-                                        {`${isExpense ? "-" : "+"} ${formatAmount(transaction.amount, currentLocale(), currency)}`}
+                                        {`${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), currency)}`}
                                         {currency?.code ? (
                                             <span className="text-muted-foreground ml-1.5 text-sm font-medium">
                                                 {currency.code}

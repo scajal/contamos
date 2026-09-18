@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
 import { cn, formatAmount } from "@/lib/utils";
 import routes from "@/routes/finance/teams/transactions";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
@@ -454,6 +455,7 @@ const Listing = () => {
                                                     <TableCell className={TRANSACTION_COLUMNS.description}>
                                                         <TruncatedText
                                                             className="w-full"
+                                                            fallback={t(`enums.${transaction.type}`)}
                                                             value={transaction.description}
                                                         />
                                                     </TableCell>
@@ -464,12 +466,10 @@ const Listing = () => {
                                                         <span
                                                             className={cn(
                                                                 "font-medium tabular-nums",
-                                                                transaction.type === "expense"
-                                                                    ? "text-destructive"
-                                                                    : "text-success",
+                                                                TRANSACTION_AMOUNT_COLOR[transaction.type],
                                                             )}
                                                         >
-                                                            {`${transaction.type === "income" ? "+" : "-"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
+                                                            {`${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
                                                         </span>
                                                     </TableCell>
                                                     <TableCell

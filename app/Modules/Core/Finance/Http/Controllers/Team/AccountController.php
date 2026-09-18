@@ -13,7 +13,9 @@ use App\Modules\Core\Finance\Http\Requests\Team\Account\StoreRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Account\UpdateRequest;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Objects\Toast;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
@@ -54,6 +56,7 @@ class AccountController
         return Inertia::modal('finance/teams/accounts/create', [
             'currencies' => Currency::query()
                 ->isActive()
+                ->with('quotes')
                 ->get(),
             'types' => AccountType::cases(),
         ])->baseRoute('finance.teams.accounts.index', ['team' => $team->getRouteKey()]);
@@ -62,12 +65,13 @@ class AccountController
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Team $team, StoreRequest $request, CreateAccount $createAccount): RedirectResponse
+    public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateAccount $createAccount): RedirectResponse
     {
         // Create the account with the validated data.
         $createAccount
             ->for($team)
-            ->using($request->safe()->only(['name', 'type']), $request->validated('currency_ids')); // @phpstan-ignore-line argument.type
+            ->by($user)
+            ->using($request->safe()->only(['name', 'type']), $request->validated('currency_ids'), $request->openingBalances()); // @phpstan-ignore-line argument.type
 
         // Flash a success message to the session.
         Toast::make(trans('Saved'))
@@ -83,7 +87,7 @@ class AccountController
     {
         return Inertia::modal('finance/teams/accounts/edit', [
             'account' => $account->load('currencies:'.new Currency()->getKeyName()),
-            'currencies' => Currency::query()->get(),
+            'currencies' => Currency::query()->with('quotes')->get(),
             'types' => AccountType::cases(),
         ])->baseRoute('finance.teams.accounts.index', ['team' => $team->getRouteKey()]);
     }
@@ -91,12 +95,13 @@ class AccountController
     /**
      * Update the specified resource in storage.
      */
-    public function update(Team $team, Account $account, UpdateRequest $request, UpdateAccount $updateAccount): RedirectResponse
+    public function update(Team $team, Account $account, UpdateRequest $request, #[CurrentUser] User $user, UpdateAccount $updateAccount): RedirectResponse
     {
         // Update the account with the validated data.
         $updateAccount
             ->for($account)
-            ->using($request->safe()->only(['name', 'type']), $request->validated('currency_ids')); // @phpstan-ignore-line argument.type
+            ->by($user)
+            ->using($request->safe()->only(['name', 'type']), $request->validated('currency_ids'), $request->openingBalances()); // @phpstan-ignore-line argument.type
 
         // Flash a success message to the session.
         Toast::make(trans('Saved'))

@@ -19,6 +19,11 @@ enum TransactionType: string implements HasLabel
     case Income = 'income';
 
     /**
+     * Represents the balance an account started with.
+     */
+    case OpeningBalance = 'opening_balance';
+
+    /**
      * Get the label for the transaction type.
      */
     public function getLabel(): string
@@ -26,6 +31,7 @@ enum TransactionType: string implements HasLabel
         return match ($this) {
             self::Expense => trans('Expense'),
             self::Income => trans('Income'),
+            self::OpeningBalance => trans('Opening balance'),
         };
     }
 
@@ -38,6 +44,7 @@ enum TransactionType: string implements HasLabel
         return match ($this) {
             self::Expense => '+',
             self::Income => '-',
+            self::OpeningBalance => '-',
         };
     }
 
@@ -50,6 +57,7 @@ enum TransactionType: string implements HasLabel
         return match ($this) {
             self::Expense => '-',
             self::Income => '+',
+            self::OpeningBalance => '+',
         };
     }
 }

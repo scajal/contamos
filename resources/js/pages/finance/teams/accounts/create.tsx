@@ -43,6 +43,10 @@ export default function Create({ currencies, types }: PageProps) {
                                 router.reload({ only: ["accounts"] });
                             }}
                             options={{ only: ["errors"] }}
+                            transform={(data) => ({
+                                ...data,
+                                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                            })}
                         >
                             {(formProps) => (
                                 <Fragment>

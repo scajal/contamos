@@ -11,6 +11,7 @@ import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
 import { cn, formatAmount } from "@/lib/utils";
 import accounts from "@/routes/finance/teams/accounts";
 import transactions from "@/routes/finance/teams/transactions";
@@ -179,17 +180,17 @@ const RecentActivity = () => {
                                             {format(new Date(transaction.occurred_at), "HH:mm")}
                                         </TableCell>
                                         <TableCell>{transaction.account?.name ?? "-"}</TableCell>
-                                        <TableCell>{transaction.description ?? ""}</TableCell>
+                                        <TableCell>
+                                            {transaction.description || t(`enums.${transaction.type}`)}
+                                        </TableCell>
                                         <TableCell className="text-right">
                                             <span
                                                 className={cn(
                                                     "font-medium tabular-nums",
-                                                    transaction.type === "expense"
-                                                        ? "text-destructive"
-                                                        : "text-success",
+                                                    TRANSACTION_AMOUNT_COLOR[transaction.type],
                                                 )}
                                             >
-                                                {`${transaction.type === "income" ? "+" : "-"} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
+                                                {`${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
                                             </span>
                                         </TableCell>
                                         <TableCell className="w-12 text-right">
