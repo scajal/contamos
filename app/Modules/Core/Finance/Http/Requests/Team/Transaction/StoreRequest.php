@@ -177,7 +177,7 @@ class StoreRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                Rule::enum(TransactionType::class),
+                Rule::in([TransactionType::Expense->value, TransactionType::Income->value]),
             ],
         ];
     }

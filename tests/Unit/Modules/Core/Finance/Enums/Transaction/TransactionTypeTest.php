@@ -15,4 +15,5 @@ it('translates the transaction type label', function (TransactionType $type, str
 })->with([
     'expense' => [TransactionType::Expense, 'Expense'],
     'income' => [TransactionType::Income, 'Income'],
+    'opening balance' => [TransactionType::OpeningBalance, 'Opening balance'],
 ]);

@@ -43,7 +43,7 @@ class TransactionFactory extends Factory
             'occurred_at' => fake()->dateTime(),
             'quote' => '1',
             'team_id' => $this->teamIdForAccount(...),
-            'type' => fake()->randomElement(TransactionType::cases()),
+            'type' => fake()->randomElement([TransactionType::Expense, TransactionType::Income]),
             'user_id' => User::factory(),
         ];
     }
@@ -67,6 +67,17 @@ class TransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'type' => TransactionType::Income,
+        ]);
+    }
+
+    /**
+     * Indicate that the transaction type is
+     * \App\Modules\Core\Finance\Enums\Transaction\TransactionType::OpeningBalance.
+     */
+    public function openingBalance(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => TransactionType::OpeningBalance,
         ]);
     }
 
