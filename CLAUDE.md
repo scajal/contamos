@@ -212,3 +212,13 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 - Always activate the `inertia-modal-development` skill when working with modal routes, `ModalLink` components, `Modal` components, the `Inertia::modal()` method, modal configuration, or any code that uses `@inertiaui/modal-vue` or `@inertiaui/modal-react`.
 
 </laravel-boost-guidelines>
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked as GitHub Issues on `scajal/hormiga` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
