@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -124,4 +126,57 @@ function assertFlashedToast(string $message): void
     expect($flash['toast'])
         ->toHaveKeys(['id', 'message'])
         ->and($flash['toast']['message'])->toBe($message);
+}
+
+/**
+ * Get the balance a \App\Modules\Core\Finance\Models\Team\Account holds
+ * for a \App\Modules\Core\Catalog\Models\Currency.
+ */
+function balanceOf(Account $account, Currency $currency): float
+{
+    return (float) $account->currencies()->whereKey($currency->getKey())->firstOrFail()->pivot->balance;
+}
+
+/**
+ * Build the attributes of a transfer between the given sides, as the
+ * transfer requests hand them to the transfer actions.
+ *
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function transferAttributes(Account $origin, Account $destination, Currency $originCurrency, Currency $destinationCurrency, array $overrides = []): array
+{
+    return [
+        'amount_received' => '25.00',
+        'amount_sent' => '25.00',
+        'description' => 'Rent savings',
+        'destination_account_id' => $destination->getKey(),
+        'destination_currency_id' => $destinationCurrency->getKey(),
+        'destination_fee' => null,
+        'destination_quote' => '1',
+        'occurred_at' => '2024-01-01 00:00:00',
+        'origin_account_id' => $origin->getKey(),
+        'origin_currency_id' => $originCurrency->getKey(),
+        'origin_fee' => null,
+        'origin_quote' => '1',
+        ...$overrides,
+    ];
+}
+
+/**
+ * Create a \App\Modules\Core\Identity\Models\Team with two accounts
+ * sharing a \App\Modules\Core\Catalog\Models\Currency.
+ *
+ * @return array{0: \App\Modules\Core\Identity\Models\Team, 1: \App\Modules\Core\Finance\Models\Team\Account, 2: \App\Modules\Core\Finance\Models\Team\Account, 3: \App\Modules\Core\Catalog\Models\Currency}
+ */
+function transferSides(string $originBalance = '100.00', string $destinationBalance = '0.00'): array
+{
+    $team = Team::factory()->create();
+    $currency = Currency::factory()->fiat()->create(['decimal_places' => 2]);
+    $origin = Account::factory()->bank()->for($team)->create();
+    $destination = Account::factory()->cash()->for($team)->create();
+    $origin->currencies()->attach($currency, ['balance' => $originBalance]);
+    $destination->currencies()->attach($currency, ['balance' => $destinationBalance]);
+
+    return [$team, $origin, $destination, $currency];
 }

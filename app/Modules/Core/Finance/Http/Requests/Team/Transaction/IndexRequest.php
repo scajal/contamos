@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Http\Requests\Team\Transaction;
 
 use App\Modules\Core\Catalog\Models\Currency;
-use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
@@ -36,7 +35,7 @@ class IndexRequest extends FormRequest
     public function filters(): array
     {
         return [
-            AllowedFilter::exact('type'),
+            AllowedFilter::scope('type', 'of_type'),
             AllowedFilter::exact('account', new Transaction()->account()->getForeignKeyName()),
             AllowedFilter::exact('currency', new Transaction()->currency()->getForeignKeyName()),
             AllowedFilter::groupOr('search', [AllowedFilter::exact('id'), AllowedFilter::partial('description')]),
@@ -101,7 +100,7 @@ class IndexRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'string',
-                Rule::enum(TransactionType::class),
+                Rule::in(Transaction::typeFilters()),
             ],
             'filter.account' => [
                 'sometimes',

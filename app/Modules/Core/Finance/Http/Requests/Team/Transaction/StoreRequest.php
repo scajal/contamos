@@ -95,7 +95,7 @@ class StoreRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                Rule::in([TransactionType::Expense->value, TransactionType::Income->value]),
+                Rule::in(array_column(TransactionType::recordableCases(), 'value')),
             ],
         ];
     }

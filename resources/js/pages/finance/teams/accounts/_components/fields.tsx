@@ -34,9 +34,9 @@ import {
 } from "@/components/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { parseDateTimeLocal, quoteAsOf, trimTrailingZeros } from "@/lib/transactions";
 import { markFormDirty } from "@/lib/utils";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
-import { Quote } from "@/types/app/modules/core/catalog/models/currency/quote";
 import { AccountType } from "@/types/app/modules/core/finance/enums/account/account-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 
@@ -58,7 +58,9 @@ type Props = FormComponentSlotProps<FormProps> & {
 };
 
 /**
- * Format a Date as a datetime-local input value (YYYY-MM-DDTHH:mm).
+ * Format a Date as a datetime-local input value (YYYY-MM-DDTHH:mm). Unlike the
+ * shared helper, this one reads an ISO instant and converts it to local time,
+ * because an account's opening balance arrives as a stored UTC timestamp.
  */
 function toDateTimeLocalValue(value?: string): string {
     const date = value === undefined ? new Date() : new Date(value);
@@ -66,52 +68,6 @@ function toDateTimeLocalValue(value?: string): string {
     const pad = (part: number) => String(part).padStart(2, "0");
 
     return `${resolved.getFullYear()}-${pad(resolved.getMonth() + 1)}-${pad(resolved.getDate())}T${pad(resolved.getHours())}:${pad(resolved.getMinutes())}`;
-}
-
-/**
- * Parse a datetime-local string as wall-clock time in the browser timezone.
- */
-function parseDateTimeLocal(value: string): Date {
-    const [datePart, timePart = "00:00"] = value.split("T");
-    const [year, month, day] = datePart.split("-").map(Number);
-    const [hour, minute] = timePart.split(":").map(Number);
-
-    return new Date(year, (month ?? 1) - 1, day ?? 1, hour ?? 0, minute ?? 0);
-}
-
-/**
- * Get the quote for the currency at the provided date.
- */
-function quoteAsOf(currency: Currency, at: Date): Quote | null {
-    const atMs = at.getTime();
-    let best: Quote | null = null;
-    let bestMs = Number.NEGATIVE_INFINITY;
-
-    for (const quote of currency.quotes ?? []) {
-        const observedMs = new Date(quote.observed_at).getTime();
-
-        if (Number.isNaN(observedMs) || observedMs > atMs) {
-            continue;
-        }
-
-        if (observedMs >= bestMs) {
-            best = quote;
-            bestMs = observedMs;
-        }
-    }
-
-    return best;
-}
-
-/**
- * Strip padded decimal:18 zeros so a catalog rate can sit in an input.
- */
-function trimTrailingZeros(value: string): string {
-    if (!value.includes(".")) {
-        return value;
-    }
-
-    return value.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
 }
 
 const TYPE_ICONS: Record<AccountType, LucideIcon> = {

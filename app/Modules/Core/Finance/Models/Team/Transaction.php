@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property numeric $quote
  * @property string $team_id
  * @property \App\Modules\Core\Finance\Enums\Transaction\TransactionType $type
+ * @property string|null $transfer_id
  * @property string|null $user_id
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
@@ -34,12 +35,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Tag> $tags
  * @property-read \App\Modules\Core\Identity\Models\Team $team
+ * @property-read \App\Modules\Core\Finance\Models\Team\Transfer|null $transfer
  * @property-read \App\Modules\Core\Identity\Models\User|null $user
  *
  * @method static \Database\Factories\Modules\Core\Finance\Models\Team\TransactionFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction occurredFrom(string $date)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction ofType(string $type)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction occurredUntil(string $date)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction withAnyTags(array<int, string>|string $ids)
@@ -49,6 +52,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable('amount', 'decimal_places', 'description', 'occurred_at', 'quote', 'type')]
 class Transaction extends Model
 {
+    /**
+     * The type filter value matching both legs of a transfer.
+     */
+    public const string TRANSFER_TYPE = 'transfer';
+
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
@@ -93,8 +101,8 @@ class Transaction extends Model
         return [
             'amount' => 'decimal:18',
             'decimal_places' => 'integer',
-            'quote' => 'decimal:18',
             'occurred_at' => 'datetime',
+            'quote' => 'decimal:18',
             'type' => TransactionType::class,
         ];
     }
@@ -107,6 +115,37 @@ class Transaction extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    /**
+     * Scope the query to transactions of the given type, where the
+     * transfer value matches both of its legs.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<\App\Modules\Core\Finance\Models\Team\Transaction>  $query
+     */
+    #[Scope]
+    protected function ofType(Builder $query, string $type): void
+    {
+        $query->when(
+            $type === self::TRANSFER_TYPE,
+            fn (Builder $query): Builder => $query->whereIn('type', TransactionType::transferCases()),
+            fn (Builder $query): Builder => $query->where('type', $type),
+        );
+    }
+
+    /**
+     * Get the values the transactions index type filter accepts, where
+     * the transfer value matches both legs of a transfer.
+     *
+     * @return array<int, string>
+     */
+    public static function typeFilters(): array
+    {
+        return [
+            ...array_column(TransactionType::recordableCases(), 'value'),
+            TransactionType::OpeningBalance->value,
+            self::TRANSFER_TYPE,
+        ];
     }
 
     /**
@@ -139,6 +178,16 @@ class Transaction extends Model
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * Get the transfer that owns the transaction.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Finance\Models\Team\Transfer, $this>
+     */
+    public function transfer(): BelongsTo
+    {
+        return $this->belongsTo(Transfer::class);
     }
 
     /**

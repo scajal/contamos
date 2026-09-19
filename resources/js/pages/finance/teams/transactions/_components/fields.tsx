@@ -1,26 +1,21 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CalendarIcon, CheckIcon, DollarSignIcon, ListIcon, StickyNoteIcon, TagIcon } from "lucide-react";
+import { DollarSignIcon, ListIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { ChipSetCheck } from "@/components/chip-set-check";
+import { DateChip, NotesChip, TagsChip } from "@/components/movement-chips";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
     Combobox,
-    ComboboxChip,
-    ComboboxChips,
-    ComboboxChipsInput,
     ComboboxContent,
-    ComboboxEmpty,
     ComboboxInput,
     ComboboxItem,
     ComboboxList,
     ComboboxTrigger,
     ComboboxValue,
-    useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import {
     InputGroup,
     InputGroupAddon,
@@ -29,19 +24,23 @@ import {
     InputGroupText,
 } from "@/components/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { TRANSACTION_AMOUNT_COLOR } from "@/lib/transactions";
+import {
+    TRANSACTION_AMOUNT_COLOR,
+    parseDateTimeLocal,
+    quoteAsOf,
+    toDateTimeLocalValue,
+    trimTrailingZeros,
+} from "@/lib/transactions";
 import { cn, markFormDirty } from "@/lib/utils";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
-import { Quote } from "@/types/app/modules/core/catalog/models/currency/quote";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 
 type FormProps = Partial<
-    Omit<Transaction, "account" | "currency" | "tags" | "team" | "user"> & { tag_ids: Array<string> }
+    Omit<Transaction, "account" | "currency" | "tags" | "team" | "transfer" | "user"> & { tag_ids: Array<string> }
 >;
 
 type Props = FormComponentSlotProps<FormProps> & {
@@ -52,108 +51,6 @@ type Props = FormComponentSlotProps<FormProps> & {
     trackTypeChanges?: boolean;
     type: TransactionType;
 };
-
-/**
- * Format a Date as a datetime-local input value (YYYY-MM-DDTHH:mm).
- */
-function toDateTimeLocalValue(value?: string): string {
-    const date = value === undefined ? new Date() : parseDateTimeLocal(value);
-    const resolved = Number.isNaN(date.getTime()) ? new Date() : date;
-    const pad = (part: number) => String(part).padStart(2, "0");
-
-    return `${resolved.getFullYear()}-${pad(resolved.getMonth() + 1)}-${pad(resolved.getDate())}T${pad(resolved.getHours())}:${pad(resolved.getMinutes())}`;
-}
-
-/**
- * Parse a datetime-local string as wall-clock time in the browser timezone.
- */
-function parseDateTimeLocal(value: string): Date {
-    const [datePart, timePart = "00:00"] = value.split("T");
-    const [year, month, day] = datePart.split("-").map(Number);
-    const [hour, minute] = timePart.split(":").map(Number);
-
-    return new Date(year, (month ?? 1) - 1, day ?? 1, hour ?? 0, minute ?? 0);
-}
-
-/**
- * Whether the two dates are the same day in the local timezone.
- */
-function isSameLocalDay(left: Date, right: Date): boolean {
-    return (
-        left.getFullYear() === right.getFullYear() &&
-        left.getMonth() === right.getMonth() &&
-        left.getDate() === right.getDate()
-    );
-}
-
-/**
- * Set the date of the occurred at value to the provided date.
- */
-function withLocalDate(occurredAt: string, date: Date): string {
-    const current = parseDateTimeLocal(occurredAt);
-    const pad = (part: number) => String(part).padStart(2, "0");
-
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(current.getHours())}:${pad(current.getMinutes())}`;
-}
-
-/**
- * Set the time of the occurred at value to the provided time.
- */
-function withLocalTime(occurredAt: string, time: string): string {
-    const [datePart] = occurredAt.split("T");
-
-    return `${datePart}T${time || "00:00"}`;
-}
-
-/**
- * Get the quote for the currency at the provided date.
- */
-function quoteAsOf(currency: Currency | null, at: Date): Quote | null {
-    if (!currency) {
-        return null;
-    }
-
-    const atMs = at.getTime();
-    let best: Quote | null = null;
-    let bestMs = Number.NEGATIVE_INFINITY;
-
-    for (const quote of currency.quotes ?? []) {
-        const observedMs = new Date(quote.observed_at).getTime();
-
-        if (Number.isNaN(observedMs) || observedMs > atMs) {
-            continue;
-        }
-
-        if (observedMs >= bestMs) {
-            best = quote;
-            bestMs = observedMs;
-        }
-    }
-
-    return best;
-}
-
-/**
- * Strip padded decimal:18 zeros so a catalog rate can sit in an input.
- */
-function trimTrailingZeros(value: string): string {
-    if (!value.includes(".")) {
-        return value;
-    }
-
-    return value.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
-}
-
-/**
- * Right-aligned check on a chip whose popover holds a non-default value.
- */
-function ChipSetCheck({ show }: { show: boolean }) {
-    if (!show) {
-        return null;
-    }
-
-    return <CheckIcon aria-hidden className="text-success ml-auto size-3.5 shrink-0" data-icon="inline-end" />;
-}
 
 export const Fields = ({
     accounts,
@@ -230,11 +127,6 @@ export const Fields = ({
     const [quoteValue, setQuoteValue] = useState(() =>
         defaultValues?.quote ? trimTrailingZeros(String(defaultValues.quote)) : "",
     );
-
-    /**
-     * Anchor the tags dropdown to the full chips field.
-     */
-    const tagsAnchor = useComboboxAnchor();
 
     /**
      * The fields ref.
@@ -436,164 +328,29 @@ export const Fields = ({
             {quoteMissing || quoteOverridden ? <input name="quote" type="hidden" value={quoteValue} /> : null}
             <div className="flex flex-col gap-2">
                 <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-2">
-                    <Popover>
-                        <PopoverTrigger
-                            render={
-                                <Button
-                                    className="max-w-full min-w-0 justify-start"
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                />
-                            }
-                        >
-                            <CalendarIcon data-icon="inline-start" />
-                            <span className="min-w-0 truncate">
-                                {isSameLocalDay(occurredAtDate, new Date())
-                                    ? t("Today")
-                                    : new Intl.DateTimeFormat(currentLocale(), { dateStyle: "medium" }).format(
-                                          occurredAtDate,
-                                      )}
-                            </span>
-                            <ChipSetCheck show={!isSameLocalDay(occurredAtDate, new Date())} />
-                        </PopoverTrigger>
-                        <PopoverContent align="start" className="w-auto">
-                            <Calendar
-                                mode="single"
-                                onSelect={(date) => {
-                                    if (!date) {
-                                        return;
-                                    }
-
-                                    setOccurredAt(withLocalDate(occurredAt, date));
-                                    markFormDirty(fields.current);
-                                }}
-                                selected={occurredAtDate}
-                            />
-                            <Field>
-                                <FieldLabel htmlFor="transaction-occurred-at-time">{t("Time")}</FieldLabel>
-                                <Input
-                                    id="transaction-occurred-at-time"
-                                    onChange={(event) => {
-                                        setOccurredAt(withLocalTime(occurredAt, event.target.value));
-                                        markFormDirty(fields.current);
-                                    }}
-                                    type="time"
-                                    value={`${String(occurredAtDate.getHours()).padStart(2, "0")}:${String(occurredAtDate.getMinutes()).padStart(2, "0")}`}
-                                />
-                            </Field>
-                        </PopoverContent>
-                    </Popover>
-                    <Popover>
-                        <PopoverTrigger
-                            className="w-full min-w-0"
-                            render={
-                                <Button
-                                    aria-invalid={invalid("description")}
-                                    className="w-full min-w-0 justify-start"
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                />
-                            }
-                        >
-                            <StickyNoteIcon data-icon="inline-start" />
-                            <span className="min-w-0 truncate">{t("Notes")}</span>
-                            <ChipSetCheck show={description.trim() !== ""} />
-                        </PopoverTrigger>
-                        <PopoverContent align="start" className="w-80">
-                            <Field data-invalid={invalid("description") || undefined}>
-                                <FieldLabel htmlFor="transaction-description">{t("Notes")}</FieldLabel>
-                                <Textarea
-                                    aria-invalid={invalid("description")}
-                                    id="transaction-description"
-                                    onChange={(event) => {
-                                        setDescription(event.target.value);
-                                        markFormDirty(fields.current);
-                                    }}
-                                    placeholder={t("Enter a description")}
-                                    value={description}
-                                />
-                                {invalid("description") && <FieldError>{errors.description}</FieldError>}
-                            </Field>
-                        </PopoverContent>
-                    </Popover>
-                    <Popover
-                        onOpenChange={(open, details) => {
-                            if (
-                                !open &&
-                                details.reason === "outside-press" &&
-                                details.event.target instanceof Element &&
-                                details.event.target.closest("[data-slot=combobox-content]")
-                            ) {
-                                details.cancel();
-                            }
-                        }}
-                    >
-                        <PopoverTrigger
-                            className="w-full min-w-0"
-                            render={
-                                <Button
-                                    aria-invalid={invalid("tag_ids")}
-                                    className="w-full min-w-0 justify-start"
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                />
-                            }
-                        >
-                            <TagIcon data-icon="inline-start" />
-                            <span className="min-w-0 truncate">{t("Tags")}</span>
-                            <ChipSetCheck show={selectedTags.length > 0} />
-                        </PopoverTrigger>
-                        <PopoverContent align="end" className="w-80">
-                            <Field data-invalid={invalid("tag_ids") || undefined}>
-                                <FieldLabel htmlFor="transaction-tags">{t("Tags")}</FieldLabel>
-                                <Combobox<Tag, true>
-                                    isItemEqualToValue={(left, right) => left.id === right.id}
-                                    items={tags}
-                                    itemToStringLabel={(item) => item.name}
-                                    itemToStringValue={(item) => item.id}
-                                    multiple
-                                    onValueChange={(value) => {
-                                        setSelectedTags(value);
-                                        markFormDirty(fields.current);
-                                    }}
-                                    value={selectedTags}
-                                >
-                                    <ComboboxChips
-                                        aria-invalid={invalid("tag_ids")}
-                                        className="w-full"
-                                        ref={tagsAnchor}
-                                    >
-                                        <InputGroupAddon>
-                                            <TagIcon />
-                                        </InputGroupAddon>
-                                        <ComboboxValue>
-                                            {selectedTags.map((tag) => (
-                                                <ComboboxChip key={tag.id}>{tag.name}</ComboboxChip>
-                                            ))}
-                                        </ComboboxValue>
-                                        <ComboboxChipsInput
-                                            id="transaction-tags"
-                                            placeholder={selectedTags.length > 0 ? undefined : t("Select tags")}
-                                        />
-                                    </ComboboxChips>
-                                    <ComboboxContent anchor={tagsAnchor}>
-                                        <ComboboxEmpty>{t("No tags found")}</ComboboxEmpty>
-                                        <ComboboxList>
-                                            {(tag) => (
-                                                <ComboboxItem key={tag.id} value={tag}>
-                                                    {tag.name}
-                                                </ComboboxItem>
-                                            )}
-                                        </ComboboxList>
-                                    </ComboboxContent>
-                                </Combobox>
-                                {invalid("tag_ids") && <FieldError>{errors.tag_ids}</FieldError>}
-                            </Field>
-                        </PopoverContent>
-                    </Popover>
+                    <DateChip
+                        fields={fields}
+                        idPrefix="transaction"
+                        occurredAt={occurredAt}
+                        onOccurredAtChange={setOccurredAt}
+                    />
+                    <NotesChip
+                        description={description}
+                        error={errors.description}
+                        fields={fields}
+                        idPrefix="transaction"
+                        invalid={invalid("description")}
+                        onDescriptionChange={setDescription}
+                    />
+                    <TagsChip
+                        error={errors.tag_ids}
+                        fields={fields}
+                        idPrefix="transaction"
+                        invalid={invalid("tag_ids")}
+                        onSelectedTagsChange={setSelectedTags}
+                        selectedTags={selectedTags}
+                        tags={tags}
+                    />
                 </div>
                 {currency ? (
                     <Popover

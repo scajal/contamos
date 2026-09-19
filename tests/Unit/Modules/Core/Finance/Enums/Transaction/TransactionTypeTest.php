@@ -16,4 +16,16 @@ it('translates the transaction type label', function (TransactionType $type, str
     'expense' => [TransactionType::Expense, 'Expense'],
     'income' => [TransactionType::Income, 'Income'],
     'opening balance' => [TransactionType::OpeningBalance, 'Opening balance'],
+    'transfer in' => [TransactionType::TransferIn, 'Transfer in'],
+    'transfer out' => [TransactionType::TransferOut, 'Transfer out'],
+]);
+
+it('knows which types are a leg of a transfer', function (TransactionType $type, bool $isTransfer): void {
+    expect($type->isTransfer())->toBe($isTransfer);
+})->with([
+    'expense' => [TransactionType::Expense, false],
+    'income' => [TransactionType::Income, false],
+    'opening balance' => [TransactionType::OpeningBalance, false],
+    'transfer in' => [TransactionType::TransferIn, true],
+    'transfer out' => [TransactionType::TransferOut, true],
 ]);

@@ -1,9 +1,10 @@
-import { Deferred, InfiniteScroll, usePage } from "@inertiajs/react";
+import { Deferred, InfiniteScroll, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { format, parse } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
     ArrowDownIcon,
+    ArrowLeftRightIcon,
     ArrowUpIcon,
     CircleDashedIcon,
     EyeIcon,
@@ -12,11 +13,14 @@ import {
     PencilIcon,
     SearchIcon,
     SearchXIcon,
+    TrashIcon,
     XIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { type DateRange } from "react-day-picker";
 import { Fragment } from "react/jsx-runtime";
 
+import { ConfirmAction } from "@/components/confirm-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -42,11 +46,13 @@ import {
     TRANSACTION_AMOUNT_SIGN,
     TRANSACTION_COLUMNS,
     TRANSACTION_TABLE_CLASS,
+    type TransactionTypeFilter,
 } from "@/lib/transactions";
+import { counterpartAccountName } from "@/lib/transfers";
 import { cn, formatAmount } from "@/lib/utils";
 import routes from "@/routes/finance/teams/transactions";
+import transferRoutes from "@/routes/finance/teams/transfers";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
-import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
@@ -54,7 +60,7 @@ import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware
 
 type PageFilters = {
     search: string | null;
-    type: TransactionType | null;
+    type: TransactionTypeFilter | null;
     account: string | null;
     currency: string | null;
     tags: string | null;
@@ -68,7 +74,7 @@ type PageProps = {
     filters: Partial<PageFilters>;
     tags: Tag[];
     transactions: LengthAwarePaginator<Transaction>;
-    types: TransactionType[];
+    types: TransactionTypeFilter[];
 };
 
 /**
@@ -147,6 +153,17 @@ const CreateTransactionMenu = ({ className }: { className?: string }) => {
                     <ModalLink href={routes.create.url({ team, type: "income" })}>
                         <ArrowDownIcon data-icon="inline-start" />
                         {t("enums.income")}
+                    </ModalLink>
+                }
+                variant="outline"
+            />
+            <Button
+                className="max-sm:flex-1"
+                nativeButton={false}
+                render={
+                    <ModalLink href={transferRoutes.create.url({ team })}>
+                        <ArrowLeftRightIcon data-icon="inline-start" />
+                        {t("Transfer")}
                     </ModalLink>
                 }
                 variant="outline"
@@ -238,7 +255,9 @@ const Filters = () => {
                             <Select onValueChange={(value) => setFilters({ type: value })} value={filters.type}>
                                 <SelectTrigger className="w-full">
                                     <SelectValue>
-                                        {(value: TransactionType | null) => `${value ? t(`enums.${value}`) : t("All")}`}
+                                        {(value: TransactionTypeFilter | null) =>
+                                            `${value ? t(`enums.${value}`) : t("All")}`
+                                        }
                                     </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -359,12 +378,12 @@ const Listing = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const { currentLocale, t } = useLaravelReactI18n();
+    const t = useLaravelReactI18n().t;
 
     /**
      * The page's props.
      */
-    const { filters, transactions, user } = usePage<PageProps>().props;
+    const { filters, transactions } = usePage<PageProps>().props;
 
     /**
      * Whether the listing is being filtered.
@@ -377,11 +396,6 @@ const Listing = () => {
     const grouped = Map.groupBy(transactions?.data ?? [], (transaction) =>
         format(new Date(transaction.occurred_at), "yyyy-MM-dd"),
     );
-
-    /**
-     * The current team's route key.
-     */
-    const team = user?.current_team?.slug ?? "";
 
     return (
         <Deferred data="transactions" fallback={<SkeletonGroup />}>
@@ -428,85 +442,7 @@ const Listing = () => {
                                     <TableComponent className={TRANSACTION_TABLE_CLASS}>
                                         <TableBody>
                                             {items.map((transaction) => (
-                                                <TableRow key={transaction.id}>
-                                                    <TableCell
-                                                        className={cn(
-                                                            "text-muted-foreground tabular-nums",
-                                                            TRANSACTION_COLUMNS.time,
-                                                        )}
-                                                    >
-                                                        {format(new Date(transaction.occurred_at), "HH:mm")}
-                                                    </TableCell>
-                                                    <TableCell className={TRANSACTION_COLUMNS.account}>
-                                                        <TruncatedText
-                                                            className="w-full"
-                                                            fallback="-"
-                                                            value={transaction.account?.name}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell className={TRANSACTION_COLUMNS.description}>
-                                                        <TruncatedText
-                                                            className="w-full"
-                                                            fallback={t(`enums.${transaction.type}`)}
-                                                            value={transaction.description}
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell className={TRANSACTION_COLUMNS.tags}>
-                                                        <TagsCell tags={transaction.tags ?? []} />
-                                                    </TableCell>
-                                                    <TableCell className={cn("text-right", TRANSACTION_COLUMNS.amount)}>
-                                                        <span
-                                                            className={cn(
-                                                                "font-medium tabular-nums",
-                                                                TRANSACTION_AMOUNT_COLOR[transaction.type],
-                                                            )}
-                                                        >
-                                                            {`${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
-                                                        </span>
-                                                    </TableCell>
-                                                    <TableCell
-                                                        className={cn("text-right", TRANSACTION_COLUMNS.actions)}
-                                                    >
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger
-                                                                render={<Button size="icon" variant="ghost" />}
-                                                            >
-                                                                <MoreHorizontalIcon />
-                                                                <span className="sr-only">{t("Actions")}</span>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
-                                                                <DropdownMenuGroup>
-                                                                    <DropdownMenuItem
-                                                                        render={
-                                                                            <ModalLink
-                                                                                href={routes.show.url({
-                                                                                    team,
-                                                                                    transaction: transaction.id,
-                                                                                })}
-                                                                            >
-                                                                                <EyeIcon />
-                                                                                <span>{t("View")}</span>
-                                                                            </ModalLink>
-                                                                        }
-                                                                    />
-                                                                    <DropdownMenuItem
-                                                                        render={
-                                                                            <ModalLink
-                                                                                href={routes.edit.url({
-                                                                                    team,
-                                                                                    transaction: transaction.id,
-                                                                                })}
-                                                                            >
-                                                                                <PencilIcon />
-                                                                                <span>{t("Edit")}</span>
-                                                                            </ModalLink>
-                                                                        }
-                                                                    />
-                                                                </DropdownMenuGroup>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </TableCell>
-                                                </TableRow>
+                                                <TransactionRow key={transaction.id} transaction={transaction} />
                                             ))}
                                         </TableBody>
                                     </TableComponent>
@@ -517,6 +453,132 @@ const Listing = () => {
                 </InfiniteScroll>
             </div>
         </Deferred>
+    );
+};
+
+const TransactionRow = ({ transaction }: { transaction: Transaction }) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const { currentLocale, t } = useLaravelReactI18n();
+
+    /**
+     * The page's props.
+     */
+    const { user } = usePage().props;
+
+    /**
+     * The current team's route key.
+     */
+    const team = user?.current_team?.slug ?? "";
+
+    /**
+     * The transfer the row belongs to, when it is one of its legs or fees.
+     */
+    const transferId = transaction.transfer_id;
+
+    /**
+     * The account on the other side, so a transfer row says where the
+     * money went or came from.
+     */
+    const counterpart = transferId ? counterpartAccountName(transaction) : null;
+
+    /**
+     * Where the row's View, Edit, and Delete actions lead. A row owned by
+     * a transfer acts on the transfer, so it is never left half-recorded.
+     */
+    const show = transferId
+        ? transferRoutes.show.url({ team, transfer: transferId })
+        : routes.show.url({ team, transaction: transaction.id });
+    const edit = transferId
+        ? transferRoutes.edit.url({ team, transfer: transferId })
+        : routes.edit.url({ team, transaction: transaction.id });
+    const destroy = transferId
+        ? transferRoutes.destroy.url({ team, transfer: transferId })
+        : routes.destroy.url({ team, transaction: transaction.id });
+
+    /**
+     * Whether the delete confirmation dialog is open.
+     */
+    const [deleteOpen, setDeleteOpen] = useState(false);
+
+    return (
+        <TableRow>
+            <TableCell className={cn("text-muted-foreground tabular-nums", TRANSACTION_COLUMNS.time)}>
+                {format(new Date(transaction.occurred_at), "HH:mm")}
+            </TableCell>
+            <TableCell className={TRANSACTION_COLUMNS.account}>
+                <TruncatedText className="w-full" fallback="-" value={transaction.account?.name} />
+            </TableCell>
+            <TableCell className={TRANSACTION_COLUMNS.description}>
+                <div className="flex min-w-0 items-center gap-1.5">
+                    {transferId ? (
+                        <ArrowLeftRightIcon
+                            aria-label={t("Transfer")}
+                            className="text-muted-foreground size-3.5 shrink-0"
+                        />
+                    ) : null}
+                    <TruncatedText
+                        className="w-full"
+                        fallback={counterpart ?? t(`enums.${transaction.type}`)}
+                        value={counterpart ?? transaction.description}
+                    />
+                </div>
+            </TableCell>
+            <TableCell className={TRANSACTION_COLUMNS.tags}>
+                <TagsCell tags={transaction.tags ?? []} />
+            </TableCell>
+            <TableCell className={cn("text-right", TRANSACTION_COLUMNS.amount)}>
+                <span className={cn("font-medium tabular-nums", TRANSACTION_AMOUNT_COLOR[transaction.type])}>
+                    {`${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
+                </span>
+            </TableCell>
+            <TableCell className={cn("text-right", TRANSACTION_COLUMNS.actions)}>
+                <DropdownMenu>
+                    <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
+                        <MoreHorizontalIcon />
+                        <span className="sr-only">{t("Actions")}</span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem
+                                render={
+                                    <ModalLink href={show}>
+                                        <EyeIcon />
+                                        <span>{t("View")}</span>
+                                    </ModalLink>
+                                }
+                            />
+                            <DropdownMenuItem
+                                render={
+                                    <ModalLink href={edit}>
+                                        <PencilIcon />
+                                        <span>{t("Edit")}</span>
+                                    </ModalLink>
+                                }
+                            />
+                            <DropdownMenuItem onClick={() => setDeleteOpen(true)} variant="destructive">
+                                <TrashIcon />
+                                <span>{t("Delete")}</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <ConfirmAction
+                    action={<Link href={destroy} method="delete" />}
+                    confirmLabel={t("Delete")}
+                    description={t("This action cannot be undone.")}
+                    onOpenChange={setDeleteOpen}
+                    open={deleteOpen}
+                    title={
+                        transferId
+                            ? t("Are you sure you want to delete the transfer?")
+                            : t("Are you sure you want to delete the transaction?")
+                    }
+                />
+            </TableCell>
+        </TableRow>
     );
 };
 

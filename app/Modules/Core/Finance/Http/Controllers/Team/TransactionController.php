@@ -26,6 +26,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use InertiaUI\Modal\Modal;
 use Spatie\QueryBuilder\QueryBuilder;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class TransactionController
 {
@@ -39,11 +40,11 @@ class TransactionController
             'currencies' => Currency::query()->isActive()->orderBy('name')->get(),
             'filters' => $request->presentedFilters(),
             'tags' => $team->tags()->orderBy('name')->get(),
-            'types' => TransactionType::cases(),
+            'types' => Transaction::typeFilters(),
             'transactions' => Inertia::scroll(
                 fn (): LengthAwarePaginator => QueryBuilder::for($team->transactions(), $request)
                     ->allowedFilters(...$request->filters())
-                    ->with('account', 'currency', 'user', 'tags')
+                    ->with('account', 'currency', 'user', 'tags', 'transfer.transactions.account')
                     ->orderBy('occurred_at', 'desc')
                     ->paginate(10)
                     ->withQueryString(),
@@ -106,6 +107,8 @@ class TransactionController
      */
     public function edit(Team $team, Transaction $transaction): Modal
     {
+        $this->assertTransactionIsNotOwnedByATransfer($transaction);
+
         $transaction->load('account', 'currency', 'user', 'tags');
 
         return Inertia::modal('finance/teams/transactions/edit', [
@@ -128,6 +131,8 @@ class TransactionController
      */
     public function update(Team $team, Transaction $transaction, UpdateRequest $request, UpdateTransaction $updateTransaction): RedirectResponse
     {
+        $this->assertTransactionIsNotOwnedByATransfer($transaction);
+
         // Update the transaction.
         $updateTransaction
             ->for($team)
@@ -153,6 +158,8 @@ class TransactionController
      */
     public function destroy(Team $team, Transaction $transaction, DeleteTransaction $deleteTransaction): RedirectResponse
     {
+        $this->assertTransactionIsNotOwnedByATransfer($transaction);
+
         // Delete the transaction and revert its balance effect.
         $deleteTransaction
             ->for($team)
@@ -163,5 +170,18 @@ class TransactionController
             ->flash();
 
         return back();
+    }
+
+    /**
+     * Refuse a transaction owned by a transfer, which can only be
+     * edited or deleted through the transfer itself.
+     */
+    protected function assertTransactionIsNotOwnedByATransfer(Transaction $transaction): void
+    {
+        abort_if(
+            filled($transaction->getAttribute($transaction->transfer()->getForeignKeyName())),
+            HttpResponse::HTTP_FORBIDDEN,
+            trans('This movement belongs to a transfer. Edit or delete the transfer instead.'),
+        );
     }
 }
