@@ -37,3 +37,6 @@ Register schedules in the module `Routes/console.php` and require it from `route
 
 ## Feature enum is the Pennant API
 Gate and check plan limits through the Feature enum (`EnsureFeaturesAreActive::using(Feature::…)`, `Feature::enabled($scope)`, `limitOn($plan)`). Enum values must match the Pennant `#[Name]`. Do not pass feature class names or raw strings at call sites.
+
+## Gate team routes with EnsureTeamPermission::using
+Gate team routes on a permission with `Route::middleware(EnsureTeamPermission::using(Permission::X))`, the way Pennant's feature middleware is applied. It runs after `EnsureTeamMembership`. Do not pass raw middleware strings, and do not use `can:` middleware.

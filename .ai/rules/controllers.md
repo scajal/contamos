@@ -55,3 +55,9 @@ Models with an on/off flag use Support HasActivation (`is_active`, `activate()` 
 
 ## Feature enum is the Pennant API
 Gate and check plan limits through the Feature enum (`EnsureFeaturesAreActive::using(Feature::…)`, `Feature::enabled($scope)`, `limitOn($plan)`). Enum values must match the Pennant `#[Name]`. Do not pass feature class names or raw strings at call sites.
+
+## Check permissions with hasTeamPermission
+When a route's permission middleware cannot express the check, guard in the controller with `abort_if` / `abort_unless` on `$user->hasTeamPermission($team, Permission::X)`. Expose the result to Inertia as a boolean prop (`canManageBilling`) rather than sending roles to the frontend.
+
+## Redirect with to_route
+Redirect to an application route with `to_route('name', [...])`. Reserve `redirect()` for URLs that are not named routes, such as `redirect()->away($url)` and `redirect()->to($url)`. Do not use `redirect()->route(...)`.
