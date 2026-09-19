@@ -9,6 +9,10 @@ import type { Transaction } from "./transaction";
 export interface Transfer {
     id: string;
     description: string | null;
+    destination_fee_id: string | null;
+    destination_leg_id: string | null;
+    origin_fee_id: string | null;
+    origin_leg_id: string | null;
     occurred_at: string;
     team_id: string;
     user_id: string | null;

@@ -1,4 +1,4 @@
-import { Deferred, InfiniteScroll, usePage } from "@inertiajs/react";
+import { Deferred, InfiniteScroll, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { format, parse } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
@@ -13,11 +13,14 @@ import {
     PencilIcon,
     SearchIcon,
     SearchXIcon,
+    TrashIcon,
     XIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { type DateRange } from "react-day-picker";
 import { Fragment } from "react/jsx-runtime";
 
+import { ConfirmAction } from "@/components/confirm-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -482,7 +485,8 @@ const TransactionRow = ({ transaction }: { transaction: Transaction }) => {
     const counterpart = transferId ? counterpartAccountName(transaction) : null;
 
     /**
-     * Where the row's View and Edit actions lead.
+     * Where the row's View, Edit, and Delete actions lead. A row owned by
+     * a transfer acts on the transfer, so it is never left half-recorded.
      */
     const show = transferId
         ? transferRoutes.show.url({ team, transfer: transferId })
@@ -490,6 +494,14 @@ const TransactionRow = ({ transaction }: { transaction: Transaction }) => {
     const edit = transferId
         ? transferRoutes.edit.url({ team, transfer: transferId })
         : routes.edit.url({ team, transaction: transaction.id });
+    const destroy = transferId
+        ? transferRoutes.destroy.url({ team, transfer: transferId })
+        : routes.destroy.url({ team, transaction: transaction.id });
+
+    /**
+     * Whether the delete confirmation dialog is open.
+     */
+    const [deleteOpen, setDeleteOpen] = useState(false);
 
     return (
         <TableRow>
@@ -546,9 +558,25 @@ const TransactionRow = ({ transaction }: { transaction: Transaction }) => {
                                     </ModalLink>
                                 }
                             />
+                            <DropdownMenuItem onClick={() => setDeleteOpen(true)} variant="destructive">
+                                <TrashIcon />
+                                <span>{t("Delete")}</span>
+                            </DropdownMenuItem>
                         </DropdownMenuGroup>
                     </DropdownMenuContent>
                 </DropdownMenu>
+                <ConfirmAction
+                    action={<Link href={destroy} method="delete" />}
+                    confirmLabel={t("Delete")}
+                    description={t("This action cannot be undone.")}
+                    onOpenChange={setDeleteOpen}
+                    open={deleteOpen}
+                    title={
+                        transferId
+                            ? t("Are you sure you want to delete the transfer?")
+                            : t("Are you sure you want to delete the transaction?")
+                    }
+                />
             </TableCell>
         </TableRow>
     );

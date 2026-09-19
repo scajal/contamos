@@ -100,7 +100,7 @@ class UpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                Rule::in([TransactionType::Expense->value, TransactionType::Income->value, $transaction->type->value]),
+                Rule::in([...array_column(TransactionType::recordableCases(), 'value'), $transaction->type->value]),
             ],
         ];
     }

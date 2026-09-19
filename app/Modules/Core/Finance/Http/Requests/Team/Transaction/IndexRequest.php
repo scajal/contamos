@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Http\Requests\Team\Transaction;
 
 use App\Modules\Core\Catalog\Models\Currency;
-use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
@@ -101,7 +100,7 @@ class IndexRequest extends FormRequest
                 'sometimes',
                 'nullable',
                 'string',
-                Rule::in([...array_column(TransactionType::cases(), 'value'), Transaction::TRANSFER_TYPE]),
+                Rule::in(Transaction::typeFilters()),
             ],
             'filter.account' => [
                 'sometimes',

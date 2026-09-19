@@ -77,10 +77,7 @@ class CreateTransfer
 
             // Create the transfer for the team.
             /** @var \App\Modules\Core\Finance\Models\Team\Transfer $transfer */
-            $transfer = $team->transfers()->create([
-                'description' => $attributes['description'] ?? null,
-                'occurred_at' => $attributes['occurred_at'] ?? null,
-            ]);
+            $transfer = $team->transfers()->create($this->transferAttributes($attributes));
 
             // If the user is provided, associate it with the transfer.
             if ($this->user instanceof User) {

@@ -50,6 +50,27 @@ enum TransactionType: string implements HasLabel
     }
 
     /**
+     * Get the types a team records as a plain transaction, which is
+     * what the transaction create route and request accept.
+     *
+     * @return array<int, self>
+     */
+    public static function recordableCases(): array
+    {
+        return [self::Income, self::Expense];
+    }
+
+    /**
+     * Get the types that are a leg of a transfer.
+     *
+     * @return array<int, self>
+     */
+    public static function transferCases(): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $type): bool => $type->isTransfer()));
+    }
+
+    /**
      * Get the sign that reverts the effect of the
      * transaction type on a balance.
      */

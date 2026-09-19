@@ -9,9 +9,8 @@ use App\Modules\Core\Identity\Models\Team;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Shared balance arithmetic for the transfer actions. Requires the
- * using class to expose a `?Team $team` property, as
- * \App\Modules\Core\Finance\Actions\Team\CreateTransfer does.
+ * Shared balance arithmetic for the transfer actions, which pass the
+ * team whose account pivot holds the balance.
  */
 trait AppliesTransactionBalances
 {

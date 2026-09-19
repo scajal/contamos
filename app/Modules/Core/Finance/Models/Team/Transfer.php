@@ -10,6 +10,7 @@ use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\HasTags;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,6 +20,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property string $id
  * @property string|null $description
+ * @property-read string|null $destination_fee_id
+ * @property-read string|null $destination_leg_id
+ * @property-read string|null $origin_fee_id
+ * @property-read string|null $origin_leg_id
  * @property \Carbon\CarbonImmutable $occurred_at
  * @property string $team_id
  * @property string|null $user_id
@@ -40,6 +45,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable('description', 'occurred_at')]
 class Transfer extends Model
 {
+    /**
+     * The accessors to append to the model's array form, so the client
+     * resolves the legs and fees by key instead of repeating the
+     * matching rules.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'destination_fee_id',
+        'destination_leg_id',
+        'origin_fee_id',
+        'origin_leg_id',
+    ];
+
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
 
@@ -68,6 +87,26 @@ class Transfer extends Model
     public function destinationFee(): ?Transaction
     {
         return $this->fee($this->destinationLeg());
+    }
+
+    /**
+     * Get the key of the fee charged on the destination account.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute<string|null, never>
+     */
+    protected function destinationFeeId(): Attribute
+    {
+        return Attribute::get(fn (): ?string => $this->destinationFee()?->id);
+    }
+
+    /**
+     * Get the key of the leg crediting the destination account.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute<string|null, never>
+     */
+    protected function destinationLegId(): Attribute
+    {
+        return Attribute::get(fn (): ?string => $this->destinationLeg()?->id);
     }
 
     /**
@@ -119,6 +158,26 @@ class Transfer extends Model
     public function originLeg(): ?Transaction
     {
         return $this->leg(TransactionType::TransferOut);
+    }
+
+    /**
+     * Get the key of the fee charged on the origin account.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute<string|null, never>
+     */
+    protected function originFeeId(): Attribute
+    {
+        return Attribute::get(fn (): ?string => $this->originFee()?->id);
+    }
+
+    /**
+     * Get the key of the leg debiting the origin account.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute<string|null, never>
+     */
+    protected function originLegId(): Attribute
+    {
+        return Attribute::get(fn (): ?string => $this->originLeg()?->id);
     }
 
     /**

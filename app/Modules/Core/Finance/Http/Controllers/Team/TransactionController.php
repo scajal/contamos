@@ -22,11 +22,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use InertiaUI\Modal\Modal;
 use Spatie\QueryBuilder\QueryBuilder;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class TransactionController
 {
@@ -40,12 +40,7 @@ class TransactionController
             'currencies' => Currency::query()->isActive()->orderBy('name')->get(),
             'filters' => $request->presentedFilters(),
             'tags' => $team->tags()->orderBy('name')->get(),
-            'types' => [
-                TransactionType::Income->value,
-                TransactionType::Expense->value,
-                TransactionType::OpeningBalance->value,
-                Transaction::TRANSFER_TYPE,
-            ],
+            'types' => Transaction::typeFilters(),
             'transactions' => Inertia::scroll(
                 fn (): LengthAwarePaginator => QueryBuilder::for($team->transactions(), $request)
                     ->allowedFilters(...$request->filters())
@@ -183,12 +178,10 @@ class TransactionController
      */
     protected function assertTransactionIsNotOwnedByATransfer(Transaction $transaction): void
     {
-        if (blank($transaction->getAttribute($transaction->transfer()->getForeignKeyName()))) {
-            return;
-        }
-
-        throw ValidationException::withMessages([
-            'transfer' => trans('This movement belongs to a transfer. Edit or delete the transfer instead.'),
-        ]);
+        abort_if(
+            filled($transaction->getAttribute($transaction->transfer()->getForeignKeyName())),
+            HttpResponse::HTTP_FORBIDDEN,
+            trans('This movement belongs to a transfer. Edit or delete the transfer instead.'),
+        );
     }
 }

@@ -12,40 +12,40 @@ export type TransferLegs = {
 };
 
 /**
- * Split the transactions a transfer owns into its legs and its fees, matching
- * each fee to the side it sits on, as the Transfer model does server side.
+ * Split the transactions a transfer owns into its legs and its fees. The
+ * server resolves which row is which and sends the keys, so the matching
+ * rules live only on the Transfer model.
  */
 export function transferLegs(transfer: Transfer): TransferLegs {
     const transactions = transfer.transactions ?? [];
-    const originLeg = transactions.find((transaction) => transaction.type === "transfer_out") ?? null;
-    const destinationLeg = transactions.find((transaction) => transaction.type === "transfer_in") ?? null;
-    const feeOn = (leg: Transaction | null): Transaction | null =>
-        leg
-            ? (transactions.find(
-                  (transaction) => transaction.type === "expense" && transaction.account_id === leg.account_id,
-              ) ?? null)
-            : null;
+    const byId = (id: string | null): Transaction | null =>
+        (id ? transactions.find((transaction) => transaction.id === id) : null) ?? null;
 
     return {
-        destinationFee: feeOn(destinationLeg),
-        destinationLeg,
-        originFee: feeOn(originLeg),
-        originLeg,
+        destinationFee: byId(transfer.destination_fee_id),
+        destinationLeg: byId(transfer.destination_leg_id),
+        originFee: byId(transfer.origin_fee_id),
+        originLeg: byId(transfer.origin_leg_id),
     };
 }
 
 /**
  * The account on the other side of the transfer the transaction belongs to,
- * so a leg or fee row can say where the money went or came from.
+ * so a leg row can say where the money went or came from.
  */
 export function counterpartAccountName(transaction: Transaction): string | null {
-    const transactions = transaction.transfer?.transactions ?? [];
+    const transfer = transaction.transfer;
 
-    return (
-        transactions.find(
-            (candidate) =>
-                (candidate.type === "transfer_in" || candidate.type === "transfer_out") &&
-                candidate.account_id !== transaction.account_id,
-        )?.account?.name ?? null
-    );
+    if (!transfer) {
+        return null;
+    }
+
+    const counterpartId =
+        transaction.id === transfer.origin_leg_id
+            ? transfer.destination_leg_id
+            : transaction.id === transfer.destination_leg_id
+              ? transfer.origin_leg_id
+              : null;
+
+    return (transfer.transactions ?? []).find((candidate) => candidate.id === counterpartId)?.account?.name ?? null;
 }

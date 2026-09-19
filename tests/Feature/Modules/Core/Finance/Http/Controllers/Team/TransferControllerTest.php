@@ -237,6 +237,19 @@ describe('store', function (): void {
             ->assertInvalid(['destination_quote', 'origin_quote']);
     });
 
+    it('keeps a submitted zero quote instead of falling back to the as-of rate', function (): void {
+        [$team, $origin, $destination, $currency] = actingTransferMember();
+        Quote::factory()->for($currency)->create(['observed_at' => '2024-06-01 00:00:00', 'rate' => '1.5']);
+
+        $transfer = storeTransfer($team, $origin, $destination, $currency, $currency, [
+            'destination_quote' => '0',
+            'origin_quote' => '0',
+        ]);
+
+        expect($transfer->originLeg()?->quote)->toBe('0.000000000000000000')
+            ->and($transfer->destinationLeg()?->quote)->toBe('0.000000000000000000');
+    });
+
     it('keeps the submitted quotes instead of the as-of rates', function (): void {
         [$team, $origin, $destination, $currency] = actingTransferMember();
         Quote::factory()->for($currency)->create(['observed_at' => '2024-06-01 00:00:00', 'rate' => '1.5']);
@@ -371,6 +384,10 @@ describe('show', function (): void {
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('finance/teams/transfers/show')
                 ->where('transfer.id', $transfer->getKey())
+                ->where('transfer.origin_leg_id', $transfer->originLeg()?->getKey())
+                ->where('transfer.destination_leg_id', $transfer->destinationLeg()?->getKey())
+                ->where('transfer.origin_fee_id', $transfer->originFee()?->getKey())
+                ->where('transfer.destination_fee_id', $transfer->destinationFee()?->getKey())
                 ->has('transfer.transactions', 4)
                 ->has('transfer.transactions.0.account')
                 ->has('transfer.transactions.0.currency')
@@ -465,6 +482,36 @@ describe('update', function (): void {
             ->and($transfer?->originLeg()?->description)->toBe('Moved more')
             ->and(balanceOf($origin, $currency))->toBe(60.0)
             ->and(balanceOf($destination, $currency))->toBe(40.0);
+    });
+
+    it('leaves the description alone when the field is omitted', function (): void {
+        [$team, $origin, $destination, $currency] = actingTransferMember();
+        $transfer = storeTransfer($team, $origin, $destination, $currency, $currency);
+
+        $payload = transferPayload($origin, $destination, $currency, $currency, ['amount_sent' => '30.00']);
+        unset($payload['description']);
+
+        $this->patch(route('finance.teams.transfers.update', ['team' => $team->getRouteKey(), 'transfer' => $transfer->getKey()]), $payload)
+            ->assertRedirect();
+
+        $transfer = $transfer->fresh()?->load('transactions');
+
+        expect($transfer?->description)->toBe('Rent savings')
+            ->and($transfer?->originLeg()?->description)->toBe('Rent savings');
+    });
+
+    it('clears the description when the field is submitted empty', function (): void {
+        [$team, $origin, $destination, $currency] = actingTransferMember();
+        $transfer = storeTransfer($team, $origin, $destination, $currency, $currency);
+
+        $this->patch(route('finance.teams.transfers.update', ['team' => $team->getRouteKey(), 'transfer' => $transfer->getKey()]), transferPayload($origin, $destination, $currency, $currency, [
+            'description' => null,
+        ]))->assertRedirect();
+
+        $transfer = $transfer->fresh()?->load('transactions');
+
+        expect($transfer?->description)->toBeNull()
+            ->and($transfer?->originLeg()?->description)->toBeNull();
     });
 
     it('moves the balances across accounts when a side changes account', function (): void {

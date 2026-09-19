@@ -78,10 +78,7 @@ class UpdateTransfer
 
             // Update the transfer itself, so the owned transactions copy
             // its new date and description.
-            $transfer->fill([
-                'description' => $attributes['description'] ?? null,
-                'occurred_at' => $attributes['occurred_at'] ?? null,
-            ])->save();
+            $transfer->fill($this->transferAttributes($attributes))->save();
 
             // Rewrite both legs in place, so they keep their ids.
             $transactions = [

@@ -24,8 +24,7 @@ trait ResolvesTransferInputs
     protected function accountFor(Team $team, string $key): ?Account
     {
         /** @var \App\Modules\Core\Finance\Models\Team\Account|null $account */
-        $account = Account::query()
-            ->where(new Account()->team()->getForeignKeyName(), $team->getKey())
+        $account = $team->accounts()
             ->find($this->input($key));
 
         return $account;
@@ -94,10 +93,16 @@ trait ResolvesTransferInputs
      */
     protected function prepareForValidation(): void
     {
+        $occurredAt = Instant::toUtc($this->input('occurred_at'), $this->input('timezone')) ?? $this->input('occurred_at');
+
         $this->merge([
-            'occurred_at' => $occurredAt = Instant::toUtc($this->input('occurred_at'), $this->input('timezone')) ?? $this->input('occurred_at'),
-            'destination_quote' => ($destinationQuote = $this->input('destination_quote')) ? $destinationQuote : Instant::resolveQuote($this->destinationCurrency(), $occurredAt)?->rate,
-            'origin_quote' => ($originQuote = $this->input('origin_quote')) ? $originQuote : Instant::resolveQuote($this->originCurrency(), $occurredAt)?->rate,
+            'occurred_at' => $occurredAt,
+            'destination_quote' => blank($destinationQuote = $this->input('destination_quote'))
+                ? Instant::resolveQuote($this->destinationCurrency(), $occurredAt)?->rate
+                : $destinationQuote,
+            'origin_quote' => blank($originQuote = $this->input('origin_quote'))
+                ? Instant::resolveQuote($this->originCurrency(), $occurredAt)?->rate
+                : $originQuote,
         ]);
     }
 

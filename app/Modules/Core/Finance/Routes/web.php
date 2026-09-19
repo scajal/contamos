@@ -118,7 +118,7 @@ Route::as('finance.teams.')
             ->name('transactions.index');
 
         Route::get('/transactions/create/{type}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'create'])
-            ->whereIn('type', [TransactionType::Expense->value, TransactionType::Income->value])
+            ->whereIn('type', array_column(TransactionType::recordableCases(), 'value'))
             ->name('transactions.create');
 
         Route::post('/transactions', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'store'])

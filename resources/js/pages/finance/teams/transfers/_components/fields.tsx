@@ -1,27 +1,21 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ArrowDownIcon, CalendarIcon, DollarSignIcon, ListIcon, StickyNoteIcon, TagIcon } from "lucide-react";
+import { ArrowDownIcon, DollarSignIcon, ListIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { ChipSetCheck } from "@/components/chip-set-check";
+import { DateChip, NotesChip, TagsChip } from "@/components/movement-chips";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
     Combobox,
-    ComboboxChip,
-    ComboboxChips,
-    ComboboxChipsInput,
     ComboboxContent,
-    ComboboxEmpty,
     ComboboxInput,
     ComboboxItem,
     ComboboxList,
     ComboboxTrigger,
     ComboboxValue,
-    useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import {
     InputGroup,
     InputGroupAddon,
@@ -30,16 +24,7 @@ import {
     InputGroupText,
 } from "@/components/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
-import {
-    isSameLocalDay,
-    parseDateTimeLocal,
-    quoteAsOf,
-    toDateTimeLocalValue,
-    trimTrailingZeros,
-    withLocalDate,
-    withLocalTime,
-} from "@/lib/transactions";
+import { parseDateTimeLocal, quoteAsOf, toDateTimeLocalValue, trimTrailingZeros } from "@/lib/transactions";
 import { markFormDirty } from "@/lib/utils";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
@@ -96,7 +81,7 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
      * Translate the provided string
      * to the current locale.
      */
-    const { currentLocale, t } = useLaravelReactI18n();
+    const t = useLaravelReactI18n().t;
 
     /**
      * The account the money leaves from.
@@ -189,11 +174,6 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
         destination: defaultValues?.destination_quote ? trimTrailingZeros(defaultValues.destination_quote) : "",
         origin: defaultValues?.origin_quote ? trimTrailingZeros(defaultValues.origin_quote) : "",
     }));
-
-    /**
-     * Anchor the tags dropdown to the full chips field.
-     */
-    const tagsAnchor = useComboboxAnchor();
 
     /**
      * The fields ref.
@@ -329,164 +309,29 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
             ) : null}
             <div className="flex flex-col gap-2">
                 <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-2">
-                    <Popover>
-                        <PopoverTrigger
-                            render={
-                                <Button
-                                    className="max-w-full min-w-0 justify-start"
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                />
-                            }
-                        >
-                            <CalendarIcon data-icon="inline-start" />
-                            <span className="min-w-0 truncate">
-                                {isSameLocalDay(occurredAtDate, new Date())
-                                    ? t("Today")
-                                    : new Intl.DateTimeFormat(currentLocale(), { dateStyle: "medium" }).format(
-                                          occurredAtDate,
-                                      )}
-                            </span>
-                            <ChipSetCheck show={!isSameLocalDay(occurredAtDate, new Date())} />
-                        </PopoverTrigger>
-                        <PopoverContent align="start" className="w-auto">
-                            <Calendar
-                                mode="single"
-                                onSelect={(date) => {
-                                    if (!date) {
-                                        return;
-                                    }
-
-                                    setOccurredAt(withLocalDate(occurredAt, date));
-                                    markFormDirty(fields.current);
-                                }}
-                                selected={occurredAtDate}
-                            />
-                            <Field>
-                                <FieldLabel htmlFor="transfer-occurred-at-time">{t("Time")}</FieldLabel>
-                                <Input
-                                    id="transfer-occurred-at-time"
-                                    onChange={(event) => {
-                                        setOccurredAt(withLocalTime(occurredAt, event.target.value));
-                                        markFormDirty(fields.current);
-                                    }}
-                                    type="time"
-                                    value={`${String(occurredAtDate.getHours()).padStart(2, "0")}:${String(occurredAtDate.getMinutes()).padStart(2, "0")}`}
-                                />
-                            </Field>
-                        </PopoverContent>
-                    </Popover>
-                    <Popover>
-                        <PopoverTrigger
-                            className="w-full min-w-0"
-                            render={
-                                <Button
-                                    aria-invalid={invalid("description")}
-                                    className="w-full min-w-0 justify-start"
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                />
-                            }
-                        >
-                            <StickyNoteIcon data-icon="inline-start" />
-                            <span className="min-w-0 truncate">{t("Notes")}</span>
-                            <ChipSetCheck show={description.trim() !== ""} />
-                        </PopoverTrigger>
-                        <PopoverContent align="start" className="w-80">
-                            <Field data-invalid={invalid("description") || undefined}>
-                                <FieldLabel htmlFor="transfer-description">{t("Notes")}</FieldLabel>
-                                <Textarea
-                                    aria-invalid={invalid("description")}
-                                    id="transfer-description"
-                                    onChange={(event) => {
-                                        setDescription(event.target.value);
-                                        markFormDirty(fields.current);
-                                    }}
-                                    placeholder={t("Enter a description")}
-                                    value={description}
-                                />
-                                {invalid("description") && <FieldError>{errors.description}</FieldError>}
-                            </Field>
-                        </PopoverContent>
-                    </Popover>
-                    <Popover
-                        onOpenChange={(open, details) => {
-                            if (
-                                !open &&
-                                details.reason === "outside-press" &&
-                                details.event.target instanceof Element &&
-                                details.event.target.closest("[data-slot=combobox-content]")
-                            ) {
-                                details.cancel();
-                            }
-                        }}
-                    >
-                        <PopoverTrigger
-                            className="w-full min-w-0"
-                            render={
-                                <Button
-                                    aria-invalid={invalid("tag_ids")}
-                                    className="w-full min-w-0 justify-start"
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                />
-                            }
-                        >
-                            <TagIcon data-icon="inline-start" />
-                            <span className="min-w-0 truncate">{t("Tags")}</span>
-                            <ChipSetCheck show={selectedTags.length > 0} />
-                        </PopoverTrigger>
-                        <PopoverContent align="end" className="w-80">
-                            <Field data-invalid={invalid("tag_ids") || undefined}>
-                                <FieldLabel htmlFor="transfer-tags">{t("Tags")}</FieldLabel>
-                                <Combobox<Tag, true>
-                                    isItemEqualToValue={(left, right) => left.id === right.id}
-                                    items={tags}
-                                    itemToStringLabel={(item) => item.name}
-                                    itemToStringValue={(item) => item.id}
-                                    multiple
-                                    onValueChange={(value) => {
-                                        setSelectedTags(value);
-                                        markFormDirty(fields.current);
-                                    }}
-                                    value={selectedTags}
-                                >
-                                    <ComboboxChips
-                                        aria-invalid={invalid("tag_ids")}
-                                        className="w-full"
-                                        ref={tagsAnchor}
-                                    >
-                                        <InputGroupAddon>
-                                            <TagIcon />
-                                        </InputGroupAddon>
-                                        <ComboboxValue>
-                                            {selectedTags.map((tag) => (
-                                                <ComboboxChip key={tag.id}>{tag.name}</ComboboxChip>
-                                            ))}
-                                        </ComboboxValue>
-                                        <ComboboxChipsInput
-                                            id="transfer-tags"
-                                            placeholder={selectedTags.length > 0 ? undefined : t("Select tags")}
-                                        />
-                                    </ComboboxChips>
-                                    <ComboboxContent anchor={tagsAnchor}>
-                                        <ComboboxEmpty>{t("No tags found")}</ComboboxEmpty>
-                                        <ComboboxList>
-                                            {(tag) => (
-                                                <ComboboxItem key={tag.id} value={tag}>
-                                                    {tag.name}
-                                                </ComboboxItem>
-                                            )}
-                                        </ComboboxList>
-                                    </ComboboxContent>
-                                </Combobox>
-                                {invalid("tag_ids") && <FieldError>{errors.tag_ids}</FieldError>}
-                            </Field>
-                        </PopoverContent>
-                    </Popover>
+                    <DateChip
+                        fields={fields}
+                        idPrefix="transfer"
+                        occurredAt={occurredAt}
+                        onOccurredAtChange={setOccurredAt}
+                    />
+                    <NotesChip
+                        description={description}
+                        error={errors.description}
+                        fields={fields}
+                        idPrefix="transfer"
+                        invalid={invalid("description")}
+                        onDescriptionChange={setDescription}
+                    />
+                    <TagsChip
+                        error={errors.tag_ids}
+                        fields={fields}
+                        idPrefix="transfer"
+                        invalid={invalid("tag_ids")}
+                        onSelectedTagsChange={setSelectedTags}
+                        selectedTags={selectedTags}
+                        tags={tags}
+                    />
                 </div>
                 <div className="grid min-w-0 grid-cols-2 gap-2">
                     <RateChip

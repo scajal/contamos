@@ -128,9 +128,24 @@ class Transaction extends Model
     {
         $query->when(
             $type === self::TRANSFER_TYPE,
-            fn (Builder $query): Builder => $query->whereIn('type', [TransactionType::TransferOut, TransactionType::TransferIn]),
+            fn (Builder $query): Builder => $query->whereIn('type', TransactionType::transferCases()),
             fn (Builder $query): Builder => $query->where('type', $type),
         );
+    }
+
+    /**
+     * Get the values the transactions index type filter accepts, where
+     * the transfer value matches both legs of a transfer.
+     *
+     * @return array<int, string>
+     */
+    public static function typeFilters(): array
+    {
+        return [
+            ...array_column(TransactionType::recordableCases(), 'value'),
+            TransactionType::OpeningBalance->value,
+            self::TRANSFER_TYPE,
+        ];
     }
 
     /**

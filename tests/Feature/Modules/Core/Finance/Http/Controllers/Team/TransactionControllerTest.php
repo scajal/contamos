@@ -1512,7 +1512,7 @@ describe('destroy', function (): void {
                 $account->getForeignKey() => $account->getKey(),
                 $currency->getForeignKey() => $currency->getKey(),
             ]) : [])
-            ->assertInvalid(['transfer']);
+            ->assertForbidden();
 
         $this->assertModelExists($transaction);
     })->with([
@@ -1541,7 +1541,7 @@ describe('destroy', function (): void {
                 'team' => $team->getRouteKey(),
                 'transaction' => $fee->getKey(),
             ]))
-            ->assertInvalid(['transfer']);
+            ->assertForbidden();
 
         $this->assertModelExists($fee);
     });

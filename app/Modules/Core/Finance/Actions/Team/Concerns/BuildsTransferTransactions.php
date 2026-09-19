@@ -46,6 +46,19 @@ trait BuildsTransferTransactions
     }
 
     /**
+     * Get the attributes of the transfer row itself, keeping out the
+     * ones it does not submit so an omitted field is left alone
+     * rather than wiped.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    protected function transferAttributes(array $attributes): array
+    {
+        return array_intersect_key($attributes, array_flip(['description', 'occurred_at']));
+    }
+
+    /**
      * Build the attributes of a transaction owned by
      * the transfer.
      *
