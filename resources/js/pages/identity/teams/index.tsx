@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { usePermissions } from "@/hooks/use-permissions";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { PERMISSIONS } from "@/lib/permissions";
 import settings from "@/routes/identity/teams/settings";
 import { Team } from "@/types/app/modules/core/identity/models/team";
 import { User } from "@/types/app/modules/core/identity/models/user";
@@ -33,7 +34,7 @@ const Index = () => {
                 {/** Details */}
                 <Details />
                 {/** Danger */}
-                {can("team:delete") && <Danger />}
+                {can(PERMISSIONS.DeleteTeam) && <Danger />}
             </div>
         </div>
     );
@@ -81,7 +82,7 @@ const Details = () => {
                     </div>
 
                     {/** Actions */}
-                    {can("team:update") && (
+                    {can(PERMISSIONS.UpdateTeam) && (
                         <Button
                             nativeButton={false}
                             render={

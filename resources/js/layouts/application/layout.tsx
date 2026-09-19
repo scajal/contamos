@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { logout } from "@/routes";
 import subscriptions from "@/routes/billing/teams/subscriptions";
 import administration from "@/routes/filament/administration";
@@ -254,7 +255,7 @@ const Sidebar = () => {
                 <SidebarGroup>
                     <SidebarGroupLabel>{t("Team")}</SidebarGroupLabel>
                     <SidebarMenu>
-                        {can("billing:manage") && (
+                        {can(PERMISSIONS.ManageBilling) && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     render={

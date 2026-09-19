@@ -10,6 +10,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
+import { isSwitchValue } from "@/lib/billing";
 import { BillingCycle } from "@/types/app/modules/billing/enums/billing-cycle";
 import { Feature } from "@/types/app/modules/billing/enums/feature";
 import { Plan } from "@/types/app/modules/billing/enums/plan";
@@ -70,7 +71,7 @@ export default function Upgrade({ canManageBilling, feature, features, owner, pl
                             <DialogDescription className="max-w-[44ch] text-sm leading-relaxed text-pretty sm:text-base">
                                 {!blocked
                                     ? t("The Free plan covers the basics. Pro removes every limit.")
-                                    : typeof blocked.free === "boolean"
+                                    : isSwitchValue(blocked.free)
                                       ? t(":feature is part of Pro.", { feature: blocked.label })
                                       : t("You have reached the Free plan limit for :feature.", {
                                             feature: blocked.label.toLowerCase(),

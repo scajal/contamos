@@ -1,3 +1,5 @@
+import { PlanValue } from "@/lib/billing";
+
 import { Feature } from "./enums/feature";
 
 /**
@@ -12,6 +14,6 @@ export interface PlanFeature {
     feature: Feature;
     label: string;
     usage: number | null;
-    free: number | boolean | null;
-    pro: number | boolean | null;
+    free: PlanValue;
+    pro: PlanValue;
 }

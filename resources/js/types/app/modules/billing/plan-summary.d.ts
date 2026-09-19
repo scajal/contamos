@@ -1,3 +1,5 @@
+import { PlanValue } from "@/lib/billing";
+
 import { BillingCycle } from "./enums/billing-cycle";
 import { Feature } from "./enums/feature";
 import { Plan } from "./enums/plan";
@@ -17,8 +19,8 @@ export interface PlanLimit {
     feature: Feature;
     label: string;
     usage: number | null;
-    free: number | boolean | null;
-    pro: number | boolean | null;
+    free: PlanValue;
+    pro: PlanValue;
 }
 
 /**

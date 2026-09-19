@@ -3,18 +3,18 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import members from "@/routes/identity/teams/members";
-import { Role } from "@/types/app/modules/core/identity/enums/team/role";
 import { User } from "@/types/app/modules/core/identity/models/user";
+import { RoleOption } from "@/types/app/modules/core/identity/role-option";
+
+import { Fields } from "./_components/fields";
 
 type PageProps = {
     member: User;
-    roles: Array<{ label: string; value: Role }>;
+    roles: Array<RoleOption>;
 };
 
 export default function EditRole({ member, roles }: PageProps) {
@@ -47,7 +47,7 @@ export default function EditRole({ member, roles }: PageProps) {
                             }}
                             options={{ only: ["errors"] }}
                         >
-                            {({ errors, invalid, isDirty, processing }) => (
+                            {(formProps) => (
                                 <Fragment>
                                     <SheetHeader>
                                         <SheetTitle>{t("Change role")}</SheetTitle>
@@ -56,39 +56,15 @@ export default function EditRole({ member, roles }: PageProps) {
                                         </SheetDescription>
                                     </SheetHeader>
                                     <div className="min-h-0 flex-1 overflow-y-auto px-6">
-                                        <FieldGroup>
-                                            <Field data-invalid={invalid("role") || undefined}>
-                                                <FieldLabel htmlFor="member-role">{t("Role")}</FieldLabel>
-                                                <Select
-                                                    defaultValue={member.membership?.role ?? null}
-                                                    id="member-role"
-                                                    name="role"
-                                                >
-                                                    <SelectTrigger aria-invalid={invalid("role")}>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectGroup>
-                                                            {roles.map((role) => (
-                                                                <SelectItem key={role.value} value={role.value}>
-                                                                    {role.label}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectGroup>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FieldDescription>
-                                                    {t(
-                                                        "Admins manage the team and its people. Members invite people and leave.",
-                                                    )}
-                                                </FieldDescription>
-                                                {invalid("role") && <FieldError>{errors.role}</FieldError>}
-                                            </Field>
-                                        </FieldGroup>
+                                        <Fields
+                                            defaultValues={{ role: member.membership?.role }}
+                                            roles={roles}
+                                            {...formProps}
+                                        />
                                     </div>
                                     <SheetFooter>
-                                        <Button disabled={processing || !isDirty} type="submit">
-                                            {processing && <Spinner data-icon="inline-start" />}
+                                        <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
+                                            {formProps.processing && <Spinner data-icon="inline-start" />}
                                             {t("Save")}
                                         </Button>
                                     </SheetFooter>

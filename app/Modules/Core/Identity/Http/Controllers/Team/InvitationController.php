@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Http\Controllers\Team;
 
-use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Identity\Actions\Team\CreateInvitation;
 use App\Modules\Core\Identity\Actions\Team\Invitation\RenewAndResendTeamInvitation;
 use App\Modules\Core\Identity\Enums\Team\Role;
@@ -37,7 +36,13 @@ class InvitationController
                     ->allowedFilters(...$request->filters())
                     ->latest()
                     ->paginate(10)
-                    ->withQueryString(),
+                    ->withQueryString()
+                    // The badge names the access the invitee will get,
+                    // which is the role as the team's plan applies it.
+                    ->through(fn (TeamInvitation $invitation): TeamInvitation => tap(
+                        $invitation,
+                        fn (TeamInvitation $invitation): mixed => $invitation->setAttribute('role', $team->effectiveRole($invitation->role)),
+                    )),
             ),
         ]);
     }
@@ -50,12 +55,7 @@ class InvitationController
         return Inertia::modal('identity/teams/invitations/create', [
             // Choosing a role is a pro feature, so a free team gets
             // no options and a note pointing at pro instead.
-            'roles' => Feature::AssignRoles->enabled($team)
-                ? collect(Role::assignable())
-                    ->map(fn (Role $role): array => ['label' => $role->getLabel(), 'value' => $role->value])
-                    ->values()
-                    ->all()
-                : [],
+            'roles' => $team->assignsRoles() ? Role::options($team->assignableRoles()) : [],
         ])->baseRoute('identity.teams.invitations.index', ['team' => $team->getRouteKey()]);
     }
 

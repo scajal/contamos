@@ -1,5 +1,6 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
+import { isSwitchValue, type PlanValue } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 import { Feature } from "@/types/app/modules/billing/enums/feature";
 import { Plan } from "@/types/app/modules/billing/enums/plan";
@@ -11,8 +12,8 @@ import { Plan } from "@/types/app/modules/billing/enums/plan";
 export type PlanTableRow = {
     feature: Feature;
     label: string;
-    free: number | boolean | null;
-    pro: number | boolean | null;
+    free: PlanValue;
+    pro: PlanValue;
     usage?: number | null;
 };
 
@@ -40,8 +41,8 @@ export const PlanTable = ({ rows, current, highlight }: Props) => {
      * Format a plan limit for display. A switch feature reports
      * whether the plan includes it instead of a number.
      */
-    const limit = (value: number | boolean | null) => {
-        if (typeof value === "boolean") {
+    const limit = (value: PlanValue) => {
+        if (isSwitchValue(value)) {
             return value ? t("Included") : t("Not included");
         }
 
@@ -55,7 +56,7 @@ export const PlanTable = ({ rows, current, highlight }: Props) => {
     const cell = (plan: Plan, row: PlanTableRow) => {
         const value = plan === "free" ? row.free : row.pro;
 
-        if (current !== plan || row.usage === undefined || row.usage === null || typeof value === "boolean") {
+        if (current !== plan || row.usage === undefined || row.usage === null || isSwitchValue(value)) {
             return limit(value);
         }
 

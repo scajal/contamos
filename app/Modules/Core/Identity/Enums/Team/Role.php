@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Enums\Team;
 
-use App\Modules\Billing\Enums\Feature;
-use App\Modules\Core\Identity\Models\Team;
 use Filament\Support\Contracts\HasLabel;
 
 /**
@@ -47,26 +45,18 @@ enum Role: string implements HasLabel
     }
 
     /**
-     * Get the values of the roles a request may
-     * assign.
+     * Shape the given roles as the options a role picker renders,
+     * in the order they are given.
      *
-     * @return array<int, string>
+     * @param  array<int, self>  $roles
+     * @return array<int, array{label: string, value: string}>
      */
-    public static function assignableValues(): array
+    public static function options(array $roles): array
     {
-        return array_map(fn (self $role): string => $role->value, self::assignable());
-    }
-
-    /**
-     * Get the roles the given team may hand out. Choosing a role
-     * is a pro feature, so a team without it only has admins
-     * besides its owner.
-     *
-     * @return array<int, self>
-     */
-    public static function assignableBy(Team $team): array
-    {
-        return Feature::AssignRoles->enabled($team) ? self::assignable() : [self::Admin];
+        return array_map(fn (self $role): array => [
+            'label' => $role->getLabel(),
+            'value' => $role->value,
+        ], $roles);
     }
 
     /**

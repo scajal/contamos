@@ -8,14 +8,14 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import subscriptions from "@/routes/billing/teams/subscriptions";
-import { Role } from "@/types/app/modules/core/identity/enums/team/role";
 import { TeamInvitation } from "@/types/app/modules/core/identity/models/team/team-invitation";
+import { RoleOption } from "@/types/app/modules/core/identity/role-option";
 
 type FormProps = Partial<Pick<TeamInvitation, "email" | "role">>;
 
 type Props = FormComponentSlotProps<FormProps> & {
     defaultValues?: FormProps;
-    roles: Array<{ label: string; value: Role }>;
+    roles: Array<RoleOption>;
 };
 
 export const Fields = ({ defaultValues, errors, invalid, roles }: Props) => {

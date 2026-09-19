@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Models;
 
+use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
@@ -178,6 +179,42 @@ class Team extends Model
         return Attribute::get(fn (): ?User => $this->relationLoaded('users')
             ? $this->users->first(fn (User $user): bool => $user->membership?->role === Role::Owner)
             : $this->users()->wherePivot('role', Role::Owner)->first());
+    }
+
+    /**
+     * Get the roles the team may hand out. Choosing a role is a pro
+     * feature, so a team without it only has admins besides its
+     * owner.
+     *
+     * @return array<int, \App\Modules\Core\Identity\Enums\Team\Role>
+     */
+    public function assignableRoles(): array
+    {
+        return $this->assignsRoles() ? Role::assignable() : [Role::Admin];
+    }
+
+    /**
+     * Indicate if the team may choose the role its members carry.
+     */
+    public function assignsRoles(): bool
+    {
+        return Feature::AssignRoles->enabled($this);
+    }
+
+    /**
+     * Get the role a stored role acts as on the team. This is the
+     * single place the plan bends a stored role: while the team
+     * cannot choose roles, the owner stays the owner and everybody
+     * else acts as an admin. The stored role is left untouched, so
+     * returning to pro restores it.
+     */
+    public function effectiveRole(?Role $role): ?Role
+    {
+        if (! $role instanceof Role) {
+            return null;
+        }
+
+        return $role === Role::Owner || $this->assignsRoles() ? $role : Role::Admin;
     }
 
     /**

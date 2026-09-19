@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Http\Controllers\Team;
 
-use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Identity\Actions\Team\RemoveMember;
 use App\Modules\Core\Identity\Enums\Team\Permission;
 use App\Modules\Core\Identity\Enums\Team\Role;
@@ -51,10 +50,7 @@ class MemberController
 
         return Inertia::modal('identity/teams/members/role', [
             'member' => $user,
-            'roles' => collect(Role::assignable())
-                ->map(fn (Role $role): array => ['label' => $role->getLabel(), 'value' => $role->value])
-                ->values()
-                ->all(),
+            'roles' => Role::options($team->assignableRoles()),
         ])->baseRoute('identity.teams.members.index', ['team' => $team->getRouteKey()]);
     }
 
@@ -95,11 +91,7 @@ class MemberController
      */
     protected function withEffectiveRole(Team $team, User $member): User
     {
-        if (Feature::AssignRoles->enabled($team) || $member->membership?->role === Role::Owner) {
-            return $member;
-        }
-
-        $member->membership?->setAttribute('role', Role::Admin);
+        $member->membership?->setAttribute('role', $team->effectiveRole($member->membership->role));
 
         return $member;
     }

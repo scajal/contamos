@@ -51,8 +51,16 @@ it('lists the permissions of the role', function (): void {
 });
 
 it('never lists the owner as assignable', function (): void {
-    expect(Role::assignable())->toBe([Role::Admin, Role::Member])
-        ->and(Role::assignableValues())->toBe(['admin', 'member']);
+    expect(Role::assignable())->toBe([Role::Admin, Role::Member]);
+});
+
+it('shapes the given roles as picker options', function (): void {
+    App::setLocale('en');
+
+    expect(Role::options(Role::assignable()))->toBe([
+        ['label' => 'Admin', 'value' => 'admin'],
+        ['label' => 'Member', 'value' => 'member'],
+    ])->and(Role::options([]))->toBe([]);
 });
 
 it('translates the role label', function (Role $role, string $label): void {

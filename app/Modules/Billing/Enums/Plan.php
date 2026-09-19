@@ -36,9 +36,7 @@ enum Plan: string implements HasLabel
         $features = [];
 
         foreach (Feature::cases() as $feature) {
-            $features[$feature->value] = $feature->isSwitch()
-                ? $feature->includedIn($this)
-                : $feature->limitOn($this);
+            $features[$feature->value] = $feature->valueOn($this);
         }
 
         return $features;

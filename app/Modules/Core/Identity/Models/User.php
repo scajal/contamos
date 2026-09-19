@@ -6,7 +6,6 @@ namespace App\Modules\Core\Identity\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Identity\Enums\Team\Permission;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Support\Concerns\DefinesKeyType;
@@ -124,28 +123,14 @@ class User extends Authenticatable implements FilamentUser
 
     /**
      * Get the role the user effectively holds on the team, or
-     * null when they do not belong to it.
-     *
-     * Choosing roles is a pro feature, so on a team without it
-     * the owner stays the owner and every other stored role
-     * acts as an admin. The stored role is left untouched, so
-     * returning to pro restores it.
+     * null when they do not belong to it. The team owns the rule
+     * that turns a stored role into the role it acts as.
      */
     public function roleOn(Team $team): ?Role
     {
-        $role = $this->teams()
+        return $team->effectiveRole($this->teams()
             ->whereKey($team->getKey())
-            ->first()?->membership?->role;
-
-        if (! $role instanceof Role) {
-            return null;
-        }
-
-        if ($role === Role::Owner || Feature::AssignRoles->enabled($team)) {
-            return $role;
-        }
-
-        return Role::Admin;
+            ->first()?->membership?->role);
     }
 
     /**

@@ -15,7 +15,7 @@ export const usePermissions = () => {
      * Whether the user holds the given permission on
      * the current team.
      */
-    const can = (permission: Permission) => (permissions ?? []).includes(permission);
+    const can = (permission: Permission) => permissions.includes(permission);
 
-    return { can, permissions: permissions ?? [] };
+    return { can };
 };

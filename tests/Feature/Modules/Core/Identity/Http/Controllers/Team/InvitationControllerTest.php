@@ -524,4 +524,19 @@ describe('roles', function (): void {
                 ->loadDeferredProps(fn (Assert $page): Assert => $page
                     ->where('invitations.data.0.role', Role::Member->value)));
     });
+
+    it('lists the role an invitee will actually get on a free team', function (): void {
+        [$user, $team] = actingMember();
+        $invitation = TeamInvitation::factory()->for($team)->as(Role::Member)->create();
+
+        $this->get(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('invitations.data.0.role', Role::Admin->value)));
+
+        // The stored role is untouched, so the invitation still carries
+        // what it was sent as.
+        expect($invitation->fresh()?->role)->toBe(Role::Member);
+    });
 });

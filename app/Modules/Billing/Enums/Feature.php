@@ -103,6 +103,17 @@ enum Feature: string implements HasLabel
     }
 
     /**
+     * What the plan gives for the feature: the limit for a quota
+     * feature, where null means unlimited, and whether the plan
+     * includes it for a switch feature. This is the one place the
+     * two shapes branch.
+     */
+    public function valueOn(Plan $plan): int|bool|null
+    {
+        return $this->isSwitch() ? $this->includedIn($plan) : $this->limitOn($plan);
+    }
+
+    /**
      * For the given plan, return the limit for the
      * feature. Null means unlimited, and a switch feature
      * has no limit. The limit lives on the Pennant

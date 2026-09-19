@@ -7,6 +7,7 @@ use App\Modules\Core\Identity\Models\Membership;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Illuminate\Support\Str;
+use Laravel\Pennant\Feature as Pennant;
 
 afterEach(function (): void {
     Str::createRandomStringsNormally();
@@ -73,10 +74,45 @@ it('exposes memberships through the users relation', function (): void {
         ->and($team->users()->first()?->membership?->team)->toBeInstanceOf(Team::class);
 });
 
-it('uses the first member email for paddle when nobody is authenticated', function (): void {
-    [$user, $team] = memberWithTeam();
+it('bills the owner of the team even when another member is acting', function (): void {
+    [$owner, $team] = memberWithTeam();
+    $admin = memberOf($team, Role::Admin);
+    $this->actingAs($admin);
 
-    expect($team->paddleEmail())->toBe($user->email);
+    expect($team->paddleEmail())->toBe($owner->email)
+        ->and($team->paddleEmail())->not->toBe($admin->email);
+});
+
+it('has no paddle email for a team without an owner', function (): void {
+    $team = Team::factory()->create();
+
+    expect($team->paddleEmail())->toBeNull();
+});
+
+it('lists the roles the team may hand out', function (): void {
+    [$owner, $team] = memberWithTeam();
+
+    expect($team->assignsRoles())->toBeFalse()
+        ->and($team->assignableRoles())->toBe([Role::Admin]);
+
+    subscribeToPro($team);
+    Pennant::flushCache();
+
+    expect($team->assignsRoles())->toBeTrue()
+        ->and($team->assignableRoles())->toBe(Role::assignable());
+});
+
+it('bends a stored role to the role it acts as under the plan', function (): void {
+    [$owner, $team] = memberWithTeam();
+
+    expect($team->effectiveRole(Role::Member))->toBe(Role::Admin)
+        ->and($team->effectiveRole(Role::Owner))->toBe(Role::Owner)
+        ->and($team->effectiveRole(null))->toBeNull();
+
+    subscribeToPro($team);
+    Pennant::flushCache();
+
+    expect($team->effectiveRole(Role::Member))->toBe(Role::Member);
 });
 
 it('exposes the user who owns the team', function (): void {

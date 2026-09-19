@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useFilters } from "@/hooks/use-filters";
 import { usePermissions } from "@/hooks/use-permissions";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { PERMISSIONS } from "@/lib/permissions";
 import invitations from "@/routes/identity/teams/invitations";
 import routes from "@/routes/identity/teams/members";
 import { User } from "@/types/app/modules/core/identity/models/user";
@@ -215,13 +216,13 @@ const MemberActions = ({ member }: { member: User }) => {
      * Whether the role of the member can be changed. On a free
      * team the route opens the upgrade prompt instead.
      */
-    const canEditRole = can("member:update") && !isSelf && !isOwner;
+    const canEditRole = can(PERMISSIONS.UpdateMember) && !isSelf && !isOwner;
 
     /**
      * Whether the member can be removed from the team, or, for the
      * authenticated user, whether they can leave it.
      */
-    const canRemove = isSelf ? !isOwner : can("member:remove") && !isOwner;
+    const canRemove = isSelf ? !isOwner : can(PERMISSIONS.RemoveMember) && !isOwner;
 
     /**
      * Whether the removal confirmation dialog is open.
@@ -359,7 +360,7 @@ const Listing = () => {
                                         </ItemDescription>
                                     </ItemContent>
                                     <ItemActions className="flex-wrap justify-end">
-                                        {member.id === user?.id ? <Badge variant="outline">{t("You")}</Badge> : null}
+                                        {member.id === user?.id ? <Badge variant="secondary">{t("You")}</Badge> : null}
                                         {member.membership?.role ? <RoleBadge role={member.membership.role} /> : null}
                                         {(members?.total ?? 0) > 1 ? <MemberActions member={member} /> : null}
                                     </ItemActions>

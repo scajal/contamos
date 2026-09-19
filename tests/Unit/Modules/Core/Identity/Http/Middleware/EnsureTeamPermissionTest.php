@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Core\Identity\Enums\Team\Permission;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Http\Middleware\EnsureTeamPermission;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
@@ -79,5 +80,20 @@ it('returns 404 when nobody is authenticated', function (): void {
         $this->fail('Expected a not found exception.');
     } catch (NotFoundHttpException|HttpException $exception) {
         expect($exception->getStatusCode())->toBe(Response::HTTP_NOT_FOUND);
+    }
+});
+
+it('returns 403 when the role of the user does not grant the permission', function (): void {
+    [$user, $team] = memberWithTeam(Role::Member);
+
+    try {
+        new EnsureTeamPermission()->handle(
+            permissionRequest($team, $user),
+            fn (): Response => new Response('ok'),
+            Permission::DeleteTeam->value,
+        );
+        $this->fail('Expected a forbidden exception.');
+    } catch (HttpException $exception) {
+        expect($exception->getStatusCode())->toBe(Response::HTTP_FORBIDDEN);
     }
 });

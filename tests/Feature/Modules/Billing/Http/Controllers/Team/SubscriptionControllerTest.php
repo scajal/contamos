@@ -109,6 +109,10 @@ describe('index', function (): void {
                 ->where('plan.status', 'active')
                 ->where('plan.cycle', BillingCycle::Monthly->value)
                 ->has('plan.limits', 3)
+                ->where('plan.limits.2.feature', Feature::AssignRoles->value)
+                ->where('plan.limits.2.usage', null)
+                ->where('plan.limits.2.free', false)
+                ->where('plan.limits.2.pro', true)
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->where('renewal.date', '2026-10-08T10:00:00+00:00')
                     ->has('renewal.amount')
@@ -404,20 +408,32 @@ describe('permissions', function (): void {
         'member' => [Role::Member],
     ]);
 
-    it('still shows the upgrade prompt to a member who cannot manage billing', function (Role $role): void {
+    it('points a free team member who cannot manage billing at the owner', function (Role $role): void {
         [$user, $team] = actingMember($role);
-        subscribeToPro($team);
 
         $this->withHeaders(inertiaModalHeaders())
             ->get(route('billing.teams.subscriptions.upgrade', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): Assert => $page
                 ->component('billing/teams/subscriptions/upgrade')
-                ->where('canManageBilling', false));
+                ->where('plan', Plan::Free->value)
+                ->where('canManageBilling', false)
+                ->where('owner.id', $team->owner?->getKey())
+                ->where('owner.name', $team->owner?->name));
     })->with([
         'admin' => [Role::Admin],
         'member' => [Role::Member],
     ]);
+
+    it('offers checkout to the owner of a free team', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('billing.teams.subscriptions.upgrade', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('canManageBilling', true));
+    });
 });
 
 describe('switch features', function (): void {
@@ -456,14 +472,5 @@ describe('switch features', function (): void {
                 ->where('features.0.free', 3)
                 ->where('features.0.pro', null)
                 ->where('features.0.usage', null));
-    });
-});
-
-describe('customer', function (): void {
-    it('bills the owner of the team', function (): void {
-        [$user, $team] = actingMember(Role::Admin);
-
-        expect($team->paddleEmail())->toBe($team->owner?->email)
-            ->and($team->paddleEmail())->not->toBe($user->email);
     });
 });

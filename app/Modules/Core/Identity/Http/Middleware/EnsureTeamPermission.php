@@ -27,7 +27,9 @@ class EnsureTeamPermission
      * role on the route team does not grant the permission. It
      * runs after \App\Modules\Core\Identity\Http\Middleware\EnsureTeamMembership,
      * so the team is already bound and the user already belongs
-     * to it.
+     * to it. Without either of them there is no team to speak of,
+     * which is not found rather than forbidden, as in the
+     * membership middleware.
      *
      * @param  Closure(Request): (Response)  $next
      */

@@ -43,7 +43,7 @@ class StoreRequest extends FormRequest
             ],
             'role' => [
                 'required',
-                Rule::enum(Role::class)->only(Role::assignableBy($team)),
+                Rule::enum(Role::class)->only($team->assignableRoles()),
             ],
         ];
     }

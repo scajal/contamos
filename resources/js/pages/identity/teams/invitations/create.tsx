@@ -14,12 +14,12 @@ import {
 import { Modal } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
 import invitations from "@/routes/identity/teams/invitations";
-import { Role } from "@/types/app/modules/core/identity/enums/team/role";
+import { RoleOption } from "@/types/app/modules/core/identity/role-option";
 
 import { Fields } from "./_components/fields";
 
 type PageProps = {
-    roles: Array<{ label: string; value: Role }>;
+    roles: Array<RoleOption>;
 };
 
 export default function Create({ roles }: PageProps) {

@@ -149,26 +149,30 @@ class SubscriptionController
      */
     protected function row(Feature $feature, ?Team $team = null): array
     {
-        if ($feature->isSwitch()) {
-            return [
-                'feature' => $feature->value,
-                'label' => $feature->getLabel(),
-                'usage' => null,
-                'free' => $feature->includedIn(Plan::Free),
-                'pro' => $feature->includedIn(Plan::Pro),
-            ];
+        return [
+            'feature' => $feature->value,
+            'label' => $feature->getLabel(),
+            'usage' => $this->usage($feature, $team),
+            'free' => $feature->valueOn(Plan::Free),
+            'pro' => $feature->valueOn(Plan::Pro),
+        ];
+    }
+
+    /**
+     * How much of a quota feature the team is using. A switch
+     * feature has no usage, and neither has a row asked for
+     * without a team.
+     */
+    protected function usage(Feature $feature, ?Team $team): ?int
+    {
+        if ($feature->isSwitch() || ! $team instanceof Team) {
+            return null;
         }
 
         /** @var \App\Modules\Billing\Features\AddAccounts|\App\Modules\Billing\Features\AddMembers|\App\Modules\Billing\Features\AddTeams $instance */
         $instance = Pennant::instance($feature);
 
-        return [
-            'feature' => $feature->value,
-            'label' => $feature->getLabel(),
-            'usage' => $team instanceof Team ? $instance->usage($team) : null,
-            'free' => $feature->limitOn(Plan::Free),
-            'pro' => $feature->limitOn(Plan::Pro),
-        ];
+        return $instance->usage($team);
     }
 
     /**
