@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Actions\Team\DeleteTeam;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
@@ -40,9 +41,9 @@ it('deletes the team with what it owns', function (): void {
 it('moves the members on the team to another of their teams', function (): void {
     [$user, $team] = memberWithTeam();
     $other = Team::factory()->create();
-    $user->teams()->attach($other);
+    $user->teams()->attach($other, ['role' => Role::Owner]);
     $member = User::factory()->create();
-    $member->teams()->attach($team);
+    memberOf($team, Role::Admin, $member);
     $member->switchTeam($team);
 
     $next = (new DeleteTeam)
@@ -57,7 +58,7 @@ it('moves the members on the team to another of their teams', function (): void 
 it('keeps the current team of members who were on another team', function (): void {
     [$user, $team] = memberWithTeam();
     $other = Team::factory()->create();
-    $user->teams()->attach($other);
+    $user->teams()->attach($other, ['role' => Role::Owner]);
     $user->switchTeam($other);
 
     $next = (new DeleteTeam)

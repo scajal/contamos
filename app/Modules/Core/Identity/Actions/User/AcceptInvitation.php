@@ -51,9 +51,10 @@ class AcceptInvitation
         $user = $this->user;
 
         return DB::transaction(function () use ($invitation, $user): Team {
-            // Join the team, unless the user is already a member.
+            // Join the team with the invited role, unless the user
+            // is already a member.
             if (! $user->belongsToTeam($invitation->team)) {
-                $user->teams()->attach($invitation->team);
+                $user->teams()->attach($invitation->team, ['role' => $invitation->role]);
             }
 
             // Mark the invitation as accepted.

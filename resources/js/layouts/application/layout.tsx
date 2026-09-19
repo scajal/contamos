@@ -46,6 +46,8 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePermissions } from "@/hooks/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { logout } from "@/routes";
 import subscriptions from "@/routes/billing/teams/subscriptions";
 import administration from "@/routes/filament/administration";
@@ -204,6 +206,11 @@ const Sidebar = () => {
      */
     const { auth, user } = usePage().props;
 
+    /**
+     * What the user may do on the current team.
+     */
+    const { can } = usePermissions();
+
     return (
         <SidebarComponent collapsible="icon">
             <SidebarHeader>
@@ -248,16 +255,20 @@ const Sidebar = () => {
                 <SidebarGroup>
                     <SidebarGroupLabel>{t("Team")}</SidebarGroupLabel>
                     <SidebarMenu>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                render={
-                                    <Link href={subscriptions.index.url({ team: user?.current_team?.slug ?? "" })} />
-                                }
-                            >
-                                <CreditCardIcon />
-                                <span>{t("Billing")}</span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
+                        {can(PERMISSIONS.ManageBilling) && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    render={
+                                        <Link
+                                            href={subscriptions.index.url({ team: user?.current_team?.slug ?? "" })}
+                                        />
+                                    }
+                                >
+                                    <CreditCardIcon />
+                                    <span>{t("Billing")}</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 render={<Link href={members.index.url({ team: user?.current_team?.slug ?? "" })} />}

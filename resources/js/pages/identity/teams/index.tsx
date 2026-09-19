@@ -1,20 +1,29 @@
 import { usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { LinkIcon, PencilIcon, TrashIcon, TypeIcon } from "lucide-react";
+import { CrownIcon, LinkIcon, PencilIcon, TrashIcon, TypeIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
+import { usePermissions } from "@/hooks/use-permissions";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { PERMISSIONS } from "@/lib/permissions";
 import settings from "@/routes/identity/teams/settings";
 import { Team } from "@/types/app/modules/core/identity/models/team";
+import { User } from "@/types/app/modules/core/identity/models/user";
 
 type PageProps = {
+    owner: User | null;
     team: Team;
 };
 
 const Index = () => {
+    /**
+     * What the user may do on the team.
+     */
+    const { can } = usePermissions();
+
     return (
         <div className="flex flex-col gap-8">
             {/** Header */}
@@ -25,7 +34,7 @@ const Index = () => {
                 {/** Details */}
                 <Details />
                 {/** Danger */}
-                <Danger />
+                {can(PERMISSIONS.DeleteTeam) && <Danger />}
             </div>
         </div>
     );
@@ -56,7 +65,12 @@ const Details = () => {
     /**
      * The page's props.
      */
-    const { team } = usePage<PageProps>().props;
+    const { owner, team } = usePage<PageProps>().props;
+
+    /**
+     * What the user may do on the team.
+     */
+    const { can } = usePermissions();
 
     return (
         <Fragment>
@@ -68,17 +82,19 @@ const Details = () => {
                     </div>
 
                     {/** Actions */}
-                    <Button
-                        nativeButton={false}
-                        render={
-                            <ModalLink href={settings.edit.url({ team: team.slug })}>
-                                <PencilIcon data-icon="inline-start" />
-                                {t("Edit")}
-                            </ModalLink>
-                        }
-                        size="sm"
-                        variant="outline"
-                    />
+                    {can(PERMISSIONS.UpdateTeam) && (
+                        <Button
+                            nativeButton={false}
+                            render={
+                                <ModalLink href={settings.edit.url({ team: team.slug })}>
+                                    <PencilIcon data-icon="inline-start" />
+                                    {t("Edit")}
+                                </ModalLink>
+                            }
+                            size="sm"
+                            variant="outline"
+                        />
+                    )}
                 </header>
             </div>
             <div className="overflow-hidden rounded-sm border">
@@ -99,6 +115,15 @@ const Details = () => {
                         <ItemContent>
                             <ItemDescription>{t("Handle")}</ItemDescription>
                             <ItemTitle>{team.slug}</ItemTitle>
+                        </ItemContent>
+                    </Item>
+                    <Item className="rounded-none border-0 border-b last:border-b-0" size="sm" variant="outline">
+                        <ItemMedia variant="icon">
+                            <CrownIcon />
+                        </ItemMedia>
+                        <ItemContent>
+                            <ItemDescription>{t("Owner")}</ItemDescription>
+                            <ItemTitle>{owner?.name ?? "—"}</ItemTitle>
                         </ItemContent>
                     </Item>
                 </ItemGroup>

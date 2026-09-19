@@ -1,4 +1,5 @@
 import "react";
+import { Permission } from "./app/modules/core/identity/enums/team/permission";
 import { User } from "./app/modules/core/identity/models/user";
 import { Toast } from "./app/modules/support/objects/toast";
 
@@ -26,6 +27,7 @@ declare module "@inertiajs/core" {
     export interface InertiaConfig {
         sharedPageProps: {
             auth: { canAccessAdministration: boolean };
+            permissions: Array<Permission>;
             user: User | null;
             locale: "en" | "es";
             appearance: "light" | "dark";

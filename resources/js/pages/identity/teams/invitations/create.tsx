@@ -14,10 +14,15 @@ import {
 import { Modal } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
 import invitations from "@/routes/identity/teams/invitations";
+import { RoleOption } from "@/types/app/modules/core/identity/role-option";
 
 import { Fields } from "./_components/fields";
 
-export default function Create() {
+type PageProps = {
+    roles: Array<RoleOption>;
+};
+
+export default function Create({ roles }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -53,7 +58,7 @@ export default function Create() {
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="flex-1">
-                                        <Fields {...formProps} />
+                                        <Fields roles={roles} {...formProps} />
                                     </div>
                                     <DialogFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">

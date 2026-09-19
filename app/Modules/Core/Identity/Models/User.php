@@ -6,6 +6,8 @@ namespace App\Modules\Core\Identity\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Modules\Core\Identity\Enums\Team\Permission;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\HasActivation;
 use Filament\Models\Contracts\FilamentUser;
@@ -72,6 +74,15 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * Indicate if the user holds the given permission on the
+     * team, according to their effective role there.
+     */
+    public function hasTeamPermission(Team $team, Permission $permission): bool
+    {
+        return $this->roleOn($team)?->grants($permission) === true;
+    }
+
+    /**
      * Determine if the user can access the filament panel.
      */
     public function canAccessPanel(Panel $panel): bool
@@ -111,6 +122,18 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * Get the role the user effectively holds on the team, or
+     * null when they do not belong to it. The team owns the rule
+     * that turns a stored role into the role it acts as.
+     */
+    public function roleOn(Team $team): ?Role
+    {
+        return $team->effectiveRole($this->teams()
+            ->whereKey($team->getKey())
+            ->first()?->membership?->role);
+    }
+
+    /**
      * Switch the user to a different team.
      */
     public function switchTeam(Team $team): bool
@@ -139,6 +162,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->belongsToMany(Team::class, new Membership()->getTable(), $this->getForeignKey(), new Team()->getForeignKey())
             ->using(Membership::class)
+            ->withPivot('role')
             ->withTimestamps()
             ->as('membership');
     }

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories\Modules\Core\Identity\Models;
 
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Core\Identity\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -31,5 +33,15 @@ class TeamFactory extends Factory
             'name' => $name = fake()->unique()->company(),
             'slug' => Str::slug($name),
         ];
+    }
+
+    /**
+     * Indicate that the given user owns the team.
+     */
+    public function ownedBy(User $user): static
+    {
+        return $this->afterCreating(function (Team $team) use ($user): void {
+            $team->users()->attach($user, ['role' => Role::Owner]);
+        });
     }
 }

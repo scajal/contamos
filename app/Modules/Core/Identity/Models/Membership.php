@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Models;
 
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property int $id
  * @property string $team_id
  * @property string $user_id
+ * @property \App\Modules\Core\Identity\Enums\Team\Role $role
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Modules\Core\Identity\Models\Team $team
@@ -36,6 +38,18 @@ class Membership extends Pivot
      * @var bool
      */
     public $incrementing = true;
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'role' => Role::class,
+        ];
+    }
 
     /**
      * Get the team that the membership belongs to.

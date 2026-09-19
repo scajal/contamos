@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -49,33 +50,54 @@ pest()->beforeEach(function (): void {
 
 /**
  * Create a \App\Modules\Core\Identity\Models\User that belongs to a
- * \App\Modules\Core\Identity\Models\Team and switch to that team.
+ * \App\Modules\Core\Identity\Models\Team with the given role and
+ * switch to that team.
  *
  * @return array{0: \App\Modules\Core\Identity\Models\User, 1: \App\Modules\Core\Identity\Models\Team}
  */
-function memberWithTeam(): array
+function memberWithTeam(Role $role = Role::Owner): array
 {
     $user = User::factory()->create();
     $team = Team::factory()->create();
-    $user->teams()->attach($team);
+    $user->teams()->attach($team, ['role' => $role]);
     $user->switchTeam($team);
+
+    // A team without an owner cannot exist, so one is added
+    // whenever the member under test is not the owner.
+    if ($role !== Role::Owner) {
+        $team->users()->attach(User::factory()->create(), ['role' => Role::Owner]);
+    }
 
     return [$user, $team];
 }
 
 /**
  * Create a \App\Modules\Core\Identity\Models\User that belongs to a
- * \App\Modules\Core\Identity\Models\Team and authenticate as that user.
+ * \App\Modules\Core\Identity\Models\Team with the given role and
+ * authenticate as that user.
  *
  * @return array{0: \App\Modules\Core\Identity\Models\User, 1: \App\Modules\Core\Identity\Models\Team}
  */
-function actingMember(): array
+function actingMember(Role $role = Role::Owner): array
 {
-    [$user, $team] = memberWithTeam();
+    [$user, $team] = memberWithTeam($role);
 
     actingAs($user);
 
     return [$user, $team];
+}
+
+/**
+ * Add a \App\Modules\Core\Identity\Models\User to the given
+ * \App\Modules\Core\Identity\Models\Team with the given role.
+ */
+function memberOf(Team $team, Role $role = Role::Admin, ?User $user = null): User
+{
+    $user ??= User::factory()->create();
+
+    $user->teams()->attach($team, ['role' => $role]);
+
+    return $user;
 }
 
 /**

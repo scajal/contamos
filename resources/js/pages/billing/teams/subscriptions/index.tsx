@@ -29,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { isOverLimit } from "@/lib/billing";
 import subscriptions from "@/routes/billing/teams/subscriptions";
 import { Transaction } from "@/types/app/modules/billing/models/transaction";
 import { PlanSummary, Renewal } from "@/types/app/modules/billing/plan-summary";
@@ -151,8 +152,7 @@ const CurrentPlan = () => {
      * What the team holds above the Free plan limits, left
      * over from an earlier Pro period.
      */
-    const overLimits =
-        plan.name === "free" ? plan.limits.filter((row) => row.free !== null && row.usage > row.free) : [];
+    const overLimits = plan.name === "free" ? plan.limits.filter(isOverLimit) : [];
 
     /**
      * The line under the plan name, by lifecycle state.

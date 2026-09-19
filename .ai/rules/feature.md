@@ -45,3 +45,7 @@ In Feature `pest()->beforeEach`, call `Http::preventStrayRequests()`, `Sleep::fa
 ## Refresh factory users before actingAs when the request calls switchTeam
 
 Strict models throw "attribute [current_team_id] either does not exist or was not retrieved" when a request resolves the acting user and calls User::switchTeam() on a User::factory()->create() instance, because the in-memory model lacks that column. Use User::factory()->create([...])->refresh() (or actingMember()) so the user mirrors a DB-loaded auth user.
+
+## Test files open with an FQDN header docblock
+
+Start every test file with a file-level docblock naming the class under test by leading-backslash FQDN, after the imports: `/** Feature tests for \App\Modules\... */`.

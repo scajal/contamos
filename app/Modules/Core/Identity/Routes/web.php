@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Modules\Billing\Enums\Feature;
+use App\Modules\Core\Identity\Enums\Team\Permission;
 use App\Modules\Core\Identity\Http\Middleware\EnsureTeamMembership;
+use App\Modules\Core\Identity\Http\Middleware\EnsureTeamPermission;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use Laravel\Pennant\Middleware\EnsureFeaturesAreActive;
@@ -72,6 +74,22 @@ Route::as('identity.teams.')
         Route::get('members', [\App\Modules\Core\Identity\Http\Controllers\Team\MemberController::class, 'index'])
             ->name('members.index');
 
+        Route::middleware([
+            EnsureTeamPermission::using(Permission::UpdateMember),
+            EnsureFeaturesAreActive::using(Feature::AssignRoles),
+        ])->group(function (): void {
+            Route::get('members/{user}/role/edit', [\App\Modules\Core\Identity\Http\Controllers\Team\MemberController::class, 'edit'])
+                ->name('members.role.edit')
+                ->scopeBindings();
+
+            Route::patch('members/{user}/role', [\App\Modules\Core\Identity\Http\Controllers\Team\MemberController::class, 'update'])
+                ->name('members.role.update')
+                ->scopeBindings();
+        });
+
+        // Removing a member needs the remove permission, but a member
+        // removing themself is leaving, which every member may do, so
+        // the controller tells the two apart.
         Route::delete('members/{user}', [\App\Modules\Core\Identity\Http\Controllers\Team\MemberController::class, 'destroy'])
             ->name('members.destroy')
             ->scopeBindings();
@@ -88,7 +106,10 @@ Route::as('identity.teams.')
         Route::get('invitations', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'index'])
             ->name('invitations.index');
 
-        Route::middleware(EnsureFeaturesAreActive::using(Feature::AddMembers))->group(function (): void {
+        Route::middleware([
+            EnsureFeaturesAreActive::using(Feature::AddMembers),
+            EnsureTeamPermission::using(Permission::CreateInvitation),
+        ])->group(function (): void {
             Route::get('invitations/create', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'create'])
                 ->name('invitations.create');
 
@@ -97,10 +118,12 @@ Route::as('identity.teams.')
         });
 
         Route::patch('invitations/{invitation}/resend', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'resend'])
+            ->middleware(EnsureTeamPermission::using(Permission::CancelInvitation))
             ->name('invitations.resend')
             ->scopeBindings();
 
         Route::delete('invitations/{invitation}', [\App\Modules\Core\Identity\Http\Controllers\Team\InvitationController::class, 'destroy'])
+            ->middleware(EnsureTeamPermission::using(Permission::CancelInvitation))
             ->name('invitations.destroy')
             ->scopeBindings();
 
@@ -116,15 +139,19 @@ Route::as('identity.teams.')
         Route::get('settings', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'index'])
             ->name('settings.index');
 
-        Route::get('settings/edit', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'edit'])
-            ->name('settings.edit');
+        Route::middleware(EnsureTeamPermission::using(Permission::UpdateTeam))->group(function (): void {
+            Route::get('settings/edit', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'edit'])
+                ->name('settings.edit');
 
-        Route::patch('settings', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'update'])
-            ->name('settings.update');
+            Route::patch('settings', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'update'])
+                ->name('settings.update');
+        });
 
-        Route::get('settings/delete', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'delete'])
-            ->name('settings.delete');
+        Route::middleware(EnsureTeamPermission::using(Permission::DeleteTeam))->group(function (): void {
+            Route::get('settings/delete', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'delete'])
+                ->name('settings.delete');
 
-        Route::delete('settings', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'destroy'])
-            ->name('settings.destroy');
+            Route::delete('settings', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'destroy'])
+                ->name('settings.destroy');
+        });
     });

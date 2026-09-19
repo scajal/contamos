@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -46,7 +47,7 @@ describe('show', function (): void {
         $user = User::factory()->create(['email' => 'ada@example.com'])->refresh();
         $this->actingAs($user);
         $invitation = TeamInvitation::factory()->create(['email' => 'ada@example.com']);
-        $invitation->team->users()->attach(User::factory()->count(2)->create());
+        $invitation->team->users()->attach(User::factory()->count(2)->create(), ['role' => Role::Admin]);
 
         $this->get(route('identity.invitations.show', ['invitation' => $invitation]))
             ->assertOk()
@@ -104,7 +105,7 @@ describe('accept', function (): void {
         $user = User::factory()->create(['email' => 'ada@example.com'])->refresh();
         $this->actingAs($user);
         $invitation = TeamInvitation::factory()->create(['email' => 'ada@example.com']);
-        $invitation->team->users()->attach(User::factory()->count(2)->create());
+        $invitation->team->users()->attach(User::factory()->count(2)->create(), ['role' => Role::Admin]);
 
         $this->post(route('identity.invitations.accept', ['invitation' => $invitation]))
             ->assertRedirectToRoute('identity.invitations.show', ['invitation' => $invitation]);
@@ -121,7 +122,7 @@ describe('accept', function (): void {
         $user = User::factory()->create(['email' => 'ada@example.com'])->refresh();
         $this->actingAs($user);
         $invitation = TeamInvitation::factory()->create(['email' => 'ada@example.com']);
-        $invitation->team->users()->attach(User::factory()->count(2)->create());
+        $invitation->team->users()->attach(User::factory()->count(2)->create(), ['role' => Role::Admin]);
         subscribeToPro($invitation->team);
 
         $this->post(route('identity.invitations.accept', ['invitation' => $invitation]))

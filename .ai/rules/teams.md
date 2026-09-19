@@ -21,3 +21,6 @@ Reusable team tags are Finance models under Team/Tag with finance.teams.tags.* C
 ## Team invitations: derived status, accept flow outside team group
 
 TeamInvitation status (pending/accepted/expired) is derived from accepted_at and expires_at via isPending()/isAccepted()/isExpired(), the pending/status scopes, and invitationStatus() in resources/js/lib/utils.ts. Do not add a status enum or column. There is no rejection: invitees accept or ignore; members cancel (delete) or resend (renew() regenerates code + expiry). The accept routes (identity.invitations.show/accept) live outside the teams/{team} group because EnsureTeamMembership 403s non-members; the invitee's email must match the invitation (isFor()). Invitations are emailed on-demand (Notification::route('mail', $email)) so unregistered invitees receive them.
+
+## Team authorization is Role and Permission enums
+Authorize team actions through the `Permission` and `Role` enums in `Enums/Team/`. Permission cases are backed `resource:verb` strings; `Role::permissions()` is the match table of what each role grants, and `Role::grants()` checks one. Check at call sites with `$user->hasTeamPermission($team, Permission::X)`.

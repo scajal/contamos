@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Modules\Core\Identity\Actions\User\AcceptInvitation;
+use App\Modules\Core\Identity\Enums\Team\Role;
+use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
 
@@ -58,3 +60,19 @@ it('keeps a single membership when the user already belongs to the team', functi
     expect($user->teams()->count())->toBe(1)
         ->and($invitation->fresh()?->isAccepted())->toBeTrue();
 });
+
+it('joins the team with the invited role', function (Role $role): void {
+    $user = User::factory()->create(['email' => 'ada@example.com']);
+    $team = Team::factory()->create();
+    subscribeToPro($team);
+    $invitation = TeamInvitation::factory()->for($team)->as($role)->create(['email' => 'ada@example.com']);
+
+    (new AcceptInvitation)
+        ->for($user)
+        ->using($invitation);
+
+    expect($user->roleOn($team))->toBe($role);
+})->with([
+    'admin' => [Role::Admin],
+    'member' => [Role::Member],
+]);

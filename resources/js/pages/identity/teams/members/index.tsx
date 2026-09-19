@@ -1,4 +1,5 @@
 import { Deferred, Link, usePage } from "@inertiajs/react";
+import { ModalLink } from "@inertiaui/modal-react";
 import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
@@ -9,12 +10,14 @@ import {
     SearchIcon,
     SearchXIcon,
     TrashIcon,
+    UserCogIcon,
     XIcon,
 } from "lucide-react";
 import { useState } from "react";
 
 import { ConfirmAction } from "@/components/confirm-action";
 import { PaginationControls } from "@/components/pagination-controls";
+import { RoleBadge } from "@/components/role-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +34,9 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/in
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFilters } from "@/hooks/use-filters";
+import { usePermissions } from "@/hooks/use-permissions";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { PERMISSIONS } from "@/lib/permissions";
 import invitations from "@/routes/identity/teams/invitations";
 import routes from "@/routes/identity/teams/members";
 import { User } from "@/types/app/modules/core/identity/models/user";
@@ -191,15 +196,42 @@ const MemberActions = ({ member }: { member: User }) => {
     const { user } = usePage<PageProps>().props;
 
     /**
+     * What the user may do on the team.
+     */
+    const { can } = usePermissions();
+
+    /**
      * Whether the member is the authenticated user, who leaves
      * the team instead of being removed from it.
      */
     const isSelf = member.id === user?.id;
 
     /**
+     * Whether the member owns the team, who is neither removed,
+     * nor demoted, nor allowed to leave.
+     */
+    const isOwner = member.membership?.role === "owner";
+
+    /**
+     * Whether the role of the member can be changed. On a free
+     * team the route opens the upgrade prompt instead.
+     */
+    const canEditRole = can(PERMISSIONS.UpdateMember) && !isSelf && !isOwner;
+
+    /**
+     * Whether the member can be removed from the team, or, for the
+     * authenticated user, whether they can leave it.
+     */
+    const canRemove = isSelf ? !isOwner : can(PERMISSIONS.RemoveMember) && !isOwner;
+
+    /**
      * Whether the removal confirmation dialog is open.
      */
     const [removeOpen, setRemoveOpen] = useState(false);
+
+    if (!canEditRole && !canRemove) {
+        return null;
+    }
 
     return (
         <>
@@ -210,10 +242,27 @@ const MemberActions = ({ member }: { member: User }) => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-auto min-w-(--anchor-width)">
                     <DropdownMenuGroup>
-                        <DropdownMenuItem onClick={() => setRemoveOpen(true)} variant="destructive">
-                            {isSelf ? <LogOutIcon /> : <TrashIcon />}
-                            <span>{isSelf ? t("Leave team") : t("Remove")}</span>
-                        </DropdownMenuItem>
+                        {canEditRole && (
+                            <DropdownMenuItem
+                                render={
+                                    <ModalLink
+                                        href={routes.role.edit.url({
+                                            team: user?.current_team?.slug ?? "",
+                                            user: member.id,
+                                        })}
+                                    >
+                                        <UserCogIcon />
+                                        <span>{t("Change role")}</span>
+                                    </ModalLink>
+                                }
+                            />
+                        )}
+                        {canRemove && (
+                            <DropdownMenuItem onClick={() => setRemoveOpen(true)} variant="destructive">
+                                {isSelf ? <LogOutIcon /> : <TrashIcon />}
+                                <span>{isSelf ? t("Leave team") : t("Remove")}</span>
+                            </DropdownMenuItem>
+                        )}
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -312,6 +361,7 @@ const Listing = () => {
                                     </ItemContent>
                                     <ItemActions className="flex-wrap justify-end">
                                         {member.id === user?.id ? <Badge variant="secondary">{t("You")}</Badge> : null}
+                                        {member.membership?.role ? <RoleBadge role={member.membership.role} /> : null}
                                         {(members?.total ?? 0) > 1 ? <MemberActions member={member} /> : null}
                                     </ItemActions>
                                 </Item>

@@ -17,7 +17,10 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(Team::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
+            $table->string('role');
             $table->timestamps();
+
+            $table->unique([new Team()->getForeignKey(), new User()->getForeignKey()]);
         });
     }
 

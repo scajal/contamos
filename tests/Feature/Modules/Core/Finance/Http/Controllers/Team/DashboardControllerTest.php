@@ -6,6 +6,7 @@ use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Illuminate\Database\Eloquent\Factories\Sequence;
@@ -200,7 +201,7 @@ it('forbids a user who belongs to another team', function (): void {
 it('switches the current team when the route team differs', function (): void {
     [$user, $currentTeam] = actingMember();
     $otherTeam = Team::factory()->create();
-    $user->teams()->attach($otherTeam);
+    $user->teams()->attach($otherTeam, ['role' => Role::Owner]);
 
     expect($user->fresh()?->current_team_id)->toBe($currentTeam->getKey());
 
@@ -213,7 +214,7 @@ it('switches the current team when the route team differs', function (): void {
 it('shares the member teams on the dashboard', function (): void {
     [$user, $team] = actingMember();
     $other = Team::factory()->create();
-    $user->teams()->attach($other);
+    $user->teams()->attach($other, ['role' => Role::Owner]);
 
     $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
         ->assertOk()

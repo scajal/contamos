@@ -13,6 +13,7 @@ use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\AccountCurrency;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
@@ -282,7 +283,9 @@ class StressSeeder extends Seeder
         if ($count > 0) {
             $members = User::factory()->count($count)->create();
             $members->last()?->deactivate();
-            $team->users()->syncWithoutDetaching($members->map(fn (User $member): string => $this->stringKey($member))->all());
+            $team->users()->syncWithoutDetaching($members->mapWithKeys(fn (User $member): array => [
+                $this->stringKey($member) => ['role' => Role::Admin],
+            ])->all());
         }
 
         return $team->users()->get();

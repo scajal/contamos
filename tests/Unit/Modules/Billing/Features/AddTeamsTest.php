@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
 use App\Modules\Billing\Features\AddTeams;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Laravel\Pennant\Feature as Pennant;
@@ -27,7 +28,7 @@ it('is active for a user without a free team', function (): void {
 it('counts only the free teams the user belongs to', function (): void {
     [$user, $free] = memberWithTeam();
     $pro = Team::factory()->create();
-    $user->teams()->attach($pro);
+    $user->teams()->attach($pro, ['role' => Role::Owner]);
     subscribeToPro($pro);
 
     expect(new AddTeams()->usage($user))->toBe(1)

@@ -2,6 +2,8 @@
 
 namespace App\Modules\Support\Http\Middleware;
 
+use App\Modules\Core\Identity\Enums\Team\Permission;
+use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
@@ -65,9 +67,45 @@ class HandleInertiaRequests extends Middleware
                 'canAccessAdministration' => ($user = $this->user($request)) && $user->canAccessPanel(Filament::getPanel('administration')),
             ],
 
+            // What the user may do on their current team, so the
+            // layout and the pages gate actions the same way the
+            // server does.
+            'permissions' => fn (): array => $this->permissions($request),
+
             // The authenticated user.
             'user' => Inertia::always($user),
         ];
+    }
+
+    /**
+     * Get the permissions the authenticated user holds on their
+     * current team, as the values of the permission enum.
+     *
+     * @return array<int, string>
+     */
+    protected function permissions(Request $request): array
+    {
+        if (! ($user = $this->user($request)) instanceof User) {
+            return [];
+        }
+
+        // Team pages carry the bound team, which the membership
+        // middleware has already switched the user to. Elsewhere the
+        // current team is the one the user acts on.
+        $team = $request->route('team');
+
+        if (! $team instanceof Team) {
+            $team = isset($user->current_team_id) ? $user->currentTeam : null;
+        }
+
+        if (! $team instanceof Team) {
+            return [];
+        }
+
+        return array_map(
+            fn (Permission $permission): string => $permission->value,
+            $user->roleOn($team)?->permissions() ?? [],
+        );
     }
 
     /**

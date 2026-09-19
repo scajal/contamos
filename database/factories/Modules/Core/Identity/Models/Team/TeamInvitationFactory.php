@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\Modules\Core\Identity\Models\Team;
 
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
@@ -35,6 +36,7 @@ class TeamInvitationFactory extends Factory
         return [
             'email' => fake()->unique()->safeEmail(),
             'expires_at' => CarbonImmutable::now()->addDays(7),
+            'role' => Role::Admin,
             (new TeamInvitation)->inviter()->getForeignKeyName() => User::factory(),
             (new TeamInvitation)->team()->getForeignKeyName() => Team::factory(),
         ];
@@ -47,6 +49,17 @@ class TeamInvitationFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'accepted_at' => CarbonImmutable::now(),
+        ]);
+    }
+
+    /**
+     * Indicate that the invitation was sent for the
+     * given role.
+     */
+    public function as(Role $role): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'role' => $role,
         ]);
     }
 

@@ -18,6 +18,7 @@ import { useState } from "react";
 
 import { ConfirmAction } from "@/components/confirm-action";
 import { PaginationControls } from "@/components/pagination-controls";
+import { RoleBadge } from "@/components/role-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -376,6 +377,7 @@ const Listing = () => {
                                             </ItemDescription>
                                         </ItemContent>
                                         <ItemActions className="flex-wrap justify-end">
+                                            <RoleBadge role={invitation.role} />
                                             <StatusBadge status={status} />
                                             {status !== "accepted" ? (
                                                 <InvitationActions invitation={invitation} />

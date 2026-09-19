@@ -15,15 +15,36 @@ it('reads the limit from the Pennant feature class', function (): void {
         ->and(Feature::AddAccounts->limitOn(Plan::Pro))->toBeNull();
 });
 
-it('lists every feature with its limit on the plan', function (): void {
+it('tells a switch feature from a quota feature', function (): void {
+    expect(Feature::AssignRoles->isSwitch())->toBeTrue()
+        ->and(Feature::AddAccounts->isSwitch())->toBeFalse()
+        ->and(Feature::AddMembers->isSwitch())->toBeFalse()
+        ->and(Feature::AddTeams->isSwitch())->toBeFalse();
+});
+
+it('has no limit for a switch feature', function (): void {
+    expect(Feature::AssignRoles->limitOn(Plan::Free))->toBeNull()
+        ->and(Feature::AssignRoles->limitOn(Plan::Pro))->toBeNull();
+});
+
+it('reads whether the plan includes the feature', function (): void {
+    expect(Feature::AssignRoles->includedIn(Plan::Free))->toBeFalse()
+        ->and(Feature::AssignRoles->includedIn(Plan::Pro))->toBeTrue()
+        ->and(Feature::AddAccounts->includedIn(Plan::Free))->toBeTrue()
+        ->and(Feature::AddAccounts->includedIn(Plan::Pro))->toBeTrue();
+});
+
+it('lists every feature with its limit or inclusion on the plan', function (): void {
     expect(Plan::Free->features())->toBe([
         'accounts:create' => 3,
         'members:create' => 2,
         'teams:create' => 1,
+        'members:roles' => false,
     ])->and(Plan::Pro->features())->toBe([
         'accounts:create' => null,
         'members:create' => null,
         'teams:create' => null,
+        'members:roles' => true,
     ]);
 });
 

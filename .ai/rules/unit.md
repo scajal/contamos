@@ -24,3 +24,6 @@ Unit-test Actions, middleware, and support classes by constructing them with `ne
 ## CarbonImmutable dates
 
 Application dates are CarbonImmutable. Typehint and construct with CarbonImmutable; do not introduce mutable Carbon.
+
+## Test files open with an FQDN header docblock
+Start every test file with a file-level docblock naming the class under test by leading-backslash FQDN, after the imports: `/** Unit tests for \App\Modules\... */`.

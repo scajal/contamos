@@ -24,18 +24,19 @@ enum Plan: string implements HasLabel
 
     /**
      * Get the features that the plan allows, keyed by
-     * feature value, with the plan's limit for each. A
-     * null limit means unlimited.
+     * feature value. A quota feature reports the plan's
+     * limit, where null means unlimited, and a switch
+     * feature reports whether the plan includes it.
      *
-     * @return array<string, int|null>
+     * @return array<string, int|bool|null>
      */
     public function features(): array
     {
-        /** @var array<string, int|null> $features */
+        /** @var array<string, int|bool|null> $features */
         $features = [];
 
         foreach (Feature::cases() as $feature) {
-            $features[$feature->value] = $feature->limitOn($this);
+            $features[$feature->value] = $feature->valueOn($this);
         }
 
         return $features;

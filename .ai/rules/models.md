@@ -35,3 +35,6 @@ Models with an on/off flag use Support HasActivation (`is_active`, `activate()` 
 
 ## Custom table names via Table attribute
 Declare non-default table names with `#[Table('...')]`. Do not set `protected $table`.
+
+## Accessors via Attribute::get
+Write read-only accessors as `protected function name(): Attribute` returning `Attribute::get(fn (): ?string => ...)`. Do not use `Attribute::make(get: ...)` or legacy `getNameAttribute()` magic methods.
