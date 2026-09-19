@@ -2,9 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Modules\Billing\Enums\Feature;
+use App\Modules\Core\Identity\Enums\Team\Permission;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use Illuminate\Support\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Pennant\Feature as Pennant;
 
 /**
  * Feature tests for \App\Modules\Core\Identity\Http\Controllers\Team\MemberController.
@@ -29,7 +34,7 @@ describe('index', function (): void {
         [$user, $team] = actingMember();
         $user->update(['name' => 'Ada Lovelace']);
         $other = User::factory()->create(['name' => 'Grace Hopper']);
-        $other->teams()->attach($team);
+        memberOf($team, Role::Admin, $other);
 
         $this->get(route('identity.teams.members.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
@@ -48,7 +53,7 @@ describe('index', function (): void {
         [$user, $team] = actingMember();
         $user->update(['name' => 'Ada Lovelace']);
         $other = User::factory()->create(['name' => 'Grace Hopper']);
-        $other->teams()->attach($team);
+        memberOf($team, Role::Admin, $other);
 
         $this->get(route('identity.teams.members.index', [
             'team' => $team->getRouteKey(),
@@ -92,7 +97,7 @@ describe('destroy', function (): void {
 
     it('does not find a user who is not a member of the team', function (): void {
         [$user, $team] = actingMember();
-        User::factory()->create()->teams()->attach($team);
+        memberOf($team);
         $stranger = User::factory()->create();
 
         $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $stranger->getKey()]))
@@ -102,7 +107,7 @@ describe('destroy', function (): void {
     it('removes another member of the team', function (): void {
         [$user, $team] = actingMember();
         $other = User::factory()->create();
-        $other->teams()->attach($team);
+        memberOf($team, Role::Admin, $other);
         $other->switchTeam($team);
 
         $this->from(route('identity.teams.members.index', ['team' => $team->getRouteKey()]))
@@ -126,10 +131,9 @@ describe('destroy', function (): void {
     });
 
     it('leaves the team and lands on another team of the member', function (): void {
-        [$user, $team] = actingMember();
-        User::factory()->create()->teams()->attach($team);
+        [$user, $team] = actingMember(Role::Admin);
         $other = Team::factory()->create();
-        $user->teams()->attach($other);
+        $user->teams()->attach($other, ['role' => Role::Owner]);
 
         $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $user->getKey()]))
             ->assertRedirectToRoute('finance.teams.dashboard.index', ['team' => $other->getRouteKey()]);
@@ -141,12 +145,270 @@ describe('destroy', function (): void {
     });
 
     it('leaves the last team of the member and lands on the team creation page', function (): void {
-        [$user, $team] = actingMember();
-        User::factory()->create()->teams()->attach($team);
+        [$user, $team] = actingMember(Role::Admin);
 
         $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $user->getKey()]))
             ->assertRedirectToRoute('identity.teams.create');
 
         expect($user->fresh()?->current_team_id)->toBeNull();
+    });
+});
+
+describe('destroy permissions', function (): void {
+    it('lets the owner and an admin remove another member', function (Role $role): void {
+        [$user, $team] = actingMember($role);
+        subscribeToPro($team);
+        $other = memberOf($team, Role::Member);
+
+        $this->from(route('identity.teams.members.index', ['team' => $team->getRouteKey()]))
+            ->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $other->getKey()]))
+            ->assertRedirect();
+
+        expect($other->fresh()?->belongsToTeam($team))->toBeFalse();
+    })->with([
+        'owner' => [Role::Owner],
+        'admin' => [Role::Admin],
+    ]);
+
+    it('forbids a member from removing another member', function (): void {
+        [$user, $team] = actingMember(Role::Member);
+        subscribeToPro($team);
+        $other = memberOf($team, Role::Admin);
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $other->getKey()]))
+            ->assertForbidden();
+
+        expect($other->fresh()?->belongsToTeam($team))->toBeTrue();
+    });
+
+    it('forbids removing the owner of the team', function (): void {
+        [$user, $team] = actingMember(Role::Admin);
+        $owner = $team->owner;
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $owner?->getKey()]))
+            ->assertForbidden();
+
+        expect($owner?->fresh()?->belongsToTeam($team))->toBeTrue();
+    });
+
+    it('forbids the owner from leaving the team', function (): void {
+        [$user, $team] = actingMember();
+        memberOf($team, Role::Admin);
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $user->getKey()]))
+            ->assertForbidden();
+
+        expect($user->fresh()?->belongsToTeam($team))->toBeTrue();
+    });
+
+    it('lets an admin and a member leave the team', function (Role $role): void {
+        [$user, $team] = actingMember($role);
+        subscribeToPro($team);
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $user->getKey()]))
+            ->assertRedirect();
+
+        expect($user->fresh()?->belongsToTeam($team))->toBeFalse();
+    })->with([
+        'admin' => [Role::Admin],
+        'member' => [Role::Member],
+    ]);
+});
+
+describe('roles', function (): void {
+    it('lists the effective role of every member on a pro team', function (): void {
+        [$owner, $team] = actingMember();
+        subscribeToPro($team);
+        $member = memberOf($team, Role::Member);
+
+        $this->get(route('identity.teams.members.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('identity/teams/members/index')
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('members.data.0.membership.role', $owner->name < $member->name ? Role::Owner->value : Role::Member->value)
+                    ->where('members.data.1.membership.role', $owner->name < $member->name ? Role::Member->value : Role::Owner->value)));
+    });
+
+    it('lists a stored member as an admin on a free team', function (): void {
+        [$owner, $team] = actingMember();
+        $member = memberOf($team, Role::Member);
+
+        $this->get(route('identity.teams.members.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('members.data', fn (Collection $members): bool => $members
+                        ->pluck('membership.role')
+                        ->sort()
+                        ->values()
+                        ->all() === [Role::Admin->value, Role::Owner->value])));
+
+        expect($member->teams()->whereKey($team->getKey())->sole()->membership?->role)->toBe(Role::Member);
+    });
+
+    it('opens the role form for the owner and an admin on a pro team', function (Role $role): void {
+        [$user, $team] = actingMember($role);
+        subscribeToPro($team);
+        $member = memberOf($team, Role::Member);
+
+        $this->get(route('identity.teams.members.role.edit', ['team' => $team->getRouteKey(), 'user' => $member->getKey()]), inertiaModalHeaders())
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('identity/teams/members/role')
+                ->where('member.id', $member->getKey())
+                ->where('roles', [
+                    ['label' => Role::Admin->getLabel(), 'value' => Role::Admin->value],
+                    ['label' => Role::Member->getLabel(), 'value' => Role::Member->value],
+                ]));
+    })->with([
+        'owner' => [Role::Owner],
+        'admin' => [Role::Admin],
+    ]);
+
+    it('changes the stored role of a member', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $member = memberOf($team, Role::Admin);
+
+        $this->from(route('identity.teams.members.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('identity.teams.members.role.update', ['team' => $team->getRouteKey(), 'user' => $member->getKey()]), [
+                'role' => Role::Member->value,
+            ])
+            ->assertRedirectToRoute('identity.teams.members.index', ['team' => $team->getRouteKey()]);
+
+        expect($member->roleOn($team))->toBe(Role::Member);
+
+        assertFlashedToast(trans('Role updated'));
+    });
+
+    it('forbids a member from changing roles', function (): void {
+        [$user, $team] = actingMember(Role::Member);
+        subscribeToPro($team);
+        $member = memberOf($team, Role::Admin);
+
+        $this->get(route('identity.teams.members.role.edit', ['team' => $team->getRouteKey(), 'user' => $member->getKey()]), inertiaModalHeaders())
+            ->assertForbidden();
+
+        $this->patch(route('identity.teams.members.role.update', ['team' => $team->getRouteKey(), 'user' => $member->getKey()]), [
+            'role' => Role::Member->value,
+        ])->assertForbidden();
+
+        expect($member->roleOn($team))->toBe(Role::Admin);
+    });
+
+    it('forbids changing the role of the owner', function (): void {
+        [$user, $team] = actingMember(Role::Admin);
+        subscribeToPro($team);
+        $owner = $team->owner;
+
+        $this->get(route('identity.teams.members.role.edit', ['team' => $team->getRouteKey(), 'user' => $owner?->getKey()]), inertiaModalHeaders())
+            ->assertForbidden();
+
+        $this->patch(route('identity.teams.members.role.update', ['team' => $team->getRouteKey(), 'user' => $owner?->getKey()]), [
+            'role' => Role::Member->value,
+        ])->assertForbidden();
+
+        expect($owner?->roleOn($team))->toBe(Role::Owner);
+    });
+
+    it('forbids changing your own role', function (): void {
+        [$user, $team] = actingMember(Role::Admin);
+        subscribeToPro($team);
+
+        $this->get(route('identity.teams.members.role.edit', ['team' => $team->getRouteKey(), 'user' => $user->getKey()]), inertiaModalHeaders())
+            ->assertForbidden();
+
+        $this->patch(route('identity.teams.members.role.update', ['team' => $team->getRouteKey(), 'user' => $user->getKey()]), [
+            'role' => Role::Member->value,
+        ])->assertForbidden();
+
+        expect($user->roleOn($team))->toBe(Role::Admin);
+    });
+
+    it('refuses the owner role and a missing role', function (mixed $role): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $member = memberOf($team, Role::Admin);
+
+        $this->from(route('identity.teams.members.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('identity.teams.members.role.update', ['team' => $team->getRouteKey(), 'user' => $member->getKey()]), [
+                'role' => $role,
+            ])
+            ->assertRedirect()
+            ->assertInvalid(['role']);
+
+        expect($member->roleOn($team))->toBe(Role::Admin);
+    })->with([
+        'owner' => [Role::Owner->value],
+        'unknown' => ['editor'],
+        'missing' => [null],
+    ]);
+
+    it('sends a free team to the upgrade prompt instead of the role form', function (): void {
+        [$user, $team] = actingMember();
+        $member = memberOf($team, Role::Admin);
+
+        $this->get(route('identity.teams.members.role.edit', ['team' => $team->getRouteKey(), 'user' => $member->getKey()]), inertiaModalHeaders())
+            ->assertRedirect(route('billing.teams.subscriptions.upgrade', [
+                'team' => $team->getRouteKey(),
+                'feature' => Feature::AssignRoles->value,
+            ]));
+
+        $this->patch(route('identity.teams.members.role.update', ['team' => $team->getRouteKey(), 'user' => $member->getKey()]), [
+            'role' => Role::Member->value,
+        ])->assertRedirect(route('billing.teams.subscriptions.upgrade', [
+            'team' => $team->getRouteKey(),
+            'feature' => Feature::AssignRoles->value,
+        ]));
+
+        expect($member->teams()->whereKey($team->getKey())->sole()->membership?->role)->toBe(Role::Admin);
+    });
+});
+
+describe('downgrade', function (): void {
+    it('keeps a stored member working as an admin once the team leaves pro', function (): void {
+        [$owner, $team] = memberWithTeam();
+        subscribeToPro($team);
+        $member = memberOf($team, Role::Member);
+        $member->switchTeam($team);
+        $this->actingAs($member);
+
+        // The team drops back to the free plan. Pennant resolves the
+        // features once per request, so the cache is flushed the way a
+        // new request would.
+        $team->subscriptions()->delete();
+        $team->unsetRelation('subscriptions');
+        Pennant::flushCache();
+
+        // The member acts as an admin: the listing shows the role, the
+        // shared permissions match, and renaming the team is allowed.
+        $this->get(route('identity.teams.members.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('permissions', array_map(
+                    fn (Permission $permission): string => $permission->value,
+                    Role::Admin->permissions(),
+                ))
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('members.data', fn (Collection $members): bool => $members
+                        ->firstWhere('id', $member->getKey())['membership']['role'] === Role::Admin->value)));
+
+        $this->from(route('identity.teams.settings.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('identity.teams.settings.update', ['team' => $team->getRouteKey()]), [
+                'name' => 'Renamed',
+                'slug' => 'renamed',
+            ])
+            ->assertRedirect();
+
+        expect($team->fresh()?->name)->toBe('Renamed')
+            // The stored role is untouched, so returning to pro
+            // restores what the owner set up.
+            ->and($member->teams()->whereKey($team->getKey())->sole()->membership?->role)->toBe(Role::Member);
+
+        subscribeToPro($team);
+        Pennant::flushCache();
+
+        expect($member->roleOn($team))->toBe(Role::Member);
     });
 });

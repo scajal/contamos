@@ -11,9 +11,9 @@ import { Plan } from "@/types/app/modules/billing/enums/plan";
 export type PlanTableRow = {
     feature: Feature;
     label: string;
-    free: number | null;
-    pro: number | null;
-    usage?: number;
+    free: number | boolean | null;
+    pro: number | boolean | null;
+    usage?: number | null;
 };
 
 type Props = {
@@ -37,9 +37,16 @@ export const PlanTable = ({ rows, current, highlight }: Props) => {
     const t = useLaravelReactI18n().t;
 
     /**
-     * Format a plan limit for display.
+     * Format a plan limit for display. A switch feature reports
+     * whether the plan includes it instead of a number.
      */
-    const limit = (value: number | null) => (value === null ? t("Unlimited") : String(value));
+    const limit = (value: number | boolean | null) => {
+        if (typeof value === "boolean") {
+            return value ? t("Included") : t("Not included");
+        }
+
+        return value === null ? t("Unlimited") : String(value);
+    };
 
     /**
      * Format a plan cell. When it is the team's current plan and
@@ -48,7 +55,7 @@ export const PlanTable = ({ rows, current, highlight }: Props) => {
     const cell = (plan: Plan, row: PlanTableRow) => {
         const value = plan === "free" ? row.free : row.pro;
 
-        if (current !== plan || row.usage === undefined) {
+        if (current !== plan || row.usage === undefined || row.usage === null || typeof value === "boolean") {
             return limit(value);
         }
 

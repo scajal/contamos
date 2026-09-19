@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Core\Identity\Actions\Team\RemoveMember;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 
@@ -29,7 +30,7 @@ it('detaches the member from the team', function (): void {
 it('moves the member to another of its teams', function (): void {
     [$user, $team] = memberWithTeam();
     $other = Team::factory()->create();
-    $user->teams()->attach($other);
+    $user->teams()->attach($other, ['role' => Role::Owner]);
 
     $next = (new RemoveMember)
         ->for($team)
@@ -53,7 +54,7 @@ it('clears the current team when the member has no team left', function (): void
 it('keeps the current team of a member removed from another team', function (): void {
     [$user, $team] = memberWithTeam();
     $other = Team::factory()->create();
-    $user->teams()->attach($other);
+    $user->teams()->attach($other, ['role' => Role::Owner]);
 
     $next = (new RemoveMember)
         ->for($other)

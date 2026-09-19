@@ -6,6 +6,9 @@ namespace App\Modules\Core\Identity\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Modules\Billing\Enums\Feature;
+use App\Modules\Core\Identity\Enums\Team\Permission;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\HasActivation;
 use Filament\Models\Contracts\FilamentUser;
@@ -72,6 +75,15 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * Indicate if the user holds the given permission on the
+     * team, according to their effective role there.
+     */
+    public function hasTeamPermission(Team $team, Permission $permission): bool
+    {
+        return $this->roleOn($team)?->grants($permission) === true;
+    }
+
+    /**
      * Determine if the user can access the filament panel.
      */
     public function canAccessPanel(Panel $panel): bool
@@ -111,6 +123,32 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * Get the role the user effectively holds on the team, or
+     * null when they do not belong to it.
+     *
+     * Choosing roles is a pro feature, so on a team without it
+     * the owner stays the owner and every other stored role
+     * acts as an admin. The stored role is left untouched, so
+     * returning to pro restores it.
+     */
+    public function roleOn(Team $team): ?Role
+    {
+        $role = $this->teams()
+            ->whereKey($team->getKey())
+            ->first()?->membership?->role;
+
+        if (! $role instanceof Role) {
+            return null;
+        }
+
+        if ($role === Role::Owner || Feature::AssignRoles->enabled($team)) {
+            return $role;
+        }
+
+        return Role::Admin;
+    }
+
+    /**
      * Switch the user to a different team.
      */
     public function switchTeam(Team $team): bool
@@ -139,6 +177,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->belongsToMany(Team::class, new Membership()->getTable(), $this->getForeignKey(), new Team()->getForeignKey())
             ->using(Membership::class)
+            ->withPivot('role')
             ->withTimestamps()
             ->as('membership');
     }

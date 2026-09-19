@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Http\Requests\Team\Invitation;
 
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Closure;
@@ -11,6 +12,7 @@ use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class StoreRequest extends FormRequest
 {
@@ -38,6 +40,10 @@ class StoreRequest extends FormRequest
                 'max:255',
                 $this->notMember($team),
                 $this->notInvited($team),
+            ],
+            'role' => [
+                'required',
+                Rule::enum(Role::class)->only(Role::assignableBy($team)),
             ],
         ];
     }

@@ -25,6 +25,9 @@ class TeamController
     public function index(Team $team): Response
     {
         return Inertia::render('identity/teams/index', [
+            // Owner-only changes go through the owner, so the page
+            // names them.
+            'owner' => $team->owner,
             'team' => $team,
         ]);
     }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Core\Identity\Actions\Team\CreateInvitation;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
@@ -18,7 +19,7 @@ it('throws when no team was provided', function (): void {
 
     (new CreateInvitation)
         ->by($user)
-        ->using(['email' => 'ada@example.com']);
+        ->using(['email' => 'ada@example.com', 'role' => Role::Admin]);
 })->throws(Exception::class, 'An invitation cannot be created without a team.');
 
 it('throws when no inviter was provided', function (): void {
@@ -26,7 +27,7 @@ it('throws when no inviter was provided', function (): void {
 
     (new CreateInvitation)
         ->for($team)
-        ->using(['email' => 'ada@example.com']);
+        ->using(['email' => 'ada@example.com', 'role' => Role::Admin]);
 })->throws(Exception::class, 'An invitation cannot be created without an inviter.');
 
 it('creates the invitation for the team and emails it to the invitee', function (): void {
@@ -36,7 +37,7 @@ it('creates the invitation for the team and emails it to the invitee', function 
     $invitation = (new CreateInvitation)
         ->for($team)
         ->by($user)
-        ->using(['email' => 'ada@example.com']);
+        ->using(['email' => 'ada@example.com', 'role' => Role::Admin]);
 
     expect($invitation)->toBeInstanceOf(TeamInvitation::class)
         ->and($invitation->exists)->toBeTrue()

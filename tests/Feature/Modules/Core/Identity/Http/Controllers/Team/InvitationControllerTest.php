@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Notifications\Team\TeamInvitationNotification;
@@ -24,6 +25,7 @@ function invitationPayload(array $overrides = []): array
 {
     return [
         'email' => 'ada@example.com',
+        'role' => Role::Admin->value,
         ...$overrides,
     ];
 }
@@ -391,5 +393,135 @@ describe('destroy', function (): void {
         $this->assertDatabaseHas($invitation->getTable(), [
             $invitation->getKeyName() => $invitation->getKey(),
         ]);
+    });
+});
+
+describe('permissions', function (): void {
+    it('lets every role invite people', function (Role $role): void {
+        Notification::fake();
+        [$user, $team] = actingMember($role);
+        subscribeToPro($team);
+
+        $this->get(route('identity.teams.invitations.create', ['team' => $team->getRouteKey()]), inertiaModalHeaders())
+            ->assertOk();
+
+        $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
+            ->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload())
+            ->assertRedirect()
+            ->assertValid();
+
+        expect($team->invitations()->count())->toBe(1);
+    })->with([
+        'owner' => [Role::Owner],
+        'admin' => [Role::Admin],
+        'member' => [Role::Member],
+    ]);
+
+    it('lets every role resend and cancel an invitation', function (Role $role): void {
+        Notification::fake();
+        [$user, $team] = actingMember($role);
+        subscribeToPro($team);
+        $invitation = TeamInvitation::factory()->for($team)->create();
+        $cancelled = TeamInvitation::factory()->for($team)->create();
+
+        $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('identity.teams.invitations.resend', ['team' => $team->getRouteKey(), 'invitation' => $invitation->getRouteKey()]))
+            ->assertRedirect();
+
+        $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
+            ->delete(route('identity.teams.invitations.destroy', ['team' => $team->getRouteKey(), 'invitation' => $cancelled->getRouteKey()]))
+            ->assertRedirect();
+
+        expect($team->invitations()->count())->toBe(1);
+    })->with([
+        'owner' => [Role::Owner],
+        'admin' => [Role::Admin],
+        'member' => [Role::Member],
+    ]);
+});
+
+describe('roles', function (): void {
+    it('exposes the assignable roles on a pro team', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+
+        $this->get(route('identity.teams.invitations.create', ['team' => $team->getRouteKey()]), inertiaModalHeaders())
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('identity/teams/invitations/create')
+                ->where('roles', [
+                    ['label' => Role::Admin->getLabel(), 'value' => Role::Admin->value],
+                    ['label' => Role::Member->getLabel(), 'value' => Role::Member->value],
+                ]));
+    });
+
+    it('exposes no roles on a free team', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->get(route('identity.teams.invitations.create', ['team' => $team->getRouteKey()]), inertiaModalHeaders())
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('identity/teams/invitations/create')
+                ->where('roles', []));
+    });
+
+    it('persists the invited role on a pro team', function (Role $role): void {
+        Notification::fake();
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+
+        $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
+            ->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload([
+                'role' => $role->value,
+            ]))
+            ->assertRedirect()
+            ->assertValid();
+
+        expect($team->invitations()->sole()->role)->toBe($role);
+    })->with([
+        'admin' => [Role::Admin],
+        'member' => [Role::Member],
+    ]);
+
+    it('refuses to invite a member on a free team', function (): void {
+        Notification::fake();
+        [$user, $team] = actingMember();
+
+        $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
+            ->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload([
+                'role' => Role::Member->value,
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['role']);
+
+        expect($team->invitations()->count())->toBe(0);
+    });
+
+    it('refuses the owner role on any plan', function (): void {
+        Notification::fake();
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+
+        $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
+            ->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload([
+                'role' => Role::Owner->value,
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['role']);
+
+        expect($team->invitations()->count())->toBe(0);
+    });
+
+    it('lists the invited role', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        TeamInvitation::factory()->for($team)->as(Role::Member)->create();
+
+        $this->get(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('identity/teams/invitations/index')
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('invitations.data.0.role', Role::Member->value)));
     });
 });

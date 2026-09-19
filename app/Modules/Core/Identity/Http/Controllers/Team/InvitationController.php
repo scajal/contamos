@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Http\Controllers\Team;
 
+use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Identity\Actions\Team\CreateInvitation;
 use App\Modules\Core\Identity\Actions\Team\Invitation\RenewAndResendTeamInvitation;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Http\Requests\Team\Invitation\IndexRequest;
 use App\Modules\Core\Identity\Http\Requests\Team\Invitation\StoreRequest;
 use App\Modules\Core\Identity\Models\Team;
@@ -45,8 +47,16 @@ class InvitationController
      */
     public function create(Team $team): Modal
     {
-        return Inertia::modal('identity/teams/invitations/create')
-            ->baseRoute('identity.teams.invitations.index', ['team' => $team->getRouteKey()]);
+        return Inertia::modal('identity/teams/invitations/create', [
+            // Choosing a role is a pro feature, so a free team gets
+            // no options and a note pointing at pro instead.
+            'roles' => Feature::AssignRoles->enabled($team)
+                ? collect(Role::assignable())
+                    ->map(fn (Role $role): array => ['label' => $role->getLabel(), 'value' => $role->value])
+                    ->values()
+                    ->all()
+                : [],
+        ])->baseRoute('identity.teams.invitations.index', ['team' => $team->getRouteKey()]);
     }
 
     /**
@@ -58,7 +68,7 @@ class InvitationController
         $createInvitation
             ->for($team)
             ->by($user)
-            ->using($request->safe(['email']));
+            ->using($request->safe(['email', 'role']));
 
         // Show a success message.
         Toast::make(trans('Invitation sent'))

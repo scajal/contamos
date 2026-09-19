@@ -9,15 +9,16 @@ import { Plan } from "./enums/plan";
 export type PlanStatus = "free" | "active" | "trialing" | "grace" | "past_due" | "paused";
 
 /**
- * A team-scoped feature with the team's usage and its limit on
- * each plan. A null limit means unlimited.
+ * A team-scoped feature with the team's usage and what each plan
+ * gives. A quota feature carries a limit, where null means
+ * unlimited; a switch feature carries a boolean and no usage.
  */
 export interface PlanLimit {
     feature: Feature;
     label: string;
-    usage: number;
-    free: number | null;
-    pro: number | null;
+    usage: number | null;
+    free: number | boolean | null;
+    pro: number | boolean | null;
 }
 
 /**

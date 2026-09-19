@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Actions\User;
 
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -37,9 +38,10 @@ class CreateTeam
             // Create the team.
             $team = Team::query()->create($attributes);
 
-            // Associate the team to the user.
-            if ($this->user instanceof \App\Modules\Core\Identity\Models\User) {
-                $this->user->teams()->attach($team);
+            // Associate the team to the user, who owns the team
+            // they created.
+            if ($this->user instanceof User) {
+                $this->user->teams()->attach($team, ['role' => Role::Owner]);
             }
 
             // Return the team.

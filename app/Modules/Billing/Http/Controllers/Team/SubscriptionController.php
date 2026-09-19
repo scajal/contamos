@@ -10,7 +10,10 @@ use App\Modules\Billing\Enums\Plan;
 use App\Modules\Billing\Http\Requests\Team\Subscription\UpgradeRequest;
 use App\Modules\Billing\Models\Subscription;
 use App\Modules\Billing\Models\Transaction;
+use App\Modules\Core\Identity\Enums\Team\Permission;
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Core\Identity\Models\User;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -53,7 +56,7 @@ class SubscriptionController
      * after an earlier Pro period; nothing is removed, it just
      * cannot add more.
      *
-     * @return array{name: string, status: string, cycle: string|null, ends_at: string|null, trial_ends_at: string|null, limits: array<int, array{feature: string, label: string, usage: int, free: int|null, pro: int|null}>}
+     * @return array{name: string, status: string, cycle: string|null, ends_at: string|null, trial_ends_at: string|null, limits: array<int, array{feature: string, label: string, usage: int|null, free: int|bool|null, pro: int|bool|null}>}
      */
     protected function plan(Team $team): array
     {
@@ -120,29 +123,52 @@ class SubscriptionController
     }
 
     /**
-     * The team-scoped features with the team's usage and the limit
-     * on each plan, in the order the upgrade modal lists them.
+     * The team-scoped features with the team's usage and what each
+     * plan gives, in the order the upgrade modal lists them. A quota
+     * feature reports its limit and usage; a switch feature reports
+     * whether the plan includes it and has no usage.
      *
-     * @return array<int, array{feature: string, label: string, usage: int, free: int|null, pro: int|null}>
+     * @return array<int, array{feature: string, label: string, usage: int|null, free: int|bool|null, pro: int|bool|null}>
      */
     protected function limits(Team $team): array
     {
         $limits = [];
 
-        foreach ([Feature::AddAccounts, Feature::AddMembers] as $feature) {
-            /** @var \App\Modules\Billing\Features\AddAccounts|\App\Modules\Billing\Features\AddMembers $instance */
-            $instance = Pennant::instance($feature);
-
-            $limits[] = [
-                'feature' => $feature->value,
-                'label' => $feature->getLabel(),
-                'usage' => $instance->usage($team),
-                'free' => $feature->limitOn(Plan::Free),
-                'pro' => $feature->limitOn(Plan::Pro),
-            ];
+        foreach ([Feature::AddAccounts, Feature::AddMembers, Feature::AssignRoles] as $feature) {
+            $limits[] = $this->row($feature, $team);
         }
 
         return $limits;
+    }
+
+    /**
+     * A feature row for the plan comparison, with the team's usage
+     * when the team is given and the feature is a quota.
+     *
+     * @return array{feature: string, label: string, usage: int|null, free: int|bool|null, pro: int|bool|null}
+     */
+    protected function row(Feature $feature, ?Team $team = null): array
+    {
+        if ($feature->isSwitch()) {
+            return [
+                'feature' => $feature->value,
+                'label' => $feature->getLabel(),
+                'usage' => null,
+                'free' => $feature->includedIn(Plan::Free),
+                'pro' => $feature->includedIn(Plan::Pro),
+            ];
+        }
+
+        /** @var \App\Modules\Billing\Features\AddAccounts|\App\Modules\Billing\Features\AddMembers|\App\Modules\Billing\Features\AddTeams $instance */
+        $instance = Pennant::instance($feature);
+
+        return [
+            'feature' => $feature->value,
+            'label' => $feature->getLabel(),
+            'usage' => $team instanceof Team ? $instance->usage($team) : null,
+            'free' => $feature->limitOn(Plan::Free),
+            'pro' => $feature->limitOn(Plan::Pro),
+        ];
     }
 
     /**
@@ -199,16 +225,17 @@ class SubscriptionController
      * Show the upgrade modal, listing what the pro plan
      * unlocks. Shown when the team hits a free plan limit.
      */
-    public function upgrade(Team $team, UpgradeRequest $request): Modal
+    public function upgrade(Team $team, UpgradeRequest $request, #[CurrentUser] User $user): Modal
     {
         return Inertia::modal('billing/teams/subscriptions/upgrade', [
+            // Only the owner pays, so everybody else is told to ask
+            // them instead of being offered checkout.
+            'canManageBilling' => $user->hasTeamPermission($team, Permission::ManageBilling),
             'feature' => $request->feature(),
-            'features' => collect(Feature::cases())->map(fn (Feature $feature): array => [
-                'feature' => $feature,
-                'label' => $feature->getLabel(),
-                'free' => $feature->limitOn(Plan::Free),
-                'pro' => $feature->limitOn(Plan::Pro),
-            ])->values(),
+            'features' => collect(Feature::cases())
+                ->map(fn (Feature $feature): array => $this->row($feature))
+                ->values(),
+            'owner' => $team->owner,
             'plan' => $team->plan(),
             'prices' => [
                 BillingCycle::Monthly->value => Plan::Pro->price(BillingCycle::Monthly),

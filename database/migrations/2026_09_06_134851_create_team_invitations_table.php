@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('email');
             $table->dateTime('expires_at')->nullable();
             $table->foreignIdFor(User::class, 'invited_by')->constrained()->cascadeOnDelete();
+            $table->string('role');
             $table->foreignIdFor(Team::class)->constrained()->cascadeOnDelete();
             $table->timestamps();
         });

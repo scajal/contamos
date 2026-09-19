@@ -152,7 +152,11 @@ const CurrentPlan = () => {
      * over from an earlier Pro period.
      */
     const overLimits =
-        plan.name === "free" ? plan.limits.filter((row) => row.free !== null && row.usage > row.free) : [];
+        plan.name === "free"
+            ? plan.limits.filter(
+                  (row) => typeof row.free === "number" && typeof row.usage === "number" && row.usage > row.free,
+              )
+            : [];
 
     /**
      * The line under the plan name, by lifecycle state.

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
 use App\Modules\Billing\Features\AddMembers;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
 use Laravel\Pennant\Feature as Pennant;
@@ -27,7 +28,7 @@ it('counts only the members as usage', function (): void {
 
 it('is inactive once the free team reaches its member limit', function (): void {
     [$user, $team] = memberWithTeam();
-    $team->users()->attach(User::factory()->create());
+    memberOf($team);
 
     expect(new AddMembers()->usage($team))->toBe(2)
         ->and(Pennant::for($team)->active(Feature::AddMembers))->toBeFalse();
@@ -36,7 +37,7 @@ it('is inactive once the free team reaches its member limit', function (): void 
 it('is always active for a pro team', function (): void {
     [$user, $team] = memberWithTeam();
     subscribeToPro($team);
-    $team->users()->attach(User::factory()->count(4)->create());
+    $team->users()->attach(User::factory()->count(4)->create(), ['role' => Role::Admin]);
 
     expect(Pennant::for($team)->active(Feature::AddMembers))->toBeTrue();
 });

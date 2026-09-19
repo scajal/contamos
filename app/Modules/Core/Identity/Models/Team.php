@@ -9,15 +9,16 @@ use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Laravel\Paddle\Billable;
 use Laravel\Paddle\Cashier;
@@ -38,6 +39,7 @@ use Laravel\Pennant\Concerns\HasFeatures;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction> $transactions
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transfer> $transfers
  * @property-read \App\Modules\Core\Identity\Models\Membership|null $membership
+ * @property-read \App\Modules\Core\Identity\Models\User|null $owner
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\User> $users
  *
  * @method static \Database\Factories\Modules\Core\Identity\Models\TeamFactory factory($count = null, $state = [])
@@ -152,16 +154,9 @@ class Team extends Model
      */
     public function paddleEmail(): ?string
     {
-        /** @var \App\Modules\Core\Identity\Models\User|null $user */
-        $user = Auth::user();
-
-        // If the user belongs to the team, return their email.
-        if ($user?->belongsToTeam($this)) {
-            return $user->email;
-        }
-
-        // Return the first user's email.
-        return $this->users->first()?->email;
+        // Billing is the owner's business, so billing correspondence
+        // goes to them.
+        return $this->owner?->email;
     }
 
     /**
@@ -170,6 +165,19 @@ class Team extends Model
     public function paddleName(): ?string
     {
         return $this->name;
+    }
+
+    /**
+     * Get the user who owns the team. Every team has exactly
+     * one owner, the user who created it.
+     *
+     * @return \Illuminate\Database\Eloquent\Casts\Attribute<\App\Modules\Core\Identity\Models\User|null, never>
+     */
+    protected function owner(): Attribute
+    {
+        return Attribute::get(fn (): ?User => $this->relationLoaded('users')
+            ? $this->users->first(fn (User $user): bool => $user->membership?->role === Role::Owner)
+            : $this->users()->wherePivot('role', Role::Owner)->first());
     }
 
     /**
@@ -242,6 +250,7 @@ class Team extends Model
     {
         return $this->belongsToMany(User::class, new Membership()->getTable(), $this->getForeignKey(), new User()->getForeignKey())
             ->using(Membership::class)
+            ->withPivot('role')
             ->withTimestamps()
             ->as('membership');
     }

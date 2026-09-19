@@ -15,19 +15,22 @@ import { Feature } from "@/types/app/modules/billing/enums/feature";
 import { Plan } from "@/types/app/modules/billing/enums/plan";
 import { PlanFeature } from "@/types/app/modules/billing/plan-feature";
 import { PlanPrice } from "@/types/app/modules/billing/plan-price";
+import { User } from "@/types/app/modules/core/identity/models/user";
 
 import { CyclePicker } from "./_components/cycle-picker";
 import { PlanTable } from "./_components/plan-table";
 import { Splash } from "./_components/splash";
 
 type PageProps = {
+    canManageBilling: boolean;
     feature: Feature | null;
     features: Array<PlanFeature>;
+    owner: User | null;
     plan: Plan;
     prices: Record<BillingCycle, PlanPrice>;
 };
 
-export default function Upgrade({ feature, features, plan, prices }: PageProps) {
+export default function Upgrade({ canManageBilling, feature, features, owner, plan, prices }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -65,11 +68,13 @@ export default function Upgrade({ feature, features, plan, prices }: PageProps) 
                                 {t("Upgrade to Pro to unlock all features")}
                             </DialogTitle>
                             <DialogDescription className="max-w-[44ch] text-sm leading-relaxed text-pretty sm:text-base">
-                                {blocked
-                                    ? t("You have reached the Free plan limit for :feature.", {
-                                          feature: blocked.label.toLowerCase(),
-                                      })
-                                    : t("The Free plan covers the basics. Pro removes every limit.")}
+                                {!blocked
+                                    ? t("The Free plan covers the basics. Pro removes every limit.")
+                                    : typeof blocked.free === "boolean"
+                                      ? t(":feature is part of Pro.", { feature: blocked.label })
+                                      : t("You have reached the Free plan limit for :feature.", {
+                                            feature: blocked.label.toLowerCase(),
+                                        })}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -84,8 +89,14 @@ export default function Upgrade({ feature, features, plan, prices }: PageProps) 
                                 <p className="text-muted-foreground text-center text-sm">
                                     {t("Your team is already on Pro.")}
                                 </p>
-                            ) : (
+                            ) : canManageBilling ? (
                                 <CyclePicker prices={prices} team={team} />
+                            ) : (
+                                <p className="text-muted-foreground text-center text-sm">
+                                    {owner
+                                        ? t("Ask :name, the team owner, to upgrade to Pro.", { name: owner.name })
+                                        : t("Ask the team owner to upgrade to Pro.")}
+                                </p>
                             )}
                         </DialogFooter>
                     </DialogContent>

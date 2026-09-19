@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Models\Team;
 
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Concerns\DefinesKeyType;
@@ -24,6 +25,7 @@ use Illuminate\Support\Str;
  * @property string $email
  * @property \Carbon\CarbonImmutable|null $expires_at
  * @property string $invited_by
+ * @property \App\Modules\Core\Identity\Enums\Team\Role $role
  * @property string $team_id
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
@@ -39,7 +41,7 @@ use Illuminate\Support\Str;
  *
  * @mixin \Eloquent
  */
-#[Fillable(['accepted_at', 'code', 'email', 'expires_at'])]
+#[Fillable(['accepted_at', 'code', 'email', 'expires_at', 'role'])]
 class TeamInvitation extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
@@ -94,6 +96,7 @@ class TeamInvitation extends Model
         return [
             'accepted_at' => 'datetime',
             'expires_at' => 'datetime',
+            'role' => Role::class,
         ];
     }
 

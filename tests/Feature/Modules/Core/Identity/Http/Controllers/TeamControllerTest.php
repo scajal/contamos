@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Exceptions;
@@ -289,7 +290,7 @@ describe('destroy', function (): void {
     it('deletes the team and lands on another team of the user', function (): void {
         [$user, $team] = actingMember();
         $other = Team::factory()->create();
-        $user->teams()->attach($other);
+        $user->teams()->attach($other, ['role' => Role::Owner]);
 
         $this->delete(route('identity.teams.settings.destroy', ['team' => $team->getRouteKey()]), ['slug' => $team->slug])
             ->assertRedirectToRoute('finance.teams.dashboard.index', ['team' => $other->getRouteKey()]);
@@ -308,5 +309,79 @@ describe('destroy', function (): void {
 
         expect(Team::query()->whereKey($team->getKey())->exists())->toBeFalse()
             ->and($user->fresh()?->current_team_id)->toBeNull();
+    });
+});
+
+describe('permissions', function (): void {
+    it('lets the owner and an admin open and submit the edit form', function (Role $role): void {
+        [$user, $team] = actingMember($role);
+        subscribeToPro($team);
+
+        $this->get(route('identity.teams.settings.edit', ['team' => $team->getRouteKey()]), inertiaModalHeaders())
+            ->assertOk();
+
+        $this->from(route('identity.teams.settings.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('identity.teams.settings.update', ['team' => $team->getRouteKey()]), [
+                'name' => 'Renamed',
+                'slug' => 'renamed',
+            ])
+            ->assertRedirect();
+
+        expect($team->fresh()?->name)->toBe('Renamed');
+    })->with([
+        'owner' => [Role::Owner],
+        'admin' => [Role::Admin],
+    ]);
+
+    it('forbids a member from editing the team', function (): void {
+        [$user, $team] = actingMember(Role::Member);
+        subscribeToPro($team);
+
+        $this->get(route('identity.teams.settings.edit', ['team' => $team->getRouteKey()]), inertiaModalHeaders())
+            ->assertForbidden();
+
+        $this->patch(route('identity.teams.settings.update', ['team' => $team->getRouteKey()]), [
+            'name' => 'Renamed',
+            'slug' => 'renamed',
+        ])->assertForbidden();
+
+        expect($team->fresh()?->name)->not->toBe('Renamed');
+    });
+
+    it('lets only the owner delete the team', function (): void {
+        [$user, $team] = actingMember();
+        memberOf($team, Role::Admin);
+
+        $this->get(route('identity.teams.settings.delete', ['team' => $team->getRouteKey()]), inertiaModalHeaders())
+            ->assertOk();
+    });
+
+    it('forbids an admin and a member from deleting the team', function (Role $role): void {
+        [$user, $team] = actingMember($role);
+        subscribeToPro($team);
+
+        $this->get(route('identity.teams.settings.delete', ['team' => $team->getRouteKey()]), inertiaModalHeaders())
+            ->assertForbidden();
+
+        $this->delete(route('identity.teams.settings.destroy', ['team' => $team->getRouteKey()]), ['handle' => $team->slug])
+            ->assertForbidden();
+
+        expect($team->fresh())->not->toBeNull();
+    })->with([
+        'admin' => [Role::Admin],
+        'member' => [Role::Member],
+    ]);
+});
+
+describe('owner', function (): void {
+    it('names the owner of the team on the settings page', function (): void {
+        [$user, $team] = actingMember(Role::Admin);
+
+        $this->get(route('identity.teams.settings.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('identity/teams/index')
+                ->where('owner.id', $team->owner?->getKey())
+                ->where('owner.name', $team->owner?->name));
     });
 });

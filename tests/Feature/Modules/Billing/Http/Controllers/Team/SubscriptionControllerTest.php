@@ -6,6 +6,7 @@ use App\Modules\Billing\Enums\BillingCycle;
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Carbon\CarbonImmutable;
@@ -58,13 +59,17 @@ describe('index', function (): void {
                 ->where('plan.name', Plan::Free->value)
                 ->where('plan.status', 'free')
                 ->where('plan.cycle', null)
-                ->has('plan.limits', 2)
+                ->has('plan.limits', 3)
                 ->where('plan.limits.0.feature', Feature::AddAccounts->value)
                 ->where('plan.limits.0.usage', 0)
                 ->where('plan.limits.0.free', 3)
                 ->where('plan.limits.0.pro', null)
                 ->where('plan.limits.1.feature', Feature::AddMembers->value)
                 ->where('plan.limits.1.usage', 1)
+                ->where('plan.limits.2.feature', Feature::AssignRoles->value)
+                ->where('plan.limits.2.usage', null)
+                ->where('plan.limits.2.free', false)
+                ->where('plan.limits.2.pro', true)
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->where('renewal', null)
                     ->has('transactions.data', 0)));
@@ -73,7 +78,7 @@ describe('index', function (): void {
     it('reports usage above the free limits for a downgraded team', function (): void {
         [$user, $team] = actingMember();
         Account::factory()->count(4)->active()->for($team)->create();
-        $team->users()->attach(User::factory()->count(2)->create());
+        $team->users()->attach(User::factory()->count(2)->create(), ['role' => Role::Admin]);
 
         $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
@@ -103,7 +108,7 @@ describe('index', function (): void {
                 ->where('plan.name', Plan::Pro->value)
                 ->where('plan.status', 'active')
                 ->where('plan.cycle', BillingCycle::Monthly->value)
-                ->has('plan.limits', 2)
+                ->has('plan.limits', 3)
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->where('renewal.date', '2026-10-08T10:00:00+00:00')
                     ->has('renewal.amount')
@@ -367,5 +372,98 @@ describe('subscribe', function (): void {
                 ->has('checkout')
                 ->where('paddle.token', 'test_token')
                 ->where('paddle.sandbox', true));
+    });
+});
+
+describe('permissions', function (): void {
+    it('lets only the owner reach the billing pages', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk();
+    });
+
+    it('forbids an admin and a member from the owner-only billing routes', function (Role $role): void {
+        [$user, $team] = actingMember($role);
+        subscribeToPro($team);
+        $transaction = billingTransaction($team);
+
+        $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]))
+            ->assertForbidden();
+
+        $this->get(route('billing.teams.subscriptions.redirect-to-customer-portal', ['team' => $team->getRouteKey()]))
+            ->assertForbidden();
+
+        $this->get(route('billing.teams.subscriptions.subscribe', ['team' => $team->getRouteKey(), 'cycle' => BillingCycle::Monthly->value]))
+            ->assertForbidden();
+
+        $this->get(route('billing.teams.subscriptions.invoice', ['team' => $team->getRouteKey(), 'billingTransaction' => $transaction->getKey()]))
+            ->assertForbidden();
+    })->with([
+        'admin' => [Role::Admin],
+        'member' => [Role::Member],
+    ]);
+
+    it('still shows the upgrade prompt to a member who cannot manage billing', function (Role $role): void {
+        [$user, $team] = actingMember($role);
+        subscribeToPro($team);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('billing.teams.subscriptions.upgrade', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('billing/teams/subscriptions/upgrade')
+                ->where('canManageBilling', false));
+    })->with([
+        'admin' => [Role::Admin],
+        'member' => [Role::Member],
+    ]);
+});
+
+describe('switch features', function (): void {
+    it('lists member roles as a pro-only feature on the upgrade modal', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('billing.teams.subscriptions.upgrade', [
+                'team' => $team->getRouteKey(),
+                'feature' => Feature::AssignRoles->value,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('billing/teams/subscriptions/upgrade')
+                ->where('feature', Feature::AssignRoles->value)
+                ->where('canManageBilling', true)
+                ->where('owner.id', $user->getKey())
+                ->has('features', count(Feature::cases()))
+                ->where('features.3.feature', Feature::AssignRoles->value)
+                ->where('features.3.label', Feature::AssignRoles->getLabel())
+                ->where('features.3.usage', null)
+                ->where('features.3.free', false)
+                ->where('features.3.pro', true));
+    });
+
+    it('keeps reporting a quota feature with its limits', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('billing.teams.subscriptions.upgrade', [
+                'team' => $team->getRouteKey(),
+                'feature' => Feature::AddAccounts->value,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('features.0.free', 3)
+                ->where('features.0.pro', null)
+                ->where('features.0.usage', null));
+    });
+});
+
+describe('customer', function (): void {
+    it('bills the owner of the team', function (): void {
+        [$user, $team] = actingMember(Role::Admin);
+
+        expect($team->paddleEmail())->toBe($team->owner?->email)
+            ->and($team->paddleEmail())->not->toBe($user->email);
     });
 });

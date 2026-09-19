@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Membership;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
@@ -76,4 +77,24 @@ it('uses the first member email for paddle when nobody is authenticated', functi
     [$user, $team] = memberWithTeam();
 
     expect($team->paddleEmail())->toBe($user->email);
+});
+
+it('exposes the user who owns the team', function (): void {
+    [$owner, $team] = memberWithTeam();
+    memberOf($team, Role::Admin);
+
+    expect($team->owner?->is($owner))->toBeTrue();
+});
+
+it('reads the owner from the loaded members when the relation is loaded', function (): void {
+    [$owner, $team] = memberWithTeam();
+    $team->load('users');
+
+    expect($team->owner?->is($owner))->toBeTrue();
+});
+
+it('has no owner when nobody belongs to the team', function (): void {
+    $team = Team::factory()->create();
+
+    expect($team->owner)->toBeNull();
 });
