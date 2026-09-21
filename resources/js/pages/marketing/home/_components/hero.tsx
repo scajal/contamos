@@ -64,7 +64,7 @@ export const Hero = ({ dashboardUrl }: HeroProps) => {
                     transition={{ duration: 0.7, ease: "easeOut", delay: 0.24 }}
                     className="flex flex-col items-center gap-4"
                 >
-                    <BorderBeam>
+                    <BorderBeam size="pulse-outside">
                         <Button
                             nativeButton={false}
                             render={<a href={dashboardUrl ?? login.url()} />}
