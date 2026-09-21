@@ -11,6 +11,7 @@ use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
@@ -33,6 +34,29 @@ function transactionPayload(array $overrides = []): array
         'type' => TransactionType::Expense->value,
         ...$overrides,
     ];
+}
+
+/**
+ * Parse the rows of an exported CSV body, byte-order mark aside.
+ *
+ * @return array<int, array<int, string|null>>
+ */
+function csvRows(string $body): array
+{
+    $handle = fopen('php://memory', 'r+');
+
+    fwrite($handle, Str::after($body, "\u{FEFF}"));
+    rewind($handle);
+
+    $rows = [];
+
+    while (($row = fgetcsv($handle)) !== false) {
+        $rows[] = $row;
+    }
+
+    fclose($handle);
+
+    return $rows;
 }
 
 describe('index', function (): void {
@@ -422,6 +446,343 @@ describe('index', function (): void {
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('transactions.data', 1)
                     ->where('transactions.data.0.id', $mine->getKey())));
+    });
+});
+
+describe('export', function (): void {
+    it('downloads a CSV attachment named after the team and the export date', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $response = $this->get(route('finance.teams.transactions.export', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+
+        $response->assertDownload("{$team->getRouteKey()}-transactions-".CarbonImmutable::now()->toDateString().'.csv');
+    });
+
+    it('starts the body with a byte-order mark and the English header row', function (): void {
+        [, $team] = actingMember();
+
+        $body = $this->get(route('finance.teams.transactions.export', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->streamedContent();
+
+        expect($body)->toStartWith("\u{FEFF}");
+
+        expect(csvRows($body)[0])->toBe([
+            'Date',
+            'Time',
+            'Type',
+            'Amount',
+            'Currency',
+            'Description',
+            'Account',
+            'Tags',
+            'Recorded by',
+            'FX rate',
+            'Id',
+        ]);
+    });
+
+    it('translates the header row for the requested locale', function (): void {
+        [, $team] = actingMember();
+
+        $body = $this->withHeaders(['Accept-Language' => 'es'])
+            ->get(route('finance.teams.transactions.export', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->streamedContent();
+
+        expect(csvRows($body)[0])->toBe([
+            'Fecha',
+            'Hora',
+            'Tipo',
+            'Monto',
+            'Moneda',
+            'Descripción',
+            'Cuenta',
+            'Etiquetas',
+            'Registró',
+            'Tipo de cambio',
+            'Id',
+        ]);
+    });
+
+    it('writes one row per transaction with its columns in order', function (): void {
+        [$user, $team] = actingMember();
+        $user->update(['name' => 'Ada Lovelace']);
+        $currency = Currency::factory()->active()->fiat()->create(['code' => 'UYU']);
+        $account = Account::factory()->bank()->active()->for($team)->create(['name' => 'Santander']);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '1234.5',
+            'currency_id' => $currency->getKey(),
+            'decimal_places' => 2,
+            'description' => 'Almuerzo compartido',
+            'occurred_at' => CarbonImmutable::now()->setTime(15, 45),
+            'quote' => '38.5',
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        $transaction->tags()->attach([
+            Tag::factory()->active()->for($team)->create(['name' => 'Salidas'])->getKey(),
+            Tag::factory()->active()->for($team)->create(['name' => 'Comida'])->getKey(),
+        ]);
+
+        $body = $this->get(route('finance.teams.transactions.export', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->streamedContent();
+
+        $rows = csvRows($body);
+
+        expect($rows)->toHaveCount(2);
+        expect($rows[1])->toBe([
+            $transaction->occurred_at->format('Y-m-d'),
+            '15:45',
+            'Expense',
+            '-1234.50',
+            'UYU',
+            'Almuerzo compartido',
+            'Santander',
+            'Comida; Salidas',
+            'Ada Lovelace',
+            '38.5',
+            $transaction->getKey(),
+        ]);
+    });
+
+    it('writes an income amount without a sign', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        Transaction::factory()->income()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '90',
+            'currency_id' => $currency->getKey(),
+            'decimal_places' => 0,
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $body = $this->get(route('finance.teams.transactions.export', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->streamedContent();
+
+        expect(csvRows($body)[1][3])->toBe('90');
+    });
+
+    it('writes the date and time in the requested timezone', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDays(9)->setTime(2, 30),
+        ]);
+
+        $body = $this->get(route('finance.teams.transactions.export', [
+            'team' => $team->getRouteKey(),
+            'timezone' => 'America/Montevideo',
+        ]))
+            ->assertOk()
+            ->streamedContent();
+
+        $expected = CarbonImmutable::now()->startOfMonth()->addDays(9)->setTime(2, 30)
+            ->setTimezone('America/Montevideo');
+
+        expect(csvRows($body)[1][0])->toBe($expected->format('Y-m-d'));
+        expect(csvRows($body)[1][1])->toBe($expected->format('H:i'));
+    });
+
+    it('falls back to UTC when no timezone is given', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $occurredAt = CarbonImmutable::now()->startOfMonth()->addDays(9)->setTime(2, 30);
+        Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => $occurredAt,
+        ]);
+
+        $body = $this->get(route('finance.teams.transactions.export', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->streamedContent();
+
+        expect(csvRows($body)[1][0])->toBe($occurredAt->format('Y-m-d'));
+        expect(csvRows($body)[1][1])->toBe('02:30');
+    });
+
+    it('rejects a timezone that is not an identifier', function (): void {
+        [, $team] = actingMember();
+
+        $this->get(route('finance.teams.transactions.export', [
+            'team' => $team->getRouteKey(),
+            'timezone' => 'Mars/Olympus',
+        ]))
+            ->assertRedirect()
+            ->assertInvalid(['timezone']);
+    });
+
+    it('exports only the transactions the filters match', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $otherCurrency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $otherAccount = Account::factory()->bank()->active()->for($team)->create();
+        $tag = Tag::factory()->active()->for($team)->create();
+
+        $month = CarbonImmutable::now()->startOfMonth()->subMonth();
+
+        $matching = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'description' => 'Office lunch',
+            'occurred_at' => $month->addDays(14),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        $matching->tags()->attach($tag->getKey());
+
+        Transaction::factory()->income()->create([
+            'account_id' => $otherAccount->getKey(),
+            'currency_id' => $otherCurrency->getKey(),
+            'description' => 'Salary',
+            'occurred_at' => $month->subMonths(2),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $body = $this->get(route('finance.teams.transactions.export', [
+            'team' => $team->getRouteKey(),
+            'filter' => [
+                'type' => TransactionType::Expense->value,
+                'account' => $account->getKey(),
+                'currency' => $currency->getKey(),
+                'search' => 'lunch',
+                'tags' => $tag->getKey(),
+                'from' => $month->toDateString(),
+                'to' => $month->endOfMonth()->toDateString(),
+            ],
+        ]))
+            ->assertOk()
+            ->streamedContent();
+
+        $rows = csvRows($body);
+
+        expect($rows)->toHaveCount(2);
+        expect($rows[1][10])->toBe($matching->getKey());
+    });
+
+    it('exports every visible transaction of the team, newest first, and nothing from another team', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+
+        $older = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now()->subDays(2),
+        ]);
+        $newer = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now(),
+        ]);
+        Transaction::factory()->expense()->create([
+            'occurred_at' => CarbonImmutable::now(),
+        ]);
+
+        $body = $this->get(route('finance.teams.transactions.export', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->streamedContent();
+
+        $rows = csvRows($body);
+
+        expect($rows)->toHaveCount(3);
+        expect($rows[1][10])->toBe($newer->getKey());
+        expect($rows[2][10])->toBe($older->getKey());
+    });
+
+    it('leaves out a transaction the free plan no longer shows', function (): void {
+        [, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+
+        Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->subMonths(5)->subDay(),
+        ]);
+        $visible = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now(),
+        ]);
+
+        $body = $this->get(route('finance.teams.transactions.export', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->streamedContent();
+
+        $rows = csvRows($body);
+
+        expect($rows)->toHaveCount(2);
+        expect($rows[1][10])->toBe($visible->getKey());
+    });
+
+    it('writes only the header row when nothing matches', function (): void {
+        [, $team] = actingMember();
+
+        $body = $this->get(route('finance.teams.transactions.export', [
+            'team' => $team->getRouteKey(),
+            'filter' => ['search' => 'nothing here'],
+        ]))
+            ->assertOk()
+            ->streamedContent();
+
+        expect(csvRows($body))->toHaveCount(1);
+    });
+
+    it('leaves the recorded by cell empty when the member is gone', function (): void {
+        [, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        Transaction::factory()->expense()->for($account)->for($team)->create([
+            'description' => null,
+            'user_id' => null,
+        ]);
+
+        $body = $this->get(route('finance.teams.transactions.export', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->streamedContent();
+
+        $row = csvRows($body)[1];
+
+        expect($row[8])->toBe('');
+        expect($row[5])->toBe('');
+    });
+
+    it('rejects an account filter from another team', function (): void {
+        [, $team] = actingMember();
+        $foreign = Account::factory()->for(Team::factory())->create();
+
+        $this->get(route('finance.teams.transactions.export', [
+            'team' => $team->getRouteKey(),
+            'filter' => ['account' => $foreign->getKey()],
+        ]))
+            ->assertRedirect()
+            ->assertInvalid(['filter.account']);
+    });
+
+    it('forbids a user who is not a member of the team', function (): void {
+        actingMember();
+        $other = Team::factory()->create();
+
+        $this->get(route('finance.teams.transactions.export', ['team' => $other->getRouteKey()]))
+            ->assertForbidden();
+    });
+
+    it('throttles the eleventh export within a minute', function (): void {
+        [, $team] = actingMember();
+
+        $url = route('finance.teams.transactions.export', ['team' => $team->getRouteKey()]);
+
+        foreach (range(1, 10) as $ignored) {
+            $this->get($url)->assertOk();
+        }
+
+        $this->get($url)->assertTooManyRequests();
     });
 });
 

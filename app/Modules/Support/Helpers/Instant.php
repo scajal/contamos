@@ -40,17 +40,36 @@ class Instant
     }
 
     /**
+     * Resolve an IANA timezone identifier, falling back to UTC when
+     * the value is missing or is not an identifier PHP knows.
+     */
+    public static function zone(mixed $timezone): DateTimeZone
+    {
+        return new DateTimeZone(self::isZone($timezone) ? $timezone : 'UTC');
+    }
+
+    /**
+     * Determine whether the value is an IANA timezone identifier.
+     *
+     * @phpstan-assert-if-true string $timezone
+     */
+    public static function isZone(mixed $timezone): bool
+    {
+        return is_string($timezone) && in_array($timezone, DateTimeZone::listIdentifiers(), true);
+    }
+
+    /**
      * Convert a timezone-naive datetime-local value to UTC.
      */
     public static function toUtc(mixed $value, mixed $timezone): ?string
     {
-        // If the value or timezone is not a string, return null.
-        if (! is_string($value) || ! is_string($timezone)) {
+        // If the value is not a string, return null.
+        if (! is_string($value)) {
             return null;
         }
 
         // Validate the timezone.
-        if (! in_array($timezone, DateTimeZone::listIdentifiers(), true)) {
+        if (! self::isZone($timezone)) {
             return null;
         }
 

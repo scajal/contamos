@@ -6,7 +6,9 @@ import {
     ArrowDownIcon,
     ArrowLeftRightIcon,
     ArrowUpIcon,
+    ChevronDownIcon,
     CircleDashedIcon,
+    DownloadIcon,
     EyeIcon,
     AlertTriangleIcon,
     ListFilterPlusIcon,
@@ -30,6 +32,7 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
@@ -108,7 +111,7 @@ const Index = () => {
                         <Filters />
                     </div>
                     <div className="flex justify-end max-sm:order-first max-sm:w-full">
-                        <CreateTransactionMenu className="max-sm:w-full" />
+                        <ActionsMenu className="max-sm:w-full" />
                     </div>
                 </div>
 
@@ -188,7 +191,7 @@ const HistoryNotice = () => {
     );
 };
 
-const CreateTransactionMenu = ({ className }: { className?: string }) => {
+const ActionsMenu = ({ className }: { className?: string }) => {
     /**
      * Translate the provided string
      * to the current locale.
@@ -198,48 +201,81 @@ const CreateTransactionMenu = ({ className }: { className?: string }) => {
     /**
      * The page's props.
      */
-    const { user } = usePage().props;
+    const { filters, transactions, user } = usePage<PageProps>().props;
 
     /**
      * The current team's route key.
      */
     const team = user?.current_team?.slug ?? "";
 
+    /**
+     * The filters the listing is showing, so the export carries the
+     * same query the page was rendered with.
+     */
+    const filter = Object.fromEntries(
+        Object.entries(filters ?? {}).filter((entry): entry is [string, string] => !!entry[1]),
+    );
+
+    /**
+     * Where the export downloads from, in the browser's own timezone
+     * so the dates match what the list shows.
+     */
+    const exportUrl = routes.export.url(
+        { team },
+        { query: { filter, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone } },
+    );
+
+    /**
+     * A listing that has not loaded, or loaded empty, has nothing
+     * worth downloading.
+     */
+    const isExportable = !!transactions?.data?.length;
+
     return (
-        <div className={cn("flex gap-1.5", className)}>
-            <Button
-                className="max-sm:flex-1"
-                nativeButton={false}
-                render={
-                    <ModalLink href={routes.create.url({ team, type: "income" })}>
-                        <ArrowDownIcon data-icon="inline-start" />
-                        {t("enums.income")}
-                    </ModalLink>
-                }
-                variant="outline"
-            />
-            <Button
-                className="max-sm:flex-1"
-                nativeButton={false}
-                render={
-                    <ModalLink href={transferRoutes.create.url({ team })}>
-                        <ArrowLeftRightIcon data-icon="inline-start" />
-                        {t("Transfer")}
-                    </ModalLink>
-                }
-                variant="outline"
-            />
-            <Button
-                className="max-sm:flex-1"
-                nativeButton={false}
-                render={
-                    <ModalLink href={routes.create.url({ team, type: "expense" })}>
-                        <ArrowUpIcon data-icon="inline-start" />
-                        {t("enums.expense")}
-                    </ModalLink>
-                }
-            />
-        </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger render={<Button className={className} />}>
+                {t("Actions")}
+                <ChevronDownIcon data-icon="inline-end" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                    <DropdownMenuItem
+                        render={
+                            <ModalLink href={routes.create.url({ team, type: "income" })}>
+                                <ArrowDownIcon />
+                                <span>{t("enums.income")}</span>
+                            </ModalLink>
+                        }
+                    />
+                    <DropdownMenuItem
+                        render={
+                            <ModalLink href={transferRoutes.create.url({ team })}>
+                                <ArrowLeftRightIcon />
+                                <span>{t("Transfer")}</span>
+                            </ModalLink>
+                        }
+                    />
+                    <DropdownMenuItem
+                        render={
+                            <ModalLink href={routes.create.url({ team, type: "expense" })}>
+                                <ArrowUpIcon />
+                                <span>{t("enums.expense")}</span>
+                            </ModalLink>
+                        }
+                    />
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                    <DropdownMenuItem
+                        disabled={!isExportable}
+                        render={isExportable ? <a href={exportUrl} /> : undefined}
+                    >
+                        <DownloadIcon />
+                        <span>{t("Export CSV")}</span>
+                    </DropdownMenuItem>
+                </DropdownMenuGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 };
 
@@ -491,7 +527,7 @@ const Listing = () => {
                                 </EmptyHeader>
                                 {!isFiltered ? (
                                     <EmptyContent>
-                                        <CreateTransactionMenu />
+                                        <ActionsMenu />
                                     </EmptyContent>
                                 ) : null}
                             </Empty>
