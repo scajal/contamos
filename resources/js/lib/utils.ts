@@ -29,8 +29,15 @@ export function markFormDirty(from?: Element | null): void {
 
 /**
  * Format a major-unit amount for display (grouping + currency decimals + catalog symbol).
+ * Tables already grouped by currency pass `symbol: false` so the code is not
+ * repeated in every cell.
  */
-export function formatAmount(amount: string, locale: string, currency?: AmountCurrency): string {
+export function formatAmount(
+    amount: string,
+    locale: string,
+    currency?: AmountCurrency,
+    options: { symbol?: boolean } = {},
+): string {
     // Get the decimal places of the currency.
     const decimalPlaces = currency?.decimal_places ?? 0;
 
@@ -52,7 +59,7 @@ export function formatAmount(amount: string, locale: string, currency?: AmountCu
             ? formattedInteger
             : `${formattedInteger}${new Intl.NumberFormat(locale).formatToParts(1.1).find((part) => part.type === "decimal")?.value ?? "."}${fractionPart.slice(0, decimalPlaces).padEnd(decimalPlaces, "0")}`;
 
-    return `${currency?.symbol} ${formatted}`;
+    return options.symbol === false ? formatted : `${currency?.symbol} ${formatted}`;
 }
 
 /**

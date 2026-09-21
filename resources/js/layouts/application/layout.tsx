@@ -8,6 +8,7 @@ import {
     BanknoteIcon,
     ChevronsUpDownIcon,
     CreditCardIcon,
+    CalendarRangeIcon,
     LayoutDashboardIcon,
     LogOutIcon,
     PlusIcon,
@@ -53,6 +54,7 @@ import subscriptions from "@/routes/billing/teams/subscriptions";
 import administration from "@/routes/filament/administration";
 import accounts from "@/routes/finance/teams/accounts";
 import dashboard from "@/routes/finance/teams/dashboard";
+import monthly from "@/routes/finance/teams/monthly";
 import tags from "@/routes/finance/teams/tags";
 import transactions from "@/routes/finance/teams/transactions";
 import teams from "@/routes/identity/teams";
@@ -63,6 +65,7 @@ const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/accounts", title: "Accounts" },
     { prefix: "finance/teams/transactions", title: "Transactions" },
     { prefix: "finance/teams/dashboard", title: "Dashboard" },
+    { prefix: "finance/teams/monthly", title: "Monthly" },
     { prefix: "finance/teams/tags", title: "Tags" },
     { prefix: "identity/teams/invitations", title: "Invitations" },
     { prefix: "identity/teams/members", title: "Members" },
@@ -225,6 +228,14 @@ const Sidebar = () => {
                             >
                                 <LayoutDashboardIcon />
                                 <span>{t("Dashboard")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                render={<Link href={monthly.index.url({ team: user?.current_team?.slug ?? "" })} />}
+                            >
+                                <CalendarRangeIcon />
+                                <span>{t("Monthly")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>

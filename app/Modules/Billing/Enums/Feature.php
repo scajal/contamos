@@ -52,6 +52,15 @@ enum Feature: string implements HasLabel
     case AssignRoles = 'members:roles';
 
     /**
+     * Represents how far back a team may open its own
+     * history. The plan's limit is the number of months
+     * reachable, counting the current one.
+     *
+     * @see \App\Modules\Billing\Features\ViewHistory
+     */
+    case ViewHistory = 'history:view';
+
+    /**
      * Check if the feature is active for the given
      * scope through Pennant.
      */
@@ -70,6 +79,7 @@ enum Feature: string implements HasLabel
             self::AddMembers => trans('Members per team'),
             self::AddTeams => trans('Free teams per user'),
             self::AssignRoles => trans('Member roles'),
+            self::ViewHistory => trans('Months of history'),
         };
     }
 
@@ -98,7 +108,7 @@ enum Feature: string implements HasLabel
     {
         return match ($this) {
             self::AssignRoles => true,
-            self::AddAccounts, self::AddMembers, self::AddTeams => false,
+            self::AddAccounts, self::AddMembers, self::AddTeams, self::ViewHistory => false,
         };
     }
 
@@ -125,7 +135,7 @@ enum Feature: string implements HasLabel
             return null;
         }
 
-        /** @var \App\Modules\Billing\Features\AddAccounts|\App\Modules\Billing\Features\AddMembers|\App\Modules\Billing\Features\AddTeams $feature */
+        /** @var \App\Modules\Billing\Features\AddAccounts|\App\Modules\Billing\Features\AddMembers|\App\Modules\Billing\Features\AddTeams|\App\Modules\Billing\Features\ViewHistory $feature */
         $feature = Pennant::instance($this);
 
         return $feature->limitOn($plan);
