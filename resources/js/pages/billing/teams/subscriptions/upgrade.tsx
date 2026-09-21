@@ -59,7 +59,7 @@ export default function Upgrade({ canManageBilling, feature, features, owner, pl
         <Modal>
             {({ rootProps }) => (
                 <Dialog {...rootProps}>
-                    <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-lg">
+                    <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-lg">
                         {/** Colour wash */}
                         <Splash />
 
@@ -80,7 +80,7 @@ export default function Upgrade({ canManageBilling, feature, features, owner, pl
                         </DialogHeader>
 
                         {/** Comparison */}
-                        <div className="relative px-6 sm:px-8">
+                        <div className="relative min-h-0 overflow-y-auto overscroll-contain px-6 sm:px-8">
                             <PlanTable highlight={feature} rows={features} />
                         </div>
 

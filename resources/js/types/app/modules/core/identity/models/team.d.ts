@@ -17,6 +17,7 @@ export interface Team {
     slug: string;
     created_at: string | null;
     updated_at: string | null;
+    users_count?: number;
     accounts?: Account[];
     billing_transactions?: BillingTransaction[];
     customer?: Customer | null;

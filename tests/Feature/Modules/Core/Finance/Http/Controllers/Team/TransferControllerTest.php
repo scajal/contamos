@@ -93,6 +93,50 @@ describe('create', function (): void {
 });
 
 describe('store', function (): void {
+    it('offers to undo the transfer it just recorded', function (): void {
+        [$team, $origin, $destination, $currency] = actingTransferMember();
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transfers.store', ['team' => $team->getRouteKey()]), transferPayload($origin, $destination, $currency, $currency))
+            ->assertRedirect();
+
+        $transfer = Transfer::query()->sole();
+
+        expect(flashedToastAction())->toBe([
+            'label' => trans('Undo'),
+            'method' => 'delete',
+            'url' => route('finance.teams.transfers.destroy', [
+                'team' => $team->getRouteKey(),
+                'transfer' => $transfer->getRouteKey(),
+            ]),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->delete(flashedToastAction()['url'])
+            ->assertRedirect();
+
+        expect(Transfer::query()->count())->toBe(0)
+            ->and(Transaction::query()->count())->toBe(0);
+    });
+
+    it('records both legs written with a comma decimal separator', function (): void {
+        [$team, $origin, $destination, $currency] = actingTransferMember();
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transfers.store', ['team' => $team->getRouteKey()]), transferPayload($origin, $destination, $currency, $currency, [
+                'amount_received' => '1.234,50',
+                'amount_sent' => '1.234,50',
+                'origin_quote' => '40,5',
+            ]))
+            ->assertRedirect();
+
+        $transfer = Transfer::query()->sole()->load('transactions');
+
+        expect((float) $transfer->originLeg()?->amount)->toBe(1234.50)
+            ->and((float) $transfer->destinationLeg()?->amount)->toBe(1234.50)
+            ->and((float) $transfer->originLeg()?->quote)->toBe(40.5);
+    });
+
     it('creates the transfer with both legs and their type, account, currency, amount, decimal places, and quote', function (): void {
         [$team, $origin, $destination, $currency, $user] = actingTransferMember();
         $tag = Tag::factory()->active()->for($team)->create();

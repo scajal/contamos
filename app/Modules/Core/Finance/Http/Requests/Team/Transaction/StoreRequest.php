@@ -11,6 +11,7 @@ use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Support\Helpers\Amount;
 use App\Modules\Support\Helpers\Instant;
 use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -35,6 +36,11 @@ class StoreRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        $this->merge([
+            'amount' => new Amount()->normalize($this->input('amount')),
+            'quote' => new Amount()->normalize($this->input('quote')),
+        ]);
+
         $this->merge([
             'occurred_at' => $occurredAt = Instant::toUtc($this->input('occurred_at'), $this->input('timezone')) ?? $this->input('occurred_at'),
             'quote' => ($quote = $this->input('quote')) ? $quote : Instant::resolveQuote($this->currency(), $occurredAt)?->rate,

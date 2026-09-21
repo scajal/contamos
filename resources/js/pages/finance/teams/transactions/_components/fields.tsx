@@ -367,8 +367,7 @@ export const Fields = ({
                             render={
                                 <Button
                                     aria-invalid={invalid("quote") || (quoteMissing && quoteValue.trim() === "")}
-                                    className="max-w-full min-w-0 justify-start"
-                                    size="sm"
+                                    className="max-w-full min-w-0 justify-start max-sm:h-10"
                                     type="button"
                                     variant="outline"
                                 />

@@ -7,6 +7,7 @@ namespace App\Modules\Core\Finance\Http\Requests\Team\Transfer\Concerns;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Support\Helpers\Amount;
 use App\Modules\Support\Helpers\Instant;
 
 /**
@@ -93,6 +94,23 @@ trait ResolvesTransferInputs
      */
     protected function prepareForValidation(): void
     {
+        $amount = new Amount;
+
+        // A Spanish keyboard writes the decimal separator as a comma,
+        // which the decimal rule rejects, so every submitted figure is
+        // normalised before the blank quotes are filled in.
+        $this->merge(array_map(
+            $amount->normalize(...),
+            $this->only([
+                'amount_received',
+                'amount_sent',
+                'destination_fee',
+                'destination_quote',
+                'origin_fee',
+                'origin_quote',
+            ]),
+        ));
+
         $occurredAt = Instant::toUtc($this->input('occurred_at'), $this->input('timezone')) ?? $this->input('occurred_at');
 
         $this->merge([

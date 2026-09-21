@@ -228,6 +228,25 @@ function assertFlashedToast(string $message): void
 }
 
 /**
+ * Get the action the flashed Inertia toast offers, if any.
+ *
+ * @return array{label: string, method: string, url: string}|null
+ */
+function flashedToastAction(): ?array
+{
+    $flash = session()->get(\Inertia\Support\SessionKey::FLASH_DATA, []);
+
+    if (! is_array($flash) || ! isset($flash['toast']) || ! is_array($flash['toast'])) {
+        return null;
+    }
+
+    /** @var array{label: string, method: string, url: string}|null $action */
+    $action = $flash['toast']['action'] ?? null;
+
+    return $action;
+}
+
+/**
  * Get the balance a \App\Modules\Core\Finance\Models\Team\Account holds
  * for a \App\Modules\Core\Catalog\Models\Currency.
  */

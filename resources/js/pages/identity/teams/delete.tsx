@@ -71,7 +71,7 @@ export default function Delete({ subscribed, team }: PageProps) {
                                     </DialogHeader>
                                     <div className="flex flex-1 flex-col gap-6">
                                         {subscribed && (
-                                            <div className="border-destructive/40 bg-destructive/5 flex gap-3 rounded-sm border p-3 text-sm">
+                                            <div className="border-destructive/40 bg-destructive/5 flex gap-3 rounded-xl border p-3 text-sm">
                                                 <AlertTriangleIcon className="text-destructive mt-0.5 size-4 shrink-0" />
                                                 <p>
                                                     {t(

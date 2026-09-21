@@ -89,7 +89,7 @@ export default function Delete({ email, teams }: PageProps) {
                                                         "These teams are deleted with your account, because you are their only member:",
                                                     )}
                                                 </p>
-                                                <div className="overflow-hidden rounded-sm border">
+                                                <div className="overflow-hidden rounded-xl border">
                                                     <ItemGroup className="gap-0 has-data-[size=sm]:gap-0">
                                                         {teams.map((team) => (
                                                             <Item
@@ -111,7 +111,7 @@ export default function Delete({ email, teams }: PageProps) {
                                             </div>
                                         )}
                                         {subscribed && (
-                                            <div className="border-destructive/40 bg-destructive/5 flex gap-3 rounded-sm border p-3 text-sm">
+                                            <div className="border-destructive/40 bg-destructive/5 flex gap-3 rounded-xl border p-3 text-sm">
                                                 <AlertTriangleIcon className="text-destructive mt-0.5 size-4 shrink-0" />
                                                 <p>
                                                     {t(

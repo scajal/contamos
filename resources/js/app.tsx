@@ -13,11 +13,34 @@ import { TooltipProvider } from "./components/ui/tooltip";
  * the server.
  */
 router.on("flash", (event) => {
-    if (event.detail.flash.toast) {
-        toast.add({
-            description: event.detail.flash.toast.message,
-        });
+    const flashed = event.detail.flash.toast;
+
+    if (!flashed) {
+        return;
     }
+
+    const action = flashed.action;
+
+    const id: string = toast.add({
+        // A write the server says can be taken back offers to do it
+        // from the toast, which is where the user is already looking.
+        actionProps: action
+            ? {
+                  children: action.label,
+                  onClick: () => {
+                      router.visit(action.url, {
+                          method: action.method,
+                          preserveScroll: true,
+                      });
+
+                      // The offer is spent, and the write it undid
+                      // announces itself with a toast of its own.
+                      toast.close(id);
+                  },
+              }
+            : undefined,
+        description: flashed.message,
+    });
 });
 
 /**

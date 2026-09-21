@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ->preventRequestForgery(except: ['paddle/*'])
             ->redirectUsersTo(fn (Request $request): string => app(ResolveAuthenticationRedirect::class)->fromRequest($request))
             ->web(append: [
+                \App\Modules\Support\Http\Middleware\HandleAppearance::class,
                 \App\Modules\Support\Http\Middleware\SetLocale::class,
                 \App\Modules\Support\Http\Middleware\HandleInertiaRequests::class,
                 \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,

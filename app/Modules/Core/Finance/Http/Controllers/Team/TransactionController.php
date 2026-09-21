@@ -128,7 +128,7 @@ class TransactionController
     public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateTransaction $createTransaction): RedirectResponse
     {
         // Create the transaction.
-        $createTransaction
+        $transaction = $createTransaction
             ->for($team)
             ->by($user)
             ->using($request->safe([
@@ -141,9 +141,21 @@ class TransactionController
                 'type',
             ]), $request->tagIds());
 
-        // Flash a success message to the session.
-        Toast::make(trans('Saved'))
-            ->flash();
+        // Flash a success message to the session, offering to take the
+        // entry back so a wrong tap costs one tap rather than a trip
+        // through the row's menu and a confirmation. An entry dated
+        // before the plan's history window is not reachable by URL,
+        // so it is saved without the offer.
+        $toast = Toast::make(trans('Saved'));
+
+        if ($this->isVisible($team, $transaction)) {
+            $toast->action(trans('Undo'), route('finance.teams.transactions.destroy', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getRouteKey(),
+            ]));
+        }
+
+        $toast->flash();
 
         return back();
     }
@@ -373,12 +385,18 @@ class TransactionController
      */
     protected function assertTransactionIsVisible(Team $team, Transaction $transaction): void
     {
+        abort_unless($this->isVisible($team, $transaction), HttpResponse::HTTP_NOT_FOUND);
+    }
+
+    /**
+     * Whether the team's plan still shows the transaction, and so
+     * whether it can be read or written by URL at all.
+     */
+    protected function isVisible(Team $team, Transaction $transaction): bool
+    {
         $since = $this->historyWindowStart($team);
 
-        abort_if(
-            $since instanceof CarbonImmutable && $transaction->occurred_at->startOfDay()->lessThan($since),
-            HttpResponse::HTTP_NOT_FOUND,
-        );
+        return ! ($since instanceof CarbonImmutable) || ! $transaction->occurred_at->startOfDay()->lessThan($since);
     }
 
     /**

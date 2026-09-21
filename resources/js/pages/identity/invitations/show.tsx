@@ -1,5 +1,4 @@
 import { Form, Link, usePage } from "@inertiajs/react";
-import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ArrowRightIcon, CheckCircle2Icon, ClockIcon, LockIcon, MailOpenIcon, UserRoundXIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
@@ -7,7 +6,7 @@ import { Fragment } from "react/jsx-runtime";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { WizardLayout } from "@/layouts/wizard/layout";
-import { invitationStatus } from "@/lib/utils";
+import { formatDate, invitationStatus } from "@/lib/utils";
 import { logout } from "@/routes";
 import invitations from "@/routes/identity/invitations";
 import { TeamInvitation } from "@/types/app/modules/core/identity/models/team/team-invitation";
@@ -23,7 +22,7 @@ const Show = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * The page's props.
@@ -47,7 +46,9 @@ const Show = () => {
             {/** Header */}
             <header className="flex flex-col items-center gap-2 text-center">
                 <MailOpenIcon />
-                <h1 className="mt-4 text-2xl font-medium">{t("You have been invited to join :team", { team })}</h1>
+                <h1 className="font-heading mt-4 text-[1.75rem] leading-tight font-semibold tracking-tight">
+                    {t("You have been invited to join :team", { team })}
+                </h1>
                 <p className="text-muted-foreground max-w-sm text-sm">
                     {t(":inviter has invited you to join the team :team.", { inviter, team })}
                 </p>
@@ -91,7 +92,7 @@ const Show = () => {
                         {invitation.expires_at ? (
                             <p className="text-muted-foreground text-sm">
                                 {t("This invitation expires on :date.", {
-                                    date: format(new Date(invitation.expires_at), "MMMM d, yyyy"),
+                                    date: formatDate(invitation.expires_at, currentLocale()),
                                 })}
                             </p>
                         ) : null}
@@ -123,7 +124,7 @@ const Notice = ({
     title: string;
 }) => {
     return (
-        <div className="flex w-full flex-col items-center gap-3 rounded-sm border p-6">
+        <div className="flex w-full flex-col items-center gap-3 rounded-xl border p-6">
             <div className="text-muted-foreground [&_svg]:size-6">{icon}</div>
             <p className="font-medium">{title}</p>
             {description ? <p className="text-muted-foreground text-sm">{description}</p> : null}

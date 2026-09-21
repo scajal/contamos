@@ -7,6 +7,7 @@ import {
     ArrowUpIcon,
     BanknoteIcon,
     CheckIcon,
+    ChevronDownIcon,
     ChevronRightIcon,
     ChevronsUpDownIcon,
     CircleDashedIcon,
@@ -25,6 +26,7 @@ import {
 import { useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
+import { AppearanceMenu } from "@/components/appearance-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -42,6 +44,7 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
+    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -74,6 +77,7 @@ import dashboard from "@/routes/finance/teams/dashboard";
 import monthly from "@/routes/finance/teams/monthly";
 import tags from "@/routes/finance/teams/tags";
 import transactions from "@/routes/finance/teams/transactions";
+import transfers from "@/routes/finance/teams/transfers";
 import teams from "@/routes/identity/teams";
 import activity from "@/routes/identity/teams/activity";
 import invitations from "@/routes/identity/teams/invitations";
@@ -165,7 +169,7 @@ export const ApplicationLayout = ({
                     </div>
                 </header>
                 {/** Content */}
-                <main className="flex min-w-0 flex-1 p-4 md:p-10">
+                <main className="flex min-w-0 flex-1 px-5 py-6 md:px-12 md:py-12">
                     <div className="mx-auto flex w-full max-w-5xl min-w-0 flex-col">{children}</div>
                 </main>
             </SidebarInset>
@@ -182,8 +186,19 @@ const CreateTransactionActions = ({ team }: { team: string }) => {
 
     return (
         <Fragment>
-            {/** Both types side by side, where the header has room for them. */}
+            {/** Every way of recording money, where the header has room for them. */}
             <div className="hidden gap-1.5 sm:flex">
+                <Button
+                    nativeButton={false}
+                    render={
+                        <ModalLink href={transfers.create.url({ team })}>
+                            <ArrowLeftRightIcon data-icon="inline-start" />
+                            {t("Transfer")}
+                        </ModalLink>
+                    }
+                    size="sm"
+                    variant="ghost"
+                />
                 <Button
                     nativeButton={false}
                     render={
@@ -207,33 +222,46 @@ const CreateTransactionActions = ({ team }: { team: string }) => {
                 />
             </div>
 
-            {/** One menu on narrow screens, so the header never overflows. */}
-            <DropdownMenu>
-                <DropdownMenuTrigger className="sm:hidden" render={<Button size="icon-sm" />}>
-                    <PlusIcon />
-                    <span className="sr-only">{t("New :name", { name: t("transaction") })}</span>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuGroup>
-                        <DropdownMenuItem
-                            render={
-                                <ModalLink href={transactions.create.url({ team, type: "income" })}>
-                                    <ArrowDownIcon />
-                                    <span>{t("New :name", { name: t("income") })}</span>
-                                </ModalLink>
-                            }
-                        />
-                        <DropdownMenuItem
-                            render={
-                                <ModalLink href={transactions.create.url({ team, type: "expense" })}>
-                                    <ArrowUpIcon />
-                                    <span>{t("New :name", { name: t("expense") })}</span>
-                                </ModalLink>
-                            }
-                        />
-                    </DropdownMenuGroup>
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {/** On a phone the button records an expense, which is what most
+             * taps are for, and the rest sits one press away. */}
+            <div className="flex items-center gap-1.5 sm:hidden">
+                <Button
+                    nativeButton={false}
+                    render={
+                        <ModalLink href={transactions.create.url({ team, type: "expense" })}>
+                            <PlusIcon />
+                            <span className="sr-only">{t("New :name", { name: t("expense") })}</span>
+                        </ModalLink>
+                    }
+                    size="icon-sm"
+                />
+                <DropdownMenu>
+                    <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
+                        <ChevronDownIcon />
+                        <span className="sr-only">{t("New :name", { name: t("transaction") })}</span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem
+                                render={
+                                    <ModalLink href={transactions.create.url({ team, type: "income" })}>
+                                        <ArrowDownIcon />
+                                        <span>{t("New :name", { name: t("income") })}</span>
+                                    </ModalLink>
+                                }
+                            />
+                            <DropdownMenuItem
+                                render={
+                                    <ModalLink href={transfers.create.url({ team })}>
+                                        <ArrowLeftRightIcon />
+                                        <span>{t("Transfer")}</span>
+                                    </ModalLink>
+                                }
+                            />
+                        </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </Fragment>
     );
 };
@@ -381,7 +409,7 @@ const OnboardingMenu = () => {
                     <DialogTitle>{t("Set up :team", { team: team.name })}</DialogTitle>
                     <DialogDescription>{t("Three steps to get going.")}</DialogDescription>
                 </DialogHeader>
-                <div className="overflow-hidden rounded-sm border">
+                <div className="overflow-hidden rounded-xl border">
                     <ItemGroup className="gap-0 has-data-[size=sm]:gap-0">
                         {steps.map((step) => (
                             <Item
@@ -434,14 +462,31 @@ const Sidebar = () => {
     const isMobile = useIsMobile();
 
     /**
+     * The current Inertia page.
+     */
+    const page = usePage();
+
+    /**
      * The page's props.
      */
-    const { auth, user } = usePage().props;
+    const { auth, user } = page.props;
 
     /**
      * What the user may do on the current team.
      */
     const { can } = usePermissions();
+
+    /**
+     * The team the sidebar's links act on.
+     */
+    const team = user?.current_team?.slug ?? "";
+
+    /**
+     * Whether the current page belongs to one of the given sections, so
+     * the sidebar can mark where the user is.
+     */
+    const isSection = (...prefixes: Array<string>): boolean =>
+        prefixes.some((prefix) => page.component.startsWith(prefix));
 
     return (
         <SidebarComponent collapsible="icon">
@@ -453,7 +498,8 @@ const Sidebar = () => {
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={<Link href={dashboard.index.url({ team: user?.current_team?.slug ?? "" })} />}
+                                isActive={isSection("finance/teams/dashboard")}
+                                render={<Link href={dashboard.index.url({ team })} />}
                             >
                                 <LayoutDashboardIcon />
                                 <span>{t("Dashboard")}</span>
@@ -461,7 +507,8 @@ const Sidebar = () => {
                         </SidebarMenuItem>
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={<Link href={monthly.index.url({ team: user?.current_team?.slug ?? "" })} />}
+                                isActive={isSection("finance/teams/monthly")}
+                                render={<Link href={monthly.index.url({ team })} />}
                             >
                                 <CalendarRangeIcon />
                                 <span>{t("Monthly")}</span>
@@ -470,11 +517,21 @@ const Sidebar = () => {
                     </SidebarMenu>
                 </SidebarGroup>
                 <SidebarGroup>
-                    <SidebarGroupLabel>{t("Finance")}</SidebarGroupLabel>
+                    <SidebarGroupLabel>{t("Ledger")}</SidebarGroupLabel>
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={<Link href={accounts.index.url({ team: user?.current_team?.slug ?? "" })} />}
+                                isActive={isSection("finance/teams/transactions", "finance/teams/transfers")}
+                                render={<Link href={transactions.index.url({ team })} />}
+                            >
+                                <ArrowLeftRightIcon />
+                                <span>{t("Transactions")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                isActive={isSection("finance/teams/accounts")}
+                                render={<Link href={accounts.index.url({ team })} />}
                             >
                                 <BanknoteIcon />
                                 <span>{t("Accounts")}</span>
@@ -482,12 +539,11 @@ const Sidebar = () => {
                         </SidebarMenuItem>
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={
-                                    <Link href={transactions.index.url({ team: user?.current_team?.slug ?? "" })} />
-                                }
+                                isActive={isSection("finance/teams/tags")}
+                                render={<Link href={tags.index.url({ team })} />}
                             >
-                                <ArrowLeftRightIcon />
-                                <span>{t("Transactions")}</span>
+                                <TagIcon />
+                                <span>{t("Tags")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>
@@ -495,23 +551,10 @@ const Sidebar = () => {
                 <SidebarGroup>
                     <SidebarGroupLabel>{t("Team")}</SidebarGroupLabel>
                     <SidebarMenu>
-                        {can(PERMISSIONS.ManageBilling) && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    render={
-                                        <Link
-                                            href={subscriptions.index.url({ team: user?.current_team?.slug ?? "" })}
-                                        />
-                                    }
-                                >
-                                    <CreditCardIcon />
-                                    <span>{t("Billing")}</span>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={<Link href={members.index.url({ team: user?.current_team?.slug ?? "" })} />}
+                                isActive={isSection("identity/teams/members")}
+                                render={<Link href={members.index.url({ team })} />}
                             >
                                 <UsersIcon />
                                 <span>{t("Members")}</span>
@@ -520,34 +563,32 @@ const Sidebar = () => {
                         {can(PERMISSIONS.ViewActivity) && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton
-                                    render={
-                                        <Link href={activity.index.url({ team: user?.current_team?.slug ?? "" })} />
-                                    }
+                                    isActive={isSection("identity/teams/activity")}
+                                    render={<Link href={activity.index.url({ team })} />}
                                 >
                                     <HistoryIcon />
                                     <span>{t("Activity")}</span>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         )}
+                        {can(PERMISSIONS.ManageBilling) && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    isActive={isSection("billing/teams/subscriptions")}
+                                    render={<Link href={subscriptions.index.url({ team })} />}
+                                >
+                                    <CreditCardIcon />
+                                    <span>{t("Billing")}</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                render={<Link href={settings.index.url({ team: user?.current_team?.slug ?? "" })} />}
+                                isActive={isSection("identity/teams/index", "identity/teams/edit")}
+                                render={<Link href={settings.index.url({ team })} />}
                             >
                                 <SettingsIcon />
                                 <span>{t("Configuration")}</span>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                </SidebarGroup>
-                <SidebarGroup>
-                    <SidebarGroupLabel>{t("Settings")}</SidebarGroupLabel>
-                    <SidebarMenu>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                render={<Link href={tags.index.url({ team: user?.current_team?.slug ?? "" })} />}
-                            >
-                                <TagIcon />
-                                <span>{t("Tags")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>
@@ -591,6 +632,14 @@ const Sidebar = () => {
                                         <UserIcon />
                                         <span>{t("Account")}</span>
                                     </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuGroup>
+                                    <DropdownMenuLabel>{t("Theme")}</DropdownMenuLabel>
+                                    <AppearanceMenu />
+                                </DropdownMenuGroup>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuGroup>
                                     <DropdownMenuItem render={<a href={logout.url()} />}>
                                         <LogOutIcon />
                                         <span>{t("Log Out")}</span>
@@ -655,17 +704,27 @@ const TeamSwitcher = () => {
                         sideOffset={4}
                     >
                         <DropdownMenuGroup>
-                            {(user.teams ?? []).map((team) => (
-                                <DropdownMenuItem
-                                    key={team.id}
-                                    render={<Link href={dashboard.index.url({ team: team.slug })} />}
-                                >
-                                    <Avatar size="sm">
-                                        <AvatarFallback>{initials(team.name)}</AvatarFallback>
-                                    </Avatar>
-                                    <span className="truncate">{team.name}</span>
-                                </DropdownMenuItem>
-                            ))}
+                            {(user.teams ?? []).map((team) => {
+                                // Teams can share a name, so the one in use is
+                                // named by its slug and marked with a check.
+                                const isCurrent = team.id === currentTeam.id;
+
+                                return (
+                                    <DropdownMenuItem
+                                        key={team.id}
+                                        render={<Link href={dashboard.index.url({ team: team.slug })} />}
+                                    >
+                                        <Avatar size="sm">
+                                            <AvatarFallback>{initials(team.name)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex min-w-0 flex-1 flex-col">
+                                            <span className="truncate">{team.name}</span>
+                                            <span className="text-muted-foreground truncate text-xs">{team.slug}</span>
+                                        </div>
+                                        {isCurrent ? <CheckIcon className="ml-auto size-4 shrink-0" /> : null}
+                                    </DropdownMenuItem>
+                                );
+                            })}
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem render={<Link href={teams.create.url()} />}>

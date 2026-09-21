@@ -65,7 +65,7 @@ export const DateChip = ({
         <Popover>
             <PopoverTrigger
                 render={
-                    <Button className="max-w-full min-w-0 justify-start" size="sm" type="button" variant="outline" />
+                    <Button className="max-w-full min-w-0 justify-start max-sm:h-10" type="button" variant="outline" />
                 }
             >
                 <CalendarIcon data-icon="inline-start" />
@@ -135,8 +135,7 @@ export const NotesChip = ({
                 render={
                     <Button
                         aria-invalid={invalid}
-                        className="w-full min-w-0 justify-start"
-                        size="sm"
+                        className="w-full min-w-0 justify-start max-sm:h-10"
                         type="button"
                         variant="outline"
                     />
@@ -213,8 +212,7 @@ export const TagsChip = ({
                 render={
                     <Button
                         aria-invalid={invalid}
-                        className="w-full min-w-0 justify-start"
-                        size="sm"
+                        className="w-full min-w-0 justify-start max-sm:h-10"
                         type="button"
                         variant="outline"
                     />

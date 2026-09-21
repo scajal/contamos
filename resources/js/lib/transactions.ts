@@ -44,6 +44,7 @@ export const TRANSACTION_COLUMNS = {
     account: "w-40",
     description: "w-48",
     tags: "w-36",
+    author: "w-10",
     amount: "w-36",
     actions: "w-12",
 } as const;

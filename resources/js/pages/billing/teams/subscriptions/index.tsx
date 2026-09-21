@@ -1,6 +1,5 @@
 import { Deferred, router, usePage, usePoll } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
-import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
     AlertTriangleIcon,
@@ -30,6 +29,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { isOverAddableLimit } from "@/lib/billing";
+import { formatDate } from "@/lib/utils";
 import subscriptions from "@/routes/billing/teams/subscriptions";
 import { Transaction } from "@/types/app/modules/billing/models/transaction";
 import { PlanSummary, Renewal } from "@/types/app/modules/billing/plan-summary";
@@ -72,8 +72,10 @@ const Header = () => {
 
     return (
         <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-medium">{t("Billing")}</h1>
-            <p className="text-muted-foreground text-sm">{t("Manage your team's billing and subscription.")}</p>
+            <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">{t("Billing")}</h1>
+            <p className="text-muted-foreground text-[15px] leading-relaxed">
+                {t("Manage your team's billing and subscription.")}
+            </p>
         </header>
     );
 };
@@ -121,11 +123,13 @@ const Activation = () => {
     }
 
     return (
-        <div className="flex items-center gap-3 rounded-sm border px-4 py-3">
+        <div className="flex items-center gap-3 rounded-xl border px-4 py-3">
             <Spinner />
             <div className="flex flex-col">
                 <p className="text-sm font-medium">{t("Activating your subscription…")}</p>
-                <p className="text-muted-foreground text-sm">{t("This usually takes a few seconds.")}</p>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">
+                    {t("This usually takes a few seconds.")}
+                </p>
             </div>
         </div>
     );
@@ -181,10 +185,12 @@ const CurrentPlan = () => {
     return (
         <Fragment>
             <header className="flex flex-col gap-1">
-                <h1 className="font-medium">{t("Current plan")}</h1>
-                <p className="text-muted-foreground text-sm">{t("What your team is on and when it renews.")}</p>
+                <h2 className="font-heading font-medium">{t("Current plan")}</h2>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">
+                    {t("What your team is on and when it renews.")}
+                </p>
             </header>
-            <div className="flex flex-col gap-4 rounded-sm border p-4">
+            <div className="flex flex-col gap-4 rounded-xl border p-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
@@ -202,16 +208,18 @@ const CurrentPlan = () => {
                         </div>
                         {plan.status === "active" ? (
                             <Deferred data="renewal" fallback={<Skeleton className="h-4 w-56" />}>
-                                {detail ? <p className="text-muted-foreground text-sm">{detail}</p> : null}
+                                {detail ? (
+                                    <p className="text-muted-foreground text-[15px] leading-relaxed">{detail}</p>
+                                ) : null}
                             </Deferred>
                         ) : detail ? (
-                            <p className="text-muted-foreground text-sm">{detail}</p>
+                            <p className="text-muted-foreground text-[15px] leading-relaxed">{detail}</p>
                         ) : null}
                     </div>
                     <PlanActions />
                 </div>
                 {overLimits.length > 0 && (
-                    <div className="flex gap-3 rounded-sm border border-amber-500/40 bg-amber-500/5 p-3">
+                    <div className="flex gap-3 rounded-xl border border-amber-500/40 bg-amber-500/5 p-3">
                         <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
                         <div className="flex flex-col gap-2 text-sm">
                             <p>
@@ -281,7 +289,7 @@ const Transactions = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * The page's props.
@@ -291,12 +299,14 @@ const Transactions = () => {
     return (
         <Fragment>
             <header className="flex flex-col gap-1">
-                <h1 className="font-medium">{t("Transactions")}</h1>
-                <p className="text-muted-foreground text-sm">{t("View your team's billing transactions.")}</p>
+                <h2 className="font-heading font-medium">{t("Transactions")}</h2>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">
+                    {t("View your team's billing transactions.")}
+                </p>
             </header>
             <Deferred data="transactions" fallback={<SkeletonRows />}>
                 {!transactions?.data?.length ? (
-                    <div className="rounded-sm border">
+                    <div className="rounded-xl border">
                         <Empty>
                             <EmptyHeader>
                                 <EmptyMedia variant="icon">
@@ -308,7 +318,7 @@ const Transactions = () => {
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4">
-                        <div className="overflow-hidden rounded-sm border">
+                        <div className="overflow-hidden rounded-xl border">
                             <ItemGroup className="gap-0">
                                 {(transactions?.data ?? []).map((transaction) => (
                                     <Item
@@ -321,7 +331,7 @@ const Transactions = () => {
                                             <ReceiptTextIcon />
                                         </ItemMedia>
                                         <ItemContent>
-                                            <ItemTitle>{format(transaction.billed_at, "MMMM d, yyyy")}</ItemTitle>
+                                            <ItemTitle>{formatDate(transaction.billed_at, currentLocale())}</ItemTitle>
                                             <ItemDescription>{`${transaction.currency} ${transaction.total}`}</ItemDescription>
                                         </ItemContent>
                                         <ItemActions className="flex-wrap justify-end">
@@ -370,10 +380,10 @@ const Transactions = () => {
 
 const SkeletonRows = () => {
     return (
-        <div className="overflow-hidden rounded-sm border">
+        <div className="overflow-hidden rounded-xl border">
             {[0, 1, 2].map((row) => (
                 <div className="flex items-center gap-3 border-b px-3 py-2.5 last:border-b-0" key={row}>
-                    <Skeleton className="size-8 rounded-sm" />
+                    <Skeleton className="size-8 rounded-xl" />
                     <div className="flex flex-1 flex-col gap-2">
                         <Skeleton className="h-4 w-40" />
                         <Skeleton className="h-3 w-12" />

@@ -8,10 +8,18 @@ use Inertia\Inertia;
 use Inertia\ResponseFactory;
 
 /**
- * @implements \Illuminate\Contracts\Support\Arrayable<string, string>
+ * @implements \Illuminate\Contracts\Support\Arrayable<string, mixed>
  */
 class Toast implements Arrayable
 {
+    /**
+     * The one thing the toast offers to do about what just happened,
+     * such as undoing it.
+     *
+     * @var array{label: string, method: string, url: string}|null
+     */
+    protected ?array $action = null;
+
     /**
      * Create a new instance of the class.
      */
@@ -20,6 +28,22 @@ class Toast implements Arrayable
         public ?string $id = null
     ) {
         $this->id = Str::ulid()->toString();
+    }
+
+    /**
+     * Offer a single action alongside the message. A write the user
+     * can take back says so here rather than behind a confirmation
+     * they would have had to read before acting.
+     */
+    public function action(string $label, string $url, string $method = 'delete'): self
+    {
+        $this->action = [
+            'label' => $label,
+            'method' => $method,
+            'url' => $url,
+        ];
+
+        return $this;
     }
 
     /**
@@ -45,6 +69,7 @@ class Toast implements Arrayable
     public function toArray(): array
     {
         return [
+            'action' => $this->action,
             'id' => $this->id,
             'message' => $this->message,
         ];

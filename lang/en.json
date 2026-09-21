@@ -72,7 +72,6 @@
     "Active": "Active",
     "Add": "Add",
     "Add :name": "Add :name",
-    "Add a new :name to get started.": "Add a new :name to get started.",
     "Add a new account to the team.": "Add a new account to the team.",
     "Add a new currency to the application.": "Add a new currency to the application.",
     "Add a new quote for :name.": "Add a new quote for :name.",
@@ -580,5 +579,7 @@
     "This change recorded no values.": "This change recorded no values.",
     ":price/month": ":price/month",
     "Billed :price a year": "Billed :price a year",
-    "Billed month to month": "Billed month to month"
+    "Billed month to month": "Billed month to month",
+    "Add :name to get started.": "Add :name to get started.",
+    "Undo": "Undo"
 }

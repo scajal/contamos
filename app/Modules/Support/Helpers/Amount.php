@@ -43,6 +43,62 @@ class Amount
     }
 
     /**
+     * Normalise a submitted amount to the dot-decimal notation the
+     * `decimal` validation rule accepts.
+     *
+     * Spanish keyboards write the decimal separator as a comma, so
+     * "1.234,50" and "350,50" reach the server in a notation Laravel
+     * rejects. The locale's own separators are stripped first, then a
+     * lone comma is read as a decimal point so a Spanish keyboard on
+     * an English locale still records the amount the user typed.
+     *
+     * @param  array<'locale', mixed>  $options
+     */
+    public function normalize(mixed $value, array $options = []): mixed
+    {
+        // Only strings carry a separator; anything else is left alone.
+        if (! is_string($value) || blank($value = trim($value))) {
+            return $value;
+        }
+
+        $lastDot = strrpos($value, '.');
+        $lastComma = strrpos($value, ',');
+
+        // Without a separator there is nothing to read.
+        if ($lastDot === false && $lastComma === false) {
+            return $value;
+        }
+
+        // With both characters the last one is the decimal point and
+        // the other groups the thousands.
+        if ($lastDot !== false && $lastComma !== false) {
+            return $lastComma > $lastDot
+                ? str_replace(',', '.', str_replace('.', '', $value))
+                : str_replace(',', '', $value);
+        }
+
+        $separator = $lastDot !== false ? '.' : ',';
+
+        // Repeated, it can only be grouping the thousands.
+        if (substr_count($value, $separator) > 1) {
+            return str_replace($separator, '', $value);
+        }
+
+        /** @var string $locale */
+        $locale = $options['locale'] ?? App::getLocale();
+
+        // A lone comma before exactly three digits groups the thousands
+        // on a locale that writes them that way. Everywhere else a lone
+        // separator is the decimal point, which keeps the dot notation
+        // the edit form is prefilled with intact.
+        if ($separator === ',' && $this->groupingSeparator($locale) === ',' && preg_match('/,\d{3}$/', $value) === 1) {
+            return str_replace(',', '', $value);
+        }
+
+        return str_replace(',', '.', $value);
+    }
+
+    /**
      * Format the provided string to the current
      * locale with the formatter.
      */
@@ -71,6 +127,18 @@ class Amount
         /** @var string $separator */
         $separator = new NumberFormatter($locale, NumberFormatter::DECIMAL)
             ->getSymbol(NumberFormatter::DECIMAL_SEPARATOR_SYMBOL) ?: '.';
+
+        return $separator;
+    }
+
+    /**
+     * Get the grouping separator.
+     */
+    protected function groupingSeparator(string $locale): string
+    {
+        /** @var string $separator */
+        $separator = new NumberFormatter($locale, NumberFormatter::DECIMAL)
+            ->getSymbol(NumberFormatter::GROUPING_SEPARATOR_SYMBOL) ?: ',';
 
         return $separator;
     }

@@ -1,5 +1,5 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 import {
     AlertDialog,
@@ -15,7 +15,7 @@ import {
 
 type Props = {
     title: string;
-    description?: string;
+    description?: ReactNode;
     confirmLabel?: string;
     cancelLabel?: string;
     action: ReactElement;

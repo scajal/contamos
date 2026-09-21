@@ -13,7 +13,7 @@ import type { Appearance } from "./_components/theme-switcher";
 interface MarketingPageProps {
     alternates: Alternates;
     dashboardUrl: string | null;
-    appearance: Appearance;
+    appearance: Appearance | "system";
     [key: string]: unknown;
 }
 
@@ -36,9 +36,11 @@ export const MarketingLayout = ({ children }: { children: ReactNode }) => {
     const { alternates, dashboardUrl, appearance: initialAppearance } = usePage<MarketingPageProps>().props;
 
     /**
-     * The colour scheme, seeded from the server-read cookie.
+     * The colour scheme, seeded from the server-read cookie. The site owns
+     * its own world and stays dark until someone asks for light, so an
+     * unset preference resolves to dark rather than to the device's.
      */
-    const [appearance, setAppearance] = useState<Appearance>(initialAppearance ?? "dark");
+    const [appearance, setAppearance] = useState<Appearance>(initialAppearance === "light" ? "light" : "dark");
 
     return (
         <LazyMotion features={domAnimation}>

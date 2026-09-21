@@ -49,8 +49,10 @@ const Header = () => {
 
     return (
         <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-medium">{t("Configuration")}</h1>
-            <p className="text-muted-foreground text-sm">{t("Manage your team's details.")}</p>
+            <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">
+                {t("Configuration")}
+            </h1>
+            <p className="text-muted-foreground text-[15px] leading-relaxed">{t("Manage your team's details.")}</p>
         </header>
     );
 };
@@ -77,8 +79,10 @@ const Details = () => {
             <div className="flex w-full flex-wrap items-end justify-between gap-4">
                 <header className="flex w-full justify-between gap-1">
                     <div className="flex flex-col gap-1">
-                        <h1 className="font-medium">{t("Details")}</h1>
-                        <p className="text-muted-foreground text-sm">{t("The name and address of your team.")}</p>
+                        <h2 className="font-heading font-medium">{t("Details")}</h2>
+                        <p className="text-muted-foreground text-[15px] leading-relaxed">
+                            {t("The name and address of your team.")}
+                        </p>
                     </div>
 
                     {/** Actions */}
@@ -97,7 +101,7 @@ const Details = () => {
                     )}
                 </header>
             </div>
-            <div className="overflow-hidden rounded-sm border">
+            <div className="overflow-hidden rounded-xl border">
                 <ItemGroup className="gap-0 has-data-[size=sm]:gap-0">
                     <Item className="rounded-none border-0 border-b last:border-b-0" size="sm" variant="outline">
                         <ItemMedia variant="icon">
@@ -147,13 +151,15 @@ const Danger = () => {
     return (
         <Fragment>
             <header className="flex flex-col gap-1">
-                <h1 className="text-destructive font-medium">{t("Danger")}</h1>
-                <p className="text-muted-foreground text-sm">{t("Destructive actions that cannot be undone.")}</p>
+                <h2 className="font-heading text-destructive font-medium">{t("Danger")}</h2>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">
+                    {t("Destructive actions that cannot be undone.")}
+                </p>
             </header>
-            <div className="border-destructive/40 flex flex-wrap items-center justify-between gap-4 rounded-sm border p-4">
+            <div className="border-destructive/40 flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4">
                 <div className="flex max-w-lg flex-col gap-1">
                     <p className="font-medium">{t("Delete team")}</p>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground text-[15px] leading-relaxed">
                         {t(
                             "Deleting the team permanently removes its accounts, transactions, tags, members, and invitations.",
                         )}

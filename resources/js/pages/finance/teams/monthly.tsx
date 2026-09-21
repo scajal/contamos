@@ -30,7 +30,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import { cn, formatAmount } from "@/lib/utils";
+import { cn, formatAmount, formatMonth, formatPercentage } from "@/lib/utils";
 import subscriptions from "@/routes/billing/teams/subscriptions";
 import accounts from "@/routes/finance/teams/accounts";
 import monthly from "@/routes/finance/teams/monthly";
@@ -190,7 +190,7 @@ const Header = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * The page's props.
@@ -200,9 +200,9 @@ const Header = () => {
     return (
         <header className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex flex-col gap-1">
-                <h1 className="text-2xl font-medium">{team.name}</h1>
-                <p className="text-muted-foreground text-sm">
-                    {t("How :name went.", { name: format(toMonth(month), "MMMM yyyy") })}
+                <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">{team.name}</h1>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">
+                    {t("How :name went.", { name: formatMonth(toMonth(month), currentLocale()) })}
                 </p>
             </div>
 
@@ -217,7 +217,7 @@ const MonthNavigation = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * The page's props.
@@ -268,7 +268,7 @@ const MonthNavigation = () => {
                     render={
                         <Button variant="outline">
                             <CalendarIcon data-icon="inline-start" />
-                            {format(selected, "MMMM yyyy")}
+                            {formatMonth(selected, currentLocale())}
                         </Button>
                     }
                 />
@@ -322,7 +322,7 @@ const CurrencySection = ({ figure }: { figure: Figure }) => {
 
     return (
         <section className="flex flex-col gap-4">
-            <h2 className="text-lg font-medium">{figure.currency.code}</h2>
+            <h2 className="font-heading text-lg font-medium">{figure.currency.code}</h2>
 
             {/** Income, expenses and net */}
             <Totals figure={figure} />
@@ -363,7 +363,7 @@ const Totals = ({ figure }: { figure: Figure }) => {
     const t = useLaravelReactI18n().t;
 
     return (
-        <div className="min-w-0 overflow-x-auto rounded-sm border">
+        <div className="min-w-0 overflow-x-auto rounded-xl border">
             <div className="flex min-w-full divide-x">
                 <TotalCell
                     className="text-success"
@@ -431,12 +431,12 @@ const TotalCell = ({
             <span className="text-muted-foreground text-sm">{label}</span>
             <span
                 className={cn(
-                    "text-xl font-medium tabular-nums",
+                    "font-heading text-2xl font-semibold tabular-nums",
                     className,
                     !className && isNegative && "text-destructive",
                 )}
             >
-                {`${isNegative ? "- " : ""}${formatAmount(total.amount, currentLocale(), currency)}`}
+                {`${isNegative ? "- " : ""}${formatAmount(total.amount, currentLocale(), currency, { trimZeros: true })}`}
             </span>
             <DeltaLabel currency={currency} delta={total.delta} isGood={isGood} />
         </Link>
@@ -474,7 +474,7 @@ const DeltaLabel = ({
             className={cn("text-xs tabular-nums", isGood(delta.amount) ? "text-success" : "text-destructive")}
             title={t("vs previous month")}
         >
-            {`${isUp ? "+" : "-"} ${formatAmount(unsigned, currentLocale(), currency)} (${Math.abs(delta.percentage).toFixed(1)}%)`}
+            {`${isUp ? "+" : "-"} ${formatAmount(unsigned, currentLocale(), currency)} (${formatPercentage(Math.abs(delta.percentage), currentLocale())})`}
         </span>
     );
 };
@@ -492,7 +492,7 @@ const TagTable = ({ figure }: { figure: Figure }) => {
     const { month, team } = usePage<PageProps>().props;
 
     return (
-        <div className="min-w-0 overflow-x-auto rounded-sm border">
+        <div className="min-w-0 overflow-x-auto rounded-xl border">
             <TableComponent>
                 <TableHeader>
                     <TableRow>
@@ -566,10 +566,11 @@ const TagAmount = ({
         <TableCell
             className={cn(
                 "text-right font-medium whitespace-nowrap tabular-nums",
-                isZero ? "text-muted-foreground font-normal" : (className ?? (isNegative && "text-destructive")),
+                isZero ? "text-muted-foreground/60 font-normal" : (className ?? (isNegative && "text-destructive")),
             )}
         >
-            {`${signed && isNegative && !isZero ? "- " : ""}${formatted}`}
+            {/** A column of zeroes reads as noise, so nothing is a dash. */}
+            {isZero ? "—" : `${signed && isNegative ? "- " : ""}${formatted}`}
         </TableCell>
     );
 };
@@ -591,7 +592,7 @@ const Transfers = ({ figure }: { figure: Figure }) => {
     }
 
     return (
-        <div className="min-w-0 overflow-x-auto rounded-sm border">
+        <div className="min-w-0 overflow-x-auto rounded-xl border">
             <div className="flex min-w-full divide-x">
                 {(
                     [
@@ -642,12 +643,16 @@ const TrendChart = ({ figure }: { figure: Figure }) => {
     const data = figure.trend.map((point) => ({
         expenses: Number(point.expenses),
         income: Number(point.income),
-        label: format(toMonth(point.month), "MMM"),
+        label: formatMonth(toMonth(point.month), currentLocale(), { month: "short", year: undefined }),
         net: Number(point.net),
     }));
 
     return (
-        <figure aria-hidden="true" className="flex min-w-0 flex-col gap-2 rounded-sm border p-4">
+        <figure
+            aria-label={t("Income vs expenses")}
+            className="flex min-w-0 flex-col gap-2 rounded-xl border p-4"
+            role="group"
+        >
             <figcaption className="text-muted-foreground text-sm">{t("Income vs expenses")}</figcaption>
             <ChartContainer className="aspect-video w-full" config={config}>
                 <ComposedChart accessibilityLayer data={data}>
@@ -669,9 +674,19 @@ const TrendChart = ({ figure }: { figure: Figure }) => {
                             />
                         }
                     />
-                    <Bar dataKey="income" fill="var(--color-income)" radius={4} />
-                    <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
-                    <Line dataKey="net" dot={false} stroke="var(--color-net)" strokeWidth={2} type="monotone" />
+                    {/** The series are drawn at their value: a growth animation on a
+                     * figure the reader came here to read buys nothing, and it leaves
+                     * the chart blank whenever the frames are throttled. */}
+                    <Bar dataKey="income" fill="var(--color-income)" isAnimationActive={false} radius={4} />
+                    <Bar dataKey="expenses" fill="var(--color-expenses)" isAnimationActive={false} radius={4} />
+                    <Line
+                        dataKey="net"
+                        dot={false}
+                        isAnimationActive={false}
+                        stroke="var(--color-net)"
+                        strokeWidth={2}
+                        type="monotone"
+                    />
                     <ChartLegend content={<ChartLegendContent className="flex-wrap" />} />
                 </ComposedChart>
             </ChartContainer>
@@ -704,7 +719,11 @@ const ExpensesDonut = ({ figure }: { figure: Figure }) => {
     }
 
     return (
-        <figure aria-hidden="true" className="flex min-w-0 flex-col gap-2 rounded-sm border p-4">
+        <figure
+            aria-label={t("Expenses by tag")}
+            className="flex min-w-0 flex-col gap-2 rounded-xl border p-4"
+            role="group"
+        >
             <figcaption className="text-muted-foreground text-sm">{t("Expenses by tag")}</figcaption>
             <ChartContainer className="aspect-video w-full" config={{}}>
                 <PieChart>
@@ -723,7 +742,14 @@ const ExpensesDonut = ({ figure }: { figure: Figure }) => {
                             />
                         }
                     />
-                    <Pie data={slices} dataKey="expenses" innerRadius="55%" nameKey="name" strokeWidth={2}>
+                    <Pie
+                        data={slices}
+                        dataKey="expenses"
+                        innerRadius="55%"
+                        isAnimationActive={false}
+                        nameKey="name"
+                        strokeWidth={2}
+                    >
                         {slices.map((slice) => (
                             <Cell fill={slice.color} key={slice.name} />
                         ))}
@@ -760,7 +786,7 @@ const LockedMonth = () => {
     const { team } = usePage<PageProps>().props;
 
     return (
-        <div className="overflow-hidden rounded-sm border">
+        <div className="overflow-hidden rounded-xl border">
             <Empty>
                 <EmptyHeader>
                     <EmptyMedia variant="icon">
@@ -795,14 +821,14 @@ const EmptyAccounts = () => {
     const { team } = usePage<PageProps>().props;
 
     return (
-        <div className="overflow-hidden rounded-sm border">
+        <div className="overflow-hidden rounded-xl border">
             <Empty>
                 <EmptyHeader>
                     <EmptyMedia variant="icon">
                         <CircleDashedIcon />
                     </EmptyMedia>
                     <EmptyTitle>{t("No :name yet", { name: t("accounts") })}</EmptyTitle>
-                    <EmptyDescription>{t("Add a new :name to get started.", { name: t("account") })}</EmptyDescription>
+                    <EmptyDescription>{t("Add :name to get started.", { name: t("accounts") })}</EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
                     <Button
@@ -833,16 +859,14 @@ const EmptyTransactions = () => {
     const { team } = usePage<PageProps>().props;
 
     return (
-        <div className="overflow-hidden rounded-sm border">
+        <div className="overflow-hidden rounded-xl border">
             <Empty>
                 <EmptyHeader>
                     <EmptyMedia variant="icon">
                         <CircleDashedIcon />
                     </EmptyMedia>
                     <EmptyTitle>{t("Nothing happened this month")}</EmptyTitle>
-                    <EmptyDescription>
-                        {t("Add a new :name to get started.", { name: t("transaction") })}
-                    </EmptyDescription>
+                    <EmptyDescription>{t("Add :name to get started.", { name: t("transactions") })}</EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
                     <div className="flex flex-wrap justify-center gap-2">
@@ -878,7 +902,7 @@ const SkeletonFigures = () => {
             {[0, 1].map((section) => (
                 <div className="flex flex-col gap-4" key={section}>
                     <Skeleton className="h-6 w-16" />
-                    <div className="overflow-hidden rounded-sm border">
+                    <div className="overflow-hidden rounded-xl border">
                         <div className="flex divide-x">
                             {[0, 1, 2].map((cell) => (
                                 <div className="flex flex-1 flex-col gap-2 p-4" key={cell}>
@@ -889,7 +913,7 @@ const SkeletonFigures = () => {
                             ))}
                         </div>
                     </div>
-                    <div className="overflow-hidden rounded-sm border">
+                    <div className="overflow-hidden rounded-xl border">
                         <div className="flex flex-col gap-3 p-4">
                             {[0, 1, 2].map((row) => (
                                 <div className="flex items-center justify-between gap-4" key={row}>

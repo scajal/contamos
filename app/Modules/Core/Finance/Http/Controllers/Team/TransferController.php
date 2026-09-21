@@ -64,13 +64,18 @@ class TransferController
     public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateTransfer $createTransfer): RedirectResponse
     {
         // Create the transfer along with the transactions it owns.
-        $createTransfer
+        $transfer = $createTransfer
             ->for($team)
             ->by($user)
             ->using($request->safe(self::ATTRIBUTES), $request->tagIds());
 
-        // Flash a success message to the session.
+        // Flash a success message to the session, offering to take the
+        // transfer back with both of its legs.
         Toast::make(trans('Saved'))
+            ->action(trans('Undo'), route('finance.teams.transfers.destroy', [
+                'team' => $team->getRouteKey(),
+                'transfer' => $transfer->getRouteKey(),
+            ]))
             ->flash();
 
         return back();

@@ -856,6 +856,92 @@ describe('store', function (): void {
             ->and($transaction->tags)->toHaveCount(0);
     });
 
+    it('offers to undo the entry it just recorded', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
+            ]))
+            ->assertRedirect();
+
+        $transaction = Transaction::query()->sole();
+
+        expect(flashedToastAction())->toBe([
+            'label' => trans('Undo'),
+            'method' => 'delete',
+            'url' => route('finance.teams.transactions.destroy', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $transaction->getRouteKey(),
+            ]),
+        ]);
+    });
+
+    it('removes the entry when the undo the toast offers is taken', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
+        ]));
+
+        $undo = flashedToastAction();
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->delete($undo['url'])
+            ->assertRedirect();
+
+        expect(Transaction::query()->count())->toBe(0);
+    });
+
+    it('withholds the undo for an entry the history window hides', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'occurred_at' => CarbonImmutable::now()->subYears(2)->toDateTimeString(),
+            ]))
+            ->assertRedirect();
+
+        assertFlashedToast(trans('Saved'));
+
+        expect(flashedToastAction())->toBeNull();
+    });
+
+    it('records an amount and a quote written with a comma decimal separator', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'amount' => '1.234,50',
+                'quote' => '40,5',
+            ]))
+            ->assertRedirect();
+
+        $transaction = Transaction::query()->sole();
+        expect((float) $transaction->amount)->toBe(1234.50)
+            ->and((float) $transaction->quote)->toBe(40.5);
+    });
+
     it('stores a datetime-local occurred_at in UTC using the submitted timezone', function (): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);

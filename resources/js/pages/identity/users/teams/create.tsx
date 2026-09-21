@@ -22,7 +22,9 @@ const Create = () => {
             {/** Header */}
             <header className="flex flex-col items-center gap-2 text-center">
                 <CirclePlusIcon />
-                <h1 className="mt-4 text-2xl font-medium">{t("Create :name", { name: t("team") })}</h1>
+                <h1 className="font-heading mt-4 text-[1.75rem] leading-tight font-semibold tracking-tight">
+                    {t("Create :name", { name: t("team") })}
+                </h1>
                 <p className="text-muted-foreground max-w-xs text-sm">
                     {t(
                         "A team is where your accounts and balances live. Start with your own, or share it with family later.",

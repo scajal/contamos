@@ -37,8 +37,10 @@ const Header = () => {
 
     return (
         <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-medium">{t("Account")}</h1>
-            <p className="text-muted-foreground text-sm">{t("Your own account, across every team.")}</p>
+            <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">{t("Account")}</h1>
+            <p className="text-muted-foreground text-[15px] leading-relaxed">
+                {t("Your own account, across every team.")}
+            </p>
         </header>
     );
 };
@@ -59,8 +61,10 @@ const Details = () => {
         <Fragment>
             <header className="flex w-full justify-between gap-1">
                 <div className="flex flex-col gap-1">
-                    <h1 className="font-medium">{t("Details")}</h1>
-                    <p className="text-muted-foreground text-sm">{t("How you sign in and how others see you.")}</p>
+                    <h2 className="font-heading font-medium">{t("Details")}</h2>
+                    <p className="text-muted-foreground text-[15px] leading-relaxed">
+                        {t("How you sign in and how others see you.")}
+                    </p>
                 </div>
 
                 {/** The identity comes from the sign-in provider,
@@ -70,7 +74,7 @@ const Details = () => {
                     <AvatarFallback>{initials(user?.name ?? "")}</AvatarFallback>
                 </Avatar>
             </header>
-            <div className="overflow-hidden rounded-sm border">
+            <div className="overflow-hidden rounded-xl border">
                 <ItemGroup className="gap-0 has-data-[size=sm]:gap-0">
                     <Item className="rounded-none border-0 border-b last:border-b-0" size="sm" variant="outline">
                         <ItemMedia variant="icon">
@@ -106,13 +110,15 @@ const Danger = () => {
     return (
         <Fragment>
             <header className="flex flex-col gap-1">
-                <h1 className="text-destructive font-medium">{t("Danger")}</h1>
-                <p className="text-muted-foreground text-sm">{t("Destructive actions that cannot be undone.")}</p>
+                <h2 className="font-heading text-destructive font-medium">{t("Danger")}</h2>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">
+                    {t("Destructive actions that cannot be undone.")}
+                </p>
             </header>
-            <div className="border-destructive/40 flex flex-wrap items-center justify-between gap-4 rounded-sm border p-4">
+            <div className="border-destructive/40 flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4">
                 <div className="flex max-w-lg flex-col gap-1">
                     <p className="font-medium">{t("Delete account")}</p>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground text-[15px] leading-relaxed">
                         {t(
                             "Deleting your account permanently removes it, along with every team where you are the only member.",
                         )}

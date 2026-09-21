@@ -145,3 +145,19 @@ it('shares no setup checklist for a user without a team', function (): void {
         ->assertInertia(fn (Assert $page): Assert => $page
             ->where('onboarding', null));
 });
+
+it('counts the people on the current team so the app can tell a shared ledger from a personal one', function (): void {
+    [$user, $team] = actingMember();
+
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): Assert => $page
+            ->where('user.current_team.users_count', 1));
+
+    $team->users()->attach(User::factory()->create(), ['role' => Role::Admin->value]);
+
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): Assert => $page
+            ->where('user.current_team.users_count', 2));
+});

@@ -10,7 +10,7 @@ import {
     CircleDashedIcon,
     DownloadIcon,
     EyeIcon,
-    AlertTriangleIcon,
+    HistoryIcon,
     ListFilterPlusIcon,
     MoreHorizontalIcon,
     PencilIcon,
@@ -24,6 +24,7 @@ import { type DateRange } from "react-day-picker";
 import { Fragment } from "react/jsx-runtime";
 
 import { ConfirmAction } from "@/components/confirm-action";
+import { TransactionAmount, TransactionAuthor, TransactionRow as MovementRow } from "@/components/transaction-row";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -38,22 +39,25 @@ import {
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
+import {
+    Item,
+    ItemActions,
+    ItemContent,
+    ItemDescription,
+    ItemHeader,
+    ItemMedia,
+    ItemTitle,
+} from "@/components/ui/item";
 import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
 import { useFilters } from "@/hooks/use-filters";
+import { useSharedTeam } from "@/hooks/use-shared-team";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import {
-    TRANSACTION_AMOUNT_COLOR,
-    TRANSACTION_AMOUNT_SIGN,
-    TRANSACTION_COLUMNS,
-    TRANSACTION_TABLE_CLASS,
-    type TransactionTypeFilter,
-} from "@/lib/transactions";
+import { TRANSACTION_COLUMNS, TRANSACTION_TABLE_CLASS, type TransactionTypeFilter } from "@/lib/transactions";
 import { counterpartAccountName } from "@/lib/transfers";
-import { cn, formatAmount } from "@/lib/utils";
+import { cn, formatDate, formatDayHeading } from "@/lib/utils";
 import subscriptions from "@/routes/billing/teams/subscriptions";
 import routes from "@/routes/finance/teams/transactions";
 import transferRoutes from "@/routes/finance/teams/transfers";
@@ -102,21 +106,22 @@ const Index = () => {
 
             {/** Content */}
             <div className="flex flex-col gap-4">
-                {/** History notice */}
-                <HistoryNotice />
-
                 {/** Filters and actions */}
                 <div className="flex items-center justify-between gap-2 max-sm:flex-col">
                     <div className="flex-1 max-sm:w-full">
                         <Filters />
                     </div>
-                    <div className="flex justify-end max-sm:order-first max-sm:w-full">
+                    <div className="flex justify-end max-sm:w-full">
                         <ActionsMenu className="max-sm:w-full" />
                     </div>
                 </div>
 
                 {/** Transactions */}
                 <Listing />
+
+                {/** Where the plan's window ends, which is where the reader
+                 * runs out of history rather than the top of the page. */}
+                <HistoryNotice />
             </div>
         </div>
     );
@@ -131,8 +136,12 @@ const Header = () => {
 
     return (
         <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-medium">{t("Transactions")}</h1>
-            <p className="text-muted-foreground text-sm">{t("Income and expenses recorded for this team.")}</p>
+            <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">
+                {t("Transactions")}
+            </h1>
+            <p className="text-muted-foreground text-[15px] leading-relaxed">
+                {t("Income and expenses recorded for this team.")}
+            </p>
         </header>
     );
 };
@@ -160,18 +169,22 @@ const HistoryNotice = () => {
     const since = toDate(history.since);
 
     return (
-        <div className="flex gap-3 rounded-sm border border-amber-500/40 bg-amber-500/5 p-3">
-            <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-            <div className="flex flex-col items-start gap-2 text-sm">
-                <p>
+        <Item className="mt-4" variant="muted">
+            <ItemMedia variant="icon">
+                <HistoryIcon className="text-muted-foreground" />
+            </ItemMedia>
+            <ItemContent>
+                <ItemDescription>
                     {t(
                         "Showing transactions since :date. The Free plan keeps the last :months months visible. Nothing was removed, upgrade to Pro to see your full history.",
                         {
-                            date: since ? since.toLocaleDateString(currentLocale(), { dateStyle: "long" }) : "",
+                            date: since ? formatDate(since, currentLocale()) : "",
                             months: String(history.months ?? ""),
                         },
                     )}
-                </p>
+                </ItemDescription>
+            </ItemContent>
+            <ItemActions>
                 <Button
                     nativeButton={false}
                     render={
@@ -185,13 +198,14 @@ const HistoryNotice = () => {
                         </ModalLink>
                     }
                     size="sm"
+                    variant="outline"
                 />
-            </div>
-        </div>
+            </ItemActions>
+        </Item>
     );
 };
 
-const ActionsMenu = ({ className }: { className?: string }) => {
+const ActionsMenu = ({ className, variant = "outline" }: { className?: string; variant?: "default" | "outline" }) => {
     /**
      * Translate the provided string
      * to the current locale.
@@ -233,7 +247,7 @@ const ActionsMenu = ({ className }: { className?: string }) => {
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger render={<Button className={className} />}>
+            <DropdownMenuTrigger render={<Button className={className} variant={variant} />}>
                 {t("Actions")}
                 <ChevronDownIcon data-icon="inline-end" />
             </DropdownMenuTrigger>
@@ -482,7 +496,13 @@ const Listing = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
+
+    /**
+     * Whether the team is shared, and so whether each row says who
+     * recorded it.
+     */
+    const showsAuthor = useSharedTeam();
 
     /**
      * The page's props.
@@ -506,7 +526,7 @@ const Listing = () => {
             <div>
                 <InfiniteScroll data="transactions" onlyNext>
                     {!transactions?.data?.length ? (
-                        <div className="overflow-hidden rounded-sm border">
+                        <div className="overflow-hidden rounded-xl border">
                             <Empty>
                                 <EmptyHeader>
                                     <EmptyMedia variant="icon">
@@ -520,14 +540,14 @@ const Listing = () => {
                                     <EmptyDescription>
                                         {isFiltered
                                             ? t("Try adjusting or clearing the filters.")
-                                            : t("Add a new :name to get started.", {
-                                                  name: t("transaction"),
+                                            : t("Add :name to get started.", {
+                                                  name: t("transactions"),
                                               })}
                                     </EmptyDescription>
                                 </EmptyHeader>
                                 {!isFiltered ? (
                                     <EmptyContent>
-                                        <ActionsMenu />
+                                        <ActionsMenu variant="default" />
                                     </EmptyContent>
                                 ) : null}
                             </Empty>
@@ -538,11 +558,26 @@ const Listing = () => {
                                 <Item className="p-0 pb-4 not-first:mt-4">
                                     <ItemHeader>
                                         <ItemTitle>
-                                            {format(parse(date, DATE_FORMAT, new Date()), "MMMM d, yyyy")}
+                                            {formatDayHeading(parse(date, DATE_FORMAT, new Date()), currentLocale(), {
+                                                today: t("Today"),
+                                                yesterday: t("Yesterday"),
+                                            })}
                                         </ItemTitle>
                                     </ItemHeader>
                                 </Item>
-                                <div className="min-w-0 overflow-x-auto rounded-sm border">
+                                {/** A phone has no room for the table's columns, and the
+                                 * amount is the point of the row, so it reads as a list. */}
+                                <div className="min-w-0 rounded-xl border md:hidden">
+                                    {items.map((transaction) => (
+                                        <MovementRow
+                                            actions={<TransactionActions transaction={transaction} />}
+                                            key={transaction.id}
+                                            showsAuthor={showsAuthor}
+                                            transaction={transaction}
+                                        />
+                                    ))}
+                                </div>
+                                <div className="hidden min-w-0 overflow-x-auto rounded-xl border md:block">
                                     <TableComponent className={TRANSACTION_TABLE_CLASS}>
                                         <TableBody>
                                             {items.map((transaction) => (
@@ -565,6 +600,71 @@ const TransactionRow = ({ transaction }: { transaction: Transaction }) => {
      * Translate the provided string
      * to the current locale.
      */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * Whether the team is shared, and so whether the row says who
+     * recorded the movement.
+     */
+    const showsAuthor = useSharedTeam();
+
+    /**
+     * The account on the other side, so a transfer row says where the
+     * money went or came from.
+     */
+    const counterpart = transaction.transfer_id ? counterpartAccountName(transaction) : null;
+
+    return (
+        <TableRow>
+            <TableCell className={cn("text-muted-foreground tabular-nums", TRANSACTION_COLUMNS.time)}>
+                {format(new Date(transaction.occurred_at), "HH:mm")}
+            </TableCell>
+            <TableCell className={TRANSACTION_COLUMNS.account}>
+                <TruncatedText className="w-full" fallback="-" value={transaction.account?.name} />
+            </TableCell>
+            <TableCell className={TRANSACTION_COLUMNS.description}>
+                <div className="flex min-w-0 items-center gap-1.5">
+                    {transaction.transfer_id ? (
+                        <ArrowLeftRightIcon
+                            aria-label={t("Transfer")}
+                            className="text-muted-foreground size-3.5 shrink-0"
+                        />
+                    ) : null}
+                    <TruncatedText
+                        className="w-full"
+                        fallback={counterpart ?? t(`enums.${transaction.type}`)}
+                        value={counterpart ?? transaction.description}
+                    />
+                </div>
+            </TableCell>
+            <TableCell className={TRANSACTION_COLUMNS.tags}>
+                <TagsCell tags={transaction.tags ?? []} />
+            </TableCell>
+            {showsAuthor ? (
+                <TableCell className={TRANSACTION_COLUMNS.author}>
+                    {transaction.user ? <TransactionAuthor user={transaction.user} /> : null}
+                </TableCell>
+            ) : null}
+            <TableCell className={cn("text-right", TRANSACTION_COLUMNS.amount)}>
+                <TransactionAmount transaction={transaction} />
+            </TableCell>
+            <TableCell className={cn("text-right", TRANSACTION_COLUMNS.actions)}>
+                <TransactionActions transaction={transaction} />
+            </TableCell>
+        </TableRow>
+    );
+};
+
+/**
+ * The View, Edit, and Delete actions of a movement, shared by the table row
+ * and the list row a phone shows instead of it. A row owned by a transfer
+ * acts on the transfer, so it is never left half-recorded.
+ */
+const TransactionActions = ({ transaction }: { transaction: Transaction }) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
     const { currentLocale, t } = useLaravelReactI18n();
 
     /**
@@ -583,14 +683,7 @@ const TransactionRow = ({ transaction }: { transaction: Transaction }) => {
     const transferId = transaction.transfer_id;
 
     /**
-     * The account on the other side, so a transfer row says where the
-     * money went or came from.
-     */
-    const counterpart = transferId ? counterpartAccountName(transaction) : null;
-
-    /**
-     * Where the row's View, Edit, and Delete actions lead. A row owned by
-     * a transfer acts on the transfer, so it is never left half-recorded.
+     * Where the row's View, Edit, and Delete actions lead.
      */
     const show = transferId
         ? transferRoutes.show.url({ team, transfer: transferId })
@@ -608,85 +701,75 @@ const TransactionRow = ({ transaction }: { transaction: Transaction }) => {
     const [deleteOpen, setDeleteOpen] = useState(false);
 
     return (
-        <TableRow>
-            <TableCell className={cn("text-muted-foreground tabular-nums", TRANSACTION_COLUMNS.time)}>
-                {format(new Date(transaction.occurred_at), "HH:mm")}
-            </TableCell>
-            <TableCell className={TRANSACTION_COLUMNS.account}>
-                <TruncatedText className="w-full" fallback="-" value={transaction.account?.name} />
-            </TableCell>
-            <TableCell className={TRANSACTION_COLUMNS.description}>
-                <div className="flex min-w-0 items-center gap-1.5">
-                    {transferId ? (
-                        <ArrowLeftRightIcon
-                            aria-label={t("Transfer")}
-                            className="text-muted-foreground size-3.5 shrink-0"
+        <Fragment>
+            <DropdownMenu>
+                <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
+                    <MoreHorizontalIcon />
+                    <span className="sr-only">{t("Actions")}</span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem
+                            render={
+                                <ModalLink href={show}>
+                                    <EyeIcon />
+                                    <span>{t("View")}</span>
+                                </ModalLink>
+                            }
                         />
-                    ) : null}
-                    <TruncatedText
-                        className="w-full"
-                        fallback={counterpart ?? t(`enums.${transaction.type}`)}
-                        value={counterpart ?? transaction.description}
-                    />
-                </div>
-            </TableCell>
-            <TableCell className={TRANSACTION_COLUMNS.tags}>
-                <TagsCell tags={transaction.tags ?? []} />
-            </TableCell>
-            <TableCell className={cn("text-right", TRANSACTION_COLUMNS.amount)}>
-                <span className={cn("font-medium tabular-nums", TRANSACTION_AMOUNT_COLOR[transaction.type])}>
-                    {`${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
-                </span>
-            </TableCell>
-            <TableCell className={cn("text-right", TRANSACTION_COLUMNS.actions)}>
-                <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
-                        <MoreHorizontalIcon />
-                        <span className="sr-only">{t("Actions")}</span>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuGroup>
-                            <DropdownMenuItem
-                                render={
-                                    <ModalLink href={show}>
-                                        <EyeIcon />
-                                        <span>{t("View")}</span>
-                                    </ModalLink>
-                                }
-                            />
-                            <DropdownMenuItem
-                                render={
-                                    <ModalLink href={edit}>
-                                        <PencilIcon />
-                                        <span>{t("Edit")}</span>
-                                    </ModalLink>
-                                }
-                            />
-                            <DropdownMenuItem onClick={() => setDeleteOpen(true)} variant="destructive">
-                                <TrashIcon />
-                                <span>{t("Delete")}</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <ConfirmAction
-                    action={<Link href={destroy} method="delete" />}
-                    confirmLabel={t("Delete")}
-                    description={t("This action cannot be undone.")}
-                    onOpenChange={setDeleteOpen}
-                    open={deleteOpen}
-                    title={
-                        transferId
-                            ? t("Are you sure you want to delete the transfer?")
-                            : t("Are you sure you want to delete the transaction?")
-                    }
-                />
-            </TableCell>
-        </TableRow>
+                        <DropdownMenuItem
+                            render={
+                                <ModalLink href={edit}>
+                                    <PencilIcon />
+                                    <span>{t("Edit")}</span>
+                                </ModalLink>
+                            }
+                        />
+                        <DropdownMenuItem onClick={() => setDeleteOpen(true)} variant="destructive">
+                            <TrashIcon />
+                            <span>{t("Delete")}</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <ConfirmAction
+                action={<Link href={destroy} method="delete" />}
+                confirmLabel={t("Delete")}
+                description={
+                    <span className="flex flex-col gap-2">
+                        {/** Naming the row is the point of the dialog: a
+                         * movement cannot be brought back, so the reader
+                         * has to recognise which one they are about to lose. */}
+                        <span className="text-foreground flex flex-wrap items-baseline gap-x-2 gap-y-1 font-medium">
+                            <TransactionAmount transaction={transaction} />
+                            <span className="text-muted-foreground font-normal">
+                                {[transaction.account?.name, formatDate(transaction.occurred_at, currentLocale())]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                            </span>
+                        </span>
+                        <span>{t("This action cannot be undone.")}</span>
+                    </span>
+                }
+                onOpenChange={setDeleteOpen}
+                open={deleteOpen}
+                title={
+                    transferId
+                        ? t("Are you sure you want to delete the transfer?")
+                        : t("Are you sure you want to delete the transaction?")
+                }
+            />
+        </Fragment>
     );
 };
 
 const SkeletonGroup = () => {
+    /**
+     * The placeholder mirrors the columns the loaded table will have,
+     * so nothing shifts sideways when the rows arrive.
+     */
+    const showsAuthor = useSharedTeam();
+
     return (
         <div>
             <Item className="p-0 pb-4">
@@ -694,7 +777,7 @@ const SkeletonGroup = () => {
                     <Skeleton className="h-4 w-32" />
                 </ItemHeader>
             </Item>
-            <div className="min-w-0 overflow-x-auto rounded-sm border">
+            <div className="min-w-0 overflow-x-auto rounded-xl border">
                 <TableComponent className={TRANSACTION_TABLE_CLASS}>
                     <TableBody>
                         {[0, 1, 2].map((row) => (
@@ -711,6 +794,11 @@ const SkeletonGroup = () => {
                                 <TableCell className={TRANSACTION_COLUMNS.tags}>
                                     <Skeleton className="h-4 w-20" />
                                 </TableCell>
+                                {showsAuthor ? (
+                                    <TableCell className={TRANSACTION_COLUMNS.author}>
+                                        <Skeleton className="size-5 rounded-full" />
+                                    </TableCell>
+                                ) : null}
                                 <TableCell className={cn("text-right", TRANSACTION_COLUMNS.amount)}>
                                     <Skeleton className="ml-auto h-4 w-20" />
                                 </TableCell>

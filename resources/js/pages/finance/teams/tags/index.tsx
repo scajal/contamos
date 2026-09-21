@@ -81,8 +81,10 @@ const Header = () => {
 
     return (
         <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-medium">{t("Tags")}</h1>
-            <p className="text-muted-foreground text-sm">{t("Labels this team can attach to transactions.")}</p>
+            <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">{t("Tags")}</h1>
+            <p className="text-muted-foreground text-[15px] leading-relaxed">
+                {t("Labels this team can attach to transactions.")}
+            </p>
         </header>
     );
 };
@@ -225,7 +227,7 @@ const Listing = () => {
     return (
         <Deferred data="tags" fallback={<SkeletonRows />}>
             {!tags?.data?.length ? (
-                <div className="rounded-sm border">
+                <div className="rounded-xl border">
                     <Empty>
                         <EmptyHeader>
                             <EmptyMedia variant="icon">
@@ -239,7 +241,7 @@ const Listing = () => {
                             <EmptyDescription>
                                 {isFiltered
                                     ? t("Try adjusting or clearing the filters.")
-                                    : t("Add a new :name to get started.", { name: t("tag") })}
+                                    : t("Add :name to get started.", { name: t("tags") })}
                             </EmptyDescription>
                         </EmptyHeader>
                         {!isFiltered ? (
@@ -251,7 +253,7 @@ const Listing = () => {
                 </div>
             ) : (
                 <div className="flex flex-col gap-4">
-                    <div className="overflow-hidden rounded-sm border">
+                    <div className="overflow-hidden rounded-xl border">
                         <ItemGroup className="gap-0">
                             {(tags?.data ?? []).map((tag) => (
                                 <Item
@@ -267,11 +269,8 @@ const Listing = () => {
                                         <ItemTitle>{tag.name}</ItemTitle>
                                     </ItemContent>
                                     <ItemActions className="flex-wrap justify-end">
-                                        {tag.is_active ? (
-                                            <Badge variant="ghost">{t("Active")}</Badge>
-                                        ) : (
-                                            <Badge variant="destructive">{t("Inactive")}</Badge>
-                                        )}
+                                        {/** Active is the normal state, so only the exception is labelled. */}
+                                        {tag.is_active ? null : <Badge variant="secondary">{t("Inactive")}</Badge>}
                                         <DropdownMenu>
                                             <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
                                                 <MoreHorizontalIcon />
@@ -334,10 +333,10 @@ const Listing = () => {
 
 const SkeletonRows = () => {
     return (
-        <div className="overflow-hidden rounded-sm border">
+        <div className="overflow-hidden rounded-xl border">
             {[0, 1, 2].map((row) => (
                 <div className="flex items-center gap-3 border-b px-3 py-2.5 last:border-b-0" key={row}>
-                    <Skeleton className="size-8 rounded-sm" />
+                    <Skeleton className="size-8 rounded-xl" />
                     <div className="flex flex-1 flex-col gap-2">
                         <Skeleton className="h-4 w-40" />
                     </div>

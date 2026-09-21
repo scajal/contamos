@@ -53,10 +53,11 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
 
-            // The marketing site's colour scheme, from an unencrypted
-            // cookie the client writes, so the server renders the right
-            // one on the first paint instead of flashing.
-            'appearance' => fn (): string => $request->cookie('appearance') === 'light' ? 'light' : 'dark',
+            // The chosen colour scheme, from an unencrypted cookie the
+            // client writes, so the server renders the right one on the
+            // first paint instead of flashing. "system" leaves the
+            // choice to the device.
+            'appearance' => fn (): string => HandleAppearance::resolve($request),
 
             // The resolved locale, read at render time so it
             // works for SSR requests too.
@@ -164,10 +165,13 @@ class HandleInertiaRequests extends Middleware
             return null;
         }
 
-        // Load the current team.
+        // Load the current team, counting the people on it so the app
+        // can tell a shared ledger from a personal one without asking
+        // every page to query for it.
         /** @var \App\Modules\Core\Identity\Models\User $user */
         if (isset($user->current_team_id)) {
             $user->loadMissing('currentTeam');
+            $user->currentTeam?->loadCount('users');
         }
 
         return $user->loadMissing('teams');

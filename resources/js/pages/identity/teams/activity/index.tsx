@@ -94,8 +94,10 @@ const Header = () => {
 
     return (
         <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-medium">{t("Activity")}</h1>
-            <p className="text-muted-foreground text-sm">{t("Every change made inside this team, and who made it.")}</p>
+            <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">{t("Activity")}</h1>
+            <p className="text-muted-foreground text-[15px] leading-relaxed">
+                {t("Every change made inside this team, and who made it.")}
+            </p>
         </header>
     );
 };
@@ -310,7 +312,7 @@ const Listing = () => {
             <div>
                 <InfiniteScroll data="activities" onlyNext>
                     {!activities?.data?.length ? (
-                        <div className="overflow-hidden rounded-sm border">
+                        <div className="overflow-hidden rounded-xl border">
                             <Empty>
                                 <EmptyHeader>
                                     <EmptyMedia variant="icon">
@@ -330,7 +332,7 @@ const Listing = () => {
                             </Empty>
                         </div>
                     ) : (
-                        <div className="overflow-hidden rounded-sm border">
+                        <div className="overflow-hidden rounded-xl border">
                             {toBatches(activities.data).map((batch) => (
                                 <Entry batch={batch} key={batch[0]?.id} />
                             ))}
@@ -344,7 +346,7 @@ const Listing = () => {
 
 const SkeletonRows = () => {
     return (
-        <div className="overflow-hidden rounded-sm border">
+        <div className="overflow-hidden rounded-xl border">
             {[0, 1, 2].map((row) => (
                 <div className="flex flex-col gap-2 border-b px-4 py-3 last:border-b-0" key={row}>
                     <Skeleton className="h-4 w-64" />

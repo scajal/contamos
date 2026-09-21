@@ -1,6 +1,6 @@
 import type { ClassValue } from "clsx";
 import { clsx } from "clsx";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { enUS, es } from "date-fns/locale";
 import { twMerge } from "tailwind-merge";
 
@@ -28,6 +28,64 @@ export function formatRelativeTime(value: string, locale: string): string {
 }
 
 /**
+ * Format an instant as a date in the current locale. date-fns patterns such as
+ * "MMMM d, yyyy" are English word order, so dates go through Intl instead and
+ * read "19 de septiembre de 2026" in Spanish.
+ *
+ * Pass a Date for yyyy-MM-dd grouping keys, which are UTC midnight and shift
+ * the calendar day west of UTC when read with new Date(): parse them first.
+ */
+export function formatDate(
+    value: Date | string,
+    locale: string,
+    options: Intl.DateTimeFormatOptions = { dateStyle: "long" },
+): string {
+    return new Intl.DateTimeFormat(locale, options).format(value instanceof Date ? value : new Date(value));
+}
+
+/**
+ * Format a month as its name and year in the current locale,
+ * as the monthly page and its charts label periods.
+ */
+export function formatMonth(value: Date, locale: string, options: Intl.DateTimeFormatOptions = {}): string {
+    return formatDate(value, locale, { month: "long", year: "numeric", ...options });
+}
+
+/**
+ * Name the day a group of movements belongs to: today and yesterday read as
+ * words, and every older day as its full date. The labels are passed in
+ * already translated so this stays free of the i18n hook.
+ */
+export function formatDayHeading(value: Date, locale: string, labels: { today: string; yesterday: string }): string {
+    if (isToday(value)) {
+        return labels.today;
+    }
+
+    if (isYesterday(value)) {
+        return labels.yesterday;
+    }
+
+    // dateStyle cannot be combined with weekday, so the parts are named.
+    return formatDate(value, locale, {
+        day: "numeric",
+        month: "long",
+        weekday: "long",
+        year: "numeric",
+    });
+}
+
+/**
+ * Format a ratio as a percentage in the current locale, so it carries the
+ * same decimal separator as the amounts it sits next to.
+ */
+export function formatPercentage(value: number, locale: string, maximumFractionDigits = 1): string {
+    return new Intl.NumberFormat(locale, {
+        maximumFractionDigits,
+        style: "percent",
+    }).format(value / 100);
+}
+
+/**
  * Notify an Inertia <Form> that values changed. Custom controls like Combobox
  * and ToggleGroup update hidden inputs in React without firing native events.
  */
@@ -42,6 +100,31 @@ export function markFormDirty(from?: Element | null): void {
 }
 
 /**
+ * The character the locale writes decimals with.
+ */
+function decimalSeparator(locale: string): string {
+    return new Intl.NumberFormat(locale).formatToParts(1.1).find((part) => part.type === "decimal")?.value ?? ".";
+}
+
+/**
+ * Drop the zeros the currency's scale padded on, keeping the two decimals
+ * money is normally written with. A currency with fewer than two decimals
+ * keeps all of them, and a digit that is not a zero is never removed.
+ */
+function trimPaddedDecimals(formatted: string, locale: string, decimalPlaces: number): string {
+    const separator = decimalSeparator(locale);
+    const [integer, fraction] = formatted.split(separator);
+
+    if (fraction === undefined || decimalPlaces <= 2) {
+        return formatted;
+    }
+
+    const kept = fraction.replace(/0+$/, "").padEnd(2, "0");
+
+    return `${integer}${separator}${kept}`;
+}
+
+/**
  * Format a major-unit amount for display (grouping + currency decimals + catalog symbol).
  * Tables already grouped by currency pass `symbol: false` so the code is not
  * repeated in every cell.
@@ -50,7 +133,7 @@ export function formatAmount(
     amount: string,
     locale: string,
     currency?: AmountCurrency,
-    options: { symbol?: boolean } = {},
+    options: { symbol?: boolean; trimZeros?: boolean } = {},
 ): string {
     // Get the decimal places of the currency.
     const decimalPlaces = currency?.decimal_places ?? 0;
@@ -71,9 +154,15 @@ export function formatAmount(
     const formatted =
         decimalPlaces === 0
             ? formattedInteger
-            : `${formattedInteger}${new Intl.NumberFormat(locale).formatToParts(1.1).find((part) => part.type === "decimal")?.value ?? "."}${fractionPart.slice(0, decimalPlaces).padEnd(decimalPlaces, "0")}`;
+            : `${formattedInteger}${decimalSeparator(locale)}${fractionPart.slice(0, decimalPlaces).padEnd(decimalPlaces, "0")}`;
 
-    return options.symbol === false ? formatted : `${currency?.symbol} ${formatted}`;
+    // A total pads to the currency's scale, which turns a six-decimal crypto
+    // balance into a figure too wide to read. Summaries drop the padding
+    // beyond the two decimals money is normally written with, and never a
+    // digit the amount actually carries.
+    const trimmed = options.trimZeros ? trimPaddedDecimals(formatted, locale, decimalPlaces) : formatted;
+
+    return options.symbol === false ? trimmed : `${currency?.symbol} ${trimmed}`;
 }
 
 /**

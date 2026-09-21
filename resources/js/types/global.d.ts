@@ -32,7 +32,7 @@ declare module "@inertiajs/core" {
             permissions: Array<Permission>;
             user: User | null;
             locale: "en" | "es";
-            appearance: "light" | "dark";
+            appearance: "light" | "dark" | "system";
             [key: string]: unknown;
         };
         flashDataType: {

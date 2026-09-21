@@ -42,11 +42,27 @@ describe('index', function (): void {
                 ->where('dashboardUrl', null));
     });
 
-    it('defaults the marketing appearance to dark', function (): void {
+    it('leaves the appearance to the device when no cookie was written', function (): void {
         get(route('home', ['locale' => 'en']))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('appearance', 'system'));
+    });
+
+    it('reads a dark appearance from its unencrypted cookie', function (): void {
+        withUnencryptedCookie('appearance', 'dark')
+            ->get(route('home', ['locale' => 'en']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->where('appearance', 'dark'));
+    });
+
+    it('ignores an appearance cookie it does not know', function (): void {
+        withUnencryptedCookie('appearance', 'sepia')
+            ->get(route('home', ['locale' => 'en']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('appearance', 'system'));
     });
 
     it('reads the appearance from its unencrypted cookie', function (): void {

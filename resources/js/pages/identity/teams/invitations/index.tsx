@@ -1,6 +1,5 @@
 import { Deferred, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
-import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
     CircleDashedIcon,
@@ -37,7 +36,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import { invitationStatus, type InvitationStatus } from "@/lib/utils";
+import { formatDate, invitationStatus, type InvitationStatus } from "@/lib/utils";
 import routes from "@/routes/identity/teams/invitations";
 import { TeamInvitation } from "@/types/app/modules/core/identity/models/team/team-invitation";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
@@ -86,8 +85,12 @@ const Header = () => {
 
     return (
         <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-medium">{t("Invitations")}</h1>
-            <p className="text-muted-foreground text-sm">{t("People invited to join this team.")}</p>
+            <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">
+                {t("Invitations")}
+            </h1>
+            <p className="text-muted-foreground text-[15px] leading-relaxed">
+                {t("People invited to join this team.")}
+            </p>
         </header>
     );
 };
@@ -311,7 +314,7 @@ const Listing = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * The page's props.
@@ -326,7 +329,7 @@ const Listing = () => {
     return (
         <Deferred data="invitations" fallback={<SkeletonRows />}>
             {!invitations?.data?.length ? (
-                <div className="rounded-sm border">
+                <div className="rounded-xl border">
                     <Empty>
                         <EmptyHeader>
                             <EmptyMedia variant="icon">
@@ -352,7 +355,7 @@ const Listing = () => {
                 </div>
             ) : (
                 <div className="flex flex-col gap-4">
-                    <div className="overflow-hidden rounded-sm border">
+                    <div className="overflow-hidden rounded-xl border">
                         <ItemGroup className="gap-0">
                             {(invitations?.data ?? []).map((invitation) => {
                                 const status = invitationStatus(invitation);
@@ -372,7 +375,7 @@ const Listing = () => {
                                             <ItemDescription>
                                                 {t("Invited by :name", { name: invitation.inviter?.name ?? "" })}
                                                 {invitation.expires_at && status === "pending"
-                                                    ? ` · ${t("Expires on :date", { date: format(new Date(invitation.expires_at), "MMMM d, yyyy") })}`
+                                                    ? ` · ${t("Expires on :date", { date: formatDate(invitation.expires_at, currentLocale()) })}`
                                                     : null}
                                             </ItemDescription>
                                         </ItemContent>
@@ -397,10 +400,10 @@ const Listing = () => {
 
 const SkeletonRows = () => {
     return (
-        <div className="overflow-hidden rounded-sm border">
+        <div className="overflow-hidden rounded-xl border">
             {[0, 1, 2].map((row) => (
                 <div className="flex items-center gap-3 border-b px-3 py-2.5 last:border-b-0" key={row}>
-                    <Skeleton className="size-8 rounded-sm" />
+                    <Skeleton className="size-8 rounded-xl" />
                     <div className="flex flex-1 flex-col gap-2">
                         <Skeleton className="h-4 w-48" />
                         <Skeleton className="h-3 w-32" />

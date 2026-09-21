@@ -1,6 +1,5 @@
 import { Deferred, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
-import { format } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
     CircleDashedIcon,
@@ -37,6 +36,7 @@ import { useFilters } from "@/hooks/use-filters";
 import { usePermissions } from "@/hooks/use-permissions";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { PERMISSIONS } from "@/lib/permissions";
+import { formatDate } from "@/lib/utils";
 import invitations from "@/routes/identity/teams/invitations";
 import routes from "@/routes/identity/teams/members";
 import { User } from "@/types/app/modules/core/identity/models/user";
@@ -97,8 +97,8 @@ const Header = () => {
 
     return (
         <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-medium">{t("Members")}</h1>
-            <p className="text-muted-foreground text-sm">
+            <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">{t("Members")}</h1>
+            <p className="text-muted-foreground text-[15px] leading-relaxed">
                 {t("People who share this team's accounts and transactions.")}
             </p>
         </header>
@@ -299,7 +299,7 @@ const Listing = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * The page's props.
@@ -314,7 +314,7 @@ const Listing = () => {
     return (
         <Deferred data="members" fallback={<SkeletonRows />}>
             {!members?.data?.length ? (
-                <div className="rounded-sm border">
+                <div className="rounded-xl border">
                     <Empty>
                         <EmptyHeader>
                             <EmptyMedia variant="icon">
@@ -335,7 +335,7 @@ const Listing = () => {
                 </div>
             ) : (
                 <div className="flex flex-col gap-4">
-                    <div className="overflow-hidden rounded-sm border">
+                    <div className="overflow-hidden rounded-xl border">
                         <ItemGroup className="gap-0">
                             {(members?.data ?? []).map((member) => (
                                 <Item
@@ -355,7 +355,7 @@ const Listing = () => {
                                         <ItemDescription>
                                             {member.email}
                                             {member.membership?.created_at
-                                                ? ` · ${t("Joined on :date", { date: format(new Date(member.membership.created_at), "MMMM d, yyyy") })}`
+                                                ? ` · ${t("Joined on :date", { date: formatDate(member.membership.created_at, currentLocale()) })}`
                                                 : null}
                                         </ItemDescription>
                                     </ItemContent>
@@ -377,7 +377,7 @@ const Listing = () => {
 
 const SkeletonRows = () => {
     return (
-        <div className="overflow-hidden rounded-sm border">
+        <div className="overflow-hidden rounded-xl border">
             {[0, 1, 2].map((row) => (
                 <div className="flex items-center gap-3 border-b px-3 py-2.5 last:border-b-0" key={row}>
                     <Skeleton className="size-8 rounded-full" />

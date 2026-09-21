@@ -8,6 +8,17 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+        {{-- With no chosen scheme the device decides, which only the client
+             knows. Applying it before the stylesheet loads keeps the first
+             paint from flashing the wrong one. --}}
+        @if (($appearance ?? 'system') === 'system')
+            <script>
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark');
+                }
+            </script>
+        @endif
+
         <link rel="preconnect" href="https://api.fontshare.com">
         <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
         <link href="https://api.fontshare.com/v2/css?f[]=switzer@1,2&display=swap" rel="stylesheet" />
