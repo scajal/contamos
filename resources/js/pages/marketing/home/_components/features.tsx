@@ -88,9 +88,6 @@ export const Features = () => {
                     transition={{ duration: 0.6, ease: "easeOut" }}
                     className="flex max-w-3xl flex-col gap-5"
                 >
-                    <span className="text-xs font-medium tracking-[0.2em] text-zinc-500 uppercase">
-                        {t("What you get")}
-                    </span>
                     <h2 className="font-heading text-[clamp(2rem,4vw,3.25rem)] leading-[1.05] font-semibold tracking-tight text-balance">
                         {t("Built around how your money really works.")}
                     </h2>

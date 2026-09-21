@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Modules\Billing\Enums\Feature;
+use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Identity\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -122,4 +124,25 @@ describe('public files', function (): void {
     it('advertises the sitemap in robots.txt', function (): void {
         expect(file_get_contents(public_path('robots.txt')))->toContain('Sitemap:');
     });
+});
+
+it('describes both plans from the enum the app gates on', function (): void {
+    get(route('home', ['locale' => 'en']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->has('features', count(Feature::cases()))
+            ->where('features.0.feature', Feature::AddAccounts->value)
+            ->where('features.0.label', trans('Accounts per team'))
+            ->where('features.0.free', Feature::AddAccounts->valueOn(Plan::Free))
+            ->where('features.0.pro', Feature::AddAccounts->valueOn(Plan::Pro)));
+});
+
+it('offers the pro price for both billing cycles', function (): void {
+    get(route('home', ['locale' => 'en']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->has('prices.monthly', fn (Assert $price): \Inertia\Testing\AssertableInertia => $price
+                ->hasAll('amount', 'currency', 'formatted'))
+            ->has('prices.yearly', fn (Assert $price): \Inertia\Testing\AssertableInertia => $price
+                ->hasAll('amount', 'currency', 'formatted')));
 });

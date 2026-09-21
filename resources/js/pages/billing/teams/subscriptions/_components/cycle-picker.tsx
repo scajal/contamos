@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { perMonthPrice, yearlySaving } from "@/lib/billing";
 import subscriptions from "@/routes/billing/teams/subscriptions";
 import { BillingCycle } from "@/types/app/modules/billing/enums/billing-cycle";
 import { PlanPrice } from "@/types/app/modules/billing/plan-price";
@@ -12,26 +13,6 @@ type Props = {
     prices: Record<BillingCycle, PlanPrice>;
     /** The team slug used to build the subscribe link. */
     team: string;
-};
-
-/**
- * Format a Paddle total in minor units as the equivalent price of one
- * month, in the user's locale. The currency decides how many minor
- * units make one major unit, so a two-decimal currency divides by a
- * hundred and a zero-decimal one by nothing. Null when the amount or
- * the currency is missing, which also covers a price cached before
- * the currency was part of it.
- */
-const perMonth = (price: PlanPrice, months: number, locale: string): string | null => {
-    if (!price.amount || !price.currency) {
-        return null;
-    }
-
-    const formatter = new Intl.NumberFormat(locale, { style: "currency", currency: price.currency });
-
-    const decimals = formatter.resolvedOptions().maximumFractionDigits ?? 2;
-
-    return formatter.format(price.amount / 10 ** decimals / months);
 };
 
 /**
@@ -56,25 +37,21 @@ export const CyclePicker = ({ prices, team }: Props) => {
 
     /**
      * What the yearly cycle saves against twelve months of the
-     * monthly one, as a whole percentage. Null when either price
-     * is unknown.
+     * monthly one, as a whole percentage.
      */
-    const saving =
-        prices.monthly.amount && prices.yearly.amount
-            ? Math.round((1 - prices.yearly.amount / (prices.monthly.amount * 12)) * 100)
-            : null;
+    const saving = yearlySaving(prices);
 
     /**
-     * The formatted price of the selected cycle, if Paddle
-     * could be reached.
+     * The total of the selected cycle, formatted in the user's locale
+     * so it reads the same way as the per-month figure above it.
      */
-    const price = prices[cycle].formatted;
+    const price = perMonthPrice(prices[cycle], 1, currentLocale());
 
     /**
      * The selected cycle's cost for one month: the yearly total
      * spread over twelve months, or the monthly total itself.
      */
-    const monthly = perMonth(prices[cycle], cycle === "yearly" ? 12 : 1, currentLocale());
+    const monthly = perMonthPrice(prices[cycle], cycle === "yearly" ? 12 : 1, currentLocale());
 
     return (
         <div className="flex flex-col items-center gap-6">
@@ -103,7 +80,7 @@ export const CyclePicker = ({ prices, team }: Props) => {
                     value="yearly"
                 >
                     {t("Yearly")}
-                    {saving !== null && saving > 0 && (
+                    {saving !== null && (
                         <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[11px] leading-none font-semibold text-emerald-700 dark:text-emerald-400">
                             {t("Save :percent%", { percent: String(saving) })}
                         </span>

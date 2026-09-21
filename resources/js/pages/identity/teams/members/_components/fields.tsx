@@ -29,7 +29,9 @@ export const Fields = ({ defaultValues, errors, invalid, roles }: Props) => {
                 <FieldLabel htmlFor="member-role">{t("Role")}</FieldLabel>
                 <Select defaultValue={defaultValues?.role ?? null} id="member-role" name="role">
                     <SelectTrigger aria-invalid={invalid("role")}>
-                        <SelectValue />
+                        <SelectValue>
+                            {(value: Role | null) => roles.find((role) => role.value === value)?.label ?? ""}
+                        </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                         <SelectGroup>

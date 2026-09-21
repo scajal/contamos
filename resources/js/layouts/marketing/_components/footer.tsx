@@ -11,6 +11,7 @@ import { ThemeSwitcher, type Appearance } from "./theme-switcher";
 const SECTIONS = [
     { hash: "product", label: "Balances" },
     { hash: "features", label: "Features" },
+    { hash: "how-it-works", label: "How it works" },
     { hash: "pricing", label: "Pricing" },
     { hash: "faq", label: "Questions" },
 ] as const;

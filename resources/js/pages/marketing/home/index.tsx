@@ -2,24 +2,31 @@ import type React from "react";
 import { Fragment } from "react";
 
 import { MarketingLayout } from "@/layouts/marketing/layout";
+import type { PlanTableRow } from "@/pages/billing/teams/subscriptions/_components/plan-table";
+import { BillingCycle } from "@/types/app/modules/billing/enums/billing-cycle";
+import { PlanPrice } from "@/types/app/modules/billing/plan-price";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 
 import { Balances } from "./_components/balances";
 import { Faq } from "./_components/faq";
 import { Features } from "./_components/features";
 import { Hero } from "./_components/hero";
+import { HowItWorks } from "./_components/how-it-works";
+import { Pricing } from "./_components/pricing";
 import { SeoHead } from "./_components/seo-head";
 import { StageFloor } from "./_components/stage-floor";
 
 interface HomeProps {
     dashboardUrl: string | null;
     alternates: Alternates;
+    features: Array<PlanTableRow>;
+    prices: Record<BillingCycle, PlanPrice>;
 }
 
-const Home = ({ dashboardUrl, alternates }: HomeProps) => {
+const Home = ({ dashboardUrl, alternates, features, prices }: HomeProps) => {
     return (
         <Fragment>
-            <SeoHead alternates={alternates} />
+            <SeoHead alternates={alternates} prices={prices} />
 
             {/*
              * The opening act shares one stage: the floor grid runs behind
@@ -34,6 +41,8 @@ const Home = ({ dashboardUrl, alternates }: HomeProps) => {
                 <Balances />
             </div>
             <Features />
+            <HowItWorks />
+            <Pricing dashboardUrl={dashboardUrl} features={features} prices={prices} />
             <Faq dashboardUrl={dashboardUrl} />
         </Fragment>
     );

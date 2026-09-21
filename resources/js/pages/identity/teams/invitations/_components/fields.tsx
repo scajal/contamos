@@ -8,6 +8,7 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import subscriptions from "@/routes/billing/teams/subscriptions";
+import { Role } from "@/types/app/modules/core/identity/enums/team/role";
 import { TeamInvitation } from "@/types/app/modules/core/identity/models/team/team-invitation";
 import { RoleOption } from "@/types/app/modules/core/identity/role-option";
 
@@ -59,7 +60,9 @@ export const Fields = ({ defaultValues, errors, invalid, roles }: Props) => {
                     <FieldLabel htmlFor="invitation-role">{t("Role")}</FieldLabel>
                     <Select defaultValue={defaultValues?.role ?? "member"} id="invitation-role" name="role">
                         <SelectTrigger aria-invalid={invalid("role")}>
-                            <SelectValue />
+                            <SelectValue>
+                                {(value: Role | null) => roles.find((role) => role.value === value)?.label ?? ""}
+                            </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>

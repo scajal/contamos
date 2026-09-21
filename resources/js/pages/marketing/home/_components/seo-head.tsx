@@ -1,6 +1,9 @@
 import { Head } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
+import { majorUnits } from "@/lib/billing";
+import { BillingCycle } from "@/types/app/modules/billing/enums/billing-cycle";
+import { PlanPrice } from "@/types/app/modules/billing/plan-price";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 
 import { QUESTIONS } from "./faq";
@@ -14,7 +17,13 @@ import { QUESTIONS } from "./faq";
  * from — the FAQ list and the Paddle-previewed prices — so what search
  * engines are told can never drift from what a visitor is shown.
  */
-export const SeoHead = ({ alternates }: { alternates: Alternates }) => {
+export const SeoHead = ({
+    alternates,
+    prices,
+}: {
+    alternates: Alternates;
+    prices: Record<BillingCycle, PlanPrice>;
+}) => {
     /**
      * Translate the provided string to the current locale.
      */
@@ -48,12 +57,31 @@ export const SeoHead = ({ alternates }: { alternates: Alternates }) => {
     );
 
     /**
-     * The offers for the page.
+     * What the page offers, in the same figures the pricing section
+     * renders. Pro publishes its yearly total, which is what a buyer
+     * is actually charged, and it is left out entirely when Paddle
+     * could not be reached rather than published as a guess.
      */
-    const allOffers = [{ "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD", url: canonical }];
+    const currency = prices.yearly.currency ?? prices.monthly.currency ?? "USD";
+    const pro = majorUnits(prices.yearly);
+
+    const allOffers = [
+        { "@type": "Offer", name: "Free", price: "0", priceCurrency: currency, url: `${canonical}#pricing` },
+        ...(pro
+            ? [
+                  {
+                      "@type": "Offer",
+                      name: "Pro",
+                      price: pro,
+                      priceCurrency: currency,
+                      url: `${canonical}#pricing`,
+                  },
+              ]
+            : []),
+    ];
 
     /**
-     * The offers for the page.
+     * One offer publishes on its own; two or more publish as a range.
      */
     const offers =
         allOffers.length === 1
@@ -63,7 +91,7 @@ export const SeoHead = ({ alternates }: { alternates: Alternates }) => {
                   offerCount: allOffers.length,
                   lowPrice: "0",
                   highPrice: allOffers[allOffers.length - 1].price,
-                  priceCurrency: "USD",
+                  priceCurrency: currency,
                   offers: allOffers,
               };
 
