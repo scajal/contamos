@@ -1,4 +1,5 @@
 import { ModalLink } from "@inertiaui/modal-react";
+import BorderBeam from "border-beam";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { useState } from "react";
 
@@ -104,16 +105,19 @@ export const CyclePicker = ({ prices, team }: Props) => {
                     </p>
                 </div>
             )}
-            <Button
-                className="w-full"
-                nativeButton={false}
-                render={
-                    <ModalLink href={subscriptions.subscribe.url({ team, cycle })}>
-                        {price ? t("Upgrade for :price", { price }) : t("Upgrade")}
-                    </ModalLink>
-                }
-                size="lg"
-            />
+            <BorderBeam className="w-full" size="pulse-outside">
+                <Button
+                    className="w-full"
+                    nativeButton={false}
+                    render={
+                        <ModalLink href={subscriptions.subscribe.url({ team, cycle })}>
+                            {price ? t("Upgrade for :price", { price }) : t("Upgrade")}
+                        </ModalLink>
+                    }
+                    size="lg"
+                    variant="outline"
+                />
+            </BorderBeam>
             {/* What paying commits you to, said before the checkout
              * opens rather than after. The documents open in their own
              * tab so reading one does not close the modal. */}
