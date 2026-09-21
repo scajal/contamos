@@ -33,7 +33,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Modules/**/Models/** | .ai/rules/models.md |
 | tests/Feature/Modules/Administration/** | .ai/rules/modules-administration.md |
 | app/Modules/** | .ai/rules/modules.md |
-| resources/js/pages/**/index.tsx, resources/js/pages/**/*.tsx, resources/js/pages/** | .ai/rules/pages.md |
+| resources/js/pages/**/index.tsx, resources/js/pages/**/*.tsx | .ai/rules/pages.md |
 | app/**, tests/**, database/factories/** | .ai/rules/phpdoc.md |
 | app/Modules/Billing/Providers/** | .ai/rules/providers.md |
 | app/Modules/**/Http/Requests/** | .ai/rules/requests.md |

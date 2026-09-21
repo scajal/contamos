@@ -1,8 +1,7 @@
 ---
 paths:
-  - 'resources/js/pages/**/index.tsx'
-  - 'resources/js/pages/**/*.tsx'
-  - 'resources/js/pages/**'
+    - "resources/js/pages/**/index.tsx"
+    - "resources/js/pages/**/*.tsx"
 ---
 
 # Pages
