@@ -577,5 +577,8 @@
     "Subscription": "Subscription",
     "Transaction": "Transaction",
     "Activity details": "Activity details",
-    "This change recorded no values.": "This change recorded no values."
+    "This change recorded no values.": "This change recorded no values.",
+    ":price/month": ":price/month",
+    "Billed :price a year": "Billed :price a year",
+    "Billed month to month": "Billed month to month"
 }

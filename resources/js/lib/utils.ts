@@ -100,3 +100,16 @@ export function invitationStatus(invitation: {
 
     return "pending";
 }
+
+/**
+ * The initials of the given name, used as the
+ * avatar fallback.
+ */
+export function initials(name: string): string {
+    return name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? "")
+        .join("");
+}

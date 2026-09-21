@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Authentication\Support\AuthKitUserDeletion;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Enums\Team\Role;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 use Tests\TestCase;
+use WorkOS\Exception\ServerException;
+use WorkOS\Resource\Response as WorkOsResponse;
 
 use function Pest\Laravel\actingAs;
 
@@ -50,6 +53,50 @@ pest()->beforeEach(function (): void {
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+/**
+ * Bind a \App\Modules\Authentication\Support\AuthKitUserDeletion
+ * that records the identifiers handed to it instead of calling
+ * WorkOS, and refuses when given something to throw. The WorkOS
+ * SDK carries its own HTTP client, so the Laravel fake does not
+ * intercept it.
+ */
+function fakeAuthKitUserDeletion(?Throwable $refusal = null): AuthKitUserDeletion
+{
+    $authKitUserDeletion = new class($refusal) extends AuthKitUserDeletion
+    {
+        /**
+         * The identifiers handed to the wrapper, in order.
+         *
+         * @var array<int, string>
+         */
+        public array $deleted = [];
+
+        public function __construct(protected ?Throwable $refusal) {}
+
+        public function deleteUsing(string $identifier): void
+        {
+            $this->deleted[] = $identifier;
+
+            if ($this->refusal instanceof Throwable) {
+                throw $this->refusal;
+            }
+        }
+    };
+
+    app()->instance(AuthKitUserDeletion::class, $authKitUserDeletion);
+
+    return $authKitUserDeletion;
+}
+
+/**
+ * Build a refusal from WorkOS that is not a "not found", the way
+ * the SDK raises one off a failed response.
+ */
+function workOsRefusal(): ServerException
+{
+    return new ServerException(new WorkOsResponse('{"code":"internal_error"}', [], 500));
+}
 
 /**
  * Empty the activity log, so a test asserts the entries the

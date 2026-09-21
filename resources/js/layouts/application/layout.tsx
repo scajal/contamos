@@ -19,6 +19,7 @@ import {
     SettingsIcon,
     ShieldCheckIcon,
     TagIcon,
+    UserIcon,
     UsersIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -64,6 +65,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { initials } from "@/lib/utils";
 import { logout } from "@/routes";
 import subscriptions from "@/routes/billing/teams/subscriptions";
 import administration from "@/routes/filament/administration";
@@ -77,6 +79,7 @@ import activity from "@/routes/identity/teams/activity";
 import invitations from "@/routes/identity/teams/invitations";
 import members from "@/routes/identity/teams/members";
 import settings from "@/routes/identity/teams/settings";
+import account from "@/routes/identity/users/account";
 
 const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/accounts", title: "Accounts" },
@@ -88,19 +91,8 @@ const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "identity/teams/invitations", title: "Invitations" },
     { prefix: "identity/teams/members", title: "Members" },
     { prefix: "identity/teams/index", title: "Configuration" },
+    { prefix: "identity/users/account", title: "Account" },
 ];
-
-/**
- * The initials of the given name, used as the
- * avatar fallback.
- */
-const initials = (name: string) =>
-    name
-        .split(" ")
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase() ?? "")
-        .join("");
 
 export const ApplicationLayout = ({
     breadcrumb,
@@ -595,6 +587,10 @@ const Sidebar = () => {
                                     </Fragment>
                                 )}
                                 <DropdownMenuGroup>
+                                    <DropdownMenuItem render={<Link href={account.index.url()} />}>
+                                        <UserIcon />
+                                        <span>{t("Account")}</span>
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem render={<a href={logout.url()} />}>
                                         <LogOutIcon />
                                         <span>{t("Log Out")}</span>
