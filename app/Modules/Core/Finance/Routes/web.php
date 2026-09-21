@@ -136,6 +136,12 @@ Route::as('finance.teams.')
         Route::post('/transactions', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'store'])
             ->name('transactions.store');
 
+        // Declared before the {transaction} route so the literal
+        // segment is not eaten by the model binding.
+        Route::get('/transactions/export', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'export'])
+            ->middleware('throttle:10,1')
+            ->name('transactions.export');
+
         Route::get('/transactions/{transaction}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransactionController::class, 'show'])
             ->name('transactions.show')
             ->scopeBindings();

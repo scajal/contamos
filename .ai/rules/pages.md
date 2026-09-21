@@ -24,3 +24,6 @@ Inertia modal Sheets use SheetHeader/SheetFooter (p-6). The scrollable body betw
 
 ## Open modal routes with ModalLink
 Open Inertia modal routes with `ModalLink` and a Wayfinder `.url()`. Use `Link` only for full-page visits. Do not point a normal `Link` at a modal route.
+
+## Page props type is PageProps
+Inertia page components declare their props as a local `type PageProps = { … }` and destructure it in the component signature. Reserve `type Props` for colocated `_components/` files.
