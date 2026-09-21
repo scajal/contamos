@@ -40,7 +40,10 @@ class TransactionFactory extends Factory
             'currency_id' => Currency::factory(),
             'decimal_places' => fake()->numberBetween(0, 18),
             'description' => fake()->sentence(),
-            'occurred_at' => fake()->dateTime(),
+            // Recent, so a transaction is inside the history window
+            // the free plan keeps visible. A test that cares about
+            // the window sets the date itself.
+            'occurred_at' => fake()->dateTimeBetween('-3 months'),
             'quote' => '1',
             'team_id' => $this->teamIdForAccount(...),
             'type' => fake()->randomElement([TransactionType::Expense, TransactionType::Income]),

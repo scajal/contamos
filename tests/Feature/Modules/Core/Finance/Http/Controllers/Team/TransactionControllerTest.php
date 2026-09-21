@@ -10,6 +10,7 @@ use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Models\Team;
+use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
@@ -76,13 +77,18 @@ describe('index', function (): void {
         $account->currencies()->attach($currency);
         $otherAccount->currencies()->attach($otherCurrency);
 
+        // A whole month inside the history window every plan keeps,
+        // so the date range is what narrows the list and not the
+        // plan's cutoff.
+        $month = CarbonImmutable::now()->startOfMonth()->subMonth();
+
         $matching = Transaction::factory()->expense()->create([
             'account_id' => $account->getKey(),
             'currency_id' => $currency->getKey(),
             'team_id' => $team->getKey(),
             'user_id' => $user->getKey(),
             'description' => 'Office lunch',
-            'occurred_at' => '2024-06-15 12:00:00',
+            'occurred_at' => $month->addDays(14),
         ]);
         Transaction::factory()->income()->create([
             'account_id' => $otherAccount->getKey(),
@@ -90,7 +96,7 @@ describe('index', function (): void {
             'team_id' => $team->getKey(),
             'user_id' => $user->getKey(),
             'description' => 'Salary',
-            'occurred_at' => '2024-01-01 12:00:00',
+            'occurred_at' => $month->subMonths(2),
         ]);
 
         $this->get(route('finance.teams.transactions.index', [
@@ -100,8 +106,8 @@ describe('index', function (): void {
                 'account' => $account->getKey(),
                 'currency' => $currency->getKey(),
                 'search' => 'lunch',
-                'from' => '2024-06-01',
-                'to' => '2024-06-30',
+                'from' => $month->toDateString(),
+                'to' => $month->endOfMonth()->toDateString(),
             ],
         ]))
             ->assertOk()
@@ -110,8 +116,8 @@ describe('index', function (): void {
                 ->where('filters.account', $account->getKey())
                 ->where('filters.currency', $currency->getKey())
                 ->where('filters.search', 'lunch')
-                ->where('filters.from', '2024-06-01')
-                ->where('filters.to', '2024-06-30')
+                ->where('filters.from', $month->toDateString())
+                ->where('filters.to', $month->endOfMonth()->toDateString())
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('transactions.data', 1)
                     ->where('transactions.data.0.id', $matching->getKey())));
@@ -262,6 +268,160 @@ describe('index', function (): void {
         ]))
             ->assertRedirect()
             ->assertInvalid(['filter.tags.0']);
+    });
+
+    it('hides transactions older than the window the free plan keeps', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $start = CarbonImmutable::now()->startOfMonth()->subMonths(5);
+
+        $older = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => $start->subDay(),
+        ]);
+        $onTheEdge = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => $start,
+        ]);
+
+        $this->get(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('history.limited', true)
+                ->where('history.months', 6)
+                ->where('history.since', $start->toDateString())
+                ->where('history.has_older', true)
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('transactions.data', 1)
+                    ->where('transactions.data.0.id', $onTheEdge->getKey())));
+
+        expect($older->fresh())->not->toBeNull();
+    });
+
+    it('reports no older transactions when the free team has none', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+
+        Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now()->subMonth(),
+        ]);
+
+        $this->get(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('history.limited', true)
+                ->where('history.has_older', false));
+    });
+
+    it('raises a from filter the free plan no longer reaches', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $start = CarbonImmutable::now()->startOfMonth()->subMonths(5);
+
+        Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => $start->subYear(),
+        ]);
+        $visible = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => $start->addDays(3),
+        ]);
+
+        $this->get(route('finance.teams.transactions.index', [
+            'team' => $team->getRouteKey(),
+            'filter' => ['from' => $start->subYear()->toDateString()],
+        ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('filters.from', $start->toDateString())
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('transactions.data', 1)
+                    ->where('transactions.data.0.id', $visible->getKey())));
+    });
+
+    it('leaves a from filter inside the window untouched', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $from = CarbonImmutable::now()->startOfMonth()->subMonths(2);
+
+        Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => $from->addDay(),
+        ]);
+
+        $this->get(route('finance.teams.transactions.index', [
+            'team' => $team->getRouteKey(),
+            'filter' => ['from' => $from->toDateString()],
+        ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('filters.from', $from->toDateString()));
+    });
+
+    it('does not invent a from filter the request never carried', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->get(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->missing('filters.from'));
+    });
+
+    it('finds nothing when searching the id of a hidden transaction', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+
+        $older = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->subMonths(8),
+        ]);
+
+        $this->get(route('finance.teams.transactions.index', [
+            'team' => $team->getRouteKey(),
+            'filter' => ['search' => $older->getKey()],
+        ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('transactions.data', 0)));
+    });
+
+    it('lists every transaction for a pro team', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+
+        $older = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now()->subYears(3),
+        ]);
+        Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now(),
+        ]);
+
+        $this->get(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('history.limited', false)
+                ->where('history.since', null)
+                ->where('history.months', null)
+                ->where('history.has_older', false)
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('transactions.data', 2)
+                    ->where('transactions.data.1.id', $older->getKey())));
+    });
+
+    it('never lists another team within the window', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $foreign = Account::factory()->bank()->active()->for(Team::factory())->create();
+
+        $mine = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now(),
+        ]);
+        Transaction::factory()->expense()->for($foreign)->create([
+            'occurred_at' => CarbonImmutable::now(),
+        ]);
+
+        $this->get(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('transactions.data', 1)
+                    ->where('transactions.data.0.id', $mine->getKey())));
     });
 });
 
@@ -732,6 +892,39 @@ describe('show', function (): void {
             'team' => $team->getRouteKey(),
             'transaction' => $foreign->getKey(),
         ]))->assertNotFound();
+    });
+
+    it('reports a transaction older than the free window as not found', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $older = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->subMonths(5)->subDay(),
+        ]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.transactions.show', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $older->getKey(),
+            ]))
+            ->assertNotFound();
+    });
+
+    it('renders a transaction older than the free window for a pro team', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $older = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now()->subYears(2),
+        ]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.transactions.show', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $older->getKey(),
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('transaction.id', $older->getKey()));
     });
 });
 
@@ -1544,5 +1737,63 @@ describe('destroy', function (): void {
             ->assertForbidden();
 
         $this->assertModelExists($fee);
+    });
+
+    it('refuses to delete a transaction older than the free window', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $older = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->subMonths(5)->subDay(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->delete(route('finance.teams.transactions.destroy', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $older->getKey(),
+            ]))
+            ->assertNotFound();
+
+        $this->assertModelExists($older);
+    });
+
+    it('reports a hidden transfer leg as not found rather than forbidden', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $transfer = Transfer::factory()->for($team)->create();
+        $leg = Transaction::factory()->transferOut()->for($account)->for($team)->for($transfer)->create([
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->subMonths(5)->subDay(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->delete(route('finance.teams.transactions.destroy', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $leg->getKey(),
+            ]))
+            ->assertNotFound();
+    });
+
+    it('deletes a transaction older than the free window for a pro team', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '75.00']);
+        $older = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '25.00',
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => CarbonImmutable::now()->subYears(2),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->delete(route('finance.teams.transactions.destroy', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $older->getKey(),
+            ]))
+            ->assertRedirect();
+
+        $this->assertModelMissing($older);
     });
 });

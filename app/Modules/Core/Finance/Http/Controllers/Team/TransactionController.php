@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Http\Controllers\Team;
 
+use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
 use App\Modules\Core\Finance\Actions\Team\DeleteTransaction;
@@ -17,8 +18,10 @@ use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Objects\Toast;
+use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -35,14 +38,17 @@ class TransactionController
      */
     public function index(Team $team, IndexRequest $request): Response
     {
+        $since = $this->historyWindowStart($team);
+
         return Inertia::render('finance/teams/transactions/index', [
             'accounts' => $team->accounts()->orderBy('name')->get(),
             'currencies' => Currency::query()->isActive()->orderBy('name')->get(),
-            'filters' => $request->presentedFilters(),
+            'filters' => $request->presentedFilters($since?->toDateString()),
+            'history' => $this->history($team, $since),
             'tags' => $team->tags()->orderBy('name')->get(),
             'types' => Transaction::typeFilters(),
             'transactions' => Inertia::scroll(
-                fn (): LengthAwarePaginator => QueryBuilder::for($team->transactions(), $request)
+                fn (): LengthAwarePaginator => QueryBuilder::for($this->visible($team, $since), $request)
                     ->allowedFilters(...$request->filters())
                     ->with('account', 'currency', 'user', 'tags', 'transfer.transactions.account')
                     ->orderBy('occurred_at', 'desc')
@@ -97,6 +103,8 @@ class TransactionController
      */
     public function show(Team $team, Transaction $transaction): Modal
     {
+        $this->assertTransactionIsVisible($team, $transaction);
+
         return Inertia::modal('finance/teams/transactions/show', [
             'transaction' => $transaction->load('account', 'currency', 'user', 'tags'),
         ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getRouteKey()]);
@@ -158,6 +166,10 @@ class TransactionController
      */
     public function destroy(Team $team, Transaction $transaction, DeleteTransaction $deleteTransaction): RedirectResponse
     {
+        // A row the plan hides reports not found before anything
+        // else, so it is never confirmed to exist.
+        $this->assertTransactionIsVisible($team, $transaction);
+
         $this->assertTransactionIsNotOwnedByATransfer($transaction);
 
         // Delete the transaction and revert its balance effect.
@@ -170,6 +182,72 @@ class TransactionController
             ->flash();
 
         return back();
+    }
+
+    /**
+     * The team's transactions the plan still shows. A plan with
+     * unlimited history leaves the query untouched; a limited one
+     * cuts at the window start with the same date-only comparison
+     * the index date filters use.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\Transaction, \App\Modules\Core\Identity\Models\Team>
+     */
+    protected function visible(Team $team, ?CarbonImmutable $since): HasMany
+    {
+        $transactions = $team->transactions();
+
+        // The cutoff is applied before any allowed filter, so no
+        // filter the user sends can widen it.
+        if ($since instanceof CarbonImmutable) {
+            $transactions->occurredFrom($since->toDateString());
+        }
+
+        return $transactions;
+    }
+
+    /**
+     * What the page needs to tell the team its list is cut: since
+     * when it starts, how many months the plan keeps, and whether
+     * the team has anything older to miss.
+     *
+     * @return array{has_older: bool, limited: bool, months: int|null, since: string|null}
+     */
+    protected function history(Team $team, ?CarbonImmutable $since): array
+    {
+        return [
+            // Only a limited team can have anything hidden, so the
+            // check is skipped entirely for a pro team.
+            'has_older' => $since instanceof CarbonImmutable && $team->transactions()
+                ->occurredUntil($since->subDay()->toDateString())
+                ->exists(),
+            'limited' => $since instanceof CarbonImmutable,
+            'months' => Feature::ViewHistory->limitOn($team->plan()),
+            'since' => $since?->toDateString(),
+        ];
+    }
+
+    /**
+     * The first day of history the team's plan still opens, or
+     * null when the plan keeps everything.
+     */
+    protected function historyWindowStart(Team $team): ?CarbonImmutable
+    {
+        return Transaction::historyWindowStart(Feature::ViewHistory->limitOn($team->plan()));
+    }
+
+    /**
+     * Refuse a transaction the team's plan no longer shows. It is
+     * still there and still counts towards the balances, but a
+     * hidden row must not be readable or writable by URL.
+     */
+    protected function assertTransactionIsVisible(Team $team, Transaction $transaction): void
+    {
+        $since = $this->historyWindowStart($team);
+
+        abort_if(
+            $since instanceof CarbonImmutable && $transaction->occurred_at->startOfDay()->lessThan($since),
+            HttpResponse::HTTP_NOT_FOUND,
+        );
     }
 
     /**

@@ -60,11 +60,15 @@ class IndexRequest extends FormRequest
     }
 
     /**
-     * Validated filters with list values compacted for the query string.
+     * Validated filters with list values compacted for the query
+     * string. When the team's plan hides older history, a date the
+     * user asked for below the window start is shown raised to it,
+     * so the filter bar says what actually applied. A request that
+     * carried no date keeps none.
      *
      * @return array<string, mixed>
      */
-    public function presentedFilters(): array
+    public function presentedFilters(?string $since = null): array
     {
         // Get the filters from the request.
         /** @var array<string, mixed> $filters */
@@ -73,6 +77,11 @@ class IndexRequest extends FormRequest
         // If the tags are an array, implode them into a string.
         if (isset($filters['tags']) && is_array($filters['tags'])) {
             $filters['tags'] = implode(',', array_values(array_filter($filters['tags'], is_string(...))));
+        }
+
+        // Raise a date the plan no longer reaches.
+        if ($since !== null && is_string($from = $filters['from'] ?? null) && $from < $since) {
+            $filters['from'] = $since;
         }
 
         return $filters;

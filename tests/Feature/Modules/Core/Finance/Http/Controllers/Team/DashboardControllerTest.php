@@ -9,6 +9,7 @@ use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -172,6 +173,51 @@ it('renders the eight most recent transactions of the active accounts', function
                 ->has('recent_transactions', 8)
                 ->where('recent_transactions.0.id', $transactions[0]->getKey())
                 ->where('recent_transactions.7.id', $transactions[7]->getKey())));
+});
+
+it('leaves transactions older than the free window out of recent activity', function (): void {
+    [$user, $team] = actingMember();
+    $peso = Currency::factory()->active()->fiat()->create(['code' => 'ARS', 'decimal_places' => 2, 'symbol' => '$']);
+    $account = Account::factory()->bank()->active()->for($team)->create();
+    $start = CarbonImmutable::now()->startOfMonth()->subMonths(5);
+
+    Transaction::factory()->income()->for($account)->for($peso)->create([
+        'amount' => '500',
+        'occurred_at' => $start->subDay(),
+    ]);
+    $visible = Transaction::factory()->income()->for($account)->for($peso)->create([
+        'amount' => '100',
+        'occurred_at' => $start,
+    ]);
+
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('recent_transactions', 1)
+                ->where('recent_transactions.0.id', $visible->getKey())
+                // The hidden transaction still counts towards the balance.
+                ->has('balances', 1)
+                ->where('balances.0.balance', fn (mixed $balance): bool => (float) $balance === 600.0)));
+});
+
+it('lists transactions older than the free window for a pro team', function (): void {
+    [$user, $team] = actingMember();
+    subscribeToPro($team);
+    $peso = Currency::factory()->active()->fiat()->create(['code' => 'ARS']);
+    $account = Account::factory()->bank()->active()->for($team)->create();
+
+    $older = Transaction::factory()->income()->for($account)->for($peso)->create([
+        'amount' => '500',
+        'occurred_at' => CarbonImmutable::now()->subYears(2),
+    ]);
+
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('recent_transactions', 1)
+                ->where('recent_transactions.0.id', $older->getKey())));
 });
 
 it('returns 404 when the team does not exist', function (): void {
