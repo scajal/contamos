@@ -6,7 +6,10 @@ import {
     ArrowLeftRightIcon,
     ArrowUpIcon,
     BanknoteIcon,
+    CheckIcon,
+    ChevronRightIcon,
     ChevronsUpDownIcon,
+    CircleDashedIcon,
     CreditCardIcon,
     CalendarRangeIcon,
     LayoutDashboardIcon,
@@ -17,11 +20,21 @@ import {
     TagIcon,
     UsersIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,6 +43,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
 import {
     Sidebar as SidebarComponent,
@@ -58,6 +72,7 @@ import monthly from "@/routes/finance/teams/monthly";
 import tags from "@/routes/finance/teams/tags";
 import transactions from "@/routes/finance/teams/transactions";
 import teams from "@/routes/identity/teams";
+import invitations from "@/routes/identity/teams/invitations";
 import members from "@/routes/identity/teams/members";
 import settings from "@/routes/identity/teams/settings";
 
@@ -147,38 +162,9 @@ export const ApplicationLayout = ({
                             ) : null}
                         </div>
                         {user?.current_team && (
-                            <div className="flex gap-1.5">
-                                <Button
-                                    nativeButton={false}
-                                    render={
-                                        <ModalLink
-                                            href={transactions.create.url({
-                                                team: user.current_team.slug,
-                                                type: "income",
-                                            })}
-                                        >
-                                            <ArrowDownIcon data-icon="inline-start" />
-                                            {t("enums.income")}
-                                        </ModalLink>
-                                    }
-                                    size="sm"
-                                    variant="outline"
-                                />
-                                <Button
-                                    nativeButton={false}
-                                    render={
-                                        <ModalLink
-                                            href={transactions.create.url({
-                                                team: user.current_team.slug,
-                                                type: "expense",
-                                            })}
-                                        >
-                                            <ArrowUpIcon data-icon="inline-start" />
-                                            {t("enums.expense")}
-                                        </ModalLink>
-                                    }
-                                    size="sm"
-                                />
+                            <div className="flex items-center gap-1.5">
+                                <OnboardingMenu />
+                                <CreateTransactionActions team={user.current_team.slug} />
                             </div>
                         )}
                     </div>
@@ -189,6 +175,254 @@ export const ApplicationLayout = ({
                 </main>
             </SidebarInset>
         </SidebarProvider>
+    );
+};
+
+const CreateTransactionActions = ({ team }: { team: string }) => {
+    /**
+     * Translate the provided string to the
+     * current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    return (
+        <Fragment>
+            {/** Both types side by side, where the header has room for them. */}
+            <div className="hidden gap-1.5 sm:flex">
+                <Button
+                    nativeButton={false}
+                    render={
+                        <ModalLink href={transactions.create.url({ team, type: "income" })}>
+                            <ArrowDownIcon data-icon="inline-start" />
+                            {t("enums.income")}
+                        </ModalLink>
+                    }
+                    size="sm"
+                    variant="outline"
+                />
+                <Button
+                    nativeButton={false}
+                    render={
+                        <ModalLink href={transactions.create.url({ team, type: "expense" })}>
+                            <ArrowUpIcon data-icon="inline-start" />
+                            {t("enums.expense")}
+                        </ModalLink>
+                    }
+                    size="sm"
+                />
+            </div>
+
+            {/** One menu on narrow screens, so the header never overflows. */}
+            <DropdownMenu>
+                <DropdownMenuTrigger className="sm:hidden" render={<Button size="icon-sm" />}>
+                    <PlusIcon />
+                    <span className="sr-only">{t("New :name", { name: t("transaction") })}</span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem
+                            render={
+                                <ModalLink href={transactions.create.url({ team, type: "income" })}>
+                                    <ArrowDownIcon />
+                                    <span>{t("New :name", { name: t("income") })}</span>
+                                </ModalLink>
+                            }
+                        />
+                        <DropdownMenuItem
+                            render={
+                                <ModalLink href={transactions.create.url({ team, type: "expense" })}>
+                                    <ArrowUpIcon />
+                                    <span>{t("New :name", { name: t("expense") })}</span>
+                                </ModalLink>
+                            }
+                        />
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </Fragment>
+    );
+};
+
+/**
+ * The storage key holding the dismissal of a team's setup
+ * checklist, kept per team so dismissing one team's checklist
+ * leaves the others alone.
+ */
+const dismissalKey = (team: string) => `onboarding-dismissed:${team}`;
+
+/**
+ * Read whether the checklist was dismissed for the team in this
+ * browser. Private windows and blocked site data throw on access,
+ * where nothing was ever dismissed.
+ */
+const readDismissal = (team: string): boolean => {
+    try {
+        return window.localStorage.getItem(dismissalKey(team)) === "1";
+    } catch {
+        return false;
+    }
+};
+
+/**
+ * Remember that the checklist was dismissed for the team. A
+ * browser that refuses to store it hides the checklist for this
+ * visit alone.
+ */
+const writeDismissal = (team: string): void => {
+    try {
+        window.localStorage.setItem(dismissalKey(team), "1");
+    } catch {
+        return;
+    }
+};
+
+const OnboardingMenu = () => {
+    /**
+     * Translate the provided string to the
+     * current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { onboarding, user } = usePage().props;
+
+    /**
+     * The team the user is acting on.
+     */
+    const team = user?.current_team;
+
+    /**
+     * Whether the checklist is open.
+     */
+    const [open, setOpen] = useState(false);
+
+    /**
+     * Whether the checklist was dismissed, remembered against the
+     * team it was read for so switching teams reads again.
+     */
+    const [dismissal, setDismissal] = useState(() => ({
+        dismissed: readDismissal(team?.id ?? ""),
+        team: team?.id ?? "",
+    }));
+
+    // Switching teams keeps the layout mounted, so the dismissal
+    // is re-read during the render that brings the new team in.
+    if (dismissal.team !== (team?.id ?? "")) {
+        setDismissal({ dismissed: readDismissal(team?.id ?? ""), team: team?.id ?? "" });
+    }
+
+    /**
+     * Hide the checklist for this team in this browser.
+     */
+    const dismiss = () => {
+        writeDismissal(team?.id ?? "");
+
+        setOpen(false);
+        setDismissal({ dismissed: true, team: team?.id ?? "" });
+    };
+
+    if (!team || !onboarding) {
+        return null;
+    }
+
+    /**
+     * The setup steps, in a fixed order whatever is done, each
+     * opening the screen where the team takes it.
+     */
+    const steps = [
+        {
+            description: t("Accounts hold your balances per currency."),
+            done: onboarding.has_account,
+            href: accounts.index.url({ team: team.slug }),
+            key: "account",
+            title: t("Create an account"),
+        },
+        {
+            description: t("Record an income or an expense on an account."),
+            done: onboarding.has_transaction,
+            href: transactions.index.url({ team: team.slug }),
+            key: "transaction",
+            title: t("Add a first transaction"),
+        },
+        {
+            description: t("Members see and record this team's activity together."),
+            done: onboarding.has_member,
+            href: invitations.index.url({ team: team.slug }),
+            key: "member",
+            title: t("Invite a member"),
+        },
+    ];
+
+    /**
+     * How many steps the team already took.
+     */
+    const done = steps.filter((step) => step.done).length;
+
+    // A finished team, and a member who put the checklist away,
+    // keep the header to themselves.
+    if (done === steps.length || dismissal.dismissed) {
+        return null;
+    }
+
+    return (
+        <Dialog onOpenChange={setOpen} open={open}>
+            <DialogTrigger
+                render={
+                    <Button
+                        aria-label={`${t("Finish your onboarding")} (${done}/${steps.length})`}
+                        size="sm"
+                        variant="ghost"
+                    />
+                }
+            >
+                <CircleDashedIcon data-icon="inline-start" />
+                <span className="hidden sm:inline">{t("Finish your onboarding")}</span>
+                <span className="tabular-nums">{`(${done}/${steps.length})`}</span>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{t("Set up :team", { team: team.name })}</DialogTitle>
+                    <DialogDescription>{t("Three steps to get going.")}</DialogDescription>
+                </DialogHeader>
+                <div className="overflow-hidden rounded-sm border">
+                    <ItemGroup className="gap-0 has-data-[size=sm]:gap-0">
+                        {steps.map((step) => (
+                            <Item
+                                className="rounded-none border-0 border-b last:border-b-0"
+                                key={step.key}
+                                // A step already taken leads nowhere: there is
+                                // nothing left to do on its screen.
+                                {...(step.done
+                                    ? {}
+                                    : { render: <Link href={step.href} onClick={() => setOpen(false)} prefetch /> })}
+                                size="sm"
+                                variant="outline"
+                            >
+                                <ItemMedia variant="icon">
+                                    {step.done ? <CheckIcon className="text-success" /> : <CircleDashedIcon />}
+                                </ItemMedia>
+                                <ItemContent>
+                                    <ItemTitle>{step.title}</ItemTitle>
+                                    <ItemDescription>{step.description}</ItemDescription>
+                                </ItemContent>
+                                {step.done ? null : (
+                                    <ItemActions>
+                                        <ChevronRightIcon className="text-muted-foreground size-4" />
+                                    </ItemActions>
+                                )}
+                            </Item>
+                        ))}
+                    </ItemGroup>
+                </div>
+                <DialogFooter>
+                    <Button onClick={dismiss} size="sm" variant="ghost">
+                        {t("Dismiss")}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 };
 
