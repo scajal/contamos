@@ -15,16 +15,39 @@ type Props = {
 };
 
 /**
+ * Format a Paddle total in minor units as the equivalent price of one
+ * month, in the user's locale. The currency decides how many minor
+ * units make one major unit, so a two-decimal currency divides by a
+ * hundred and a zero-decimal one by nothing. Null when the amount or
+ * the currency is missing, which also covers a price cached before
+ * the currency was part of it.
+ */
+const perMonth = (price: PlanPrice, months: number, locale: string): string | null => {
+    if (!price.amount || !price.currency) {
+        return null;
+    }
+
+    const formatter = new Intl.NumberFormat(locale, { style: "currency", currency: price.currency });
+
+    const decimals = formatter.resolvedOptions().maximumFractionDigits ?? 2;
+
+    return formatter.format(price.amount / 10 ** decimals / months);
+};
+
+/**
  * The monthly or yearly choice and the single upgrade button that
  * carries the selected cycle's price. Yearly is preselected because
- * it is the better deal, and the pill says by how much.
+ * it is the better deal: the pill says by how much, and the price
+ * line shows the yearly plan as what it costs per month, with the
+ * yearly total underneath, so the cheapest way to pay reads as
+ * the cheapest.
  */
 export const CyclePicker = ({ prices, team }: Props) => {
     /**
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * The billing cycle the user picked.
@@ -46,6 +69,12 @@ export const CyclePicker = ({ prices, team }: Props) => {
      * could be reached.
      */
     const price = prices[cycle].formatted;
+
+    /**
+     * The selected cycle's cost for one month: the yearly total
+     * spread over twelve months, or the monthly total itself.
+     */
+    const monthly = perMonth(prices[cycle], cycle === "yearly" ? 12 : 1, currentLocale());
 
     return (
         <div className="flex flex-col items-center gap-6">
@@ -81,6 +110,16 @@ export const CyclePicker = ({ prices, team }: Props) => {
                     )}
                 </ToggleGroupItem>
             </ToggleGroup>
+            {monthly && price && (
+                <div className="flex flex-col items-center gap-1 text-center">
+                    <p className="font-heading text-3xl font-semibold tracking-tight">
+                        {t(":price/month", { price: monthly })}
+                    </p>
+                    <p className="text-muted-foreground text-sm">
+                        {cycle === "yearly" ? t("Billed :price a year", { price }) : t("Billed month to month")}
+                    </p>
+                </div>
+            )}
             <Button
                 className="w-full"
                 nativeButton={false}

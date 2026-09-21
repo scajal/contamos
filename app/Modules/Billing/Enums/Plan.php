@@ -60,34 +60,36 @@ enum Plan: string implements HasLabel
      * fetched rather than duplicated here. A failed preview
      * yields nulls and is not cached in place of a real price.
      *
-     * @return array{formatted: string|null, amount: int|null}
+     * @return array{formatted: string|null, amount: int|null, currency: string|null}
      */
     public function price(BillingCycle $cycle): array
     {
         // The free plan has no price to preview.
         if ($this === self::Free) {
-            return ['formatted' => null, 'amount' => null];
+            return ['formatted' => null, 'amount' => null, 'currency' => null];
         }
 
-        /** @var array{formatted: string|null, amount: int|null} $price */
+        /** @var array{formatted: string|null, amount: int|null, currency: string|null} $price */
         $price = rescue(fn (): array => Cache::remember(
-            "billing.plans.{$this->value}.{$cycle->value}.price",
+            "billing.plans.{$this->value}.{$cycle->value}.price.v2",
             CarbonImmutable::now()->addHours(12),
             function () use ($cycle): array {
                 if (! ($preview = Cashier::previewPrices([$this->priceId($cycle)])->first()) instanceof PricePreview) {
                     throw new \RuntimeException('Paddle returned no price preview.');
                 }
 
-                // The total in minor units lets the page work out the
-                // yearly saving without parsing formatted money.
+                // The total in minor units and its currency let the page
+                // work out the yearly saving and the per-month equivalent
+                // without parsing formatted money.
                 $total = $preview->rawTotal();
 
                 return [
                     'formatted' => $preview->total(),
                     'amount' => is_numeric($total) ? (int) $total : null,
+                    'currency' => $preview->currency()->getCode(),
                 ];
             },
-        ), ['formatted' => null, 'amount' => null]);
+        ), ['formatted' => null, 'amount' => null, 'currency' => null]);
 
         return $price;
     }

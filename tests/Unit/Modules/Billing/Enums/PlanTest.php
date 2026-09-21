@@ -21,6 +21,7 @@ it('returns no price for the free plan', function (): void {
     expect(Plan::Free->price(BillingCycle::Monthly))->toBe([
         'formatted' => null,
         'amount' => null,
+        'currency' => null,
     ]);
 });
 
@@ -34,5 +35,6 @@ it('returns no price when paddle previews nothing', function (): void {
     expect(Plan::Pro->price(BillingCycle::Monthly))->toBe([
         'formatted' => null,
         'amount' => null,
+        'currency' => null,
     ]);
 });

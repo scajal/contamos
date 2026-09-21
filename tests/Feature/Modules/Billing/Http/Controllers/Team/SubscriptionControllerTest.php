@@ -254,14 +254,14 @@ describe('upgrade', function (): void {
         Http::fake([
             '*/pricing-preview' => Http::sequence()
                 ->push(['data' => ['details' => ['line_items' => [[
-                    'price' => ['id' => Plan::Pro->priceId(BillingCycle::Monthly)],
+                    'price' => ['id' => Plan::Pro->priceId(BillingCycle::Monthly), 'unit_price' => ['currency_code' => 'USD']],
                     'formatted_totals' => ['total' => '$4.99'],
                     'totals' => ['total' => '499'],
                 ]]]]])
                 ->push(['data' => ['details' => ['line_items' => [[
-                    'price' => ['id' => Plan::Pro->priceId(BillingCycle::Yearly)],
-                    'formatted_totals' => ['total' => '$39.99'],
-                    'totals' => ['total' => '3999'],
+                    'price' => ['id' => Plan::Pro->priceId(BillingCycle::Yearly), 'unit_price' => ['currency_code' => 'USD']],
+                    'formatted_totals' => ['total' => '$29.99'],
+                    'totals' => ['total' => '2999'],
                 ]]]]]),
         ]);
 
@@ -271,8 +271,10 @@ describe('upgrade', function (): void {
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->where('prices.monthly.formatted', '$4.99')
                 ->where('prices.monthly.amount', 499)
-                ->where('prices.yearly.formatted', '$39.99')
-                ->where('prices.yearly.amount', 3999));
+                ->where('prices.monthly.currency', 'USD')
+                ->where('prices.yearly.formatted', '$29.99')
+                ->where('prices.yearly.amount', 2999)
+                ->where('prices.yearly.currency', 'USD'));
     });
 
     it('renders without prices when paddle cannot be reached', function (): void {
@@ -285,6 +287,7 @@ describe('upgrade', function (): void {
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->where('prices.monthly.formatted', null)
                 ->where('prices.monthly.amount', null)
+                ->where('prices.monthly.currency', null)
                 ->where('prices.yearly.formatted', null));
     });
 
