@@ -13,6 +13,7 @@ use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\LogsTeamActivity;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -50,6 +51,7 @@ use Spatie\Activitylog\Enums\ActivityEvent;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\Team newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\Team newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\Team query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Identity\Models\Team solo()
  *
  * @mixin \Eloquent
  */
@@ -258,6 +260,19 @@ class Team extends Model
         }
 
         return $role === Role::Owner || $this->assignsRoles() ? $role : Role::Admin;
+    }
+
+    /**
+     * Narrow the query to the teams holding a single member,
+     * which are the ones a member takes with them when they
+     * delete their account.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<$this>  $query
+     */
+    #[Scope]
+    protected function solo(Builder $query): void
+    {
+        $query->has('users', '=', 1);
     }
 
     /**

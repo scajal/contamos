@@ -42,6 +42,26 @@ Route::as('identity.')
 
         /*
         |--------------------------------------------------------------------------
+        | Account routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the user's own account. They are not
+        | team-scoped because the account outlives any one team, and they
+        | are open on every plan because erasure is never gated.
+        |
+        */
+
+        Route::get('account', [\App\Modules\Core\Identity\Http\Controllers\User\AccountController::class, 'index'])
+            ->name('users.account.index');
+
+        Route::get('account/delete', [\App\Modules\Core\Identity\Http\Controllers\User\AccountController::class, 'delete'])
+            ->name('users.account.delete');
+
+        Route::delete('account', [\App\Modules\Core\Identity\Http\Controllers\User\AccountController::class, 'destroy'])
+            ->name('users.account.destroy');
+
+        /*
+        |--------------------------------------------------------------------------
         | Invitation routes
         |--------------------------------------------------------------------------
         |

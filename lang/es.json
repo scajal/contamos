@@ -637,5 +637,8 @@
     "Subscription": "Suscripción",
     "Transaction": "Transacción",
     "Activity details": "Detalles de la actividad",
-    "This change recorded no values.": "Este cambio no registró valores."
+    "This change recorded no values.": "Este cambio no registró valores.",
+    ":price/month": ":price/mes",
+    "Billed :price a year": "Se factura :price al año",
+    "Billed month to month": "Se factura mes a mes"
 }
