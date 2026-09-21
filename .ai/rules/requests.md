@@ -36,3 +36,6 @@ Put custom validation attribute labels in lang/{locale}/validation.php under att
 ## distinct belongs on array items
 
 Laravel distinct compares sibling values on wildcard attributes (tag_ids.*), not the parent array. Putting distinct on tag_ids lets duplicate IDs through and the taggables unique index then 500s.
+
+## Share sibling logic via a local Concerns trait
+Share logic between sibling Form Requests with a trait in a `Concerns/` folder next to them, named as a verb phrase (`ResolvesTransactionInputs`, `ResolvesOpeningBalances`). Keep the trait methods `protected`. Do not extract a base class or a service for this, and do not put module-specific traits in `Support/Concerns`.

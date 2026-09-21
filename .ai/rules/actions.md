@@ -19,3 +19,6 @@ Name transactional write Actions `Create{Resource}` or `Update{Resource}`. Do no
 
 ## Guard Action context with Exception
 When `using(...)` runs without the `for()` / `by()` context it needs, throw a base `Exception` with a full-sentence message. Do not add custom exception classes for Action guards.
+
+## Share sibling logic via a local Concerns trait
+Share logic between sibling Actions with a trait in a `Concerns/` folder next to them, named as a verb phrase (`AppliesTransactionBalances`, `BuildsTransferTransactions`). Keep the trait methods `protected`. Do not extract a base class or a service for this, and do not put module-specific traits in `Support/Concerns`.
