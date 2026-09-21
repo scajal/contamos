@@ -25,8 +25,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $currency_id
  * @property int $decimal_places
  * @property string|null $description
+ * @property \Carbon\CarbonImmutable|null $due_date
  * @property \Carbon\CarbonImmutable $occurred_at
  * @property numeric $quote
+ * @property string|null $recurring_rule_id
  * @property string $team_id
  * @property \App\Modules\Core\Finance\Enums\Transaction\TransactionType $type
  * @property string|null $transfer_id
@@ -35,6 +37,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Modules\Core\Finance\Models\Team\Account $account
  * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
+ * @property-read \App\Modules\Core\Finance\Models\Team\RecurringRule|null $recurringRule
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Tag> $tags
  * @property-read \App\Modules\Core\Identity\Models\Team $team
  * @property-read \App\Modules\Core\Finance\Models\Team\Transfer|null $transfer
@@ -51,7 +54,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @mixin \Eloquent
  */
-#[Fillable('amount', 'decimal_places', 'description', 'occurred_at', 'quote', 'type')]
+#[Fillable('amount', 'decimal_places', 'description', 'due_date', 'occurred_at', 'quote', 'type')]
 class Transaction extends Model
 {
     /**
@@ -131,6 +134,7 @@ class Transaction extends Model
         return [
             'amount' => 'decimal:18',
             'decimal_places' => 'integer',
+            'due_date' => 'date',
             'occurred_at' => 'datetime',
             'quote' => 'decimal:18',
             'type' => TransactionType::class,
@@ -190,6 +194,16 @@ class Transaction extends Model
             TransactionType::OpeningBalance->value,
             self::TRANSFER_TYPE,
         ];
+    }
+
+    /**
+     * Get the recurring rule the transaction was generated from.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Finance\Models\Team\RecurringRule, $this>
+     */
+    public function recurringRule(): BelongsTo
+    {
+        return $this->belongsTo(RecurringRule::class);
     }
 
     /**

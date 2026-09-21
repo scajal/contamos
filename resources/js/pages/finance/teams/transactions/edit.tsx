@@ -4,8 +4,15 @@ import { useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import transactions from "@/routes/finance/teams/transactions";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
@@ -33,15 +40,15 @@ export default function Edit({ accounts, tags, transaction }: PageProps) {
     const { user } = usePage().props;
 
     /**
-     * Income or expense, toggled in the form without leaving the sheet.
+     * Income or expense, toggled in the form without leaving the dialog.
      */
     const [type, setType] = useState(transaction.type);
 
     return (
         <Modal>
             {({ rootProps }) => (
-                <Sheet {...rootProps}>
-                    <SheetContent>
+                <Dialog {...rootProps}>
+                    <DialogContent>
                         <Form
                             {...transactions.update.form({
                                 team: user?.current_team?.slug ?? "",
@@ -61,11 +68,11 @@ export default function Edit({ accounts, tags, transaction }: PageProps) {
                         >
                             {(formProps) => (
                                 <Fragment>
-                                    <SheetHeader>
-                                        <SheetTitle>{t("Edit :name", { name: t("transaction") })}</SheetTitle>
-                                        <SheetDescription>{t("Edit the transaction.")}</SheetDescription>
-                                    </SheetHeader>
-                                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
+                                    <DialogHeader>
+                                        <DialogTitle>{t("Edit :name", { name: t("transaction") })}</DialogTitle>
+                                        <DialogDescription>{t("Edit the transaction.")}</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="flex-1">
                                         <Fields
                                             accounts={accounts}
                                             defaultValues={{
@@ -84,17 +91,17 @@ export default function Edit({ accounts, tags, transaction }: PageProps) {
                                             {...formProps}
                                         />
                                     </div>
-                                    <SheetFooter>
+                                    <DialogFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
                                             {formProps.processing && <Spinner data-icon="inline-start" />}
                                             {t("Save")}
                                         </Button>
-                                    </SheetFooter>
+                                    </DialogFooter>
                                 </Fragment>
                             )}
                         </Form>
-                    </SheetContent>
-                </Sheet>
+                    </DialogContent>
+                </Dialog>
             )}
         </Modal>
     );

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         __DIR__.'/../app/Modules/Core/Catalog/Services/Quote/Commands',
+        __DIR__.'/../app/Modules/Core/Finance/Services/RecurringRule/Commands',
     ])
     ->withExceptions(
         fn (Exceptions $exceptions): Exceptions => $exceptions

@@ -4,8 +4,15 @@ import { useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import transactions from "@/routes/finance/teams/transactions";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
@@ -16,11 +23,12 @@ import { Fields } from "./_components/fields";
 
 type PageProps = {
     accounts: Array<Account>;
+    canRecur: boolean;
     tags: Array<Tag>;
     type: TransactionType;
 };
 
-export default function Create({ accounts, tags, type: initialType }: PageProps) {
+export default function Create({ accounts, canRecur, tags, type: initialType }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -33,15 +41,15 @@ export default function Create({ accounts, tags, type: initialType }: PageProps)
     const { user } = usePage().props;
 
     /**
-     * Income or expense, toggled in the form without leaving the sheet.
+     * Income or expense, toggled in the form without leaving the dialog.
      */
     const [type, setType] = useState(initialType);
 
     return (
         <Modal>
             {({ rootProps }) => (
-                <Sheet {...rootProps}>
-                    <SheetContent>
+                <Dialog {...rootProps}>
+                    <DialogContent>
                         <Form
                             {...transactions.store.form({ team: user?.current_team?.slug ?? "" })}
                             className="contents"
@@ -58,19 +66,21 @@ export default function Create({ accounts, tags, type: initialType }: PageProps)
                         >
                             {(formProps) => (
                                 <Fragment>
-                                    <SheetHeader>
-                                        <SheetTitle>{t("Register an :name", { name: t(type) })}</SheetTitle>
-                                        <SheetDescription>
+                                    <DialogHeader>
+                                        <DialogTitle>{t("Register an :name", { name: t(type) })}</DialogTitle>
+                                        <DialogDescription>
                                             {accounts.length === 1
                                                 ? t("In :name", { name: accounts[0].name })
                                                 : type === "income"
                                                   ? t("Record money coming into an account.")
                                                   : t("Record money leaving an account.")}
-                                        </SheetDescription>
-                                    </SheetHeader>
-                                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="flex-1">
                                         <Fields
                                             accounts={accounts}
+                                            allowRepeat
+                                            canRepeat={canRecur}
                                             defaultValues={{ type: initialType }}
                                             onTypeChange={setType}
                                             tags={tags}
@@ -78,17 +88,17 @@ export default function Create({ accounts, tags, type: initialType }: PageProps)
                                             {...formProps}
                                         />
                                     </div>
-                                    <SheetFooter>
+                                    <DialogFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
                                             {formProps.processing && <Spinner data-icon="inline-start" />}
                                             {t("Register this :name", { name: t(type) })}
                                         </Button>
-                                    </SheetFooter>
+                                    </DialogFooter>
                                 </Fragment>
                             )}
                         </Form>
-                    </SheetContent>
-                </Sheet>
+                    </DialogContent>
+                </Dialog>
             )}
         </Modal>
     );

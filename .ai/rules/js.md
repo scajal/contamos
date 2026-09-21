@@ -22,9 +22,9 @@ Use full English strings as keys in lang/{locale}.json. Frontend: useLaravelReac
 
 Assign layout with `Page.layout = (page) => <ApplicationLayout>{page}</ApplicationLayout>` (or `WizardLayout`). Omit layout on Inertia modal pages. Do not use `setLayoutProps`.
 
-## Modal plus Sheet for Inertia modals
+## Modal plus Dialog for Inertia modals
 
-Render Inertia modal pages as `<Modal>` wrapping `<Sheet {...rootProps}>`. Put title and description in `SheetHeader` and actions in `SheetFooter`.
+Render Inertia modal pages as `<Modal>` wrapping `<Dialog {...rootProps}>`. Put title and description in `DialogHeader`, the body in a `flex-1` div, and actions in `DialogFooter`. Do not use `Sheet` for modal pages — it is only the mobile sidebar drawer.
 
 ## Colocate form fields in _components
 

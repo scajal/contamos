@@ -1,5 +1,6 @@
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Quote } from "@/types/app/modules/core/catalog/models/currency/quote";
+import { Frequency } from "@/types/app/modules/core/finance/enums/recurring-rule/frequency";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 
 /**
@@ -127,6 +128,28 @@ export function quoteAsOf(currency: Currency | null, at: Date): Quote | null {
     }
 
     return best;
+}
+
+/**
+ * The singular and plural unit noun keys for each recurring frequency,
+ * e.g. "day"/"days" for daily, used beside an interval such as "1 month"
+ * or "2 months" rather than the frequency's own adjective ("Monthly").
+ */
+export const FREQUENCY_UNITS: Record<Frequency, [string, string]> = {
+    daily: ["day", "days"],
+    weekly: ["week", "weeks"],
+    monthly: ["month", "months"],
+    yearly: ["year", "years"],
+};
+
+/**
+ * Get the singular or plural unit noun key for the frequency, based on
+ * the interval.
+ */
+export function frequencyUnitKey(frequency: Frequency, interval: number): string {
+    const [singular, plural] = FREQUENCY_UNITS[frequency];
+
+    return interval === 1 ? singular : plural;
 }
 
 /**

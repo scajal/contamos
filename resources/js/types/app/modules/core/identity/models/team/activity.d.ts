@@ -25,7 +25,7 @@ export interface ActivityChange {
 
 /**
  * A timeline row. The values it changed only travel with the
- * detail sheet, which sends `ActivityEntry & { changes }`.
+ * detail dialog, which sends `ActivityEntry & { changes }`.
  */
 export interface ActivityEntry {
     id: number;

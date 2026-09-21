@@ -18,9 +18,9 @@ Wrap deferred index listings in `<Deferred data="…" fallback={<Skeleton… />}
 
 Item defaults to border-transparent, so `border-b` on stacked rows is invisible. For Item lists inside a bordered container (accounts, tags, currency/tag pickers), use variant="outline" with `rounded-none border-0 border-b last:border-b-0` — the same pattern as accounts/index and tags/index. Do not rely on TableRow borders after migrating a list to Item.
 
-## Sheet body padding matches header and footer
+## Dialog popup owns the padding and the scroll
 
-Inertia modal Sheets use SheetHeader/SheetFooter (p-6). The scrollable body between them is px-6, not px-4, so fields line up with the title and actions. Do not change the mobile sidebar Sheet (p-0).
+Inertia modal Dialogs put padding and scrolling on DialogContent (grid, gap-6, p-6, max-h with overflow-y-auto). The body between DialogHeader and DialogFooter is a plain `flex-1` div — do not re-add px-6 or a nested overflow-y-auto. A footer that splits actions left and right needs `flex-row justify-between sm:justify-between`, since DialogFooter defaults to `sm:justify-end`.
 
 ## Open modal routes with ModalLink
 Open Inertia modal routes with `ModalLink` and a Wayfinder `.url()`. Use `Link` only for full-page visits. Do not point a normal `Link` at a modal route.

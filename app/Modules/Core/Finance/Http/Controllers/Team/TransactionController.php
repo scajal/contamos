@@ -6,6 +6,7 @@ namespace App\Modules\Core\Finance\Http\Controllers\Team;
 
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Actions\Team\CreateRecurringRule;
 use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
 use App\Modules\Core\Finance\Actions\Team\DeleteTransaction;
 use App\Modules\Core\Finance\Actions\Team\UpdateTransaction;
@@ -14,6 +15,7 @@ use App\Modules\Core\Finance\Http\Requests\Team\Transaction\ExportRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\IndexRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\StoreRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\UpdateRequest;
+use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
@@ -117,6 +119,7 @@ class TransactionController
             'accounts' => $team->accounts()->isActive()->with(['currencies' => function (Relation $currencies): void {
                 $currencies->isActive()->with('quotes'); // @phpstan-ignore-line argument.type
             }])->get(),
+            'canRecur' => Feature::RecurTransactions->enabled($team),
             'tags' => $team->tags()->isActive()->orderBy('name')->get(),
             'type' => $type,
         ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getRouteKey()]);
@@ -125,30 +128,67 @@ class TransactionController
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateTransaction $createTransaction): RedirectResponse
+    public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateTransaction $createTransaction, CreateRecurringRule $createRecurringRule): RedirectResponse
     {
-        // Create the transaction.
-        $transaction = $createTransaction
-            ->for($team)
-            ->by($user)
-            ->using($request->safe([
-                (new Transaction)->account()->getForeignKeyName(),
-                'amount',
-                (new Transaction)->currency()->getForeignKeyName(),
-                'description',
-                'occurred_at',
-                'quote',
-                'type',
-            ]), $request->tagIds());
+        // Repeating an entry is a Pro feature. The form hides it on a
+        // Free team, so a request that still asks for it is refused
+        // rather than silently recorded as a one-off.
+        abort_if($request->boolean('repeat') && ! Feature::RecurTransactions->enabled($team), HttpResponse::HTTP_FORBIDDEN);
+
+        // When the request asks the transaction to repeat, create the
+        // rule that will generate its future occurrences.
+        $rule = ($repeat = $request->repeatAttributes()) !== null
+            ? $createRecurringRule->for($team)->by($user)->using($repeat)
+            : null;
+
+        // A rule due today or earlier generates its first occurrence right
+        // away, linked to that due date. A rule starting later waits for
+        // its due date, so no transaction is created here.
+        $transaction = ! $rule instanceof \App\Modules\Core\Finance\Models\Team\RecurringRule || $rule->isDueByToday()
+            ? $createTransaction
+                ->for($team)
+                ->by($user)
+                ->using([
+                    ...$request->safe([
+                        (new Transaction)->account()->getForeignKeyName(),
+                        'amount',
+                        (new Transaction)->currency()->getForeignKeyName(),
+                        'description',
+                        'occurred_at',
+                        'quote',
+                        'type',
+                    ]),
+                    ...($rule instanceof RecurringRule
+                        ? [$rule->getForeignKey() => $rule->getKey(), 'due_date' => $rule->starts_on]
+                        : []),
+                ], $request->tagIds())
+            : null;
+
+        // The rule carries the same tags its occurrences will, and
+        // once its first occurrence exists the schedule picks up from
+        // the one after it.
+        if ($rule instanceof RecurringRule) {
+            $rule->attachTags($request->tagIds());
+
+            if ($transaction instanceof Transaction) {
+                $rule->forceFill(['last_generated_due_date' => $rule->starts_on])->save();
+            }
+        }
 
         // Flash a success message to the session, offering to take the
         // entry back so a wrong tap costs one tap rather than a trip
-        // through the row's menu and a confirmation. An entry dated
-        // before the plan's history window is not reachable by URL,
-        // so it is saved without the offer.
+        // through the row's menu and a confirmation. A repeating entry
+        // is undone as a whole, rule and generated transaction alike.
+        // An entry dated before the plan's history window is not
+        // reachable by URL, so it is saved without the offer.
         $toast = Toast::make(trans('Saved'));
 
-        if ($this->isVisible($team, $transaction)) {
+        if ($rule instanceof RecurringRule) {
+            $toast->action(trans('Undo'), route('finance.teams.recurring-rules.undo', [
+                'team' => $team->getRouteKey(),
+                'recurringRule' => $rule->getRouteKey(),
+            ]));
+        } elseif ($transaction instanceof Transaction && $this->isVisible($team, $transaction)) {
             $toast->action(trans('Undo'), route('finance.teams.transactions.destroy', [
                 'team' => $team->getRouteKey(),
                 'transaction' => $transaction->getRouteKey(),

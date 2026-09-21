@@ -1,9 +1,9 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ACTIVITY_DATE_FIELDS, ACTIVITY_FIELD_LABELS, causerName } from "@/lib/activity";
 import { ActivityChange, ActivityEntry } from "@/types/app/modules/core/identity/models/team/activity";
 
@@ -19,7 +19,7 @@ export default function Show({ entries }: PageProps) {
     const { currentLocale, t } = useLaravelReactI18n();
 
     /**
-     * The entry the sheet is about, which is the first row the
+     * The entry the dialog is about, which is the first row the
      * action wrote.
      */
     const head = entries[0];
@@ -36,15 +36,15 @@ export default function Show({ entries }: PageProps) {
     return (
         <Modal>
             {({ rootProps }) => (
-                <Sheet {...rootProps}>
-                    <SheetContent>
-                        <SheetHeader>
-                            <SheetTitle>{t("Activity details")}</SheetTitle>
-                            <SheetDescription suppressHydrationWarning>
+                <Dialog {...rootProps}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{t("Activity details")}</DialogTitle>
+                            <DialogDescription suppressHydrationWarning>
                                 {[head ? causerName(head.causer, t) : null, occurredAt].filter(Boolean).join(" · ")}
-                            </SheetDescription>
-                        </SheetHeader>
-                        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex-1">
                             <FieldGroup>
                                 {entries.map((entry) => (
                                     <Field key={entry.id}>
@@ -65,8 +65,8 @@ export default function Show({ entries }: PageProps) {
                                 ))}
                             </FieldGroup>
                         </div>
-                    </SheetContent>
-                </Sheet>
+                    </DialogContent>
+                </Dialog>
             )}
         </Modal>
     );

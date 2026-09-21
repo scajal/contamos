@@ -6,9 +6,16 @@ import { ArrowDownIcon, PencilIcon } from "lucide-react";
 import { ConfirmAction } from "@/components/confirm-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { transferLegs } from "@/lib/transfers";
 import { formatAmount } from "@/lib/utils";
 import transfers from "@/routes/finance/teams/transfers";
@@ -62,13 +69,13 @@ export default function Show({ transfer }: PageProps) {
     return (
         <Modal>
             {({ rootProps }) => (
-                <Sheet {...rootProps}>
-                    <SheetContent>
-                        <SheetHeader>
-                            <SheetTitle>{t("Transfer details")}</SheetTitle>
-                            <SheetDescription suppressHydrationWarning>{occurredAt}</SheetDescription>
-                        </SheetHeader>
-                        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
+                <Dialog {...rootProps}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{t("Transfer details")}</DialogTitle>
+                            <DialogDescription suppressHydrationWarning>{occurredAt}</DialogDescription>
+                        </DialogHeader>
+                        <div className="flex-1">
                             <FieldGroup>
                                 <SideSummary
                                     fee={originFee}
@@ -120,7 +127,7 @@ export default function Show({ transfer }: PageProps) {
                                 ) : null}
                             </FieldGroup>
                         </div>
-                        <SheetFooter className="flex-row justify-between">
+                        <DialogFooter className="flex-row justify-between sm:justify-between">
                             <ConfirmAction
                                 title={t("Are you sure you want to delete the transfer?")}
                                 description={t("This action cannot be undone.")}
@@ -158,9 +165,9 @@ export default function Show({ transfer }: PageProps) {
                                 }
                                 variant="outline"
                             />
-                        </SheetFooter>
-                    </SheetContent>
-                </Sheet>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             )}
         </Modal>
     );

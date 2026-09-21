@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
+use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
@@ -1298,6 +1300,99 @@ describe('store', function (): void {
             ->and($activities->first()?->attribute_changes['attributes']['description'])->toBe('Lunch')
             ->and($activities->last()?->attribute_changes['old']['tags'])->toBe([])
             ->and($activities->last()?->attribute_changes['attributes']['tags'])->toBe([$tag->getKey()]);
+    });
+
+    it('creates a recurring rule and its first occurrence when the start date is today', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $today = CarbonImmutable::now('America/Argentina/Buenos_Aires');
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'occurred_at' => $today->format('Y-m-d\TH:i'),
+                'timezone' => 'America/Argentina/Buenos_Aires',
+                'repeat' => true,
+                'recurring_frequency' => 'monthly',
+                'recurring_interval' => 1,
+            ]))
+            ->assertRedirect();
+
+        assertFlashedToast(trans('Saved'));
+
+        $rule = RecurringRule::query()->sole();
+        expect($rule->frequency)->toBe(Frequency::Monthly)
+            ->and($rule->interval)->toBe(1)
+            ->and($rule->starts_on->toDateString())->toBe($today->toDateString())
+            ->and($rule->timezone)->toBe('America/Argentina/Buenos_Aires')
+            ->and($rule->user?->is($user))->toBeTrue();
+
+        $transaction = Transaction::query()->sole();
+        expect($transaction->recurring_rule_id)->toBe($rule->getKey())
+            ->and($transaction->due_date?->toDateString())->toBe($today->toDateString());
+    });
+
+    it('does not create a transaction when the recurring start date is in the future', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $future = CarbonImmutable::now('UTC')->addMonth();
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'occurred_at' => $future->format('Y-m-d\TH:i'),
+            'timezone' => 'UTC',
+            'repeat' => true,
+            'recurring_frequency' => 'monthly',
+            'recurring_interval' => 1,
+        ]))->assertRedirect();
+
+        expect(RecurringRule::query()->count())->toBe(1)
+            ->and(Transaction::query()->count())->toBe(0);
+    });
+
+    it('offers a combined undo that removes both the rule and its transaction', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '0']);
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'occurred_at' => CarbonImmutable::now('UTC')->format('Y-m-d\TH:i'),
+            'timezone' => 'UTC',
+            'repeat' => true,
+            'recurring_frequency' => 'weekly',
+            'recurring_interval' => 2,
+        ]))->assertRedirect();
+
+        $rule = RecurringRule::query()->sole();
+
+        expect(flashedToastAction())->toBe([
+            'label' => trans('Undo'),
+            'method' => 'delete',
+            'url' => route('finance.teams.recurring-rules.undo', [
+                'team' => $team->getRouteKey(),
+                'recurringRule' => $rule->getRouteKey(),
+            ]),
+        ]);
+
+        $undo = flashedToastAction();
+
+        $this->delete($undo['url'])->assertRedirect();
+
+        expect(RecurringRule::query()->count())->toBe(0)
+            ->and(Transaction::query()->count())->toBe(0)
+            ->and((float) $account->currencies()->first()?->pivot->balance)->toBe(0.0);
     });
 });
 

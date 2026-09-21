@@ -13,6 +13,17 @@ require __DIR__.'/../app/Modules/Core/Catalog/Routes/console.php';
 
 /*
 |--------------------------------------------------------------------------
+| Finance Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register finance commands for your application.
+|
+*/
+
+require __DIR__.'/../app/Modules/Core/Finance/Routes/console.php';
+
+/*
+|--------------------------------------------------------------------------
 | Identity Routes
 |--------------------------------------------------------------------------
 |

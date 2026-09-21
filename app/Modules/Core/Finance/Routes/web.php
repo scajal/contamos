@@ -231,4 +231,51 @@ Route::as('finance.teams.')
         Route::delete('/transfers/{transfer}', [\App\Modules\Core\Finance\Http\Controllers\Team\TransferController::class, 'destroy'])
             ->name('transfers.destroy')
             ->scopeBindings();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Recurring rule routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the recurring rule management.
+        |
+        */
+
+        Route::get('/recurring-rules', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'index'])
+            ->name('recurring-rules.index');
+
+        Route::get('/recurring-rules/{recurringRule}/edit', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'edit'])
+            ->name('recurring-rules.edit')
+            ->scopeBindings();
+
+        Route::delete('/recurring-rules/{recurringRule}', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'destroy'])
+            ->name('recurring-rules.destroy')
+            ->scopeBindings();
+
+        Route::delete('/recurring-rules/{recurringRule}/undo', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'undo'])
+            ->name('recurring-rules.undo')
+            ->scopeBindings();
+
+        // A team whose plan does not include recurring transactions
+        // keeps its rules listed and may delete them, but cannot add
+        // to or restart what would never generate.
+        Route::middleware(EnsureFeaturesAreActive::using(Feature::RecurTransactions))->group(function (): void {
+            Route::get('/recurring-rules/create', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'create'])
+                ->name('recurring-rules.create');
+
+            Route::post('/recurring-rules', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'store'])
+                ->name('recurring-rules.store');
+
+            Route::patch('/recurring-rules/{recurringRule}', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'update'])
+                ->name('recurring-rules.update')
+                ->scopeBindings();
+
+            Route::patch('/recurring-rules/{recurringRule}/pause', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'pause'])
+                ->name('recurring-rules.pause')
+                ->scopeBindings();
+
+            Route::patch('/recurring-rules/{recurringRule}/resume', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'resume'])
+                ->name('recurring-rules.resume')
+                ->scopeBindings();
+        });
     });

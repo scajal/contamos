@@ -64,9 +64,7 @@ export const DateChip = ({
     return (
         <Popover>
             <PopoverTrigger
-                render={
-                    <Button className="max-w-full min-w-0 justify-start max-sm:h-10" type="button" variant="outline" />
-                }
+                render={<Button className="w-full min-w-0 justify-start max-sm:h-10" type="button" variant="outline" />}
             >
                 <CalendarIcon data-icon="inline-start" />
                 <span className="min-w-0 truncate">

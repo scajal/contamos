@@ -45,6 +45,26 @@ function SelectTrigger({
     );
 }
 
+/**
+ * An unstyled select trigger meant to sit inside an InputGroupButton, the
+ * way ComboboxTrigger does for a Combobox, so a select can collapse into
+ * the same input group as a sibling control.
+ */
+function SelectTriggerButton({ className, children, ...props }: SelectPrimitive.Trigger.Props) {
+    return (
+        <SelectPrimitive.Trigger
+            data-slot="select-trigger-button"
+            className={cn("[&_svg:not([class*='size-'])]:size-4", className)}
+            {...props}
+        >
+            {children}
+            <SelectPrimitive.Icon
+                render={<ChevronDownIcon className="text-muted-foreground pointer-events-none size-4" />}
+            />
+        </SelectPrimitive.Trigger>
+    );
+}
+
 function SelectContent({
     className,
     children,
@@ -168,5 +188,6 @@ export {
     SelectScrollUpButton,
     SelectSeparator,
     SelectTrigger,
+    SelectTriggerButton,
     SelectValue,
 };

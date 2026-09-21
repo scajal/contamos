@@ -1,17 +1,25 @@
 import { Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ArrowLeftRightIcon, CheckIcon, CopyIcon, PencilIcon } from "lucide-react";
+import { ArrowLeftRightIcon, CheckIcon, CopyIcon, PencilIcon, RepeatIcon } from "lucide-react";
 import { useState } from "react";
 
 import { ConfirmAction } from "@/components/confirm-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN, trimTrailingZeros } from "@/lib/transactions";
 import { cn, formatAmount } from "@/lib/utils";
+import recurringRules from "@/routes/finance/teams/recurring-rules";
 import transactions from "@/routes/finance/teams/transactions";
 import transfers from "@/routes/finance/teams/transfers";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
@@ -80,13 +88,13 @@ export default function Show({ transaction }: PageProps) {
     return (
         <Modal>
             {({ rootProps }) => (
-                <Sheet {...rootProps}>
-                    <SheetContent>
-                        <SheetHeader>
-                            <SheetTitle>{t("Transaction details")}</SheetTitle>
-                            <SheetDescription suppressHydrationWarning>{occurredAt}</SheetDescription>
-                        </SheetHeader>
-                        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
+                <Dialog {...rootProps}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{t("Transaction details")}</DialogTitle>
+                            <DialogDescription suppressHydrationWarning>{occurredAt}</DialogDescription>
+                        </DialogHeader>
+                        <div className="flex-1">
                             <FieldGroup>
                                 <div className="flex items-baseline justify-between gap-3">
                                     <p
@@ -157,6 +165,31 @@ export default function Show({ transaction }: PageProps) {
                                     </Field>
                                 ) : null}
 
+                                {/** The schedule this entry came from, when it was generated. */}
+                                {transaction.recurring_rule_id ? (
+                                    <Field>
+                                        <FieldLabel>{t("Recurring")}</FieldLabel>
+                                        <div>
+                                            <Button
+                                                className="h-auto p-0"
+                                                nativeButton={false}
+                                                render={
+                                                    <ModalLink
+                                                        href={recurringRules.edit.url({
+                                                            recurringRule: transaction.recurring_rule_id,
+                                                            team: user?.current_team?.slug ?? "",
+                                                        })}
+                                                    >
+                                                        <RepeatIcon data-icon="inline-start" />
+                                                        {t("See the rule")}
+                                                    </ModalLink>
+                                                }
+                                                variant="link"
+                                            />
+                                        </div>
+                                    </Field>
+                                ) : null}
+
                                 <Field>
                                     <FieldLabel>{t("Transaction ID")}</FieldLabel>
                                     <div className="flex min-w-0 items-center gap-1">
@@ -169,7 +202,7 @@ export default function Show({ transaction }: PageProps) {
                             </FieldGroup>
                         </div>
                         {transaction.transfer_id ? (
-                            <SheetFooter>
+                            <DialogFooter>
                                 <Button
                                     nativeButton={false}
                                     render={
@@ -185,9 +218,9 @@ export default function Show({ transaction }: PageProps) {
                                     }
                                     variant="outline"
                                 />
-                            </SheetFooter>
+                            </DialogFooter>
                         ) : (
-                            <SheetFooter className="flex-row justify-between">
+                            <DialogFooter className="flex-row justify-between sm:justify-between">
                                 <ConfirmAction
                                     title={t("Are you sure you want to delete the transaction?")}
                                     description={t("This action cannot be undone.")}
@@ -225,10 +258,10 @@ export default function Show({ transaction }: PageProps) {
                                     }
                                     variant="outline"
                                 />
-                            </SheetFooter>
+                            </DialogFooter>
                         )}
-                    </SheetContent>
-                </Sheet>
+                    </DialogContent>
+                </Dialog>
             )}
         </Modal>
     );

@@ -3,8 +3,15 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import transfers from "@/routes/finance/teams/transfers";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
@@ -32,8 +39,8 @@ export default function Create({ accounts, tags }: PageProps) {
     return (
         <Modal>
             {({ rootProps }) => (
-                <Sheet {...rootProps}>
-                    <SheetContent>
+                <Dialog {...rootProps}>
+                    <DialogContent>
                         <Form
                             {...transfers.store.form({ team: user?.current_team?.slug ?? "" })}
                             className="contents"
@@ -50,26 +57,26 @@ export default function Create({ accounts, tags }: PageProps) {
                         >
                             {(formProps) => (
                                 <Fragment>
-                                    <SheetHeader>
-                                        <SheetTitle>{t("Register a :name", { name: t("transfer") })}</SheetTitle>
-                                        <SheetDescription>
+                                    <DialogHeader>
+                                        <DialogTitle>{t("Register a :name", { name: t("transfer") })}</DialogTitle>
+                                        <DialogDescription>
                                             {t("Move money between two of this team's accounts.")}
-                                        </SheetDescription>
-                                    </SheetHeader>
-                                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="flex-1">
                                         <Fields accounts={accounts} tags={tags} {...formProps} />
                                     </div>
-                                    <SheetFooter>
+                                    <DialogFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
                                             {formProps.processing && <Spinner data-icon="inline-start" />}
                                             {t("Register this :name", { name: t("transfer") })}
                                         </Button>
-                                    </SheetFooter>
+                                    </DialogFooter>
                                 </Fragment>
                             )}
                         </Form>
-                    </SheetContent>
-                </Sheet>
+                    </DialogContent>
+                </Dialog>
             )}
         </Modal>
     );

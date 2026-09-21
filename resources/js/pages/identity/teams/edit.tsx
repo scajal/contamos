@@ -3,8 +3,15 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import settings from "@/routes/identity/teams/settings";
 import { Team } from "@/types/app/modules/core/identity/models/team";
@@ -25,8 +32,8 @@ export default function Edit({ team }: PageProps) {
     return (
         <Modal>
             {({ rootProps }) => (
-                <Sheet {...rootProps}>
-                    <SheetContent>
+                <Dialog {...rootProps}>
+                    <DialogContent>
                         {/**
                          * Renaming regenerates the slug, so the server redirects
                          * to the new settings URL instead of coming back here.
@@ -39,24 +46,24 @@ export default function Edit({ team }: PageProps) {
                         >
                             {(formProps) => (
                                 <Fragment>
-                                    <SheetHeader>
-                                        <SheetTitle>{t("Edit :name", { name: t("team") })}</SheetTitle>
-                                        <SheetDescription>{t("Edit the team.")}</SheetDescription>
-                                    </SheetHeader>
-                                    <div className="min-h-0 flex-1 overflow-y-auto px-6">
+                                    <DialogHeader>
+                                        <DialogTitle>{t("Edit :name", { name: t("team") })}</DialogTitle>
+                                        <DialogDescription>{t("Edit the team.")}</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="flex-1">
                                         <Fields defaultValues={team} {...formProps} />
                                     </div>
-                                    <SheetFooter>
+                                    <DialogFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
                                             {formProps.processing && <Spinner data-icon="inline-start" />}
                                             {t("Save")}
                                         </Button>
-                                    </SheetFooter>
+                                    </DialogFooter>
                                 </Fragment>
                             )}
                         </Form>
-                    </SheetContent>
-                </Sheet>
+                    </DialogContent>
+                </Dialog>
             )}
         </Modal>
     );

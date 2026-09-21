@@ -60,6 +60,14 @@ enum Feature: string implements HasLabel
     case ManageBudgets = 'budgets:manage';
 
     /**
+     * Represents scheduling a transaction to repeat on its own.
+     * A switch feature: the plan includes it or it does not.
+     *
+     * @see \App\Modules\Billing\Features\RecurTransactions
+     */
+    case RecurTransactions = 'transactions:recur';
+
+    /**
      * Represents opening the team's activity log. A switch
      * feature: the plan includes it or it does not.
      *
@@ -96,6 +104,7 @@ enum Feature: string implements HasLabel
             self::AddTeams => trans('Free teams per user'),
             self::AssignRoles => trans('Member roles'),
             self::ManageBudgets => trans('Budgets per tag'),
+            self::RecurTransactions => trans('Recurring transactions'),
             self::ViewActivity => trans('Activity log'),
             self::ViewHistory => trans('Months of history'),
         };
@@ -109,7 +118,7 @@ enum Feature: string implements HasLabel
     public function includedIn(Plan $plan): bool
     {
         if ($this->isSwitch()) {
-            /** @var \App\Modules\Billing\Features\AssignRoles|\App\Modules\Billing\Features\ManageBudgets|\App\Modules\Billing\Features\ViewActivity $feature */
+            /** @var \App\Modules\Billing\Features\AssignRoles|\App\Modules\Billing\Features\ManageBudgets|\App\Modules\Billing\Features\RecurTransactions|\App\Modules\Billing\Features\ViewActivity $feature */
             $feature = Pennant::instance($this);
 
             return $feature->includedIn($plan);
@@ -125,7 +134,7 @@ enum Feature: string implements HasLabel
     public function isSwitch(): bool
     {
         return match ($this) {
-            self::AssignRoles, self::ManageBudgets, self::ViewActivity => true,
+            self::AssignRoles, self::ManageBudgets, self::RecurTransactions, self::ViewActivity => true,
             self::AddAccounts, self::AddMembers, self::AddTeams, self::ViewHistory => false,
         };
     }

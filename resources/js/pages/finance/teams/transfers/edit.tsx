@@ -3,8 +3,15 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import { transferLegs } from "@/lib/transfers";
 import transfers from "@/routes/finance/teams/transfers";
@@ -40,8 +47,8 @@ export default function Edit({ accounts, tags, transfer }: PageProps) {
     return (
         <Modal>
             {({ rootProps }) => (
-                <Sheet {...rootProps}>
-                    <SheetContent>
+                <Dialog {...rootProps}>
+                    <DialogContent>
                         <Form
                             {...transfers.update.form({
                                 team: user?.current_team?.slug ?? "",
@@ -61,11 +68,11 @@ export default function Edit({ accounts, tags, transfer }: PageProps) {
                         >
                             {(formProps) => (
                                 <Fragment>
-                                    <SheetHeader>
-                                        <SheetTitle>{t("Edit :name", { name: t("transfer") })}</SheetTitle>
-                                        <SheetDescription>{t("Edit the transfer.")}</SheetDescription>
-                                    </SheetHeader>
-                                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6">
+                                    <DialogHeader>
+                                        <DialogTitle>{t("Edit :name", { name: t("transfer") })}</DialogTitle>
+                                        <DialogDescription>{t("Edit the transfer.")}</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="flex-1">
                                         <Fields
                                             accounts={accounts}
                                             defaultValues={{
@@ -87,17 +94,17 @@ export default function Edit({ accounts, tags, transfer }: PageProps) {
                                             {...formProps}
                                         />
                                     </div>
-                                    <SheetFooter>
+                                    <DialogFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
                                             {formProps.processing && <Spinner data-icon="inline-start" />}
                                             {t("Save")}
                                         </Button>
-                                    </SheetFooter>
+                                    </DialogFooter>
                                 </Fragment>
                             )}
                         </Form>
-                    </SheetContent>
-                </Sheet>
+                    </DialogContent>
+                </Dialog>
             )}
         </Modal>
     );

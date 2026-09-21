@@ -18,6 +18,7 @@ import {
     LifeBuoyIcon,
     LogOutIcon,
     PlusIcon,
+    RepeatIcon,
     SettingsIcon,
     ShieldCheckIcon,
     TagIcon,
@@ -78,6 +79,7 @@ import accounts from "@/routes/finance/teams/accounts";
 import budgets from "@/routes/finance/teams/budgets";
 import dashboard from "@/routes/finance/teams/dashboard";
 import monthly from "@/routes/finance/teams/monthly";
+import recurringRules from "@/routes/finance/teams/recurring-rules";
 import tags from "@/routes/finance/teams/tags";
 import transactions from "@/routes/finance/teams/transactions";
 import transfers from "@/routes/finance/teams/transfers";
@@ -95,6 +97,7 @@ const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/budgets", title: "Budgets" },
     { prefix: "finance/teams/monthly", title: "Monthly" },
     { prefix: "finance/teams/tags", title: "Tags" },
+    { prefix: "finance/teams/recurring-rules", title: "Recurring" },
     { prefix: "identity/teams/activity", title: "Activity" },
     { prefix: "identity/teams/invitations", title: "Invitations" },
     { prefix: "identity/teams/members", title: "Members" },
@@ -557,6 +560,15 @@ const Sidebar = () => {
                             >
                                 <WalletIcon />
                                 <span>{t("Budgets")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                isActive={isSection("finance/teams/recurring-rules")}
+                                render={<Link href={recurringRules.index.url({ team })} />}
+                            >
+                                <RepeatIcon />
+                                <span>{t("Recurring")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>

@@ -14,6 +14,7 @@ import {
     ListFilterPlusIcon,
     MoreHorizontalIcon,
     PencilIcon,
+    RepeatIcon,
     SearchIcon,
     SearchXIcon,
     TrashIcon,
@@ -629,6 +630,9 @@ const TransactionRow = ({ transaction }: { transaction: Transaction }) => {
                             aria-label={t("Transfer")}
                             className="text-muted-foreground size-3.5 shrink-0"
                         />
+                    ) : null}
+                    {transaction.recurring_rule_id ? (
+                        <RepeatIcon aria-label={t("Recurring")} className="text-muted-foreground size-3.5 shrink-0" />
                     ) : null}
                     <TruncatedText
                         className="w-full"

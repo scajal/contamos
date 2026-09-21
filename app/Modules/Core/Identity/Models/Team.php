@@ -10,6 +10,7 @@ use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\AccountCurrency;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
+use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
@@ -44,6 +45,7 @@ use Spatie\Activitylog\Enums\ActivityEvent;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Billing\Models\Transaction> $billingTransactions
  * @property-read \App\Modules\Billing\Models\Customer|null $customer
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team\TeamInvitation> $invitations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\RecurringRule> $recurringRules
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Billing\Models\Subscription> $subscriptions
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Tag> $tags
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction> $transactions
@@ -349,6 +351,16 @@ class Team extends Model
         $session = Cashier::api('POST', "customers/{$customer->paddle_id}/portal-sessions", $payload)->json('data');
 
         return redirect()->away($session['urls']['general']['overview']); // @phpstan-ignore-line offsetAccess.nonOffsetAccessible False positive.
+    }
+
+    /**
+     * Get the recurring rules of the team.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\RecurringRule, $this>
+     */
+    public function recurringRules(): HasMany
+    {
+        return $this->hasMany(RecurringRule::class);
     }
 
     /**

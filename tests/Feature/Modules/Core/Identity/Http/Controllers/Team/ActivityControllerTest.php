@@ -52,7 +52,7 @@ function visitActivity(Team $team, array $query = []): Illuminate\Testing\TestRe
 }
 
 /**
- * Open the detail sheet of one entry of a
+ * Open the detail dialog of one entry of a
  * \App\Modules\Core\Identity\Models\Team activity log.
  */
 function openActivity(Team $team, Activity $activity): Illuminate\Testing\TestResponse
