@@ -134,7 +134,7 @@ class SubscriptionController
     {
         $limits = [];
 
-        foreach ([Feature::AddAccounts, Feature::AddMembers, Feature::AssignRoles] as $feature) {
+        foreach ([Feature::AddAccounts, Feature::AddMembers, Feature::AssignRoles, Feature::ViewHistory] as $feature) {
             $limits[] = $this->row($feature, $team);
         }
 
@@ -169,7 +169,7 @@ class SubscriptionController
             return null;
         }
 
-        /** @var \App\Modules\Billing\Features\AddAccounts|\App\Modules\Billing\Features\AddMembers|\App\Modules\Billing\Features\AddTeams $instance */
+        /** @var \App\Modules\Billing\Features\AddAccounts|\App\Modules\Billing\Features\AddMembers|\App\Modules\Billing\Features\AddTeams|\App\Modules\Billing\Features\ViewHistory $instance */
         $instance = Pennant::instance($feature);
 
         return $instance->usage($team);

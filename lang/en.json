@@ -543,5 +543,6 @@
     "Nothing happened this month": "Nothing happened this month",
     "This month is not in your plan": "This month is not in your plan",
     "The free plan shows the last six months. Upgrade to Pro to open your whole history.": "The free plan shows the last six months. Upgrade to Pro to open your whole history.",
-    "Months of history": "Months of history"
+    "Months of history": "Months of history",
+    "Showing transactions since :date. The Free plan keeps the last :months months visible. Nothing was removed, upgrade to Pro to see your full history.": "Showing transactions since :date. The Free plan keeps the last :months months visible. Nothing was removed, upgrade to Pro to see your full history."
 }

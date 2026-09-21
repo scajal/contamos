@@ -8,6 +8,7 @@ use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\HasTags;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -131,6 +132,20 @@ class Transaction extends Model
             fn (Builder $query): Builder => $query->whereIn('type', TransactionType::transferCases()),
             fn (Builder $query): Builder => $query->where('type', $type),
         );
+    }
+
+    /**
+     * The first day a team on a limited plan may still see, given
+     * how many months its plan keeps visible. The window is that
+     * many calendar months ending on the current one, so a limit
+     * of six opens the current month and the five before it. A
+     * null limit means unlimited history and no window.
+     */
+    public static function historyWindowStart(?int $months): ?CarbonImmutable
+    {
+        return $months === null
+            ? null
+            : CarbonImmutable::now()->startOfMonth()->subMonths($months - 1);
     }
 
     /**

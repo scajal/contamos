@@ -8,6 +8,7 @@ import {
     ArrowUpIcon,
     CircleDashedIcon,
     EyeIcon,
+    AlertTriangleIcon,
     ListFilterPlusIcon,
     MoreHorizontalIcon,
     PencilIcon,
@@ -50,12 +51,14 @@ import {
 } from "@/lib/transactions";
 import { counterpartAccountName } from "@/lib/transfers";
 import { cn, formatAmount } from "@/lib/utils";
+import subscriptions from "@/routes/billing/teams/subscriptions";
 import routes from "@/routes/finance/teams/transactions";
 import transferRoutes from "@/routes/finance/teams/transfers";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
+import { TransactionHistory } from "@/types/app/modules/core/finance/transaction-history";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 
 type PageFilters = {
@@ -72,6 +75,7 @@ type PageProps = {
     accounts: Account[];
     currencies: Currency[];
     filters: Partial<PageFilters>;
+    history: TransactionHistory;
     tags: Tag[];
     transactions: LengthAwarePaginator<Transaction>;
     types: TransactionTypeFilter[];
@@ -95,6 +99,9 @@ const Index = () => {
 
             {/** Content */}
             <div className="flex flex-col gap-4">
+                {/** History notice */}
+                <HistoryNotice />
+
                 {/** Filters and actions */}
                 <div className="flex items-center justify-between gap-2 max-sm:flex-col">
                     <div className="flex-1 max-sm:w-full">
@@ -124,6 +131,60 @@ const Header = () => {
             <h1 className="text-2xl font-medium">{t("Transactions")}</h1>
             <p className="text-muted-foreground text-sm">{t("Income and expenses recorded for this team.")}</p>
         </header>
+    );
+};
+
+const HistoryNotice = () => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const { currentLocale, t } = useLaravelReactI18n();
+
+    /**
+     * The page's props.
+     */
+    const { history, user } = usePage<PageProps>().props;
+
+    /**
+     * A team whose plan keeps everything, or one with nothing
+     * older to miss, is told nothing.
+     */
+    if (!history.limited || !history.has_older || !history.since) {
+        return null;
+    }
+
+    const since = toDate(history.since);
+
+    return (
+        <div className="flex gap-3 rounded-sm border border-amber-500/40 bg-amber-500/5 p-3">
+            <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="flex flex-col items-start gap-2 text-sm">
+                <p>
+                    {t(
+                        "Showing transactions since :date. The Free plan keeps the last :months months visible. Nothing was removed, upgrade to Pro to see your full history.",
+                        {
+                            date: since ? since.toLocaleDateString(currentLocale(), { dateStyle: "long" }) : "",
+                            months: String(history.months ?? ""),
+                        },
+                    )}
+                </p>
+                <Button
+                    nativeButton={false}
+                    render={
+                        <ModalLink
+                            href={subscriptions.upgrade.url(
+                                { team: user?.current_team?.slug ?? "" },
+                                { query: { feature: "history:view" } },
+                            )}
+                        >
+                            {t("Upgrade to Pro")}
+                        </ModalLink>
+                    }
+                    size="sm"
+                />
+            </div>
+        </div>
     );
 };
 
@@ -192,7 +253,13 @@ const Filters = () => {
     /**
      * The page's props.
      */
-    const { accounts, currencies, filters: initial, tags, types, user } = usePage<PageProps>().props;
+    const { accounts, currencies, filters: initial, history, tags, types, user } = usePage<PageProps>().props;
+
+    /**
+     * The first day the plan still reaches, so the picker cannot
+     * offer a range that would come back empty.
+     */
+    const since = toDate(history.since);
 
     /**
      * The filters synced with the URL.
@@ -350,6 +417,7 @@ const Filters = () => {
                             <FieldLabel>{t("Date")}</FieldLabel>
                             <Calendar
                                 defaultMonth={range.from}
+                                disabled={since ? { before: since } : undefined}
                                 mode="range"
                                 onSelect={(selected) =>
                                     setFilters({
