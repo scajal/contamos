@@ -3,14 +3,17 @@
 namespace App\Modules\Core\Finance\Actions\Team;
 
 use App\Modules\Core\Finance\Actions\Team\Concerns\CreatesOpeningBalanceTransactions;
+use App\Modules\Core\Finance\Actions\Team\Concerns\SyncsAccountCurrencies;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Support\Helpers\TeamActivity;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
 class UpdateAccount
 {
     use CreatesOpeningBalanceTransactions;
+    use SyncsAccountCurrencies;
 
     /**
      * The account for which the update will be performed.
@@ -67,13 +70,15 @@ class UpdateAccount
 
         $account = $this->account;
 
-        return DB::transaction(function () use ($account, $attributes, $currencyIds, $openingBalances): Account {
+        // Everything the update writes reads as one entry in
+        // the team's activity log.
+        return TeamActivity::within(fn (): Account => DB::transaction(function () use ($account, $attributes, $currencyIds, $openingBalances): Account {
             // Update the account for the team, excluding
             // the currencies.
             $account->update($attributes);
 
             // Sync the currencies for the account.
-            $account->currencies()->sync($currencyIds);
+            $this->syncCurrencies($account, $currencyIds);
 
             // Create one opening balance row per newly
             // attached currency.
@@ -83,6 +88,6 @@ class UpdateAccount
 
             // Return the account.
             return $account;
-        });
+        }));
     }
 }

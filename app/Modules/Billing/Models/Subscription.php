@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Billing\Models;
 
+use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Core\Identity\Models\Team\Activity;
+use App\Modules\Support\Concerns\LogsTeamActivity;
 use Illuminate\Database\Eloquent\Attributes\Table;
 
 /**
@@ -37,5 +40,42 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 #[Table('billing_subscriptions')]
 class Subscription extends \Laravel\Paddle\Subscription
 {
-    //
+    use LogsTeamActivity;
+
+    /**
+     * Write the team the entry belongs to and leave it with no
+     * causer: Paddle drives every status change, so nobody in
+     * the team performed it.
+     */
+    public function beforeActivityLogged(Activity $activity, string $event): void
+    {
+        $activity->setAttribute($activity->team()->getForeignKeyName(), $this->activityTeamKey());
+
+        $activity->causer()->dissociate();
+    }
+
+    /**
+     * Get the attributes whose changes are recorded in the
+     * team's activity log.
+     *
+     * @return array<int, string>
+     */
+    public function activityLogAttributes(): array
+    {
+        return ['ends_at', 'paused_at', 'status', 'trial_ends_at'];
+    }
+
+    /**
+     * Get the key of the team the subscription belongs to.
+     * Paddle bills teams, so anything else is billed for
+     * nobody's log.
+     */
+    public function activityTeamKey(): ?string
+    {
+        if ($this->billable_type !== Team::class) {
+            return null;
+        }
+
+        return $this->billable_id;
+    }
 }

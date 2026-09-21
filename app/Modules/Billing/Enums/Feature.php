@@ -52,6 +52,14 @@ enum Feature: string implements HasLabel
     case AssignRoles = 'members:roles';
 
     /**
+     * Represents opening the team's activity log. A switch
+     * feature: the plan includes it or it does not.
+     *
+     * @see \App\Modules\Billing\Features\ViewActivity
+     */
+    case ViewActivity = 'activity:view';
+
+    /**
      * Represents how far back a team may open its own
      * history. The plan's limit is the number of months
      * reachable, counting the current one.
@@ -79,6 +87,7 @@ enum Feature: string implements HasLabel
             self::AddMembers => trans('Members per team'),
             self::AddTeams => trans('Free teams per user'),
             self::AssignRoles => trans('Member roles'),
+            self::ViewActivity => trans('Activity log'),
             self::ViewHistory => trans('Months of history'),
         };
     }
@@ -91,7 +100,7 @@ enum Feature: string implements HasLabel
     public function includedIn(Plan $plan): bool
     {
         if ($this->isSwitch()) {
-            /** @var \App\Modules\Billing\Features\AssignRoles $feature */
+            /** @var \App\Modules\Billing\Features\AssignRoles|\App\Modules\Billing\Features\ViewActivity $feature */
             $feature = Pennant::instance($this);
 
             return $feature->includedIn($plan);
@@ -107,7 +116,7 @@ enum Feature: string implements HasLabel
     public function isSwitch(): bool
     {
         return match ($this) {
-            self::AssignRoles => true,
+            self::AssignRoles, self::ViewActivity => true,
             self::AddAccounts, self::AddMembers, self::AddTeams, self::ViewHistory => false,
         };
     }

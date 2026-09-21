@@ -1,5 +1,7 @@
 import type { ClassValue } from "clsx";
 import { clsx } from "clsx";
+import { formatDistanceToNow } from "date-fns";
+import { enUS, es } from "date-fns/locale";
 import { twMerge } from "tailwind-merge";
 
 import type { Currency } from "@/types/app/modules/core/catalog/models/currency";
@@ -11,6 +13,18 @@ type AmountCurrency = Pick<Currency, "decimal_places" | "symbol">;
  */
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
+}
+
+/**
+ * How long ago the given instant was, in words, in the current
+ * locale. Timelines show this and keep the exact moment in the
+ * title attribute.
+ */
+export function formatRelativeTime(value: string, locale: string): string {
+    return formatDistanceToNow(new Date(value), {
+        addSuffix: true,
+        locale: locale.startsWith("es") ? es : enUS,
+    });
 }
 
 /**

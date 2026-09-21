@@ -176,4 +176,24 @@ describe('accept', function (): void {
         expect($user->fresh()?->belongsToTeam($invitation->team))->toBeTrue()
             ->and($invitation->fresh()?->isAccepted())->toBeTrue();
     });
+
+    it('records the member joining as one entry with the invitee as causer', function (): void {
+        $user = User::factory()->create(['email' => 'ada@example.com'])->refresh();
+        $this->actingAs($user);
+        $invitation = TeamInvitation::factory()->create(['email' => 'ada@example.com', 'role' => Role::Admin]);
+        clearActivities();
+
+        $this->post(route('identity.invitations.accept', ['invitation' => $invitation]))
+            ->assertRedirect();
+
+        $activities = activitiesOf($invitation->team);
+
+        expect($activities->pluck('event')->all())->toBe(['updated', 'member_added'])
+            ->and($activities->pluck('batch_uuid')->unique()->filter()->all())->toHaveCount(1)
+            ->and($activities->pluck('causer_id')->unique()->all())->toBe([$user->getKey()])
+            ->and($activities->first()?->subject?->is($invitation))->toBeTrue()
+            ->and($activities->first()?->attribute_changes['attributes'])->toHaveKey('accepted_at')
+            ->and($activities->last()?->subject?->is($user))->toBeTrue()
+            ->and($activities->last()?->attribute_changes['attributes'])->toBe(['role' => Role::Admin->value]);
+    });
 });

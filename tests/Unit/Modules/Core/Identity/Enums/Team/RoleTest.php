@@ -24,6 +24,7 @@ it('grants the permissions of the role', function (Role $role, Permission $permi
         Permission::CancelInvitation->value => ['owner' => true, 'admin' => true, 'member' => true],
         Permission::UpdateMember->value => ['owner' => true, 'admin' => true, 'member' => false],
         Permission::RemoveMember->value => ['owner' => true, 'admin' => true, 'member' => false],
+        Permission::ViewActivity->value => ['owner' => true, 'admin' => true, 'member' => false],
     ];
 
     foreach ($expected as $permission => $roles) {
@@ -43,6 +44,7 @@ it('lists the permissions of the role', function (): void {
             Permission::RemoveMember,
             Permission::UpdateMember,
             Permission::UpdateTeam,
+            Permission::ViewActivity,
         ])
         ->and(Role::Member->permissions())->toBe([
             Permission::CancelInvitation,

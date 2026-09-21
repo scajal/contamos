@@ -7,6 +7,7 @@ namespace App\Modules\Core\Finance\Actions\Team;
 use App\Modules\Core\Finance\Actions\Team\Concerns\AppliesTransactionBalances;
 use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Support\Helpers\TeamActivity;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -42,20 +43,24 @@ class DeleteTransfer
 
         $team = $this->team;
 
-        DB::transaction(function () use ($team, $transfer): void {
-            // Load the transactions the transfer owns.
-            $transfer->load('transactions');
+        // Everything the action writes reads as one entry in
+        // the team's activity log.
+        TeamActivity::within(function () use ($team, $transfer): void {
+            DB::transaction(function () use ($team, $transfer): void {
+                // Load the transactions the transfer owns.
+                $transfer->load('transactions');
 
-            foreach ($transfer->transactions as $transaction) {
-                // Revert its effect on the account balance.
-                $this->revertBalance($team, $transaction);
+                foreach ($transfer->transactions as $transaction) {
+                    // Revert its effect on the account balance.
+                    $this->revertBalance($team, $transaction);
 
-                // Delete the owned transaction.
-                $transaction->delete();
-            }
+                    // Delete the owned transaction.
+                    $transaction->delete();
+                }
 
-            // Delete the transfer.
-            $transfer->delete();
+                // Delete the transfer.
+                $transfer->delete();
+            });
         });
     }
 }

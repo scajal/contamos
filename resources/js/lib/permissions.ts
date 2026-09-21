@@ -13,4 +13,5 @@ export const PERMISSIONS = {
     RemoveMember: "member:remove",
     UpdateMember: "member:update",
     UpdateTeam: "team:update",
+    ViewActivity: "activity:view",
 } as const satisfies Record<string, Permission>;

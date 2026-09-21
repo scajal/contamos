@@ -8,6 +8,7 @@ use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\HasTags;
+use App\Modules\Support\Concerns\LogsTeamActivity;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -66,6 +67,34 @@ class Transaction extends Model
 
     use HasTags;
     use HasUlids;
+    use LogsTeamActivity;
+
+    /**
+     * Get the attributes whose changes are recorded in the
+     * team's activity log.
+     *
+     * @return array<int, string>
+     */
+    public function activityLogAttributes(): array
+    {
+        return [
+            $this->account()->getForeignKeyName(),
+            'amount',
+            $this->currency()->getForeignKeyName(),
+            'description',
+            'occurred_at',
+            'quote',
+            'type',
+        ];
+    }
+
+    /**
+     * Get the key of the team the transaction belongs to.
+     */
+    public function activityTeamKey(): ?string
+    {
+        return is_string($key = $this->getAttribute($this->team()->getForeignKeyName())) ? $key : null;
+    }
 
     /**
      * Get the account for the transaction.

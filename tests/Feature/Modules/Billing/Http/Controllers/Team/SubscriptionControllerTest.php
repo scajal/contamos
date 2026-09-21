@@ -14,6 +14,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Paddle\Subscription;
 
 /**
  * Feature tests for \App\Modules\Billing\Http\Controllers\Team\SubscriptionController.
@@ -480,5 +481,36 @@ describe('switch features', function (): void {
                 ->where('features.0.free', 3)
                 ->where('features.0.pro', null)
                 ->where('features.0.usage', null));
+    });
+});
+
+describe('activity log', function (): void {
+    it('records a subscription against the team with no causer', function (): void {
+        [$user, $team] = actingMember();
+        clearActivities();
+
+        subscribeToPro($team);
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('created')
+            ->and($activity->causer)->toBeNull()
+            ->and($activity->subject?->is($team->subscriptions()->sole()))->toBeTrue()
+            ->and($activity->attribute_changes['attributes']['status'])->toBe(Subscription::STATUS_ACTIVE);
+    });
+
+    it('records a subscription status change against the team', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        clearActivities();
+
+        $team->subscriptions()->sole()->update(['status' => Subscription::STATUS_PAUSED]);
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('updated')
+            ->and($activity->causer)->toBeNull()
+            ->and($activity->attribute_changes['old'])->toBe(['status' => Subscription::STATUS_ACTIVE])
+            ->and($activity->attribute_changes['attributes'])->toBe(['status' => Subscription::STATUS_PAUSED]);
     });
 });

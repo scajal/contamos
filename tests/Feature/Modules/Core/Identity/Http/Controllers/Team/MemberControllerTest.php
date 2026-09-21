@@ -152,6 +152,41 @@ describe('destroy', function (): void {
 
         expect($user->fresh()?->current_team_id)->toBeNull();
     });
+
+    it('records a removed member with the remover as causer', function (): void {
+        [$user, $team] = actingMember();
+        $other = User::factory()->create();
+        memberOf($team, Role::Admin, $other);
+        $other->switchTeam($team);
+        clearActivities();
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $other->getKey()]))
+            ->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('member_removed')
+            ->and($activity->causer?->is($user))->toBeTrue()
+            ->and($activity->subject?->is($other))->toBeTrue()
+            ->and($activity->attribute_changes['old'])->toBe(['role' => Role::Admin->value]);
+    });
+
+    it('records a member who leaves as its own causer', function (): void {
+        [$owner, $team] = memberWithTeam();
+        $member = memberOf($team, Role::Admin);
+        $member->switchTeam($team);
+        $this->actingAs($member->refresh());
+        clearActivities();
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $member->getKey()]))
+            ->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('member_removed')
+            ->and($activity->causer?->is($member))->toBeTrue()
+            ->and($activity->subject?->is($member))->toBeTrue();
+    });
 });
 
 describe('destroy permissions', function (): void {
@@ -363,6 +398,25 @@ describe('roles', function (): void {
         ]));
 
         expect($member->teams()->whereKey($team->getKey())->sole()->membership?->role)->toBe(Role::Admin);
+    });
+
+    it('records a role change with the role it replaced', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $member = memberOf($team, Role::Member);
+        clearActivities();
+
+        $this->patch(route('identity.teams.members.role.update', ['team' => $team->getRouteKey(), 'user' => $member->getKey()]), [
+            'role' => Role::Admin->value,
+        ])->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('member_role_updated')
+            ->and($activity->causer?->is($user))->toBeTrue()
+            ->and($activity->subject?->is($member))->toBeTrue()
+            ->and($activity->attribute_changes['old'])->toBe(['role' => Role::Member->value])
+            ->and($activity->attribute_changes['attributes'])->toBe(['role' => Role::Admin->value]);
     });
 });
 

@@ -6,6 +6,7 @@ use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Support\Helpers\TeamActivity;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -55,7 +56,9 @@ class CreateTransaction
             throw new Exception('A transaction cannot be created without a team.');
         }
 
-        return DB::transaction(function () use ($attributes, $tagIds): Transaction {
+        // Everything the action writes reads as one entry in
+        // the team's activity log.
+        return TeamActivity::within(fn (): Transaction => DB::transaction(function () use ($attributes, $tagIds): Transaction {
             // Get the currency for the transaction.
             /** @var \App\Modules\Core\Catalog\Models\Currency $currency */
             $currency = Currency::query()
@@ -89,6 +92,6 @@ class CreateTransaction
 
             // Return the transaction.
             return $transaction;
-        });
+        }));
     }
 }

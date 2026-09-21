@@ -6,6 +6,7 @@ namespace App\Modules\Core\Identity\Actions\Team;
 
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Support\Helpers\TeamActivity;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -40,8 +41,20 @@ class RemoveMember
         $team = $this->team;
 
         return DB::transaction(function () use ($member, $team): ?Team {
+            // Remember the stored role the member carried, since
+            // the membership row is about to go.
+            $role = $member->teams()
+                ->whereKey($team->getKey())
+                ->first()?->membership?->role;
+
             // Leave the team.
             $member->teams()->detach($team);
+
+            // Record the member leaving, which no model change of
+            // its own would show.
+            TeamActivity::record($member, 'member_removed', [
+                'old' => ['role' => $role?->value],
+            ], $team);
 
             // Keep the current team of the member untouched when it
             // is not the team it was removed from.

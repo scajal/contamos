@@ -19,6 +19,7 @@
         "laravel/wayfinder": "^0.1.14",
         "laravel/workos": "^0.6.0",
         "nunomaduro/essentials": "^1.2",
+        "spatie/laravel-activitylog": "^5.1",
         "spatie/laravel-query-builder": "^7.3"
     },
     "require-dev": {

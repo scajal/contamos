@@ -13,6 +13,7 @@ use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Support\Helpers\TeamActivity;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -67,7 +68,9 @@ class CreateTransfer
 
         $team = $this->team;
 
-        return DB::transaction(function () use ($team, $attributes, $tagIds): Transfer {
+        // Everything the action writes reads as one entry in
+        // the team's activity log.
+        return TeamActivity::within(fn (): Transfer => DB::transaction(function () use ($team, $attributes, $tagIds): Transfer {
             // Resolve both sides of the transfer, failing when an account
             // belongs to another team.
             $originAccount = $this->resolveAccount($team, $attributes['origin_account_id'] ?? null);
@@ -114,7 +117,7 @@ class CreateTransfer
 
             // Return the transfer.
             return $transfer;
-        });
+        }));
     }
 
     /**

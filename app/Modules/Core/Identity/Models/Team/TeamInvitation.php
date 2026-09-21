@@ -8,6 +8,7 @@ use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Concerns\DefinesKeyType;
+use App\Modules\Support\Concerns\LogsTeamActivity;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -51,6 +52,26 @@ class TeamInvitation extends Model
     use HasFactory;
 
     use HasUlids;
+    use LogsTeamActivity;
+
+    /**
+     * Get the attributes whose changes are recorded in the
+     * team's activity log.
+     *
+     * @return array<int, string>
+     */
+    public function activityLogAttributes(): array
+    {
+        return ['accepted_at', 'email', 'expires_at', 'role'];
+    }
+
+    /**
+     * Get the key of the team the invitation belongs to.
+     */
+    public function activityTeamKey(): ?string
+    {
+        return is_string($key = $this->getAttribute($this->team()->getForeignKeyName())) ? $key : null;
+    }
 
     /**
      * Mark the invitation as accepted.

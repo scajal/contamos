@@ -292,6 +292,23 @@ describe('store', function (): void {
 
         expect($team->invitations()->count())->toBe(1);
     });
+
+    it('records the invitation in the activity log', function (): void {
+        Notification::fake();
+        [$user, $team] = actingMember();
+        clearActivities();
+
+        $this->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload())
+            ->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('created')
+            ->and($activity->causer?->is($user))->toBeTrue()
+            ->and($activity->subject?->is(TeamInvitation::query()->sole()))->toBeTrue()
+            ->and($activity->attribute_changes['attributes']['email'])->toBe('ada@example.com')
+            ->and($activity->attribute_changes['attributes']['role'])->toBe(Role::Admin->value);
+    });
 });
 
 describe('resend', function (): void {
@@ -345,6 +362,25 @@ describe('resend', function (): void {
         ]))
             ->assertNotFound();
     });
+
+    it('records the renewed expiry in the activity log', function (): void {
+        Notification::fake();
+        $this->travelTo(CarbonImmutable::parse('2026-09-06 12:00:00'));
+        [$user, $team] = actingMember();
+        $invitation = TeamInvitation::factory()->for($team)->expired()->create();
+        clearActivities();
+
+        $this->patch(route('identity.teams.invitations.resend', [
+            'team' => $team->getRouteKey(),
+            'invitation' => $invitation,
+        ]))->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('updated')
+            ->and($activity->causer?->is($user))->toBeTrue()
+            ->and($activity->attribute_changes['attributes'])->toHaveKey('expires_at');
+    });
 });
 
 describe('destroy', function (): void {
@@ -393,6 +429,23 @@ describe('destroy', function (): void {
         $this->assertDatabaseHas($invitation->getTable(), [
             $invitation->getKeyName() => $invitation->getKey(),
         ]);
+    });
+
+    it('records the cancellation with the last values of the invitation', function (): void {
+        [$user, $team] = actingMember();
+        $invitation = TeamInvitation::factory()->for($team)->create(['email' => 'ada@example.com']);
+        clearActivities();
+
+        $this->delete(route('identity.teams.invitations.destroy', [
+            'team' => $team->getRouteKey(),
+            'invitation' => $invitation,
+        ]))->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('deleted')
+            ->and($activity->causer?->is($user))->toBeTrue()
+            ->and($activity->attribute_changes['old']['email'])->toBe('ada@example.com');
     });
 });
 

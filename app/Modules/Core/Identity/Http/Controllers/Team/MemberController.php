@@ -11,6 +11,7 @@ use App\Modules\Core\Identity\Http\Requests\Team\Member\IndexRequest;
 use App\Modules\Core\Identity\Http\Requests\Team\Member\UpdateRequest;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Support\Helpers\TeamActivity;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
@@ -61,9 +62,22 @@ class MemberController
     {
         $this->assertRoleIsEditable($team, $user, $currentUser);
 
+        // Remember the stored role, so the entry says what the
+        // change replaced.
+        $role = $user->teams()
+            ->whereKey($team->getKey())
+            ->first()?->membership?->role;
+
         // Store the role the request asked for. The effective role
         // follows the team's plan, the stored one does not.
         $team->users()->updateExistingPivot($user->getKey(), $request->validated());
+
+        // Record the new role, which no model change of its own
+        // would show.
+        TeamActivity::record($user, 'member_role_updated', [
+            'old' => ['role' => $role?->value],
+            'attributes' => $request->validated(),
+        ], $team);
 
         // Show a success message.
         Toast::make(trans('Role updated'))
