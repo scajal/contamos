@@ -83,7 +83,7 @@ export const PlanTable = ({ rows, current, highlight }: Props) => {
                         </th>
                         <th
                             className={cn(
-                                "w-16 px-2 py-2 text-right font-normal sm:w-24 sm:px-4",
+                                "w-px px-2 py-2 text-right font-normal whitespace-nowrap sm:px-4",
                                 current === "free" && "text-foreground font-medium",
                             )}
                             scope="col"
@@ -92,7 +92,7 @@ export const PlanTable = ({ rows, current, highlight }: Props) => {
                         </th>
                         <th
                             className={cn(
-                                "w-20 px-3 py-2 text-right font-normal sm:w-28 sm:px-4",
+                                "w-px px-3 py-2 text-right font-normal whitespace-nowrap sm:px-4",
                                 (current === "pro" || current === undefined) && "text-foreground font-medium",
                             )}
                             scope="col"
@@ -113,7 +113,7 @@ export const PlanTable = ({ rows, current, highlight }: Props) => {
                                 <td className="px-3 py-3 text-left sm:px-4">{row.label}</td>
                                 <td
                                     className={cn(
-                                        "px-2 py-3 text-right tabular-nums sm:px-4",
+                                        "px-2 py-3 text-right whitespace-nowrap tabular-nums sm:px-4",
                                         current === "free" ? "font-medium" : "text-muted-foreground",
                                     )}
                                 >
@@ -121,7 +121,7 @@ export const PlanTable = ({ rows, current, highlight }: Props) => {
                                 </td>
                                 <td
                                     className={cn(
-                                        "px-3 py-3 text-right tabular-nums sm:px-4",
+                                        "px-3 py-3 text-right whitespace-nowrap tabular-nums sm:px-4",
                                         current === "free" && "text-muted-foreground",
                                         current === "pro" && "font-medium",
                                     )}
