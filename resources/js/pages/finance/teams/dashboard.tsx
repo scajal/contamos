@@ -11,6 +11,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
+import { useBalances } from "@/hooks/use-balances";
 import { useSharedTeam } from "@/hooks/use-shared-team";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import {
@@ -126,6 +127,11 @@ const BalanceCell = ({ balance, team }: { balance: AccountBalance; team: string 
     const currentLocale = useLaravelReactI18n().currentLocale;
 
     /**
+     * Mask the balance while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
+    /**
      * The balance as a string, since some drivers
      * return aggregated decimals as numbers.
      */
@@ -138,13 +144,20 @@ const BalanceCell = ({ balance, team }: { balance: AccountBalance; team: string 
 
     return (
         <Link
-            className="hover:bg-muted flex min-w-40 flex-1 flex-col gap-1 p-4"
+            className="hover:bg-muted flex min-w-40 flex-auto flex-col gap-1 p-4"
             href={transactions.index.url({ team }, { query: { filter: { currency: balance.id } } })}
             prefetch
         >
             <span className="text-muted-foreground text-sm">{balance.code}</span>
-            <span className={cn("font-heading text-2xl font-semibold tabular-nums", isNegative && "text-destructive")}>
-                {`${isNegative ? "- " : ""}${formatAmount(amount, currentLocale(), balance, { trimZeros: true })}`}
+            <span
+                className={cn(
+                    "font-heading text-xl font-semibold whitespace-nowrap tabular-nums sm:text-2xl",
+                    isNegative && "text-destructive",
+                )}
+            >
+                {mask(
+                    `${isNegative ? "- " : ""}${formatAmount(amount, currentLocale(), balance, { trimZeros: true })}`,
+                )}
             </span>
         </Link>
     );
@@ -161,6 +174,11 @@ const RecentActivity = () => {
      * The page's props.
      */
     const { recent_transactions, team } = usePage<PageProps>().props;
+
+    /**
+     * Mask the amounts while balances are hidden.
+     */
+    const mask = useBalances().mask;
 
     /**
      * Whether the team is shared, and so whether each row says who
@@ -273,7 +291,9 @@ const RecentActivity = () => {
                                                     TRANSACTION_AMOUNT_COLOR[transaction.type],
                                                 )}
                                             >
-                                                {`${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
+                                                {mask(
+                                                    `${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`,
+                                                )}
                                             </span>
                                         </TableCell>
                                         <TableCell className={cn("text-right", TRANSACTION_COLUMNS.actions)}>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useBalances } from "@/hooks/use-balances";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { frequencyUnitKey, TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
 import { cn, formatAmount, formatDate } from "@/lib/utils";
@@ -151,6 +152,11 @@ const Listing = () => {
     const { canRecur, rules, user } = usePage<PageProps>().props;
 
     /**
+     * Mask the amounts while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
+    /**
      * The team the rules belong to.
      */
     const team = user?.current_team?.slug ?? "";
@@ -237,7 +243,9 @@ const Listing = () => {
                                                 TRANSACTION_AMOUNT_COLOR[rule.type],
                                             )}
                                         >
-                                            {`${TRANSACTION_AMOUNT_SIGN[rule.type]} ${formatAmount(rule.amount, currentLocale(), rule.currency)}`}
+                                            {mask(
+                                                `${TRANSACTION_AMOUNT_SIGN[rule.type]} ${formatAmount(rule.amount, currentLocale(), rule.currency)}`,
+                                            )}
                                         </span>
                                         {canRecur && (
                                             <Button

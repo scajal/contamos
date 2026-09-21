@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
+import { useBalances } from "@/hooks/use-balances";
 import { transferLegs } from "@/lib/transfers";
 import { formatAmount } from "@/lib/utils";
 import transfers from "@/routes/finance/teams/transfers";
@@ -191,6 +192,11 @@ const SideSummary = ({
     locale: string;
     sign: string;
 }) => {
+    /**
+     * Mask the amounts while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
     if (!leg) {
         return null;
     }
@@ -201,7 +207,7 @@ const SideSummary = ({
             <div className="flex items-baseline justify-between gap-3">
                 <p className="min-w-0 truncate text-sm">{leg.account?.name}</p>
                 <p className="shrink-0 text-lg font-semibold tabular-nums">
-                    {`${sign} ${formatAmount(leg.amount, locale, leg.currency)}`}
+                    {mask(`${sign} ${formatAmount(leg.amount, locale, leg.currency)}`)}
                     {leg.currency?.code ? (
                         <span className="text-muted-foreground ml-1.5 text-sm font-medium">{leg.currency.code}</span>
                     ) : null}
@@ -211,7 +217,7 @@ const SideSummary = ({
                 <div className="text-muted-foreground flex items-baseline justify-between gap-3 text-sm">
                     <span className="min-w-0 truncate">{feeLabel}</span>
                     <span className="text-destructive shrink-0 tabular-nums">
-                        {`- ${formatAmount(fee.amount, locale, fee.currency)}`}
+                        {mask(`- ${formatAmount(fee.amount, locale, fee.currency)}`)}
                     </span>
                 </div>
             ) : null}

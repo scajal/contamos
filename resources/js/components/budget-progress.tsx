@@ -1,5 +1,6 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
+import { useBalances } from "@/hooks/use-balances";
 import { cn, formatAmount, formatPercentage } from "@/lib/utils";
 import { BudgetProgress as Progress } from "@/types/app/modules/core/finance/models/team/budget-period";
 
@@ -31,6 +32,12 @@ export const BudgetProgress = ({ className, currency, progress }: Props) => {
      * to the current locale.
      */
     const { currentLocale, t } = useLaravelReactI18n();
+
+    /**
+     * Mask the figures while balances are hidden. A budget's numbers are
+     * balances too, even written into a sentence.
+     */
+    const mask = useBalances().mask;
 
     /**
      * The pot the month had to spend: the budgeted amount plus
@@ -68,25 +75,25 @@ export const BudgetProgress = ({ className, currency, progress }: Props) => {
             <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs tabular-nums">
                 <span>
                     {t(":spent of :amount", {
-                        spent: formatAmount(progress.spent, currentLocale(), currency, { symbol: false }),
-                        amount: formatAmount(progress.amount, currentLocale(), currency, { symbol: false }),
+                        spent: mask(formatAmount(progress.spent, currentLocale(), currency, { symbol: false })),
+                        amount: mask(formatAmount(progress.amount, currentLocale(), currency, { symbol: false })),
                     })}
                 </span>
                 {/** Income tagged into the budget enlarges the pot. */}
                 {Number(progress.income) > 0 && (
                     <span className="text-success">
                         {t("+:amount in", {
-                            amount: formatAmount(progress.income, currentLocale(), currency, { symbol: false }),
+                            amount: mask(formatAmount(progress.income, currentLocale(), currency, { symbol: false })),
                         })}
                     </span>
                 )}
                 <span className={cn(isOver && "text-destructive font-medium")}>
                     {isOver
                         ? t("over by :amount", {
-                              amount: formatAmount(rest, currentLocale(), currency, { symbol: false }),
+                              amount: mask(formatAmount(rest, currentLocale(), currency, { symbol: false })),
                           })
                         : t(":amount left", {
-                              amount: formatAmount(rest, currentLocale(), currency, { symbol: false }),
+                              amount: mask(formatAmount(rest, currentLocale(), currency, { symbol: false })),
                           })}
                 </span>
                 {progress.percentage !== null && <span>{formatPercentage(progress.percentage, currentLocale())}</span>}

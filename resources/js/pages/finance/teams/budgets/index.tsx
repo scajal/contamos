@@ -30,6 +30,7 @@ import {
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useBalances } from "@/hooks/use-balances";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { formatAmount, formatMonth } from "@/lib/utils";
 import subscriptions from "@/routes/billing/teams/subscriptions";
@@ -175,6 +176,11 @@ const Listing = () => {
      */
     const { budgets, user } = usePage<PageProps>().props;
 
+    /**
+     * Mask the amounts while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
     const team = user?.current_team?.slug ?? "";
 
     return (
@@ -221,7 +227,7 @@ const Listing = () => {
                                         </ItemTitle>
                                         <ItemDescription className="flex flex-wrap items-center gap-x-2 tabular-nums">
                                             <span className="font-medium">
-                                                {formatAmount(budget.amount, currentLocale(), budget.currency)}
+                                                {mask(formatAmount(budget.amount, currentLocale(), budget.currency))}
                                             </span>
                                             <span>{budget.currency.code}</span>
                                             <span aria-hidden>·</span>

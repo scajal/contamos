@@ -7,7 +7,6 @@ import {
     ArrowUpIcon,
     BanknoteIcon,
     CheckIcon,
-    ChevronDownIcon,
     ChevronRightIcon,
     ChevronsUpDownIcon,
     CircleDashedIcon,
@@ -30,6 +29,7 @@ import { useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
 import { AppearanceMenu } from "@/components/appearance-menu";
+import { BalancesToggle } from "@/components/balances-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -169,6 +169,7 @@ export const ApplicationLayout = ({
                         </div>
                         {user?.current_team && (
                             <div className="flex items-center gap-1.5">
+                                <BalancesToggle />
                                 <OnboardingMenu />
                                 <CreateTransactionActions team={user.current_team.slug} />
                             </div>
@@ -229,26 +230,24 @@ const CreateTransactionActions = ({ team }: { team: string }) => {
                 />
             </div>
 
-            {/** On a phone the button records an expense, which is what most
-             * taps are for, and the rest sits one press away. */}
-            <div className="flex items-center gap-1.5 sm:hidden">
-                <Button
-                    nativeButton={false}
-                    render={
-                        <ModalLink href={transactions.create.url({ team, type: "expense" })}>
-                            <PlusIcon />
-                            <span className="sr-only">{t("New :name", { name: t("expense") })}</span>
-                        </ModalLink>
-                    }
-                    size="icon-sm"
-                />
+            {/** On a phone there is no room for three buttons, so the plus
+             * opens the same three ways of recording money as a menu. */}
+            <div className="flex items-center sm:hidden">
                 <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" />}>
-                        <ChevronDownIcon />
+                    <DropdownMenuTrigger render={<Button size="icon-sm" />}>
+                        <PlusIcon />
                         <span className="sr-only">{t("New :name", { name: t("transaction") })}</span>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuGroup>
+                            <DropdownMenuItem
+                                render={
+                                    <ModalLink href={transactions.create.url({ team, type: "expense" })}>
+                                        <ArrowUpIcon />
+                                        <span>{t("New :name", { name: t("expense") })}</span>
+                                    </ModalLink>
+                                }
+                            />
                             <DropdownMenuItem
                                 render={
                                     <ModalLink href={transactions.create.url({ team, type: "income" })}>

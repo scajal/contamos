@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
+import { useBalances } from "@/hooks/use-balances";
 import { TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN, trimTrailingZeros } from "@/lib/transactions";
 import { cn, formatAmount } from "@/lib/utils";
 import recurringRules from "@/routes/finance/teams/recurring-rules";
@@ -56,6 +57,11 @@ export default function Show({ transaction }: PageProps) {
      * Description, if the recorder wrote one.
      */
     const description = transaction.description?.trim() || null;
+
+    /**
+     * Mask the amounts while balances are hidden.
+     */
+    const mask = useBalances().mask;
 
     /**
      * Tags attached to the movement.
@@ -103,7 +109,9 @@ export default function Show({ transaction }: PageProps) {
                                             TRANSACTION_AMOUNT_COLOR[transaction.type],
                                         )}
                                     >
-                                        {`${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), currency)}`}
+                                        {mask(
+                                            `${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), currency)}`,
+                                        )}
                                         {currency?.code ? (
                                             <span className="text-muted-foreground ml-1.5 text-sm font-medium">
                                                 {currency.code}
@@ -151,7 +159,7 @@ export default function Show({ transaction }: PageProps) {
                                             </p>
                                             {usdAmount ? (
                                                 <p className="text-muted-foreground shrink-0 text-sm tabular-nums">
-                                                    {`≈ ${formatAmount(usdAmount, currentLocale(), USD)}`}
+                                                    {mask(`≈ ${formatAmount(usdAmount, currentLocale(), USD)}`)}
                                                 </p>
                                             ) : null}
                                         </div>

@@ -4,6 +4,7 @@ import { ArrowLeftRightIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Item, ItemActions, ItemContent } from "@/components/ui/item";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useBalances } from "@/hooks/use-balances";
 import { TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
 import { counterpartAccountName } from "@/lib/transfers";
 import { cn, formatAmount, initials } from "@/lib/utils";
@@ -26,9 +27,16 @@ export const TransactionAmount = ({ className, transaction }: { className?: stri
      */
     const currentLocale = useLaravelReactI18n().currentLocale;
 
+    /**
+     * Mask the amount while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
     return (
         <span className={cn("font-medium tabular-nums", TRANSACTION_AMOUNT_COLOR[transaction.type], className)}>
-            {`${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`}
+            {mask(
+                `${TRANSACTION_AMOUNT_SIGN[transaction.type]} ${formatAmount(transaction.amount, currentLocale(), transaction.currency)}`,
+            )}
         </span>
     );
 };

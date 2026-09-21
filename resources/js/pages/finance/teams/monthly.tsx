@@ -32,6 +32,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemMedia } from "@/co
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useBalances } from "@/hooks/use-balances";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { cn, formatAmount, formatMonth, formatPercentage } from "@/lib/utils";
 import subscriptions from "@/routes/billing/teams/subscriptions";
@@ -424,11 +425,16 @@ const TotalCell = ({
      */
     const { month, team } = usePage<PageProps>().props;
 
+    /**
+     * Mask the figures while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
     const isNegative = total.amount.startsWith("-");
 
     return (
         <Link
-            className="hover:bg-muted flex min-w-40 flex-1 flex-col gap-1 p-4"
+            className="hover:bg-muted flex min-w-40 flex-auto flex-col gap-1 p-4"
             href={transactions.index.url(
                 { team: team.slug },
                 { query: { filter: monthFilter(month, currency.id, type) } },
@@ -438,12 +444,14 @@ const TotalCell = ({
             <span className="text-muted-foreground text-sm">{label}</span>
             <span
                 className={cn(
-                    "font-heading text-2xl font-semibold tabular-nums",
+                    "font-heading text-xl font-semibold whitespace-nowrap tabular-nums sm:text-2xl",
                     className,
                     !className && isNegative && "text-destructive",
                 )}
             >
-                {`${isNegative ? "- " : ""}${formatAmount(total.amount, currentLocale(), currency, { trimZeros: true })}`}
+                {mask(
+                    `${isNegative ? "- " : ""}${formatAmount(total.amount, currentLocale(), currency, { trimZeros: true })}`,
+                )}
             </span>
             <DeltaLabel currency={currency} delta={total.delta} isGood={isGood} />
         </Link>
@@ -465,6 +473,11 @@ const DeltaLabel = ({
      */
     const { currentLocale, t } = useLaravelReactI18n();
 
+    /**
+     * Mask the figures while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
     if (!delta || delta.percentage === null) {
         return (
             <span className="text-muted-foreground text-xs" title={t("vs previous month")}>
@@ -481,7 +494,7 @@ const DeltaLabel = ({
             className={cn("text-xs tabular-nums", isGood(delta.amount) ? "text-success" : "text-destructive")}
             title={t("vs previous month")}
         >
-            {`${isUp ? "+" : "-"} ${formatAmount(unsigned, currentLocale(), currency)} (${formatPercentage(Math.abs(delta.percentage), currentLocale())})`}
+            {`${isUp ? "+" : "-"} ${mask(formatAmount(unsigned, currentLocale(), currency))} (${formatPercentage(Math.abs(delta.percentage), currentLocale())})`}
         </span>
     );
 };
@@ -617,6 +630,11 @@ const TagAmount = ({
      */
     const currentLocale = useLaravelReactI18n().currentLocale;
 
+    /**
+     * Mask the figures while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
     const isZero = Number(amount) === 0;
     const isNegative = amount.startsWith("-");
 
@@ -637,7 +655,7 @@ const TagAmount = ({
             )}
         >
             {/** A column of zeroes reads as noise, so nothing is a dash. */}
-            {isZero ? "—" : `${signed && isNegative ? "- " : ""}${formatted}`}
+            {isZero ? "—" : mask(`${signed && isNegative ? "- " : ""}${formatted}`)}
         </TableCell>
     );
 };
@@ -654,6 +672,11 @@ const Transfers = ({ figure }: { figure: Figure }) => {
      */
     const { month, team } = usePage<PageProps>().props;
 
+    /**
+     * Mask the figures while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
     if (!figure.transfers) {
         return null;
     }
@@ -668,7 +691,7 @@ const Transfers = ({ figure }: { figure: Figure }) => {
                     ] as const
                 ).map(([key, label]) => (
                     <Link
-                        className="hover:bg-muted flex min-w-40 flex-1 flex-col gap-1 p-4"
+                        className="hover:bg-muted flex min-w-40 flex-auto flex-col gap-1 p-4"
                         href={transactions.index.url(
                             { team: team.slug },
                             { query: { filter: monthFilter(month, figure.currency.id, "transfer") } },
@@ -677,8 +700,8 @@ const Transfers = ({ figure }: { figure: Figure }) => {
                         prefetch
                     >
                         <span className="text-muted-foreground text-sm">{label}</span>
-                        <span className="text-lg font-medium tabular-nums">
-                            {formatAmount(figure.transfers?.[key] ?? "0", currentLocale(), figure.currency)}
+                        <span className="text-lg font-medium whitespace-nowrap tabular-nums">
+                            {mask(formatAmount(figure.transfers?.[key] ?? "0", currentLocale(), figure.currency))}
                         </span>
                     </Link>
                 ))}
@@ -693,6 +716,11 @@ const TrendChart = ({ figure }: { figure: Figure }) => {
      * to the current locale.
      */
     const { currentLocale, t } = useLaravelReactI18n();
+
+    /**
+     * Mask the figures while balances are hidden.
+     */
+    const mask = useBalances().mask;
 
     /**
      * How each series of the chart is named and coloured.
@@ -734,7 +762,7 @@ const TrendChart = ({ figure }: { figure: Figure }) => {
                                             {config[name as keyof typeof config]?.label ?? name}
                                         </span>
                                         <span className="font-medium tabular-nums">
-                                            {formatAmount(String(value), currentLocale(), figure.currency)}
+                                            {mask(formatAmount(String(value), currentLocale(), figure.currency))}
                                         </span>
                                     </div>
                                 )}
@@ -769,6 +797,11 @@ const ExpensesDonut = ({ figure }: { figure: Figure }) => {
     const { currentLocale, t } = useLaravelReactI18n();
 
     /**
+     * Mask the figures while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
+    /**
      * The tags that spent something, since a zero slice
      * draws nothing and clutters the legend. Untagged money
      * keeps the muted colour it has in the table.
@@ -801,7 +834,7 @@ const ExpensesDonut = ({ figure }: { figure: Figure }) => {
                                     <div className="flex w-full justify-between gap-4">
                                         <span className="text-muted-foreground">{name}</span>
                                         <span className="font-medium tabular-nums">
-                                            {formatAmount(String(value), currentLocale(), figure.currency)}
+                                            {mask(formatAmount(String(value), currentLocale(), figure.currency))}
                                         </span>
                                     </div>
                                 )}
