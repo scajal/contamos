@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { perMonthPrice, yearlySaving } from "@/lib/billing";
 import subscriptions from "@/routes/billing/teams/subscriptions";
+import legal from "@/routes/legal";
 import { BillingCycle } from "@/types/app/modules/billing/enums/billing-cycle";
 import { PlanPrice } from "@/types/app/modules/billing/plan-price";
 
@@ -29,6 +30,12 @@ export const CyclePicker = ({ prices, team }: Props) => {
      * to the current locale.
      */
     const { currentLocale, t } = useLaravelReactI18n();
+
+    /**
+     * The locale the modal is being read in, which picks the locale
+     * of the documents linked under the button.
+     */
+    const locale = currentLocale();
 
     /**
      * The billing cycle the user picked.
@@ -107,6 +114,31 @@ export const CyclePicker = ({ prices, team }: Props) => {
                 }
                 size="lg"
             />
+            {/* What paying commits you to, said before the checkout
+             * opens rather than after. The documents open in their own
+             * tab so reading one does not close the modal. */}
+            <p className="text-muted-foreground text-center text-xs leading-relaxed text-balance">
+                {t("Read before you pay:")}{" "}
+                <a
+                    className="hover:text-foreground underline underline-offset-4"
+                    href={legal.terms.url({ locale })}
+                    rel="noreferrer"
+                    target="_blank"
+                >
+                    {t("Terms of service")}
+                </a>
+                <span aria-hidden="true" className="px-1.5">
+                    ·
+                </span>
+                <a
+                    className="hover:text-foreground underline underline-offset-4"
+                    href={legal.refunds.url({ locale })}
+                    rel="noreferrer"
+                    target="_blank"
+                >
+                    {t("Refund policy")}
+                </a>
+            </p>
         </div>
     );
 };

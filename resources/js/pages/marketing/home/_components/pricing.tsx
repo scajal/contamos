@@ -165,6 +165,12 @@ export const Pricing = ({ dashboardUrl, features, prices }: PricingProps) => {
                     className="mt-4"
                 >
                     <PlanTable rows={features} />
+                    {/* The plans are a snapshot, not a roadmap: the app keeps growing, and this says so without promising anything for later. */}
+                    <p className="text-muted-foreground mt-6 text-center text-sm text-balance">
+                        {t(
+                            "Contamos is being built in the open. New features ship often, and this page always says what the app does today, not what it might do later.",
+                        )}
+                    </p>
                 </m.div>
             </div>
         </section>

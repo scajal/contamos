@@ -30,6 +30,7 @@ declare module "@inertiajs/core" {
             auth: { canAccessAdministration: boolean };
             onboarding: Onboarding | null;
             permissions: Array<Permission>;
+            support: { email: string };
             user: User | null;
             locale: "en" | "es";
             appearance: "light" | "dark" | "system";

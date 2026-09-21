@@ -82,6 +82,10 @@ export default function Upgrade({ canManageBilling, feature, features, owner, pl
                         {/** Comparison */}
                         <div className="relative min-h-0 overflow-y-auto overscroll-contain px-6 sm:px-8">
                             <PlanTable highlight={feature} rows={features} />
+                            {/* Read right before paying: the comparison is today's, and the app is still growing. */}
+                            <p className="text-muted-foreground mt-4 text-xs leading-relaxed">
+                                {t("Contamos is in active development. The table above is what each plan gives today.")}
+                            </p>
                         </div>
 
                         {/** Actions */}

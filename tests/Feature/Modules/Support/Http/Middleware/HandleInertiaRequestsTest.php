@@ -14,6 +14,7 @@ use Database\Factories\Modules\Core\Identity\Models\Team\TeamInvitationFactory;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
+use function Pest\Laravel\get;
 
 /**
  * Feature tests for \App\Modules\Support\Http\Middleware\HandleInertiaRequests.
@@ -160,4 +161,20 @@ it('counts the people on the current team so the app can tell a shared ledger fr
         ->assertOk()
         ->assertInertia(fn (Assert $page): Assert => $page
             ->where('user.current_team.users_count', 2));
+});
+
+it('shares the support address with every page, signed in or not', function (): void {
+    config()->set('support.email', 'ayuda@contamos.app');
+
+    get(route('home', ['locale' => 'en']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): Assert => $page
+            ->where('support.email', 'ayuda@contamos.app'));
+
+    [$user, $team] = actingMember();
+
+    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): Assert => $page
+            ->where('support.email', 'ayuda@contamos.app'));
 });

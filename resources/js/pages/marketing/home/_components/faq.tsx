@@ -39,6 +39,10 @@ export const QUESTIONS: Array<{ question: string; answer: string }> = [
         answer: "They sync once a day from Uruguay's central bank, and every movement stores the rate of the day it happened, so today's rate never rewrites last year's entries. If you need a different one, you set it on the movement itself.",
     },
     {
+        question: "Is Contamos finished?",
+        answer: "No, and it will not be for a while. It is in active development: new features land regularly, and the ones described on this page are the ones that work today. Nothing here is a promise about later.",
+    },
+    {
         question: "How do I cancel Pro?",
         answer: "From the billing portal, whenever you want. There is no form to fill in and nobody to talk to.",
     },

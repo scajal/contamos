@@ -12,6 +12,7 @@ import { ThemeSwitcher, type Appearance } from "./theme-switcher";
 
 interface HeaderProps {
     alternates: Alternates;
+    homeUrl: string;
     dashboardUrl: string | null;
     appearance: Appearance;
     onAppearanceChange: (appearance: Appearance) => void;
@@ -26,19 +27,16 @@ interface HeaderProps {
  * turns the pill grey and muddies the wordmark. The outer band stays
  * click-through so only the pill itself catches the pointer.
  */
-export const Header = ({ alternates, dashboardUrl, appearance, onAppearanceChange }: HeaderProps) => {
+export const Header = ({ alternates, homeUrl, dashboardUrl, appearance, onAppearanceChange }: HeaderProps) => {
     /**
      * Translate the provided string to the current locale.
      */
-    const { t, currentLocale } = useLaravelReactI18n();
+    const t = useLaravelReactI18n().t;
 
     return (
         <header className="pointer-events-none sticky top-0 z-40 px-4 pt-4 sm:px-6">
             <div className="bg-background/95 supports-backdrop-filter:bg-background/85 pointer-events-auto mx-auto flex h-14 max-w-3xl items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-4 shadow-lg backdrop-blur-xl sm:pl-5">
-                <a
-                    href={alternates[currentLocale() as "en" | "es"] ?? alternates.en}
-                    className="flex shrink-0 items-center gap-2"
-                >
+                <a href={homeUrl} className="flex shrink-0 items-center gap-2">
                     <BrandMark />
                     <span className="font-heading text-base font-semibold tracking-tight">
                         {import.meta.env.VITE_APP_NAME}

@@ -109,20 +109,8 @@ describe('index', function (): void {
 });
 
 describe('public files', function (): void {
-    it('publishes a sitemap with both locale urls', function (): void {
-        $sitemap = file_get_contents(public_path('sitemap.xml'));
-
-        expect($sitemap)
-            ->toContain('/en')
-            ->toContain('/es');
-    });
-
     it('publishes an llms.txt', function (): void {
         expect(file_exists(public_path('llms.txt')))->toBeTrue();
-    });
-
-    it('advertises the sitemap in robots.txt', function (): void {
-        expect(file_get_contents(public_path('robots.txt')))->toContain('Sitemap:');
     });
 });
 

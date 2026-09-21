@@ -145,7 +145,7 @@ const CurrentPlan = () => {
     /**
      * The page's props.
      */
-    const { locale, plan, renewal, team } = usePage<PageProps>().props;
+    const { locale, plan, renewal, support, team } = usePage<PageProps>().props;
 
     /**
      * Format a date for the current locale.
@@ -159,6 +159,13 @@ const CurrentPlan = () => {
      * list says so itself.
      */
     const overLimits = plan.name === "free" ? plan.limits.filter(isOverAddableLimit) : [];
+
+    /**
+     * Whether the team is in a state it may not get out of on its
+     * own: a payment that failed, a subscription that is ending or
+     * paused, or limits it is already over.
+     */
+    const stuck = ["grace", "past_due", "paused"].includes(plan.status) || overLimits.length > 0;
 
     /**
      * The line under the plan name, by lifecycle state.
@@ -237,7 +244,24 @@ const CurrentPlan = () => {
                         </div>
                     </div>
                 )}
+                {/* A payment that failed, a subscription that stopped or a
+                 * portal that will not help is where a person needs one, so
+                 * the address sits inside the card that states the trouble. */}
+                {stuck && (
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                        {t("Something we can help with?")}{" "}
+                        <a className="text-foreground underline underline-offset-4" href={`mailto:${support.email}`}>
+                            {t("Write to :email", { email: support.email })}
+                        </a>
+                    </p>
+                )}
             </div>
+            {/* The plan someone is paying for keeps changing, so the page says the app is still being built rather than letting the table read as final. */}
+            <p className="text-muted-foreground text-[15px] leading-relaxed">
+                {t(
+                    "Contamos is in active development. New features land regularly; what your plan includes today is what you see above.",
+                )}
+            </p>
         </Fragment>
     );
 

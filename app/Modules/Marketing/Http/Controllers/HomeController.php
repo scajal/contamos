@@ -33,6 +33,10 @@ class HomeController
     {
         return Inertia::render('marketing/home/index', [
             'dashboardUrl' => $user instanceof User ? $redirect->forUser($user) : null,
+            // Where the shell's wordmark and section links point. On
+            // this page it is the page itself, which is how the footer
+            // tells it is at home and keeps its links bare fragments.
+            'homeUrl' => route('home', ['locale' => App::currentLocale()]),
             'alternates' => [
                 'en' => route('home', ['locale' => 'en']),
                 'es' => route('home', ['locale' => 'es']),

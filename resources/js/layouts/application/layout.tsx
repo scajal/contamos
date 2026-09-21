@@ -15,6 +15,7 @@ import {
     CalendarRangeIcon,
     HistoryIcon,
     LayoutDashboardIcon,
+    LifeBuoyIcon,
     LogOutIcon,
     PlusIcon,
     SettingsIcon,
@@ -469,7 +470,7 @@ const Sidebar = () => {
     /**
      * The page's props.
      */
-    const { auth, user } = page.props;
+    const { auth, support, user } = page.props;
 
     /**
      * What the user may do on the current team.
@@ -631,6 +632,10 @@ const Sidebar = () => {
                                     <DropdownMenuItem render={<Link href={account.index.url()} />}>
                                         <UserIcon />
                                         <span>{t("Account")}</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem render={<a href={`mailto:${support.email}`} />}>
+                                        <LifeBuoyIcon />
+                                        <span>{t("Support")}</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuGroup>
                                 <DropdownMenuSeparator />

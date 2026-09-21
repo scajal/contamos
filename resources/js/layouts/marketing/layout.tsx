@@ -12,6 +12,7 @@ import type { Appearance } from "./_components/theme-switcher";
 
 interface MarketingPageProps {
     alternates: Alternates;
+    homeUrl: string;
     dashboardUrl: string | null;
     appearance: Appearance | "system";
     [key: string]: unknown;
@@ -33,7 +34,7 @@ export const MarketingLayout = ({ children }: { children: ReactNode }) => {
     /**
      * The page's props.
      */
-    const { alternates, dashboardUrl, appearance: initialAppearance } = usePage<MarketingPageProps>().props;
+    const { alternates, homeUrl, dashboardUrl, appearance: initialAppearance } = usePage<MarketingPageProps>().props;
 
     /**
      * The colour scheme, seeded from the server-read cookie. The site owns
@@ -53,6 +54,7 @@ export const MarketingLayout = ({ children }: { children: ReactNode }) => {
                 </a>
                 <Header
                     alternates={alternates}
+                    homeUrl={homeUrl}
                     dashboardUrl={dashboardUrl}
                     appearance={appearance}
                     onAppearanceChange={setAppearance}
@@ -60,6 +62,7 @@ export const MarketingLayout = ({ children }: { children: ReactNode }) => {
                 <main id="main">{children}</main>
                 <Footer
                     alternates={alternates}
+                    homeUrl={homeUrl}
                     dashboardUrl={dashboardUrl}
                     appearance={appearance}
                     onAppearanceChange={setAppearance}
