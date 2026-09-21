@@ -166,6 +166,25 @@ describe('update', function (): void {
 
         expect($team->fresh()?->slug)->toBe($slug);
     });
+
+    it('records the rename and the new handle in the activity log', function (): void {
+        [$user, $team] = actingMember();
+        $team->update(['name' => 'Acme Family']);
+        clearActivities();
+
+        $this->patch(route('identity.teams.settings.update', ['team' => 'acme-family']), [
+            'name' => 'Cajal Household',
+            'slug' => 'cajal-household',
+        ])->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('updated')
+            ->and($activity->causer?->is($user))->toBeTrue()
+            ->and($activity->subject?->is($team))->toBeTrue()
+            ->and($activity->attribute_changes['old'])->toBe(['name' => 'Acme Family', 'slug' => 'acme-family'])
+            ->and($activity->attribute_changes['attributes'])->toBe(['name' => 'Cajal Household', 'slug' => 'cajal-household']);
+    });
 });
 
 describe('delete', function (): void {

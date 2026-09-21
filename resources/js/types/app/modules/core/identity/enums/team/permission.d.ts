@@ -8,4 +8,5 @@ export type Permission =
     | "billing:manage"
     | "member:remove"
     | "member:update"
-    | "team:update";
+    | "team:update"
+    | "activity:view";

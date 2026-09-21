@@ -99,6 +99,7 @@ enum Role: string implements HasLabel
                 Permission::RemoveMember,
                 Permission::UpdateMember,
                 Permission::UpdateTeam,
+                Permission::ViewActivity,
             ],
 
             // A member only brings people in.

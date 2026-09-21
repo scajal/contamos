@@ -1186,6 +1186,33 @@ describe('store', function (): void {
 
         expect(Transaction::query()->count())->toBe(0);
     });
+
+    it('records the transaction and its tags as one entry in the activity log', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->for($team)->create();
+        clearActivities();
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'tag_ids' => [$tag->getKey()],
+        ]))->assertRedirect();
+
+        $transaction = Transaction::query()->sole();
+        $activities = activitiesOf($team);
+
+        expect($activities->pluck('event')->all())->toBe(['created', 'tags_synced'])
+            ->and($activities->pluck('batch_uuid')->unique()->filter()->all())->toHaveCount(1)
+            ->and($activities->first()?->causer?->is($user))->toBeTrue()
+            ->and($activities->first()?->subject?->is($transaction))->toBeTrue()
+            ->and($activities->first()?->attribute_changes['attributes']['amount'])->toBe($transaction->amount)
+            ->and($activities->first()?->attribute_changes['attributes']['description'])->toBe('Lunch')
+            ->and($activities->last()?->attribute_changes['old']['tags'])->toBe([])
+            ->and($activities->last()?->attribute_changes['attributes']['tags'])->toBe([$tag->getKey()]);
+    });
 });
 
 describe('show', function (): void {
@@ -2015,6 +2042,70 @@ describe('update', function (): void {
             ->assertRedirect()
             ->assertInvalid(['type']);
     });
+
+    it('records only the changed fields and the new tags in the activity log', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '100.00']);
+        $tag = Tag::factory()->for($team)->create();
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'currency_id' => $currency->getKey(),
+            'description' => 'Lunch',
+            'occurred_at' => '2024-06-01 12:00:00',
+            'quote' => '1',
+            'team_id' => $team->getKey(),
+        ]);
+        clearActivities();
+
+        $this->patch(route('finance.teams.transactions.update', [
+            'team' => $team->getRouteKey(),
+            'transaction' => $transaction->getKey(),
+        ]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'description' => 'Dinner',
+            'tag_ids' => [$tag->getKey()],
+        ]))->assertRedirect();
+
+        $activities = activitiesOf($team);
+
+        expect($activities->pluck('event')->all())->toBe(['updated', 'tags_synced'])
+            ->and($activities->pluck('batch_uuid')->unique()->filter()->all())->toHaveCount(1)
+            ->and($activities->first()?->causer?->is($user))->toBeTrue()
+            ->and($activities->first()?->attribute_changes['old'])->toBe(['description' => 'Lunch'])
+            ->and($activities->first()?->attribute_changes['attributes'])->toBe(['description' => 'Dinner'])
+            ->and($activities->last()?->attribute_changes['attributes']['tags'])->toBe([$tag->getKey()]);
+    });
+
+    it('records no entry when nothing about the transaction changed', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '100.00']);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'currency_id' => $currency->getKey(),
+            'description' => 'Lunch',
+            'occurred_at' => '2024-06-01 12:00:00',
+            'quote' => '1',
+            'team_id' => $team->getKey(),
+        ]);
+        clearActivities();
+
+        $this->patch(route('finance.teams.transactions.update', [
+            'team' => $team->getRouteKey(),
+            'transaction' => $transaction->getKey(),
+        ]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+        ]))->assertRedirect();
+
+        expect(activitiesOf($team))->toHaveCount(0);
+    });
 });
 
 describe('destroy', function (): void {
@@ -2156,5 +2247,33 @@ describe('destroy', function (): void {
             ->assertRedirect();
 
         $this->assertModelMissing($older);
+    });
+
+    it('records the deletion with the last values of the transaction', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '75.00']);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '25.00',
+            'currency_id' => $currency->getKey(),
+            'description' => 'Lunch',
+            'team_id' => $team->getKey(),
+        ]);
+        clearActivities();
+
+        $this->delete(route('finance.teams.transactions.destroy', [
+            'team' => $team->getRouteKey(),
+            'transaction' => $transaction->getKey(),
+        ]))->assertRedirect();
+
+        $activity = activitiesOf($team, 'deleted')->sole();
+
+        expect($activity->causer?->is($user))->toBeTrue()
+            ->and($activity->subject_id)->toBe($transaction->getKey())
+            ->and($activity->attribute_changes['old']['description'])->toBe('Lunch')
+            ->and($activity->attribute_changes['old']['amount'])->toBe($transaction->amount)
+            ->and($activity->attribute_changes)->not->toHaveKey('attributes');
     });
 });

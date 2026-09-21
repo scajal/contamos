@@ -7,6 +7,7 @@ namespace App\Modules\Core\Finance\Actions\Team;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Support\Helpers\TeamActivity;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -42,7 +43,9 @@ class UpdateTransaction
             throw new Exception('A transaction cannot be updated without a team.');
         }
 
-        return DB::transaction(function () use ($transaction, $attributes, $tagIds): Transaction {
+        // Everything the action writes reads as one entry in
+        // the team's activity log.
+        return TeamActivity::within(fn (): Transaction => DB::transaction(function () use ($transaction, $attributes, $tagIds): Transaction {
             // Revert the current effect on the current account balance
             // for the current currency.
             $this->team
@@ -82,6 +85,6 @@ class UpdateTransaction
 
             // Return the updated transaction.
             return $transaction;
-        });
+        }));
     }
 }

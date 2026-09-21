@@ -9,6 +9,7 @@ use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\HasTags;
+use App\Modules\Support\Concerns\LogsTeamActivity;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -67,6 +68,26 @@ class Transfer extends Model
 
     use HasTags;
     use HasUlids;
+    use LogsTeamActivity;
+
+    /**
+     * Get the attributes whose changes are recorded in the
+     * team's activity log.
+     *
+     * @return array<int, string>
+     */
+    public function activityLogAttributes(): array
+    {
+        return ['description', 'occurred_at'];
+    }
+
+    /**
+     * Get the key of the team the transfer belongs to.
+     */
+    public function activityTeamKey(): ?string
+    {
+        return is_string($key = $this->getAttribute($this->team()->getForeignKeyName())) ? $key : null;
+    }
 
     /**
      * The attributes that should be cast.

@@ -12,6 +12,7 @@ import {
     CircleDashedIcon,
     CreditCardIcon,
     CalendarRangeIcon,
+    HistoryIcon,
     LayoutDashboardIcon,
     LogOutIcon,
     PlusIcon,
@@ -72,6 +73,7 @@ import monthly from "@/routes/finance/teams/monthly";
 import tags from "@/routes/finance/teams/tags";
 import transactions from "@/routes/finance/teams/transactions";
 import teams from "@/routes/identity/teams";
+import activity from "@/routes/identity/teams/activity";
 import invitations from "@/routes/identity/teams/invitations";
 import members from "@/routes/identity/teams/members";
 import settings from "@/routes/identity/teams/settings";
@@ -82,6 +84,7 @@ const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/dashboard", title: "Dashboard" },
     { prefix: "finance/teams/monthly", title: "Monthly" },
     { prefix: "finance/teams/tags", title: "Tags" },
+    { prefix: "identity/teams/activity", title: "Activity" },
     { prefix: "identity/teams/invitations", title: "Invitations" },
     { prefix: "identity/teams/members", title: "Members" },
     { prefix: "identity/teams/index", title: "Configuration" },
@@ -522,6 +525,18 @@ const Sidebar = () => {
                                 <span>{t("Members")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+                        {can(PERMISSIONS.ViewActivity) && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    render={
+                                        <Link href={activity.index.url({ team: user?.current_team?.slug ?? "" })} />
+                                    }
+                                >
+                                    <HistoryIcon />
+                                    <span>{t("Activity")}</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 render={<Link href={settings.index.url({ team: user?.current_team?.slug ?? "" })} />}

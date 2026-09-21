@@ -6,7 +6,10 @@ use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Core\Identity\Models\Team\Activity;
 use App\Modules\Core\Identity\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
@@ -47,6 +50,33 @@ pest()->beforeEach(function (): void {
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+/**
+ * Empty the activity log, so a test asserts the entries the
+ * request under it wrote and not the ones its fixtures did.
+ */
+function clearActivities(): void
+{
+    Activity::query()->delete();
+}
+
+/**
+ * Get the entries of a \App\Modules\Core\Identity\Models\Team
+ * activity log, oldest first, narrowed to one event when one
+ * is named.
+ *
+ * @return \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team\Activity>
+ */
+function activitiesOf(Team $team, ?string $event = null): Collection
+{
+    /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team\Activity> $activities */
+    $activities = $team->activities()
+        ->when($event !== null, fn (Builder $query): Builder => $query->where('event', $event))
+        ->orderBy(new Activity()->getKeyName())
+        ->get();
+
+    return $activities;
+}
 
 /**
  * Create a \App\Modules\Core\Identity\Models\User that belongs to a

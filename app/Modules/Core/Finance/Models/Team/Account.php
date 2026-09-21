@@ -8,6 +8,7 @@ use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\HasActivation;
+use App\Modules\Support\Concerns\LogsTeamActivity;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -52,6 +53,26 @@ class Account extends Model
     use HasFactory;
 
     use HasUlids;
+    use LogsTeamActivity;
+
+    /**
+     * Get the attributes whose changes are recorded in the
+     * team's activity log.
+     *
+     * @return array<int, string>
+     */
+    public function activityLogAttributes(): array
+    {
+        return ['is_active', 'name'];
+    }
+
+    /**
+     * Get the key of the team the account belongs to.
+     */
+    public function activityTeamKey(): ?string
+    {
+        return is_string($key = $this->getAttribute($this->team()->getForeignKeyName())) ? $key : null;
+    }
 
     /**
      * Scope the query to the aggregated balance per currency

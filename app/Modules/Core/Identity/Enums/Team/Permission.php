@@ -53,6 +53,11 @@ enum Permission: string implements HasLabel
     case UpdateTeam = 'team:update';
 
     /**
+     * Represents opening the team's activity log.
+     */
+    case ViewActivity = 'activity:view';
+
+    /**
      * Get the label for the permission.
      */
     public function getLabel(): string
@@ -65,6 +70,7 @@ enum Permission: string implements HasLabel
             self::RemoveMember => trans('Remove members'),
             self::UpdateMember => trans('Change member roles'),
             self::UpdateTeam => trans('Rename the team'),
+            self::ViewActivity => trans('See the activity log'),
         };
     }
 }

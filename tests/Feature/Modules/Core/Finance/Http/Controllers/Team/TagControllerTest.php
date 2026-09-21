@@ -159,6 +159,21 @@ describe('store', function (): void {
 
         expect(Tag::query()->count())->toBe(0);
     });
+
+    it('records the tag creation in the activity log', function (): void {
+        [$user, $team] = actingMember();
+        clearActivities();
+
+        $this->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload())
+            ->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('created')
+            ->and($activity->causer?->is($user))->toBeTrue()
+            ->and($activity->subject?->is(Tag::query()->sole()))->toBeTrue()
+            ->and($activity->attribute_changes['attributes'])->toBe(['is_active' => true, 'name' => 'Comida']);
+    });
 });
 
 describe('edit', function (): void {
@@ -262,6 +277,23 @@ describe('update', function (): void {
 
         expect($tag->fresh()?->name)->toBe('Comida');
     });
+
+    it('records the rename in the activity log', function (): void {
+        [$user, $team] = actingMember();
+        $tag = Tag::factory()->for($team)->create(['name' => 'Old']);
+        clearActivities();
+
+        $this->patch(route('finance.teams.tags.update', [
+            'team' => $team->getRouteKey(),
+            'tag' => $tag->getKey(),
+        ]), tagPayload(['name' => 'New']))->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('updated')
+            ->and($activity->attribute_changes['old'])->toBe(['name' => 'Old'])
+            ->and($activity->attribute_changes['attributes'])->toBe(['name' => 'New']);
+    });
 });
 
 describe('activate', function (): void {
@@ -279,6 +311,23 @@ describe('activate', function (): void {
         assertFlashedToast(trans('Saved'));
         expect($tag->fresh()?->is_active)->toBeTrue();
     });
+
+    it('records the activation in the activity log', function (): void {
+        [$user, $team] = actingMember();
+        $tag = Tag::factory()->inactive()->for($team)->create();
+        clearActivities();
+
+        $this->patch(route('finance.teams.tags.activate', [
+            'team' => $team->getRouteKey(),
+            'tag' => $tag->getKey(),
+        ]))->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('updated')
+            ->and($activity->attribute_changes['old'])->toBe(['is_active' => false])
+            ->and($activity->attribute_changes['attributes'])->toBe(['is_active' => true]);
+    });
 });
 
 describe('deactivate', function (): void {
@@ -295,5 +344,22 @@ describe('deactivate', function (): void {
 
         assertFlashedToast(trans('Saved'));
         expect($tag->fresh()?->is_active)->toBeFalse();
+    });
+
+    it('records the deactivation in the activity log', function (): void {
+        [$user, $team] = actingMember();
+        $tag = Tag::factory()->active()->for($team)->create();
+        clearActivities();
+
+        $this->patch(route('finance.teams.tags.deactivate', [
+            'team' => $team->getRouteKey(),
+            'tag' => $tag->getKey(),
+        ]))->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('updated')
+            ->and($activity->attribute_changes['old'])->toBe(['is_active' => true])
+            ->and($activity->attribute_changes['attributes'])->toBe(['is_active' => false]);
     });
 });

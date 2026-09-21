@@ -12,6 +12,7 @@ use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Support\Concerns\DefinesKeyType;
+use App\Modules\Support\Concerns\LogsTeamActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -24,6 +25,7 @@ use Illuminate\Support\Str;
 use Laravel\Paddle\Billable;
 use Laravel\Paddle\Cashier;
 use Laravel\Pennant\Concerns\HasFeatures;
+use Spatie\Activitylog\Enums\ActivityEvent;
 
 /**
  * @property string $id
@@ -32,6 +34,7 @@ use Laravel\Pennant\Concerns\HasFeatures;
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Account> $accounts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team\Activity> $activities
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Billing\Models\Transaction> $billingTransactions
  * @property-read \App\Modules\Billing\Models\Customer|null $customer
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team\TeamInvitation> $invitations
@@ -64,6 +67,46 @@ class Team extends Model
 
     use HasFeatures;
     use HasUlids;
+    use LogsTeamActivity;
+
+    /**
+     * The model events the activity log never records. A team
+     * takes its log with it when it goes, so recording its
+     * deletion would only leave a row pointing at nothing.
+     *
+     * @var array<int, string>
+     */
+    protected static $doNotRecordEvents = [ActivityEvent::Deleted->value];
+
+    /**
+     * Get the entries of the team's activity log.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Identity\Models\Team\Activity, $this>
+     */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(Team\Activity::class);
+    }
+
+    /**
+     * Get the attributes whose changes are recorded in the
+     * team's activity log.
+     *
+     * @return array<int, string>
+     */
+    public function activityLogAttributes(): array
+    {
+        return ['name', 'slug'];
+    }
+
+    /**
+     * Get the key of the team the entries belong to, which is
+     * the team itself.
+     */
+    public function activityTeamKey(): ?string
+    {
+        return is_string($key = $this->getKey()) ? $key : null;
+    }
 
     /**
      * Get the accounts of the team.

@@ -64,6 +64,32 @@ Route::as('identity.teams.')
     ->group(function (): void {
         /*
         |--------------------------------------------------------------------------
+        | Activity routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the team activity log. The permission runs
+        | first, so a member is refused outright instead of being offered an
+        | upgrade they may not ask for.
+        |
+        */
+
+        Route::get('activity', [\App\Modules\Core\Identity\Http\Controllers\Team\ActivityController::class, 'index'])
+            ->middleware([
+                EnsureTeamPermission::using(Permission::ViewActivity),
+                EnsureFeaturesAreActive::using(Feature::ViewActivity),
+            ])
+            ->name('activity.index');
+
+        Route::get('activity/{activity}', [\App\Modules\Core\Identity\Http\Controllers\Team\ActivityController::class, 'show'])
+            ->middleware([
+                EnsureTeamPermission::using(Permission::ViewActivity),
+                EnsureFeaturesAreActive::using(Feature::ViewActivity),
+            ])
+            ->name('activity.show')
+            ->scopeBindings();
+
+        /*
+        |--------------------------------------------------------------------------
         | Member routes
         |--------------------------------------------------------------------------
         |

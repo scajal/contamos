@@ -7,6 +7,7 @@ namespace App\Modules\Core\Identity\Actions\User;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Support\Helpers\TeamActivity;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -50,7 +51,9 @@ class AcceptInvitation
 
         $user = $this->user;
 
-        return DB::transaction(function () use ($invitation, $user): Team {
+        // Accepting the invitation and joining the team read as
+        // one entry in the team's activity log.
+        return TeamActivity::within(fn (): Team => DB::transaction(function () use ($invitation, $user): Team {
             // Join the team with the invited role, unless the user
             // is already a member.
             if (! $user->belongsToTeam($invitation->team)) {
@@ -63,7 +66,13 @@ class AcceptInvitation
             // Switch the user to the team.
             $user->switchTeam($invitation->team);
 
+            // Record the member joining, which no model change of
+            // its own would show.
+            TeamActivity::record($user, 'member_added', [
+                'attributes' => ['role' => $invitation->role->value],
+            ], $invitation->team);
+
             return $invitation->team;
-        });
+        }));
     }
 }

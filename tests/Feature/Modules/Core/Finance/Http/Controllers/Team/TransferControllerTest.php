@@ -368,6 +368,22 @@ describe('store', function (): void {
             ->post(route('finance.teams.transfers.store', ['team' => $team->getRouteKey()]), [])
             ->assertInvalid(['amount_received', 'amount_sent', 'destination_account_id', 'destination_currency_id', 'destination_quote', 'occurred_at', 'origin_account_id', 'origin_currency_id', 'origin_quote']);
     });
+
+    it('records the transfer and its legs as one entry in the activity log', function (): void {
+        [$team, $origin, $destination, $currency, $user] = actingTransferMember();
+        clearActivities();
+
+        $transfer = storeTransfer($team, $origin, $destination, $currency, $currency);
+
+        $activities = activitiesOf($team);
+
+        expect($activities->pluck('event')->unique()->all())->toBe(['created'])
+            ->and($activities)->toHaveCount(3)
+            ->and($activities->pluck('batch_uuid')->unique()->filter()->all())->toHaveCount(1)
+            ->and($activities->pluck('causer_id')->unique()->all())->toBe([$user->getKey()])
+            ->and($activities->first()?->subject?->is($transfer))->toBeTrue()
+            ->and($activities->first()?->attribute_changes['attributes']['description'])->toBe('Rent savings');
+    });
 });
 
 describe('show', function (): void {
@@ -674,5 +690,23 @@ describe('destroy', function (): void {
 
         $this->delete(route('finance.teams.transfers.destroy', ['team' => $team->getRouteKey(), 'transfer' => $transfer->getKey()]))
             ->assertNotFound();
+    });
+
+    it('records the deletion of the transfer and its legs as one entry in the activity log', function (): void {
+        [$team, $origin, $destination, $currency] = actingTransferMember();
+        $transfer = storeTransfer($team, $origin, $destination, $currency, $currency);
+        clearActivities();
+
+        $this->delete(route('finance.teams.transfers.destroy', [
+            'team' => $team->getRouteKey(),
+            'transfer' => $transfer->getKey(),
+        ]))->assertRedirect();
+
+        $activities = activitiesOf($team);
+
+        expect($activities->pluck('event')->unique()->all())->toBe(['deleted'])
+            ->and($activities)->toHaveCount(3)
+            ->and($activities->pluck('batch_uuid')->unique()->filter()->all())->toHaveCount(1)
+            ->and($activities->last()?->attribute_changes['old']['description'])->toBe('Rent savings');
     });
 });

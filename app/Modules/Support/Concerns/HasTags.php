@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Support\Concerns;
 
 use App\Modules\Core\Finance\Models\Team\Tag;
+use App\Modules\Support\Helpers\TeamActivity;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,8 +31,14 @@ trait HasTags
 
         $this->assertTagsBelongToTeam($tagIds);
 
+        // Remember the tag set the model carried.
+        $before = $this->tagKeys();
+
         // Attach the tags to the model.
         $this->tags()->attach($tagIds);
+
+        // Record the change in the team's activity log.
+        $this->recordTagActivity($before, $this->tagKeys());
     }
 
     /**
@@ -43,8 +50,48 @@ trait HasTags
     {
         $this->assertTagsBelongToTeam($tagIds);
 
+        // Remember the tag set the model carried.
+        $before = $this->tagKeys();
+
         // Sync the tags to the model.
         $this->tags()->sync($tagIds);
+
+        // Record the change in the team's activity log.
+        $this->recordTagActivity($before, $this->tagKeys());
+    }
+
+    /**
+     * Get the keys of the tags the model currently carries,
+     * in a stable order.
+     *
+     * @return array<int, string>
+     */
+    protected function tagKeys(): array
+    {
+        /** @var array<int, string> $keys */
+        $keys = $this->tags()->pluck(new Tag()->getQualifiedKeyName())->sort()->values()->all();
+
+        return $keys;
+    }
+
+    /**
+     * Record a change of the model's tag set in the team's activity
+     * log, so a tag filter that starts matching a record has a
+     * matching entry. An unchanged set is not a change.
+     *
+     * @param  array<int, string>  $before
+     * @param  array<int, string>  $after
+     */
+    protected function recordTagActivity(array $before, array $after): void
+    {
+        if ($before === $after) {
+            return;
+        }
+
+        TeamActivity::record($this, 'tags_synced', [
+            'old' => ['tags' => $before],
+            'attributes' => ['tags' => $after],
+        ]);
     }
 
     /**

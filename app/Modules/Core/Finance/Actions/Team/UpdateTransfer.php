@@ -12,6 +12,7 @@ use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Models\Team;
+use App\Modules\Support\Helpers\TeamActivity;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -52,7 +53,9 @@ class UpdateTransfer
 
         $team = $this->team;
 
-        return DB::transaction(function () use ($team, $transfer, $attributes, $tagIds): Transfer {
+        // Everything the action writes reads as one entry in
+        // the team's activity log.
+        return TeamActivity::within(fn (): Transfer => DB::transaction(function () use ($team, $transfer, $attributes, $tagIds): Transfer {
             // Load the transactions the transfer currently owns.
             $transfer->load('transactions');
 
@@ -107,7 +110,7 @@ class UpdateTransfer
 
             // Return the updated transfer.
             return $transfer->refresh();
-        });
+        }));
     }
 
     /**

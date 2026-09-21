@@ -359,6 +359,27 @@ describe('store', function (): void {
 
         expect(Account::query()->count())->toBe(0);
     });
+
+    it('records the account and its currencies as one entry in the activity log', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        clearActivities();
+
+        $this->post(route('finance.teams.accounts.store', ['team' => $team->getRouteKey()]), accountPayload([
+            'currency_ids' => [$currency->getKey()],
+        ]))->assertRedirect();
+
+        $account = Account::query()->sole();
+        $activities = activitiesOf($team);
+
+        expect($activities->pluck('event')->all())->toBe(['created', 'currency_attached'])
+            ->and($activities->pluck('batch_uuid')->unique()->filter()->all())->toHaveCount(1)
+            ->and($activities->first()?->causer?->is($user))->toBeTrue()
+            ->and($activities->first()?->subject?->is($account))->toBeTrue()
+            ->and($activities->first()?->attribute_changes['attributes']['name'])->toBe('Checking')
+            ->and($activities->last()?->subject?->is($account))->toBeTrue()
+            ->and($activities->last()?->attribute_changes['attributes'])->toBe([$currency->getForeignKey() => $currency->getKey()]);
+    });
 });
 
 describe('edit', function (): void {
@@ -514,6 +535,32 @@ describe('update', function (): void {
             ->and((float) $account->currencies()->where('currency_id', $old->getKey())->sole()->pivot->balance)->toBe(75.0)
             ->and($account->transactions()->where('currency_id', $old->getKey())->count())->toBe(1);
     });
+
+    it('records the rename and the currencies that came and went in the activity log', function (): void {
+        [$user, $team] = actingMember();
+        $old = Currency::factory()->active()->fiat()->create();
+        $new = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->for($team)->create(['name' => 'Old']);
+        $account->currencies()->attach($old);
+        clearActivities();
+
+        $this->patch(route('finance.teams.accounts.update', [
+            'team' => $team->getRouteKey(),
+            'account' => $account->getKey(),
+        ]), accountPayload([
+            'name' => 'New',
+            'currency_ids' => [$new->getKey()],
+        ]))->assertRedirect();
+
+        $activities = activitiesOf($team);
+
+        expect($activities->pluck('event')->all())->toBe(['updated', 'currency_attached', 'currency_detached'])
+            ->and($activities->pluck('batch_uuid')->unique()->filter()->all())->toHaveCount(1)
+            ->and($activities->first()?->attribute_changes['old'])->toBe(['name' => 'Old'])
+            ->and($activities->first()?->attribute_changes['attributes'])->toBe(['name' => 'New'])
+            ->and($activities->get(1)?->attribute_changes['attributes'])->toBe([$new->getForeignKey() => $new->getKey()])
+            ->and($activities->last()?->attribute_changes['old'])->toBe([$old->getForeignKey() => $old->getKey()]);
+    });
 });
 
 describe('activate', function (): void {
@@ -565,6 +612,23 @@ describe('activate', function (): void {
 
         expect($account->fresh()?->is_active)->toBeTrue();
     });
+
+    it('records the activation in the activity log', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->inactive()->for($team)->create();
+        clearActivities();
+
+        $this->patch(route('finance.teams.accounts.activate', [
+            'team' => $team->getRouteKey(),
+            'account' => $account->getKey(),
+        ]))->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('updated')
+            ->and($activity->attribute_changes['old'])->toBe(['is_active' => false])
+            ->and($activity->attribute_changes['attributes'])->toBe(['is_active' => true]);
+    });
 });
 
 describe('deactivate', function (): void {
@@ -581,5 +645,22 @@ describe('deactivate', function (): void {
 
         assertFlashedToast(trans('Saved'));
         expect($account->fresh()?->is_active)->toBeFalse();
+    });
+
+    it('records the deactivation in the activity log', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->active()->for($team)->create();
+        clearActivities();
+
+        $this->patch(route('finance.teams.accounts.deactivate', [
+            'team' => $team->getRouteKey(),
+            'account' => $account->getKey(),
+        ]))->assertRedirect();
+
+        $activity = activitiesOf($team)->sole();
+
+        expect($activity->event)->toBe('updated')
+            ->and($activity->attribute_changes['old'])->toBe(['is_active' => true])
+            ->and($activity->attribute_changes['attributes'])->toBe(['is_active' => false]);
     });
 });
