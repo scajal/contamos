@@ -67,6 +67,11 @@ class HandleInertiaRequests extends Middleware
                 'canAccessAdministration' => ($user = $this->user($request)) && $user->canAccessPanel(Filament::getPanel('administration')),
             ],
 
+            // Which of the setup steps the current team already
+            // took, so the layout can offer the rest wherever the
+            // user is.
+            'onboarding' => fn (): ?array => $this->onboarding($request),
+
             // What the user may do on their current team, so the
             // layout and the pages gate actions the same way the
             // server does.
@@ -74,6 +79,34 @@ class HandleInertiaRequests extends Middleware
 
             // The authenticated user.
             'user' => Inertia::always($user),
+        ];
+    }
+
+    /**
+     * Get the completion of the setup steps of the current team,
+     * or null when the user acts on no team.
+     *
+     * @return array{has_account: bool, has_member: bool, has_transaction: bool}|null
+     */
+    protected function onboarding(Request $request): ?array
+    {
+        if (! ($team = $this->team($request)) instanceof Team) {
+            return null;
+        }
+
+        return [
+            // An account counts once it exists, even if the team
+            // later deactivated it.
+            'has_account' => $team->accounts()->exists(),
+
+            // A team is no longer alone once somebody was invited,
+            // whatever became of the invitation, or once it holds
+            // more than the one member who created it.
+            'has_member' => $team->invitations()->exists() || $team->users()->count() > 1,
+
+            // Any transaction of any type on any account counts,
+            // including an opening balance.
+            'has_transaction' => $team->transactions()->exists(),
         ];
     }
 
@@ -89,16 +122,7 @@ class HandleInertiaRequests extends Middleware
             return [];
         }
 
-        // Team pages carry the bound team, which the membership
-        // middleware has already switched the user to. Elsewhere the
-        // current team is the one the user acts on.
-        $team = $request->route('team');
-
-        if (! $team instanceof Team) {
-            $team = isset($user->current_team_id) ? $user->currentTeam : null;
-        }
-
-        if (! $team instanceof Team) {
+        if (! ($team = $this->team($request)) instanceof Team) {
             return [];
         }
 
@@ -106,6 +130,27 @@ class HandleInertiaRequests extends Middleware
             fn (Permission $permission): string => $permission->value,
             $user->roleOn($team)?->permissions() ?? [],
         );
+    }
+
+    /**
+     * Get the team the user acts on, if any.
+     */
+    protected function team(Request $request): ?Team
+    {
+        if (! ($user = $this->user($request)) instanceof User) {
+            return null;
+        }
+
+        // Team pages carry the bound team, which the membership
+        // middleware has already switched the user to. Elsewhere the
+        // current team is the one the user acts on.
+        $team = $request->route('team');
+
+        if ($team instanceof Team) {
+            return $team;
+        }
+
+        return isset($user->current_team_id) ? $user->currentTeam : null;
     }
 
     /**

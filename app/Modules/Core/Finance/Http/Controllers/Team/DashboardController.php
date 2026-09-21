@@ -26,10 +26,6 @@ class DashboardController
             'has_accounts' => $team->accounts()
                 ->isActive()
                 ->exists(),
-            // The setup checklist reads the team's own history, so
-            // every check ignores the filters the dashboard puts
-            // on what it displays.
-            'onboarding' => $this->onboarding($team),
             // Balances sum every transaction the team ever recorded,
             // whatever its plan hides, so they stay correct.
             'balances' => Inertia::defer(
@@ -57,28 +53,5 @@ class DashboardController
             ),
             'team' => $team,
         ]);
-    }
-
-    /**
-     * Get the completion of the team's setup steps.
-     *
-     * @return array{has_account: bool, has_member: bool, has_transaction: bool}
-     */
-    protected function onboarding(Team $team): array
-    {
-        return [
-            // An account counts once it exists, even if the team
-            // later deactivated it.
-            'has_account' => $team->accounts()->exists(),
-
-            // A team is no longer alone once somebody was invited,
-            // whatever became of the invitation, or once it holds
-            // more than the one member who created it.
-            'has_member' => $team->invitations()->exists() || $team->users()->count() > 1,
-
-            // Any transaction of any type on any account counts,
-            // including an opening balance.
-            'has_transaction' => $team->transactions()->exists(),
-        ];
     }
 }

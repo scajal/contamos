@@ -2,43 +2,15 @@ import { Deferred, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { format, parseISO } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import {
-    ArrowDownIcon,
-    ArrowUpIcon,
-    CalendarRangeIcon,
-    CheckIcon,
-    ChevronDownIcon,
-    CircleDashedIcon,
-    EyeIcon,
-    PlusIcon,
-} from "lucide-react";
-import { useState } from "react";
+import { ArrowDownIcon, ArrowUpIcon, CalendarRangeIcon, CircleDashedIcon, EyeIcon, PlusIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import {
-    Item,
-    ItemActions,
-    ItemContent,
-    ItemDescription,
-    ItemGroup,
-    ItemHeader,
-    ItemMedia,
-    ItemTitle,
-} from "@/components/ui/item";
+import { Item, ItemHeader, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/components/ui/table";
-import { usePermissions } from "@/hooks/use-permissions";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import { PERMISSIONS } from "@/lib/permissions";
 import {
     TRANSACTION_AMOUNT_COLOR,
     TRANSACTION_AMOUNT_SIGN,
@@ -49,7 +21,6 @@ import { cn, formatAmount } from "@/lib/utils";
 import accounts from "@/routes/finance/teams/accounts";
 import monthly from "@/routes/finance/teams/monthly";
 import transactions from "@/routes/finance/teams/transactions";
-import invitations from "@/routes/identity/teams/invitations";
 import { AccountBalance } from "@/types/app/modules/core/finance/models/team/account-balance";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
 import { Team } from "@/types/app/modules/core/identity/models/team";
@@ -57,100 +28,20 @@ import { Team } from "@/types/app/modules/core/identity/models/team";
 type PageProps = {
     balances: Array<AccountBalance>;
     has_accounts: boolean;
-    onboarding: Onboarding;
     recent_transactions: Array<Transaction>;
     team: Team;
-};
-
-/**
- * Which of the team's setup steps are done, shared by
- * App\Modules\Core\Finance\Http\Controllers\Team\DashboardController.
- */
-type Onboarding = {
-    has_account: boolean;
-    has_member: boolean;
-    has_transaction: boolean;
-};
-
-/**
- * The storage key holding the dismissal of a team's setup
- * checklist, kept per team so dismissing one team's checklist
- * leaves the others alone.
- */
-const dismissalKey = (team: string) => `onboarding-dismissed:${team}`;
-
-/**
- * Read whether the checklist was dismissed for the team in this
- * browser. Private windows and blocked site data throw on access,
- * where nothing was ever dismissed.
- */
-const readDismissal = (team: string): boolean => {
-    try {
-        return window.localStorage.getItem(dismissalKey(team)) === "1";
-    } catch {
-        return false;
-    }
-};
-
-/**
- * Remember that the checklist was dismissed for the team. A
- * browser that refuses to store it hides the checklist for this
- * visit alone.
- */
-const writeDismissal = (team: string): void => {
-    try {
-        window.localStorage.setItem(dismissalKey(team), "1");
-    } catch {
-        return;
-    }
 };
 
 const Dashboard = () => {
     /**
      * The page's props.
      */
-    const { has_accounts, onboarding, team } = usePage<PageProps>().props;
-
-    /**
-     * Whether the team finished setting itself up, which retires
-     * the checklist for everyone.
-     */
-    const isSetUp = onboarding.has_account && onboarding.has_transaction && onboarding.has_member;
-
-    /**
-     * Whether the checklist was dismissed, remembered against the
-     * team it was read for so switching teams reads again.
-     */
-    const [dismissal, setDismissal] = useState(() => ({ dismissed: readDismissal(team.id), team: team.id }));
-
-    // Visiting another team's dashboard keeps this component
-    // mounted, so the dismissal is re-read during the render
-    // that brings the new team in.
-    if (dismissal.team !== team.id) {
-        setDismissal({ dismissed: readDismissal(team.id), team: team.id });
-    }
-
-    /**
-     * Whether the checklist is on the page.
-     */
-    const showsChecklist = !isSetUp && !dismissal.dismissed;
-
-    /**
-     * Hide the checklist for this team in this browser.
-     */
-    const dismiss = () => {
-        writeDismissal(team.id);
-
-        setDismissal({ dismissed: true, team: team.id });
-    };
+    const { has_accounts } = usePage<PageProps>().props;
 
     return (
         <div className="flex flex-col gap-8">
             {/** Header */}
             <Header />
-
-            {/** Setup checklist */}
-            {showsChecklist && <SetupChecklist onDismiss={dismiss} />}
 
             {has_accounts ? (
                 <Fragment>
@@ -165,9 +56,7 @@ const Dashboard = () => {
                     </Deferred>
                 </Fragment>
             ) : (
-                // The checklist opens with the same account step,
-                // so it stands in for the empty state.
-                !showsChecklist && <EmptyAccounts />
+                <EmptyAccounts />
             )}
         </div>
     );
@@ -361,147 +250,6 @@ const RecentActivity = () => {
                     </div>
                 </div>
             ))}
-        </div>
-    );
-};
-
-const SetupChecklist = ({ onDismiss }: { onDismiss: () => void }) => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    /**
-     * The page's props.
-     */
-    const { onboarding, team } = usePage<PageProps>().props;
-
-    /**
-     * What the user may do on the team.
-     */
-    const { can } = usePermissions();
-
-    /**
-     * The setup steps, in a fixed order whatever is done, each
-     * offering its action while it is still open.
-     */
-    const steps = [
-        {
-            action: (
-                <Button
-                    nativeButton={false}
-                    render={
-                        <ModalLink href={accounts.create.url({ team: team.slug })}>
-                            <PlusIcon data-icon="inline-start" />
-                            {t("Create :name", { name: t("account") })}
-                        </ModalLink>
-                    }
-                    size="sm"
-                />
-            ),
-            description: t("Accounts hold your balances per currency."),
-            done: onboarding.has_account,
-            key: "account",
-            title: t("Create an account"),
-        },
-        {
-            action: (
-                <DropdownMenu>
-                    {/** An account holds the transaction, so the form cannot be submitted without one. */}
-                    <DropdownMenuTrigger render={<Button disabled={!onboarding.has_account} size="sm" />}>
-                        {t("New :name", { name: t("transaction") })}
-                        <ChevronDownIcon data-icon="inline-end" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuGroup>
-                            <DropdownMenuItem
-                                render={
-                                    <ModalLink href={transactions.create.url({ team: team.slug, type: "income" })}>
-                                        <ArrowDownIcon />
-                                        <span>{t("New :name", { name: t("income") })}</span>
-                                    </ModalLink>
-                                }
-                            />
-                            <DropdownMenuItem
-                                render={
-                                    <ModalLink href={transactions.create.url({ team: team.slug, type: "expense" })}>
-                                        <ArrowUpIcon />
-                                        <span>{t("New :name", { name: t("expense") })}</span>
-                                    </ModalLink>
-                                }
-                            />
-                        </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            ),
-            description: t("Record an income or an expense on an account."),
-            done: onboarding.has_transaction,
-            key: "transaction",
-            title: t("Add a first transaction"),
-        },
-        {
-            // The step and its tick belong to the team, but only a
-            // member who may invite is offered the action.
-            action: can(PERMISSIONS.CreateInvitation) ? (
-                <Button
-                    nativeButton={false}
-                    render={
-                        <ModalLink href={invitations.create.url({ team: team.slug })}>
-                            <PlusIcon data-icon="inline-start" />
-                            {t("Invite member")}
-                        </ModalLink>
-                    }
-                    size="sm"
-                />
-            ) : null,
-            description: t("Members see and record this team's activity together."),
-            done: onboarding.has_member,
-            key: "member",
-            title: t("Invite a member"),
-        },
-    ];
-
-    /**
-     * How many steps the team already took.
-     */
-    const done = steps.filter((step) => step.done).length;
-
-    return (
-        <div className="overflow-hidden rounded-sm border">
-            <div className="flex flex-wrap items-start justify-between gap-4 border-b p-4">
-                <div className="flex flex-col gap-1">
-                    <h2 className="font-medium">{t("Set up :team", { team: team.name })}</h2>
-                    <p className="text-muted-foreground text-sm">{t("Three steps to get going.")}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm tabular-nums">
-                        {t(":done of :total done", { done, total: steps.length })}
-                    </span>
-                    <Button onClick={onDismiss} size="sm" variant="ghost">
-                        {t("Dismiss")}
-                    </Button>
-                </div>
-            </div>
-            <ItemGroup className="gap-0">
-                {steps.map((step) => (
-                    <Item
-                        className="rounded-none border-0 border-b last:border-b-0"
-                        key={step.key}
-                        size="sm"
-                        variant="outline"
-                    >
-                        <ItemMedia variant="icon">
-                            {step.done ? <CheckIcon className="text-success" /> : <CircleDashedIcon />}
-                        </ItemMedia>
-                        <ItemContent>
-                            <ItemTitle>{step.title}</ItemTitle>
-                            <ItemDescription>{step.description}</ItemDescription>
-                        </ItemContent>
-                        {!step.done && step.action ? <ItemActions>{step.action}</ItemActions> : null}
-                    </Item>
-                ))}
-            </ItemGroup>
         </div>
     );
 };

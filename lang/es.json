@@ -610,12 +610,12 @@
     "Showing transactions since :date. The Free plan keeps the last :months months visible. Nothing was removed, upgrade to Pro to see your full history.": "Mostrando transacciones desde el :date. El plan gratis mantiene visibles los últimos :months meses. No se borró nada, pasate a Pro para ver todo tu historial.",
     "Set up :team": "Configura :team",
     "Three steps to get going.": "Tres pasos para empezar.",
-    ":done of :total done": ":done de :total listos",
     "Dismiss": "Descartar",
     "Create an account": "Crea una cuenta",
     "Accounts hold your balances per currency.": "Las cuentas guardan tus saldos por moneda.",
     "Add a first transaction": "Registra tu primera transacción",
     "Record an income or an expense on an account.": "Registra un ingreso o un gasto en una cuenta.",
     "Invite a member": "Invita a un miembro",
-    "Members see and record this team's activity together.": "Los miembros ven y registran juntos la actividad de este equipo."
+    "Members see and record this team's activity together.": "Los miembros ven y registran juntos la actividad de este equipo.",
+    "Finish your onboarding": "Termina tu configuración"
 }

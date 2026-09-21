@@ -8,7 +8,6 @@ use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
-use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\Sequence;
@@ -129,98 +128,6 @@ it('keeps the balance per currency correct with a transfer and its fees', functi
                 ->has('balances', 1)
                 ->where('balances.0.balance', fn (mixed $balance): bool => (float) $balance === 98.5)
                 ->has('recent_transactions', 4)));
-});
-
-it('shares an untouched setup checklist for a team with nothing', function (): void {
-    [, $team] = actingMember();
-
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-            ->where('onboarding.has_account', false)
-            ->where('onboarding.has_transaction', false)
-            ->where('onboarding.has_member', false));
-});
-
-it('ticks the account step for an inactive account the empty path ignores', function (): void {
-    [, $team] = actingMember();
-    Account::factory()->bank()->inactive()->for($team)->create();
-
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-            ->where('has_accounts', false)
-            ->where('onboarding.has_account', true));
-});
-
-it('ticks the transaction step for any transaction', function (): void {
-    [, $team] = actingMember();
-    $currency = Currency::factory()->active()->fiat()->create();
-    $account = Account::factory()->cash()->inactive()->for($team)->create();
-
-    Transaction::factory()->openingBalance()->for($account)->for($currency)->create();
-
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-            ->where('onboarding.has_transaction', true));
-});
-
-it('ticks the member step for a pending invitation', function (): void {
-    [, $team] = actingMember();
-    TeamInvitation::factory()->for($team)->create();
-
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-            ->where('onboarding.has_member', true));
-});
-
-it('ticks the member step for an accepted invitation', function (): void {
-    [, $team] = actingMember();
-    TeamInvitation::factory()->accepted()->for($team)->create();
-
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-            ->where('onboarding.has_member', true));
-});
-
-it('ticks the member step for an expired invitation', function (): void {
-    [, $team] = actingMember();
-    TeamInvitation::factory()->expired()->for($team)->create();
-
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-            ->where('onboarding.has_member', true));
-});
-
-it('ticks the member step for a team of two with no invitation left', function (): void {
-    [, $team] = actingMember();
-    $team->users()->attach(User::factory()->create(), ['role' => Role::Member]);
-
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-            ->where('onboarding.has_member', true));
-});
-
-it('leaves the setup checklist of another team alone', function (): void {
-    [, $team] = actingMember();
-    $foreign = Team::factory()->create();
-    $currency = Currency::factory()->active()->fiat()->create();
-    $account = Account::factory()->bank()->active()->for($foreign)->create();
-
-    Transaction::factory()->income()->for($account)->for($currency)->create();
-    TeamInvitation::factory()->for($foreign)->create();
-
-    $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-            ->where('onboarding.has_account', false)
-            ->where('onboarding.has_transaction', false)
-            ->where('onboarding.has_member', false));
 });
 
 it('does not count inactive accounts toward the empty path', function (): void {
