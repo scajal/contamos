@@ -23,11 +23,14 @@ export interface ActivityChange {
     new_label: string | string[] | null;
 }
 
+/**
+ * A timeline row. The values it changed only travel with the
+ * detail sheet, which sends `ActivityEntry & { changes }`.
+ */
 export interface ActivityEntry {
     id: number;
     batch_uuid: string | null;
     causer: ActivityCauser;
-    changes: ActivityChange[];
     created_at: string | null;
     event: string | null;
     subject_id: string | null;

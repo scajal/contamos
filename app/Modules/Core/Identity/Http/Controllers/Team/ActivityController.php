@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
+use InertiaUI\Modal\Modal;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class ActivityController
@@ -39,12 +40,7 @@ class ActivityController
      */
     public function index(Team $team, IndexRequest $request): Response
     {
-        $members = $team->users()
-            ->orderBy('name')
-            ->get([
-                new User()->qualifyColumn(new User()->getKeyName()),
-                new User()->qualifyColumn('name'),
-            ]);
+        $members = $this->members($team);
 
         return Inertia::render('identity/teams/activity/index', [
             'activities' => Inertia::scroll(
@@ -131,19 +127,96 @@ class ActivityController
         $names = $this->references($rows);
 
         /** @var \Illuminate\Pagination\LengthAwarePaginator<int, array<string, mixed>> $entries */
-        $entries = $activities->through(fn (Activity $activity): array => [
+        $entries = $activities->through(fn (Activity $activity): array => $this->entry($members, $activity, $names));
+
+        return $entries;
+    }
+
+    /**
+     * Shape one entry, without the values it changed. The timeline
+     * only says what happened; the sheet says what it was.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\User>  $members
+     * @param  array<string, array<string, string>>  $names
+     * @return array<string, mixed>
+     */
+    protected function entry(Collection $members, Activity $activity, array $names): array
+    {
+        return [
             'id' => $activity->getKey(),
             'batch_uuid' => $activity->batch_uuid,
             'causer' => $this->causer($members, $activity),
-            'changes' => $this->changes($activity, $names),
             'created_at' => $activity->created_at?->toIso8601String(),
             'event' => $activity->event,
             'subject_id' => $activity->subject_id,
             'subject_label' => $this->subjectLabel($activity, $names),
             'subject_type' => ActivitySubject::forType($activity->subject_type)?->value,
-        ]);
+        ];
+    }
 
-        return $entries;
+    /**
+     * Show what a single thing somebody did changed. An entry that
+     * belongs to a batch opens with every row the same action
+     * wrote, so the sheet says as much as the timeline promised.
+     */
+    public function show(Team $team, Activity $activity): Modal
+    {
+        $rows = $this->batch($team, $activity);
+
+        $members = $this->members($team);
+
+        $names = $this->references($rows);
+
+        return Inertia::modal('identity/teams/activity/show', [
+            'entries' => $rows
+                ->map(fn (Activity $row): array => [
+                    ...$this->entry($members, $row, $names),
+                    'changes' => $this->changes($row, $names),
+                ])
+                ->values(),
+        ])->baseRoute('identity.teams.activity.index', ['team' => $team->getRouteKey()]);
+    }
+
+    /**
+     * Get every row the action that wrote the entry produced, in
+     * the order it wrote them. An entry written outside a batch
+     * stands alone.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team\Activity>
+     */
+    protected function batch(Team $team, Activity $activity): Collection
+    {
+        if ($activity->batch_uuid === null) {
+            return $activity->newCollection([$activity->load('causer', 'subject')]);
+        }
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team\Activity> $rows */
+        $rows = $team->activities()
+            ->where('batch_uuid', $activity->batch_uuid)
+            ->with('causer', 'subject')
+            ->orderBy(new Activity()->getKeyName())
+            ->get();
+
+        return $rows;
+    }
+
+    /**
+     * Get the team's members, as the member filter lists them and
+     * the causer of an entry is matched against them.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\User>
+     */
+    protected function members(Team $team): Collection
+    {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\User> $members */
+        $members = $team->users()
+            ->orderBy('name')
+            ->get([
+                new User()->qualifyColumn(new User()->getKeyName()),
+                new User()->qualifyColumn('name'),
+            ]);
+
+        return $members;
     }
 
     /**

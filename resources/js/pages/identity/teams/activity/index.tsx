@@ -1,8 +1,8 @@
 import { Deferred, InfiniteScroll, usePage } from "@inertiajs/react";
+import { ModalLink } from "@inertiaui/modal-react";
 import { format, parse } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ChevronDownIcon, CircleDashedIcon, ListFilterPlusIcon, SearchXIcon, XIcon } from "lucide-react";
-import { useState } from "react";
+import { ChevronRightIcon, CircleDashedIcon, ListFilterPlusIcon, SearchXIcon, XIcon } from "lucide-react";
 import { type DateRange } from "react-day-picker";
 
 import { Badge } from "@/components/ui/badge";
@@ -15,11 +15,12 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { causerName } from "@/lib/activity";
+import { formatRelativeTime } from "@/lib/utils";
 import routes from "@/routes/identity/teams/activity";
 import { ActivitySubjectOption } from "@/types/app/modules/core/identity/activity-subject-option";
 import { ActivitySubject } from "@/types/app/modules/core/identity/enums/team/activity/activity-subject";
-import { ActivityCauser, ActivityChange, ActivityEntry } from "@/types/app/modules/core/identity/models/team/activity";
+import { ActivityEntry } from "@/types/app/modules/core/identity/models/team/activity";
 import { User } from "@/types/app/modules/core/identity/models/user";
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 
@@ -41,39 +42,6 @@ type PageProps = {
  * The date format used in the URL.
  */
 const DATE_FORMAT = "yyyy-MM-dd";
-
-/**
- * The changed fields whose values are instants rather
- * than plain text.
- */
-const DATE_FIELDS = ["accepted_at", "ends_at", "expires_at", "occurred_at", "paused_at", "trial_ends_at"];
-
-/**
- * The translated label of a changed field, so nobody needs to
- * know the column names. A field with no label of its own is
- * shown as it is stored.
- */
-const FIELD_LABELS: Record<string, string> = {
-    accepted_at: "Accepted",
-    account_id: "Account",
-    amount: "Amount",
-    currency_id: "Currency",
-    description: "Description",
-    email: "Email",
-    ends_at: "Ends",
-    expires_at: "Expires",
-    is_active: "Active",
-    name: "Name",
-    occurred_at: "Date",
-    paused_at: "Paused",
-    quote: "Rate",
-    role: "Role",
-    slug: "Handle",
-    status: "Status",
-    tags: "Tags",
-    trial_ends_at: "Trial ends",
-    type: "Type",
-};
 
 /**
  * Parse a URL date into a Date, if any.
@@ -256,122 +224,6 @@ const Filters = () => {
     );
 };
 
-const Causer = ({ causer }: { causer: ActivityCauser }) => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    const name =
-        causer.kind === "member"
-            ? (causer.name ?? t("A former member"))
-            : causer.kind === "support"
-              ? t("Support")
-              : causer.kind === "system"
-                ? t("System")
-                : t("A former member");
-
-    return <span className="font-medium">{name}</span>;
-};
-
-const Value = ({ label, value }: { label: ActivityChange["old_label"]; value: ActivityChange["old"] }) => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    // A list reads as its resolved names, or as its raw keys
-    // when nothing named them.
-    if (Array.isArray(value)) {
-        const items = Array.isArray(label) ? label : value.map(String);
-
-        return <span>{items.length ? items.join(", ") : t("None")}</span>;
-    }
-
-    if (value === null) {
-        return <span className="text-muted-foreground">{t("None")}</span>;
-    }
-
-    if (typeof value === "boolean") {
-        return <span>{value ? t("Yes") : t("No")}</span>;
-    }
-
-    return <span>{typeof label === "string" ? label : value}</span>;
-};
-
-const Changes = ({ changes }: { changes: ActivityChange[] }) => {
-    /**
-     * Translate the provided string
-     * to the current locale.
-     */
-    const { currentLocale, t } = useLaravelReactI18n();
-
-    /**
-     * Present one stored value the way its field reads: an instant
-     * as a date, an amount without the padding the database keeps,
-     * and anything else as it is.
-     */
-    const present = (field: string, value: ActivityChange["old"]): ActivityChange["old"] => {
-        if (typeof value !== "string") {
-            return value;
-        }
-
-        if (DATE_FIELDS.includes(field)) {
-            const parsed = new Date(value);
-
-            return Number.isNaN(parsed.getTime())
-                ? value
-                : parsed.toLocaleDateString(currentLocale(), { dateStyle: "medium" });
-        }
-
-        // Decimal columns keep every scale digit, which nobody
-        // reads. Trailing zeros carry no value.
-        if (["amount", "quote"].includes(field) && value.includes(".")) {
-            return value.replace(/0+$/, "").replace(/\.$/, "");
-        }
-
-        return value;
-    };
-
-    if (!changes.length) {
-        return null;
-    }
-
-    /**
-     * An entry that only recorded values it had reads as what
-     * went, and one that only recorded values it gained reads
-     * as what arrived. Everything else is a replacement.
-     */
-    const isRemoval = changes.every((change) => change.new === null);
-    const isAddition = changes.every((change) => change.old === null);
-
-    return (
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-            {changes.map((change) => (
-                <div className="col-span-2 grid grid-cols-subgrid" key={change.field}>
-                    <dt className="text-muted-foreground">{t(FIELD_LABELS[change.field] ?? change.field)}</dt>
-                    <dd className="flex flex-wrap items-center gap-2">
-                        {isRemoval ? (
-                            <Value label={change.old_label} value={present(change.field, change.old)} />
-                        ) : isAddition ? (
-                            <Value label={change.new_label} value={present(change.field, change.new)} />
-                        ) : (
-                            <>
-                                <span className="text-muted-foreground line-through">
-                                    <Value label={change.old_label} value={present(change.field, change.old)} />
-                                </span>
-                                <Value label={change.new_label} value={present(change.field, change.new)} />
-                            </>
-                        )}
-                    </dd>
-                </div>
-            ))}
-        </dl>
-    );
-};
-
 const Entry = ({ batch }: { batch: ActivityEntry[] }) => {
     /**
      * Translate the provided string
@@ -382,12 +234,7 @@ const Entry = ({ batch }: { batch: ActivityEntry[] }) => {
     /**
      * The page's props.
      */
-    const { subjects } = usePage<PageProps>().props;
-
-    /**
-     * Whether the values before and after are shown.
-     */
-    const [open, setOpen] = useState(false);
+    const { subjects, user } = usePage<PageProps>().props;
 
     /**
      * The entry the batch reads as, which is the first row
@@ -400,68 +247,44 @@ const Entry = ({ batch }: { batch: ActivityEntry[] }) => {
     }
 
     /**
-     * The translated name of the kind of record a row is about.
+     * The translated name of the kind of record the entry
+     * is about.
      */
-    const subjectLabel = (entry: ActivityEntry) =>
-        subjects.find((subject) => subject.value === entry.subject_type)?.label ?? "";
-
-    /**
-     * Whether any row of the batch recorded values worth opening.
-     */
-    const hasChanges = batch.some((entry) => entry.changes.length);
+    const subject = subjects.find((option) => option.value === head.subject_type)?.label ?? "";
 
     return (
-        <div className="flex flex-col gap-3 border-b px-4 py-3 last:border-b-0">
-            <div className="flex items-start gap-3">
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <Causer causer={head.causer} />
-                        <Badge variant="secondary">{head.event}</Badge>
-                        <span className="text-muted-foreground truncate">
-                            {[subjectLabel(head), head.subject_label].filter(Boolean).join(" · ")}
-                        </span>
-                        {rest.length ? (
-                            <span className="text-muted-foreground text-xs">
-                                {t("+:count more", { count: String(rest.length) })}
-                            </span>
-                        ) : null}
-                    </div>
-                    {head.created_at ? (
-                        <span
-                            className="text-muted-foreground text-xs"
-                            title={new Date(head.created_at).toLocaleString(currentLocale(), {
-                                dateStyle: "long",
-                                timeStyle: "short",
-                            })}
-                        >
-                            {formatRelativeTime(head.created_at, currentLocale())}
+        <ModalLink
+            className="hover:bg-muted/50 flex items-start gap-3 border-b px-4 py-3 transition-colors last:border-b-0"
+            href={routes.show.url({ team: user?.current_team?.slug ?? "", activity: head.id })}
+        >
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <span className="font-medium">{causerName(head.causer, t)}</span>
+                    <Badge variant="secondary">{head.event}</Badge>
+                    <span className="text-muted-foreground truncate">
+                        {[subject, head.subject_label].filter(Boolean).join(" · ")}
+                    </span>
+                    {rest.length ? (
+                        <span className="text-muted-foreground text-xs">
+                            {t("+:count more", { count: String(rest.length) })}
                         </span>
                     ) : null}
                 </div>
-                {hasChanges ? (
-                    <Button onClick={() => setOpen(!open)} size="icon" variant="ghost">
-                        <ChevronDownIcon className={cn("transition-transform", open && "rotate-180")} />
-                        <span className="sr-only">{t("Details")}</span>
-                    </Button>
+                {head.created_at ? (
+                    <span
+                        className="text-muted-foreground text-xs"
+                        suppressHydrationWarning
+                        title={new Date(head.created_at).toLocaleString(currentLocale(), {
+                            dateStyle: "long",
+                            timeStyle: "short",
+                        })}
+                    >
+                        {formatRelativeTime(head.created_at, currentLocale())}
+                    </span>
                 ) : null}
             </div>
-            {open ? (
-                <div className="flex flex-col gap-3 pl-1">
-                    {batch.map((entry) => (
-                        <div className="flex flex-col gap-1" key={entry.id}>
-                            {batch.length > 1 ? (
-                                <span className="text-muted-foreground text-xs">
-                                    {[subjectLabel(entry), entry.subject_label, entry.event]
-                                        .filter(Boolean)
-                                        .join(" · ")}
-                                </span>
-                            ) : null}
-                            <Changes changes={entry.changes} />
-                        </div>
-                    ))}
-                </div>
-            ) : null}
-        </div>
+            <ChevronRightIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+        </ModalLink>
     );
 };
 

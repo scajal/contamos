@@ -635,5 +635,7 @@
     "Ends": "Termina",
     "Invitation": "Invitación",
     "Subscription": "Suscripción",
-    "Transaction": "Transacción"
+    "Transaction": "Transacción",
+    "Activity details": "Detalles de la actividad",
+    "This change recorded no values.": "Este cambio no registró valores."
 }

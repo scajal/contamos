@@ -80,6 +80,14 @@ Route::as('identity.teams.')
             ])
             ->name('activity.index');
 
+        Route::get('activity/{activity}', [\App\Modules\Core\Identity\Http\Controllers\Team\ActivityController::class, 'show'])
+            ->middleware([
+                EnsureTeamPermission::using(Permission::ViewActivity),
+                EnsureFeaturesAreActive::using(Feature::ViewActivity),
+            ])
+            ->name('activity.show')
+            ->scopeBindings();
+
         /*
         |--------------------------------------------------------------------------
         | Member routes

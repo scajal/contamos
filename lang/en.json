@@ -575,5 +575,7 @@
     "Ends": "Ends",
     "Invitation": "Invitation",
     "Subscription": "Subscription",
-    "Transaction": "Transaction"
+    "Transaction": "Transaction",
+    "Activity details": "Activity details",
+    "This change recorded no values.": "This change recorded no values."
 }

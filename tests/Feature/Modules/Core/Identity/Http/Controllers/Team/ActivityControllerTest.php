@@ -51,6 +51,17 @@ function visitActivity(Team $team, array $query = []): Illuminate\Testing\TestRe
     return test()->get(route('identity.teams.activity.index', ['team' => $team->getRouteKey(), ...$query]));
 }
 
+/**
+ * Open the detail sheet of one entry of a
+ * \App\Modules\Core\Identity\Models\Team activity log.
+ */
+function openActivity(Team $team, Activity $activity): Illuminate\Testing\TestResponse
+{
+    return test()
+        ->withHeaders(inertiaModalHeaders())
+        ->get(route('identity.teams.activity.show', ['team' => $team->getRouteKey(), 'activity' => $activity->getKey()]));
+}
+
 describe('index', function (): void {
     it('redirects guests to login', function (): void {
         $team = Team::factory()->create();
@@ -214,30 +225,6 @@ describe('index', function (): void {
                     ->where('activities.data.3.causer', ['kind' => 'system', 'name' => null])));
     });
 
-    it('names the records a change refers to and keeps the raw key when one is gone', function (): void {
-        [$user, $team] = actingMember();
-        subscribeToPro($team);
-        $account = Account::factory()->bank()->for($team)->create(['name' => 'Checking']);
-        $tag = Tag::factory()->for($team)->create(['name' => 'Comida']);
-        clearActivities();
-        recordActivity($team, [
-            'subject_type' => Transaction::class,
-            'attribute_changes' => ['old' => [], 'attributes' => [
-                'account_id' => $account->getKey(),
-                'tags' => [$tag->getKey(), 'missing-tag'],
-            ]],
-        ]);
-
-        visitActivity($team)
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->loadDeferredProps(fn (Assert $page): Assert => $page
-                    ->where('activities.data.0.changes.0.field', 'account_id')
-                    ->where('activities.data.0.changes.0.new', $account->getKey())
-                    ->where('activities.data.0.changes.0.new_label', 'Checking')
-                    ->where('activities.data.0.changes.1.field', 'tags')
-                    ->where('activities.data.0.changes.1.new_label', ['Comida', 'missing-tag'])));
-    });
-
     it('names a deleted transaction by the values it was deleted with', function (): void {
         [$user, $team] = actingMember();
         subscribeToPro($team);
@@ -258,5 +245,124 @@ describe('index', function (): void {
             ->assertInertia(fn (Assert $page): Assert => $page
                 ->loadDeferredProps(fn (Assert $page): Assert => $page
                     ->where('activities.data.0.subject_label', '25.5 UYU')));
+    });
+});
+
+describe('show', function (): void {
+    it('redirects guests to login', function (): void {
+        $team = Team::factory()->create();
+        $activity = recordActivity($team);
+
+        openActivity($team, $activity)->assertRedirectToRoute('login');
+    });
+
+    it('forbids a member holding the member role on a pro team', function (): void {
+        [$user, $team] = actingMember(Role::Member);
+        subscribeToPro($team);
+        $activity = recordActivity($team);
+
+        openActivity($team, $activity)->assertForbidden();
+    });
+
+    it('redirects the owner of a free team to the upgrade modal', function (): void {
+        [$user, $team] = actingMember();
+        $activity = recordActivity($team);
+
+        openActivity($team, $activity)->assertRedirectToRoute('billing.teams.subscriptions.upgrade', [
+            'team' => $team->getRouteKey(),
+            'feature' => Feature::ViewActivity->value,
+        ]);
+    });
+
+    it('does not find an entry of another team', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $foreign = recordActivity(Team::factory()->create());
+
+        openActivity($team, $foreign)->assertNotFound();
+    });
+
+    it('opens every row the same action wrote, in the order it wrote them', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $tag = Tag::factory()->for($team)->create(['name' => 'Comida']);
+        clearActivities();
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), [
+            'amount' => '10.50',
+            'description' => 'Lunch',
+            'occurred_at' => '2024-06-01 12:00:00',
+            'quote' => '1',
+            'type' => 'expense',
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'tag_ids' => [$tag->getKey()],
+        ])->assertRedirect();
+
+        openActivity($team, activitiesOf($team)->first())
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('identity/teams/activity/show')
+                ->has('entries', 2)
+                ->where('entries.0.event', 'created')
+                ->where('entries.0.causer.name', $user->name)
+                ->where('entries.1.event', 'tags_synced'));
+    });
+
+    it('opens an entry written outside a batch on its own', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        clearActivities();
+        $tag = Tag::factory()->for($team)->create(['name' => 'Comida']);
+
+        openActivity($team, activitiesOf($team)->sole())
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->has('entries', 1)
+                ->where('entries.0.subject_label', 'Comida'));
+    });
+
+    it('names the records a change refers to and keeps the raw key when one is gone', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $account = Account::factory()->bank()->for($team)->create(['name' => 'Checking']);
+        $tag = Tag::factory()->for($team)->create(['name' => 'Comida']);
+        clearActivities();
+        recordActivity($team, [
+            'subject_type' => Transaction::class,
+            'attribute_changes' => ['old' => [], 'attributes' => [
+                'account_id' => $account->getKey(),
+                'tags' => [$tag->getKey(), 'missing-tag'],
+            ]],
+        ]);
+
+        openActivity($team, activitiesOf($team)->sole())
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('entries.0.changes.0.field', 'account_id')
+                ->where('entries.0.changes.0.new', $account->getKey())
+                ->where('entries.0.changes.0.new_label', 'Checking')
+                ->where('entries.0.changes.1.field', 'tags')
+                ->where('entries.0.changes.1.new_label', ['Comida', 'missing-tag']));
+    });
+
+    it('lists a change with only the values it recorded', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $tag = Tag::factory()->for($team)->create(['name' => 'Old']);
+        clearActivities();
+
+        $this->patch(route('finance.teams.tags.update', [
+            'team' => $team->getRouteKey(),
+            'tag' => $tag->getKey(),
+        ]), ['name' => 'New'])->assertRedirect();
+
+        openActivity($team, activitiesOf($team)->sole())
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('entries.0.changes.0.field', 'name')
+                ->where('entries.0.changes.0.old', 'Old')
+                ->where('entries.0.changes.0.new', 'New'));
     });
 });
