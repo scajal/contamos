@@ -12,14 +12,17 @@ use Laravel\Pennant\Feature as Pennant;
  */
 it('reads the limit from the Pennant feature class', function (): void {
     expect(Feature::AddAccounts->limitOn(Plan::Free))->toBe(3)
-        ->and(Feature::AddAccounts->limitOn(Plan::Pro))->toBeNull();
+        ->and(Feature::AddAccounts->limitOn(Plan::Pro))->toBeNull()
+        ->and(Feature::ViewHistory->limitOn(Plan::Free))->toBe(6)
+        ->and(Feature::ViewHistory->limitOn(Plan::Pro))->toBeNull();
 });
 
 it('tells a switch feature from a quota feature', function (): void {
     expect(Feature::AssignRoles->isSwitch())->toBeTrue()
         ->and(Feature::AddAccounts->isSwitch())->toBeFalse()
         ->and(Feature::AddMembers->isSwitch())->toBeFalse()
-        ->and(Feature::AddTeams->isSwitch())->toBeFalse();
+        ->and(Feature::AddTeams->isSwitch())->toBeFalse()
+        ->and(Feature::ViewHistory->isSwitch())->toBeFalse();
 });
 
 it('has no limit for a switch feature', function (): void {
@@ -31,7 +34,9 @@ it('reads whether the plan includes the feature', function (): void {
     expect(Feature::AssignRoles->includedIn(Plan::Free))->toBeFalse()
         ->and(Feature::AssignRoles->includedIn(Plan::Pro))->toBeTrue()
         ->and(Feature::AddAccounts->includedIn(Plan::Free))->toBeTrue()
-        ->and(Feature::AddAccounts->includedIn(Plan::Pro))->toBeTrue();
+        ->and(Feature::AddAccounts->includedIn(Plan::Pro))->toBeTrue()
+        ->and(Feature::ViewHistory->includedIn(Plan::Free))->toBeTrue()
+        ->and(Feature::ViewHistory->includedIn(Plan::Pro))->toBeTrue();
 });
 
 it('lists every feature with its limit or inclusion on the plan', function (): void {
@@ -40,11 +45,13 @@ it('lists every feature with its limit or inclusion on the plan', function (): v
         'members:create' => 2,
         'teams:create' => 1,
         'members:roles' => false,
+        'history:view' => 6,
     ])->and(Plan::Pro->features())->toBe([
         'accounts:create' => null,
         'members:create' => null,
         'teams:create' => null,
         'members:roles' => true,
+        'history:view' => null,
     ]);
 });
 

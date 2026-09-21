@@ -37,6 +37,18 @@ Route::as('finance.teams.')
 
         /*
         |--------------------------------------------------------------------------
+        | Monthly routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the monthly report.
+        |
+        */
+
+        Route::get('/monthly', [\App\Modules\Core\Finance\Http\Controllers\Team\MonthlyController::class, 'index'])
+            ->name('monthly.index');
+
+        /*
+        |--------------------------------------------------------------------------
         | Account routes
         |--------------------------------------------------------------------------
         |

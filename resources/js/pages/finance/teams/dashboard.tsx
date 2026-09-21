@@ -2,7 +2,7 @@ import { Deferred, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { format, parseISO } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ArrowDownIcon, ArrowUpIcon, CircleDashedIcon, EyeIcon, PlusIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, CalendarRangeIcon, CircleDashedIcon, EyeIcon, PlusIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
 } from "@/lib/transactions";
 import { cn, formatAmount } from "@/lib/utils";
 import accounts from "@/routes/finance/teams/accounts";
+import monthly from "@/routes/finance/teams/monthly";
 import transactions from "@/routes/finance/teams/transactions";
 import { AccountBalance } from "@/types/app/modules/core/finance/models/team/account-balance";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
@@ -74,9 +75,21 @@ const Header = () => {
     const { team } = usePage<PageProps>().props;
 
     return (
-        <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-medium">{team.name}</h1>
-            <p className="text-muted-foreground text-sm">{t("Income and expenses across this team's accounts.")}</p>
+        <header className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-1">
+                <h1 className="text-2xl font-medium">{team.name}</h1>
+                <p className="text-muted-foreground text-sm">{t("Income and expenses across this team's accounts.")}</p>
+            </div>
+            <Button
+                nativeButton={false}
+                render={
+                    <Link href={monthly.index.url({ team: team.slug })} prefetch>
+                        <CalendarRangeIcon data-icon="inline-start" />
+                        {t("This month")}
+                    </Link>
+                }
+                variant="outline"
+            />
         </header>
     );
 };
