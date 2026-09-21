@@ -6,6 +6,7 @@ namespace App\Modules\Core\Identity\Enums\Team\Activity;
 
 use App\Modules\Billing\Models\Subscription;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
@@ -26,6 +27,11 @@ enum ActivitySubject: string implements HasLabel
      * Represents an account of the team.
      */
     case Account = 'account';
+
+    /**
+     * Represents one dated stretch of a tag's budget.
+     */
+    case Budget = 'budget';
 
     /**
      * Represents an invitation to join the team.
@@ -84,6 +90,7 @@ enum ActivitySubject: string implements HasLabel
     {
         return match ($this) {
             self::Account => trans('Account'),
+            self::Budget => trans('Budget'),
             self::Invitation => trans('Invitation'),
             self::Member => trans('Member'),
             self::Subscription => trans('Subscription'),
@@ -103,6 +110,7 @@ enum ActivitySubject: string implements HasLabel
     {
         return match ($this) {
             self::Account => Account::class,
+            self::Budget => BudgetPeriod::class,
             self::Invitation => TeamInvitation::class,
             self::Member => User::class,
             self::Subscription => Subscription::class,

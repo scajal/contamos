@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Identity\Models\Team;
+use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
@@ -361,5 +365,197 @@ describe('deactivate', function (): void {
         expect($activity->event)->toBe('updated')
             ->and($activity->attribute_changes['old'])->toBe(['is_active' => true])
             ->and($activity->attribute_changes['attributes'])->toBe(['is_active' => false]);
+    });
+});
+
+describe('budgets on the tag form', function (): void {
+    /**
+     * Create a pro team holding one currency on an active
+     * account, which is what a budget may be set in.
+     *
+     * @return array{0: \App\Modules\Core\Identity\Models\Team, 1: \App\Modules\Core\Catalog\Models\Currency}
+     */
+    $budgetingTeam = function (bool $pro = true): array {
+        [$user, $team] = actingMember();
+
+        if ($pro) {
+            subscribeToPro($team);
+        }
+
+        $currency = Currency::factory()->active()->fiat()->create(['code' => 'ARS', 'decimal_places' => 2]);
+        $account = Account::factory()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '0']);
+
+        return [$team, $currency];
+    };
+
+    it('offers the held currencies on the create modal', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam();
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.tags.create', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('currencies', 1)
+                ->where('currencies.0.code', 'ARS'));
+    });
+
+    it('shows no budget fields to a free team', function () use ($budgetingTeam): void {
+        [$team] = $budgetingTeam(false);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.tags.create', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('currencies', 0));
+    });
+
+    it('opens a budget from this month when the tag is created', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam();
+
+        $this->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload([
+            'budgets' => [$currency->getKey() => '750.00'],
+        ]))->assertRedirect();
+
+        $period = BudgetPeriod::query()->sole();
+
+        expect((float) $period->amount)->toBe(750.0)
+            ->and($period->from_month->format('Y-m'))->toBe(CarbonImmutable::now()->format('Y-m'))
+            ->and($period->until_month)->toBeNull();
+    });
+
+    it('creates no budget when the amount is left blank', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam();
+
+        $this->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload([
+            'budgets' => [$currency->getKey() => ''],
+        ]))->assertRedirect();
+
+        expect(BudgetPeriod::query()->count())->toBe(0);
+    });
+
+    it('ignores budgets submitted by a free team', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam(false);
+
+        $this->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload([
+            'budgets' => [$currency->getKey() => '750.00'],
+        ]))->assertRedirect();
+
+        expect(BudgetPeriod::query()->count())->toBe(0);
+    });
+
+    it('rejects a currency the team does not hold', function () use ($budgetingTeam): void {
+        [$team] = $budgetingTeam();
+        $foreign = Currency::factory()->active()->fiat()->create(['code' => 'EUR']);
+
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload([
+                'budgets' => [$foreign->getKey() => '750.00'],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['budgets']);
+
+        expect(BudgetPeriod::query()->count())->toBe(0);
+    });
+
+    it('rejects an amount that is not positive', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam();
+
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload([
+                'budgets' => [$currency->getKey() => '-10'],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['budgets.'.$currency->getKey()]);
+    });
+
+    it('prefills the edit modal with the running amount', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam();
+        $tag = Tag::factory()->for($team)->create();
+        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '400']);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.tags.edit', [
+                'team' => $team->getRouteKey(),
+                'tag' => $tag->getKey(),
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('budgets.'.$currency->getKey(), fn (mixed $value): bool => (float) $value === 400.0));
+    });
+
+    it('ends the running stretch last month and opens a new one on the new amount', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam();
+        $tag = Tag::factory()->for($team)->create(['name' => 'Food']);
+        $running = BudgetPeriod::factory()->for($tag)->for($currency)->create([
+            'amount' => '400',
+            'from_month' => CarbonImmutable::now()->subMonths(3),
+            'until_month' => null,
+        ]);
+
+        $this->patch(route('finance.teams.tags.update', [
+            'team' => $team->getRouteKey(),
+            'tag' => $tag->getKey(),
+        ]), tagPayload([
+            'name' => 'Food',
+            'budgets' => [$currency->getKey() => '600'],
+        ]))->assertRedirect();
+
+        $opened = BudgetPeriod::query()->whereKeyNot($running)->sole();
+
+        expect($running->fresh()?->until_month?->format('Y-m'))->toBe(CarbonImmutable::now()->subMonth()->format('Y-m'))
+            ->and((float) $opened->amount)->toBe(600.0)
+            ->and($opened->from_month->format('Y-m'))->toBe(CarbonImmutable::now()->format('Y-m'));
+    });
+
+    it('changes the amount in place when the stretch started this month', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam();
+        $tag = Tag::factory()->for($team)->create(['name' => 'Food']);
+        $running = BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '400']);
+
+        $this->patch(route('finance.teams.tags.update', [
+            'team' => $team->getRouteKey(),
+            'tag' => $tag->getKey(),
+        ]), tagPayload([
+            'name' => 'Food',
+            'budgets' => [$currency->getKey() => '600'],
+        ]))->assertRedirect();
+
+        expect(BudgetPeriod::query()->count())->toBe(1)
+            ->and((float) $running->fresh()?->amount)->toBe(600.0);
+    });
+
+    it('stops the budget at the end of last month when the amount is cleared', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam();
+        $tag = Tag::factory()->for($team)->create(['name' => 'Food']);
+        $running = BudgetPeriod::factory()->for($tag)->for($currency)->create([
+            'amount' => '400',
+            'from_month' => CarbonImmutable::now()->subMonths(3),
+            'until_month' => null,
+        ]);
+
+        $this->patch(route('finance.teams.tags.update', [
+            'team' => $team->getRouteKey(),
+            'tag' => $tag->getKey(),
+        ]), tagPayload([
+            'name' => 'Food',
+            'budgets' => [$currency->getKey() => ''],
+        ]))->assertRedirect();
+
+        expect($running->fresh()?->until_month?->format('Y-m'))
+            ->toBe(CarbonImmutable::now()->subMonth()->format('Y-m'));
+    });
+
+    it('leaves a currency the form did not carry untouched', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam();
+        $tag = Tag::factory()->for($team)->create(['name' => 'Food']);
+        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '400']);
+
+        $this->patch(route('finance.teams.tags.update', [
+            'team' => $team->getRouteKey(),
+            'tag' => $tag->getKey(),
+        ]), tagPayload(['name' => 'Food']))->assertRedirect();
+
+        expect((float) BudgetPeriod::query()->sole()->amount)->toBe(400.0);
     });
 });

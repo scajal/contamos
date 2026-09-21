@@ -85,6 +85,49 @@ Route::as('finance.teams.')
 
         /*
         |--------------------------------------------------------------------------
+        | Budget routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the per-tag budget management.
+        |
+        */
+
+        // The listing itself stays reachable on every plan so a
+        // team that downgrades sees the locked upgrade state
+        // rather than losing the page.
+        Route::get('budgets', [\App\Modules\Core\Finance\Http\Controllers\Team\BudgetController::class, 'index'])
+            ->name('budgets.index');
+
+        Route::middleware(EnsureFeaturesAreActive::using(Feature::ManageBudgets))->group(function (): void {
+            Route::get('budgets/create', [\App\Modules\Core\Finance\Http\Controllers\Team\BudgetController::class, 'create'])
+                ->name('budgets.create');
+
+            Route::post('budgets', [\App\Modules\Core\Finance\Http\Controllers\Team\BudgetController::class, 'store'])
+                ->name('budgets.store');
+
+            Route::get('budgets/{budget}/edit', [\App\Modules\Core\Finance\Http\Controllers\Team\BudgetController::class, 'edit'])
+                ->name('budgets.edit')
+                ->scopeBindings();
+
+            Route::patch('budgets/{budget}', [\App\Modules\Core\Finance\Http\Controllers\Team\BudgetController::class, 'update'])
+                ->name('budgets.update')
+                ->scopeBindings();
+
+            Route::patch('budgets/{budget}/pause', [\App\Modules\Core\Finance\Http\Controllers\Team\BudgetController::class, 'pause'])
+                ->name('budgets.pause')
+                ->scopeBindings();
+
+            Route::patch('budgets/{budget}/resume', [\App\Modules\Core\Finance\Http\Controllers\Team\BudgetController::class, 'resume'])
+                ->name('budgets.resume')
+                ->scopeBindings();
+
+            Route::delete('budgets/{budget}', [\App\Modules\Core\Finance\Http\Controllers\Team\BudgetController::class, 'destroy'])
+                ->name('budgets.destroy')
+                ->scopeBindings();
+        });
+
+        /*
+        |--------------------------------------------------------------------------
         | Tag routes
         |--------------------------------------------------------------------------
         |

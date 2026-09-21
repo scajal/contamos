@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Http\Requests\Team\Tag;
 
+use App\Modules\Core\Finance\Http\Requests\Team\Tag\Concerns\ResolvesTagBudgets;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Identity\Models\Team;
 use Closure;
@@ -13,6 +14,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreRequest extends FormRequest
 {
+    use ResolvesTagBudgets;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -20,6 +23,14 @@ class StoreRequest extends FormRequest
     {
         // @todo: Add authorization logic.
         return true;
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->normalizeBudgets();
     }
 
     /**
@@ -36,6 +47,7 @@ class StoreRequest extends FormRequest
                 'max:255',
                 $this->uniqueName($team),
             ],
+            ...$this->budgetRules($team),
         ];
     }
 

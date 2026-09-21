@@ -14,10 +14,15 @@ import {
 import { Modal } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
 import tags from "@/routes/finance/teams/tags";
+import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 
 import { Fields } from "./_components/fields";
 
-export default function Create() {
+type PageProps = {
+    currencies: Array<Currency>;
+};
+
+export default function Create({ currencies }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -51,7 +56,7 @@ export default function Create() {
                                         <DialogDescription>{t("Name the tag.")}</DialogDescription>
                                     </DialogHeader>
                                     <div className="flex-1">
-                                        <Fields {...formProps} />
+                                        <Fields currencies={currencies} {...formProps} />
                                     </div>
                                     <DialogFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">

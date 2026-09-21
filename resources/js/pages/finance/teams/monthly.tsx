@@ -11,10 +11,12 @@ import {
     CircleDashedIcon,
     LockIcon,
     PlusIcon,
+    WalletIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { Bar, CartesianGrid, Cell, ComposedChart, Line, Pie, PieChart, XAxis } from "recharts";
 
+import { BudgetProgress } from "@/components/budget-progress";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -26,6 +28,7 @@ import {
     type ChartConfig,
 } from "@/components/ui/chart";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemMedia } from "@/components/ui/item";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableBody, TableCell, Table as TableComponent, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -35,6 +38,7 @@ import subscriptions from "@/routes/billing/teams/subscriptions";
 import accounts from "@/routes/finance/teams/accounts";
 import monthly from "@/routes/finance/teams/monthly";
 import transactions from "@/routes/finance/teams/transactions";
+import { BudgetProgress as BudgetProgressFigures } from "@/types/app/modules/core/finance/models/team/budget-period";
 import { Team } from "@/types/app/modules/core/identity/models/team";
 
 /**
@@ -81,6 +85,7 @@ type Total = {
  * money that carries no tag at all.
  */
 type TagRow = {
+    budget: BudgetProgressFigures | null;
     expenses: string;
     id: string | null;
     income: string;
@@ -112,6 +117,7 @@ export type Figure = {
 };
 
 type PageProps = {
+    can_budget: boolean;
     earliest_month: string;
     figures: Array<Figure>;
     has_accounts: boolean;
@@ -338,6 +344,7 @@ const CurrencySection = ({ figure }: { figure: Figure }) => {
             {/** Where the money went */}
             {figure.tags.length ? (
                 <div className="flex flex-col gap-2">
+                    <BudgetsUpsell />
                     <TagTable figure={figure} />
                     <p className="text-muted-foreground text-xs">
                         {t(
@@ -479,6 +486,57 @@ const DeltaLabel = ({
     );
 };
 
+const BudgetsUpsell = () => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { can_budget, team } = usePage<PageProps>().props;
+
+    /**
+     * A team whose plan already has budgets has nothing
+     * to learn here.
+     */
+    if (can_budget) {
+        return null;
+    }
+
+    return (
+        <Item variant="muted">
+            <ItemMedia variant="icon">
+                <WalletIcon className="text-muted-foreground" />
+            </ItemMedia>
+            <ItemContent>
+                <ItemDescription>
+                    {t("Set budgets per tag with Pro and follow every category against its limit.")}
+                </ItemDescription>
+            </ItemContent>
+            <ItemActions>
+                <Button
+                    nativeButton={false}
+                    render={
+                        <ModalLink
+                            href={subscriptions.upgrade.url(
+                                { team: team.slug },
+                                { query: { feature: "budgets:manage" } },
+                            )}
+                        >
+                            {t("Upgrade to Pro")}
+                        </ModalLink>
+                    }
+                    size="sm"
+                    variant="outline"
+                />
+            </ItemActions>
+        </Item>
+    );
+};
+
 const TagTable = ({ figure }: { figure: Figure }) => {
     /**
      * Translate the provided string
@@ -522,6 +580,15 @@ const TagTable = ({ figure }: { figure: Figure }) => {
                                         {tag.name ?? t("Untagged")}
                                     </span>
                                 </Link>
+                                {/** A budgeted tag shows how far the month has
+                                 * gone into it, right under its name. */}
+                                {tag.budget ? (
+                                    <BudgetProgress
+                                        className="mt-1.5 max-w-xs"
+                                        currency={figure.currency}
+                                        progress={tag.budget}
+                                    />
+                                ) : null}
                             </TableCell>
                             <TagAmount amount={tag.income} className="text-success" currency={figure.currency} />
                             <TagAmount amount={tag.expenses} className="text-destructive" currency={figure.currency} />

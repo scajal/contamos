@@ -6,6 +6,7 @@ namespace App\Modules\Core\Identity\Http\Controllers\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Identity\Enums\Team\Activity\ActivitySubject;
 use App\Modules\Core\Identity\Enums\Team\Role;
@@ -352,12 +353,34 @@ class ActivityController
 
         return match ($subject) {
             ActivitySubject::Account, ActivitySubject::Tag, ActivitySubject::Team => $named('name'),
+            // A budget period has no name of its own, so it goes
+            // by the tag it belongs to, and by what it was set
+            // at once the period is gone.
+            ActivitySubject::Budget => $this->budgetLabel($activity, $stored, $names),
             ActivitySubject::Invitation => $named('email'),
             ActivitySubject::Member => is_string($name = $activity->subject?->getAttribute('name')) ? $name : null,
             ActivitySubject::Subscription => ActivitySubject::Subscription->getLabel(),
             ActivitySubject::Transaction, ActivitySubject::Transfer => $named('description') ?? $this->amountLabel($stored, $names),
             null => null,
         };
+    }
+
+    /**
+     * Name a budget period by the tag it is set on, falling back
+     * to the amount it carried once the period is gone.
+     *
+     * @param  array<string, mixed>  $stored
+     * @param  array<string, array<string, string>>  $names
+     */
+    protected function budgetLabel(Activity $activity, array $stored, array $names): ?string
+    {
+        $subject = $activity->subject;
+
+        if ($subject instanceof BudgetPeriod) {
+            return $subject->tag->name;
+        }
+
+        return $this->amountLabel($stored, $names);
     }
 
     /**

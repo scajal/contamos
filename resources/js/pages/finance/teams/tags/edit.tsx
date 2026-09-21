@@ -14,15 +14,18 @@ import {
 import { Modal } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
 import tags from "@/routes/finance/teams/tags";
+import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 
 import { Fields } from "./_components/fields";
 
 type PageProps = {
+    budgets: Record<string, string>;
+    currencies: Array<Currency>;
     tag: Tag;
 };
 
-export default function Edit({ tag }: PageProps) {
+export default function Edit({ budgets, currencies, tag }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -56,7 +59,11 @@ export default function Edit({ tag }: PageProps) {
                                         <DialogDescription>{t("Edit the tag.")}</DialogDescription>
                                     </DialogHeader>
                                     <div className="flex-1">
-                                        <Fields defaultValues={tag} {...formProps} />
+                                        <Fields
+                                            currencies={currencies}
+                                            defaultValues={{ ...tag, budgets }}
+                                            {...formProps}
+                                        />
                                     </div>
                                     <DialogFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">

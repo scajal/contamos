@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property string $id
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $team_id
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\BudgetPeriod> $budgetPeriods
  * @property-read \App\Modules\Core\Identity\Models\Team $team
  *
  * @method static \Database\Factories\Modules\Core\Finance\Models\Team\TagFactory factory($count = null, $state = [])
@@ -60,6 +62,17 @@ class Tag extends Model
     public function activityTeamKey(): ?string
     {
         return is_string($key = $this->getAttribute($this->team()->getForeignKeyName())) ? $key : null;
+    }
+
+    /**
+     * Get the budget periods set on the tag, in every
+     * currency it is budgeted in.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\BudgetPeriod, $this>
+     */
+    public function budgetPeriods(): HasMany
+    {
+        return $this->hasMany(BudgetPeriod::class);
     }
 
     /**

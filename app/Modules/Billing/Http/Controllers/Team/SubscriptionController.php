@@ -134,7 +134,7 @@ class SubscriptionController
     {
         $limits = [];
 
-        foreach ([Feature::AddAccounts, Feature::AddMembers, Feature::AssignRoles, Feature::ViewHistory] as $feature) {
+        foreach ([Feature::AddAccounts, Feature::AddMembers, Feature::AssignRoles, Feature::ManageBudgets, Feature::ViewHistory] as $feature) {
             $limits[] = $this->row($feature, $team);
         }
 

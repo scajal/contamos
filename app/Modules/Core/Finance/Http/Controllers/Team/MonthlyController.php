@@ -7,15 +7,15 @@ namespace App\Modules\Core\Finance\Http\Controllers\Team;
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
+use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\CalculatesBudgetProgress;
+use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\SumsTaggedActivity;
 use App\Modules\Core\Finance\Http\Requests\Team\Monthly\IndexRequest;
 use App\Modules\Core\Finance\Models\Team\Account;
-use App\Modules\Core\Finance\Models\Team\Tag;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -23,6 +23,9 @@ use Inertia\Response;
 
 class MonthlyController
 {
+    use CalculatesBudgetProgress;
+    use SumsTaggedActivity;
+
     /**
      * The format the selected month travels in, both in
      * the URL and in the page props.
@@ -65,6 +68,10 @@ class MonthlyController
         $isLocked = $month->lessThan($earliest);
 
         return Inertia::render('finance/teams/monthly', [
+            // A plan without budgets still learns they exist, so
+            // the tag table carries a single upsell instead of
+            // budget blocks.
+            'can_budget' => Feature::ManageBudgets->enabled($team),
             'earliest_month' => $earliest->format(self::MONTH_FORMAT),
             'figures' => $isLocked ? [] : Inertia::defer(
                 fn (): array => $this->figures($team, $month, $earliest),
@@ -281,7 +288,8 @@ class MonthlyController
      */
     protected function tagsByCurrency(Team $team, CarbonImmutable $month): Collection
     {
-        $rows = $this->taggedByCurrency($team, $month);
+        $budgets = $this->budgetPeriodsFor($team, $month);
+        $rows = $this->taggedByCurrency($team, $month, $budgets);
 
         // Money carrying no tag at all still has to show up, so
         // it is summed apart and pinned below the tags.
@@ -295,38 +303,18 @@ class MonthlyController
     /**
      * Sum the month's income and expenses per tag and currency,
      * biggest spender first, keeping tags the team has since
-     * retired as long as they were used that month.
+     * retired as long as they were used that month. A budgeted
+     * tag that stayed quiet still gets a row, so its budget is
+     * never missing from the month.
      *
+     * @param  \Illuminate\Support\Collection<string, \App\Modules\Core\Finance\Models\Team\BudgetPeriod>  $budgets
      * @return array<string, array<int, array<string, mixed>>>
      */
-    protected function taggedByCurrency(Team $team, CarbonImmutable $month): array
+    protected function taggedByCurrency(Team $team, CarbonImmutable $month, Collection $budgets): array
     {
-        $transaction = new Transaction;
-        $tag = new Tag;
-        $tags = $transaction->tags();
-        $currencyKey = $transaction->currency()->getForeignKeyName();
+        $currencyKey = new Transaction()->currency()->getForeignKeyName();
 
-        $rows = $this->monthly($team, $month)
-            ->select([
-                $transaction->qualifyColumn($currencyKey),
-                $tag->qualifyColumn($tag->getKeyName()).' as tag_id',
-                $tag->qualifyColumn('name').' as tag_name',
-            ])
-            ->selectRaw(...$this->sumOfType(TransactionType::Expense, 'expenses'))
-            ->selectRaw(...$this->sumOfType(TransactionType::Income, 'income'))
-            ->join($tags->getTable(), function (JoinClause $join) use ($transaction, $tags): void {
-                $join->on($tags->getQualifiedForeignPivotKeyName(), '=', $transaction->getQualifiedKeyName())
-                    ->where($tags->getQualifiedMorphTypeName(), $transaction->getMorphClass());
-            })
-            ->join($tag->getTable(), $tag->getQualifiedKeyName(), '=', $tags->getQualifiedRelatedPivotKeyName())
-            ->groupBy(
-                $transaction->qualifyColumn($currencyKey),
-                $tag->qualifyColumn($tag->getKeyName()),
-                $tag->qualifyColumn('name'),
-            )
-            ->get();
-
-        return $rows
+        $rows = $this->taggedTotals($team, $month)
             ->groupBy(fn (Transaction $row): string => $this->text($row->getAttribute($currencyKey)))
             ->mapWithKeys(fn (EloquentCollection $group, int|string $currency): array => [
                 (string) $currency => $group
@@ -335,12 +323,63 @@ class MonthlyController
                         $this->text($row->getAttribute('tag_name')),
                         $this->decimal($row->getAttribute('income')),
                         $this->decimal($row->getAttribute('expenses')),
+                        $budgets->get($this->budgetKey(
+                            $this->text($row->getAttribute('tag_id')),
+                            $this->text($row->getAttribute($currencyKey)),
+                        )),
                     ))
-                    ->sort($this->byExpensesThenName(...))
                     ->values()
                     ->all(),
             ])
             ->all();
+
+        // A budget the month has not been spent against yet is
+        // still something to report, so its tag joins the
+        // breakdown with a row of zeroes.
+        $rows = $this->withQuietBudgets($rows, $budgets);
+
+        return array_map(
+            fn (array $group): array => new Collection($group)
+                ->sort($this->byExpensesThenName(...))
+                ->values()
+                ->all(),
+            $rows,
+        );
+    }
+
+    /**
+     * Add a zero row for every budgeted tag the month has no
+     * figures for, so the tag's bar is shown from the start
+     * of the month rather than appearing on first spend.
+     *
+     * @param  array<string, array<int, array<string, mixed>>>  $rows
+     * @param  \Illuminate\Support\Collection<string, \App\Modules\Core\Finance\Models\Team\BudgetPeriod>  $budgets
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    protected function withQuietBudgets(array $rows, Collection $budgets): array
+    {
+        $currencyKey = new BudgetPeriod()->currency()->getForeignKeyName();
+
+        foreach ($budgets as $period) {
+            $currency = $this->text($period->getAttribute($currencyKey));
+            $tagId = $this->text($period->getAttribute($period->tag()->getForeignKeyName()));
+
+            // The tag already reported figures for the currency,
+            // so its row carries the budget already.
+            $isReported = new Collection($rows[$currency] ?? [])
+                ->contains(fn (array $row): bool => $row['id'] === $tagId);
+
+            if ($isReported) {
+                continue;
+            }
+
+            $rows[$currency] = [
+                ...$rows[$currency] ?? [],
+                $this->tagRow($tagId, $period->tag->name, '0', '0', $period),
+            ];
+        }
+
+        return $rows;
     }
 
     /**
@@ -373,37 +412,20 @@ class MonthlyController
     }
 
     /**
-     * The month's income and expenses of the team's active
-     * accounts, the shape every tag aggregate starts from.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder<\App\Modules\Core\Finance\Models\Team\Transaction>
-     */
-    protected function monthly(Team $team, CarbonImmutable $month): Builder
-    {
-        $transaction = new Transaction;
-
-        return $team->transactions()
-            ->getQuery()
-            ->whereIn($transaction->qualifyColumn('type'), [
-                TransactionType::Expense->value,
-                TransactionType::Income->value,
-            ])
-            ->whereRelation('account', new Account()->qualifyColumn('is_active'), true)
-            ->occurredFrom($month->startOfMonth()->toDateString())
-            ->occurredUntil($month->endOfMonth()->toDateString());
-    }
-
-    /**
      * One row of the tag breakdown, where a null tag is the
-     * untagged money of the currency.
+     * untagged money of the currency. A row with no budget
+     * behind it carries a null block.
      *
      * @param  numeric-string  $income
      * @param  numeric-string  $expenses
      * @return array<string, mixed>
      */
-    protected function tagRow(?string $id, ?string $name, string $income, string $expenses): array
+    protected function tagRow(?string $id, ?string $name, string $income, string $expenses, ?BudgetPeriod $budget = null): array
     {
         return [
+            'budget' => $budget instanceof BudgetPeriod
+                ? $this->budgetProgress($budget, $income, $expenses)
+                : null,
             'expenses' => $expenses,
             'id' => $id,
             'income' => $income,
@@ -426,21 +448,6 @@ class MonthlyController
         return $spending === 0
             ? strcmp($this->text($first['name']), $this->text($second['name']))
             : $spending;
-    }
-
-    /**
-     * The raw select that sums the amounts of one transaction
-     * type, along with the type it is bound to.
-     *
-     * @param  literal-string  $alias
-     * @return array{0: literal-string, 1: array<int, string>}
-     */
-    protected function sumOfType(TransactionType $type, string $alias): array
-    {
-        return [
-            'COALESCE(SUM(CASE WHEN type = ? THEN amount ELSE 0 END), 0) AS '.$alias,
-            [$type->value],
-        ];
     }
 
     /**
@@ -510,27 +517,5 @@ class MonthlyController
             'moved_in' => '0',
             'moved_out' => '0',
         ];
-    }
-
-    /**
-     * Read an aggregated amount as a decimal string, since
-     * drivers hand sums back as strings, integers or floats.
-     *
-     * @return numeric-string
-     */
-    protected function decimal(mixed $amount): string
-    {
-        $value = $this->text($amount);
-
-        return is_numeric($value) ? $value : '0';
-    }
-
-    /**
-     * Read a raw column value as a string, since drivers
-     * type aggregated and key columns differently.
-     */
-    protected function text(mixed $value): string
-    {
-        return is_scalar($value) ? (string) $value : '';
     }
 }

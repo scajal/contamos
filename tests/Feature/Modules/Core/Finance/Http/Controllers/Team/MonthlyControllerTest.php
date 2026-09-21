@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
@@ -643,5 +644,195 @@ describe('trend', function (): void {
                     ->where('figures.0.trend.0.income', fn (mixed $amount): bool => (float) $amount === 100.0)
                     ->where('figures.0.trend.0.expenses', fn (mixed $amount): bool => (float) $amount === 0.0)
                     ->where('figures.0.trend.1.income', fn (mixed $amount): bool => (float) $amount === 0.0)));
+    });
+});
+
+describe('budgets', function (): void {
+    /**
+     * Create a pro team holding one currency on an active account,
+     * with a tag to budget and spend against.
+     *
+     * @return array{0: \App\Modules\Core\Identity\Models\Team, 1: \App\Modules\Core\Catalog\Models\Currency, 2: \App\Modules\Core\Finance\Models\Team\Account, 3: \App\Modules\Core\Finance\Models\Team\Tag}
+     */
+    $budgetingTeam = function (bool $pro = true): array {
+        [$user, $team] = actingMember();
+
+        if ($pro) {
+            subscribeToPro($team);
+        }
+
+        $currency = Currency::factory()->active()->fiat()->create(['code' => 'ARS', 'decimal_places' => 2]);
+        $account = Account::factory()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '0']);
+        $tag = Tag::factory()->active()->for($team)->create(['name' => 'Food']);
+
+        return [$team, $currency, $account, $tag];
+    };
+
+    it('reports what the month made of a budgeted tag', function () use ($budgetingTeam): void {
+        [$team, $currency, $account, $tag] = $budgetingTeam();
+        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+
+        $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '120',
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
+        ]);
+        $spent->attachTags([$tag->getKey()]);
+
+        $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('can_budget', true)
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('figures.0.tags.0.budget.amount', fn (mixed $value): bool => (float) $value === 500.0)
+                    ->where('figures.0.tags.0.budget.spent', fn (mixed $value): bool => (float) $value === 120.0)
+                    ->where('figures.0.tags.0.budget.income', fn (mixed $value): bool => (float) $value === 0.0)
+                    ->where('figures.0.tags.0.budget.remaining', fn (mixed $value): bool => (float) $value === 380.0)
+                    ->where('figures.0.tags.0.budget.percentage', fn (mixed $value): bool => (float) $value === 24.0)));
+    });
+
+    it('enlarges the pot with income tagged into the budget', function () use ($budgetingTeam): void {
+        [$team, $currency, $account, $tag] = $budgetingTeam();
+        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        $month = CarbonImmutable::now()->startOfMonth()->addDay();
+
+        $earned = Transaction::factory()->income()->for($account)->for($currency)->create(['amount' => '100', 'occurred_at' => $month]);
+        $earned->attachTags([$tag->getKey()]);
+
+        $spent = Transaction::factory()->expense()->for($account)->for($currency)->create(['amount' => '300', 'occurred_at' => $month]);
+        $spent->attachTags([$tag->getKey()]);
+
+        $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('figures.0.tags.0.budget.income', fn (mixed $value): bool => (float) $value === 100.0)
+                    ->where('figures.0.tags.0.budget.remaining', fn (mixed $value): bool => (float) $value === 300.0)
+                    ->where('figures.0.tags.0.budget.percentage', fn (mixed $value): bool => (float) $value === 50.0)));
+    });
+
+    it('reports a tag over its budget with a negative remaining', function () use ($budgetingTeam): void {
+        [$team, $currency, $account, $tag] = $budgetingTeam();
+        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '100']);
+
+        $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '150',
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
+        ]);
+        $spent->attachTags([$tag->getKey()]);
+
+        $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('figures.0.tags.0.budget.remaining', fn (mixed $value): bool => (float) $value === -50.0)
+                    ->where('figures.0.tags.0.budget.percentage', fn (mixed $value): bool => (float) $value === 150.0)));
+    });
+
+    it('leaves an unbudgeted tag and the untagged row without a budget', function () use ($budgetingTeam): void {
+        [$team, $currency, $account, $tag] = $budgetingTeam();
+        $month = CarbonImmutable::now()->startOfMonth()->addDay();
+
+        $tagged = Transaction::factory()->expense()->for($account)->for($currency)->create(['amount' => '40', 'occurred_at' => $month]);
+        $tagged->attachTags([$tag->getKey()]);
+
+        Transaction::factory()->expense()->for($account)->for($currency)->create(['amount' => '10', 'occurred_at' => $month]);
+
+        $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('figures.0.tags', 2)
+                    ->where('figures.0.tags.0.budget', null)
+                    ->where('figures.0.tags.1.name', null)
+                    ->where('figures.0.tags.1.budget', null)));
+    });
+
+    it('reports a budgeted tag the month has no figures for', function () use ($budgetingTeam): void {
+        [$team, $currency, $account, $tag] = $budgetingTeam();
+        $quiet = Tag::factory()->active()->for($team)->create(['name' => 'Zzz']);
+        BudgetPeriod::factory()->running()->for($quiet)->for($currency)->create(['amount' => '200']);
+
+        $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '40',
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
+        ]);
+        $spent->attachTags([$tag->getKey()]);
+
+        $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('figures.0.tags', 2)
+                    ->where('figures.0.tags.0.name', 'Food')
+                    ->where('figures.0.tags.1.name', 'Zzz')
+                    ->where('figures.0.tags.1.budget.spent', fn (mixed $value): bool => (float) $value === 0.0)
+                    ->where('figures.0.tags.1.budget.amount', fn (mixed $value): bool => (float) $value === 200.0)));
+    });
+
+    it('keeps a past month on the amount that was in force then', function () use ($budgetingTeam): void {
+        [$team, $currency, $account, $tag] = $budgetingTeam();
+        $past = CarbonImmutable::now()->startOfMonth()->subMonth();
+
+        BudgetPeriod::factory()->for($tag)->for($currency)->create([
+            'amount' => '300',
+            'from_month' => $past->subMonths(2),
+            'until_month' => $past,
+        ]);
+        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '900']);
+
+        $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '150',
+            'occurred_at' => $past->addDay(),
+        ]);
+        $spent->attachTags([$tag->getKey()]);
+
+        $this->get(route('finance.teams.monthly.index', [
+            'team' => $team->getRouteKey(),
+            'month' => $past->format('Y-m'),
+        ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('figures.0.tags.0.budget.amount', fn (mixed $value): bool => (float) $value === 300.0)
+                    ->where('figures.0.tags.0.budget.remaining', fn (mixed $value): bool => (float) $value === 150.0)));
+    });
+
+    it('keeps applying a budget on a deactivated tag', function () use ($budgetingTeam): void {
+        [$team, $currency, $account, $tag] = $budgetingTeam();
+        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+
+        $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '120',
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
+        ]);
+        $spent->attachTags([$tag->getKey()]);
+
+        $tag->deactivate();
+
+        $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('figures.0.tags.0.budget.amount', fn (mixed $value): bool => (float) $value === 500.0)));
+    });
+
+    it('omits the budget blocks and flags the upsell for a free team', function () use ($budgetingTeam): void {
+        [$team, $currency, $account, $tag] = $budgetingTeam(false);
+        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+
+        $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '120',
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
+        ]);
+        $spent->attachTags([$tag->getKey()]);
+
+        $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('can_budget', false)
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('figures.0.tags', 1)
+                    ->where('figures.0.tags.0.budget', null)));
     });
 });

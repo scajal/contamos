@@ -6,7 +6,10 @@ namespace App\Modules\Core\Identity\Models;
 
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
+use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\AccountCurrency;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
@@ -16,11 +19,13 @@ use App\Modules\Support\Concerns\LogsTeamActivity;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use Laravel\Paddle\Billable;
@@ -118,6 +123,46 @@ class Team extends Model
     public function accounts(): HasMany
     {
         return $this->hasMany(Account::class);
+    }
+
+    /**
+     * Get the budget periods set on the team's tags, which is
+     * how a budget is scoped to the team at all.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough<\App\Modules\Core\Finance\Models\Team\BudgetPeriod, \App\Modules\Core\Finance\Models\Team\Tag, $this>
+     */
+    public function budgets(): HasManyThrough
+    {
+        return $this->hasManyThrough(BudgetPeriod::class, Tag::class);
+    }
+
+    /**
+     * Get the currencies the team holds on its active
+     * accounts, ordered by code. These are the only
+     * currencies a budget can be set in, since any
+     * other one can never show progress.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Catalog\Models\Currency>
+     */
+    public function heldCurrencies(): EloquentCollection
+    {
+        $accountCurrency = new AccountCurrency;
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Catalog\Models\Currency> $currencies */
+        $currencies = Currency::query()
+            ->whereIn(
+                new Currency()->getKeyName(),
+                $accountCurrency->newQuery()
+                    ->select($accountCurrency->currency()->getForeignKeyName())
+                    ->whereIn(
+                        $accountCurrency->account()->getForeignKeyName(),
+                        $this->accounts()->isActive()->select(new Account()->getKeyName()),
+                    ),
+            )
+            ->orderBy('code')
+            ->get();
+
+        return $currencies;
     }
 
     /**

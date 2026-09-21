@@ -60,7 +60,7 @@ describe('index', function (): void {
                 ->where('plan.name', Plan::Free->value)
                 ->where('plan.status', 'free')
                 ->where('plan.cycle', null)
-                ->has('plan.limits', 4)
+                ->has('plan.limits', 5)
                 ->where('plan.limits.0.feature', Feature::AddAccounts->value)
                 ->where('plan.limits.0.usage', 0)
                 ->where('plan.limits.0.free', 3)
@@ -70,10 +70,15 @@ describe('index', function (): void {
                 ->where('plan.limits.2.feature', Feature::AssignRoles->value)
                 ->where('plan.limits.2.usage', null)
                 ->where('plan.limits.2.free', false)
-                ->where('plan.limits.3.feature', Feature::ViewHistory->value)
-                ->where('plan.limits.3.usage', 1)
-                ->where('plan.limits.3.free', 6)
-                ->where('plan.limits.3.pro', null)
+                ->where('plan.limits.3.feature', Feature::ManageBudgets->value)
+                ->where('plan.limits.3.label', Feature::ManageBudgets->getLabel())
+                ->where('plan.limits.3.usage', null)
+                ->where('plan.limits.3.free', false)
+                ->where('plan.limits.3.pro', true)
+                ->where('plan.limits.4.feature', Feature::ViewHistory->value)
+                ->where('plan.limits.4.usage', 1)
+                ->where('plan.limits.4.free', 6)
+                ->where('plan.limits.4.pro', null)
                 ->where('plan.limits.2.pro', true)
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->where('renewal', null)
@@ -113,14 +118,16 @@ describe('index', function (): void {
                 ->where('plan.name', Plan::Pro->value)
                 ->where('plan.status', 'active')
                 ->where('plan.cycle', BillingCycle::Monthly->value)
-                ->has('plan.limits', 4)
+                ->has('plan.limits', 5)
                 ->where('plan.limits.2.feature', Feature::AssignRoles->value)
                 ->where('plan.limits.2.usage', null)
                 ->where('plan.limits.2.free', false)
-                ->where('plan.limits.3.feature', Feature::ViewHistory->value)
-                ->where('plan.limits.3.usage', 1)
-                ->where('plan.limits.3.free', 6)
-                ->where('plan.limits.3.pro', null)
+                ->where('plan.limits.3.feature', Feature::ManageBudgets->value)
+                ->where('plan.limits.3.pro', true)
+                ->where('plan.limits.4.feature', Feature::ViewHistory->value)
+                ->where('plan.limits.4.usage', 1)
+                ->where('plan.limits.4.free', 6)
+                ->where('plan.limits.4.pro', null)
                 ->where('plan.limits.2.pro', true)
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->where('renewal.date', '2026-10-08T10:00:00+00:00')
@@ -469,6 +476,25 @@ describe('switch features', function (): void {
                 ->where('features.3.usage', null)
                 ->where('features.3.free', false)
                 ->where('features.3.pro', true));
+    });
+
+    it('lists budgets per tag as a pro-only feature on the upgrade modal', function (): void {
+        [$user, $team] = actingMember();
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('billing.teams.subscriptions.upgrade', [
+                'team' => $team->getRouteKey(),
+                'feature' => Feature::ManageBudgets->value,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('billing/teams/subscriptions/upgrade')
+                ->where('feature', Feature::ManageBudgets->value)
+                ->where('features.4.feature', Feature::ManageBudgets->value)
+                ->where('features.4.label', Feature::ManageBudgets->getLabel())
+                ->where('features.4.usage', null)
+                ->where('features.4.free', false)
+                ->where('features.4.pro', true));
     });
 
     it('keeps reporting a quota feature with its limits', function (): void {
