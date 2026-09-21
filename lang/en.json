@@ -547,5 +547,15 @@
     "This month is not in your plan": "This month is not in your plan",
     "The free plan shows the last six months. Upgrade to Pro to open your whole history.": "The free plan shows the last six months. Upgrade to Pro to open your whole history.",
     "Months of history": "Months of history",
-    "Showing transactions since :date. The Free plan keeps the last :months months visible. Nothing was removed, upgrade to Pro to see your full history.": "Showing transactions since :date. The Free plan keeps the last :months months visible. Nothing was removed, upgrade to Pro to see your full history."
+    "Showing transactions since :date. The Free plan keeps the last :months months visible. Nothing was removed, upgrade to Pro to see your full history.": "Showing transactions since :date. The Free plan keeps the last :months months visible. Nothing was removed, upgrade to Pro to see your full history.",
+    "Set up :team": "Set up :team",
+    "Three steps to get going.": "Three steps to get going.",
+    ":done of :total done": ":done of :total done",
+    "Dismiss": "Dismiss",
+    "Create an account": "Create an account",
+    "Accounts hold your balances per currency.": "Accounts hold your balances per currency.",
+    "Add a first transaction": "Add a first transaction",
+    "Record an income or an expense on an account.": "Record an income or an expense on an account.",
+    "Invite a member": "Invite a member",
+    "Members see and record this team's activity together.": "Members see and record this team's activity together."
 }
