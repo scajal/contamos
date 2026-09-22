@@ -23,6 +23,18 @@
         <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
         <link href="https://api.fontshare.com/v2/css?f[]=switzer@1,2&display=swap" rel="stylesheet" />
 
+        @if (app()->isProduction() && ($measurementId = config('services.google.analytics.measurement_id')))
+            {{-- Google tag (gtag.js). GA4's enhanced measurement reports
+                 Inertia's history changes as page views on its own. --}}
+            <script async src="https://www.googletagmanager.com/gtag/js?id={{ $measurementId }}"></script>
+            <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag() { dataLayer.push(arguments); }
+                gtag('js', new Date());
+                gtag('config', @json($measurementId));
+            </script>
+        @endif
+
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
