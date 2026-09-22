@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetPeriodStatus;
+use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetTargetKind;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
@@ -50,6 +52,27 @@ function budgetPayload(Tag $tag, Currency $currency, array $overrides = []): arr
         'currency_id' => $currency->getKey(),
         'from_month' => CarbonImmutable::now()->format('Y-m'),
         'tag_id' => $tag->getKey(),
+        'target_kind' => BudgetTargetKind::Tag->value,
+        'until_month' => null,
+        ...$overrides,
+    ];
+}
+
+/**
+ * Valid payload for storing a category
+ * \App\Modules\Core\Finance\Models\Team\BudgetPeriod.
+ *
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function categoryBudgetPayload(Category $category, Currency $currency, array $overrides = []): array
+{
+    return [
+        'amount' => '8000.00',
+        'category' => $category->value,
+        'currency_id' => $currency->getKey(),
+        'from_month' => CarbonImmutable::now()->format('Y-m'),
+        'target_kind' => BudgetTargetKind::Category->value,
         'until_month' => null,
         ...$overrides,
     ];
@@ -58,7 +81,7 @@ function budgetPayload(Tag $tag, Currency $currency, array $overrides = []): arr
 describe('index', function (): void {
     it('renders a deferred listing of the budgets', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
 
         $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
@@ -69,14 +92,14 @@ describe('index', function (): void {
                 ->has('tags', 1)
                 ->loadDeferredProps(fn (Assert $page): Assert => $page
                     ->has('budgets.data', 1)
-                    ->where('budgets.data.0.tag.name', 'Food')
+                    ->where('budgets.data.0.target.tag.name', 'Food')
                     ->where('budgets.data.0.currency.code', 'ARS')
                     ->where('budgets.data.0.status', BudgetPeriodStatus::Running->value)));
     });
 
     it('reports the current month progress of the running budget', function (): void {
         [$user, $team, $currency, $tag, $account] = budgetingTeam();
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
 
         $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
             'amount' => '200',
@@ -95,7 +118,7 @@ describe('index', function (): void {
 
     it('omits the percentage when the budget pot is empty', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '0']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '0']);
 
         $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
@@ -110,9 +133,9 @@ describe('index', function (): void {
         $stopped = Tag::factory()->active()->for($team)->create(['name' => 'Bbb']);
         $objective = Tag::factory()->active()->for($team)->create(['name' => 'Ccc']);
 
-        BudgetPeriod::factory()->scheduled()->for($later)->for($currency)->create();
-        BudgetPeriod::factory()->paused()->for($stopped)->for($currency)->create();
-        BudgetPeriod::factory()->singleMonth(CarbonImmutable::now()->subMonths(2))->for($objective)->for($currency)->create();
+        BudgetPeriod::factory()->scheduled()->forTag($later)->for($currency)->create();
+        BudgetPeriod::factory()->paused()->forTag($stopped)->for($currency)->create();
+        BudgetPeriod::factory()->singleMonth(CarbonImmutable::now()->subMonths(2))->forTag($objective)->for($currency)->create();
 
         $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
@@ -126,12 +149,12 @@ describe('index', function (): void {
 
     it('reports a replaced stretch as ended rather than paused', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        BudgetPeriod::factory()->for($tag)->for($currency)->create([
+        BudgetPeriod::factory()->forTag($tag)->for($currency)->create([
             'amount' => '300',
             'from_month' => CarbonImmutable::now()->subMonths(4),
             'until_month' => CarbonImmutable::now()->subMonth(),
         ]);
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
 
         $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
@@ -144,14 +167,94 @@ describe('index', function (): void {
     it('lists the budgets of a deactivated tag and labels it', function (): void {
         [$user, $team, $currency] = budgetingTeam();
         $retired = Tag::factory()->inactive()->for($team)->create(['name' => 'Retired']);
-        BudgetPeriod::factory()->running()->for($retired)->for($currency)->create();
+        BudgetPeriod::factory()->running()->forTag($retired)->for($currency)->create();
 
         $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): Assert => $page
                 ->loadDeferredProps(fn (Assert $page): Assert => $page
                     ->has('budgets.data', 1)
-                    ->where('budgets.data.0.tag.is_active', false)));
+                    ->where('budgets.data.0.target.tag.is_active', false)));
+    });
+
+    it('lists a category budget with its label and icon', function (): void {
+        [$user, $team, $currency] = budgetingTeam();
+        BudgetPeriod::factory()->running()->forCategory(Category::Utilities)->for($team)->for($currency)->create(['amount' => '8000']);
+
+        $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->has('categories')
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->has('budgets.data', 1)
+                    ->where('budgets.data.0.target.kind', BudgetTargetKind::Category->value)
+                    ->where('budgets.data.0.target.category.value', Category::Utilities->value)
+                    ->where('budgets.data.0.target.category.icon', Category::Utilities->icon())
+                    ->where('budgets.data.0.status', BudgetPeriodStatus::Running->value)));
+    });
+
+    it('sums the month movements of the budgeted category', function (): void {
+        [$user, $team, $currency, $tag, $account] = budgetingTeam();
+        BudgetPeriod::factory()->running()->forCategory(Category::Food)->for($team)->for($currency)->create(['amount' => '500']);
+
+        Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '200',
+            'category' => Category::Food,
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
+        ]);
+        Transaction::factory()->income()->for($account)->for($currency)->create([
+            'amount' => '100',
+            'category' => Category::Food,
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
+        ]);
+        Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '900',
+            'category' => Category::Transport,
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
+        ]);
+
+        $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('budgets.data.0.progress.spent', fn (mixed $value): bool => (float) $value === 200.0)
+                    ->where('budgets.data.0.progress.income', fn (mixed $value): bool => (float) $value === 100.0)
+                    ->where('budgets.data.0.progress.remaining', fn (mixed $value): bool => (float) $value === 400.0)));
+    });
+
+    it('counts a movement under its category budget and its tag budget at once', function (): void {
+        [$user, $team, $currency, $tag, $account] = budgetingTeam();
+        BudgetPeriod::factory()->running()->forCategory(Category::Food)->for($team)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
+
+        $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '200',
+            'category' => Category::Food,
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
+        ]);
+        $spent->attachTags([$tag->getKey()]);
+
+        $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->has('budgets.data', 2)
+                    ->where('budgets.data.0.progress.spent', fn (mixed $value): bool => (float) $value === 200.0)
+                    ->where('budgets.data.1.progress.spent', fn (mixed $value): bool => (float) $value === 200.0)));
+    });
+
+    it('keeps a category budget of a downgraded team without its progress', function (): void {
+        [$user, $team, $currency] = budgetingTeam();
+        BudgetPeriod::factory()->running()->forCategory(Category::Utilities)->for($team)->for($currency)->create(['amount' => '8000']);
+        cancelPro($team);
+
+        $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('is_locked', true)
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->has('budgets.data', 1)
+                    ->where('budgets.data.0.target.category.value', Category::Utilities->value)));
     });
 
     it('offers only the currencies the team holds on an active account', function (): void {
@@ -179,7 +282,7 @@ describe('index', function (): void {
 
     it('keeps listing the budgets a free team already recorded', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
         cancelPro($team);
 
         $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
@@ -189,7 +292,7 @@ describe('index', function (): void {
                 ->where('is_locked', true)
                 ->loadDeferredProps(fn (Assert $page): Assert => $page
                     ->has('budgets.data', 1)
-                    ->where('budgets.data.0.tag.name', 'Food')));
+                    ->where('budgets.data.0.target.tag.name', 'Food')));
     });
 });
 
@@ -260,7 +363,7 @@ describe('store', function (): void {
 
     it('rejects a period overlapping another on the same tag and currency', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create();
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create();
 
         $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
             ->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), budgetPayload($tag, $currency))
@@ -296,12 +399,100 @@ describe('store', function (): void {
         [$user, $team, $currency, $tag, $account] = budgetingTeam();
         $dollar = Currency::factory()->active()->fiat()->create(['code' => 'USD', 'decimal_places' => 2]);
         $account->currencies()->attach($dollar, ['balance' => '0']);
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create();
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create();
 
         $this->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), budgetPayload($tag, $dollar))
             ->assertRedirect();
 
         expect(BudgetPeriod::query()->count())->toBe(2);
+    });
+
+    it('opens a budget period on a category', function (): void {
+        [$user, $team, $currency] = budgetingTeam();
+
+        $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), categoryBudgetPayload(Category::Utilities, $currency))
+            ->assertRedirect();
+
+        assertFlashedToast(trans('Saved'));
+
+        $period = BudgetPeriod::query()->sole();
+
+        expect($period->category)->toBe(Category::Utilities)
+            ->and($period->tag_id)->toBeNull()
+            ->and($period->team_id)->toBe($team->getKey())
+            ->and((float) $period->amount)->toBe(8000.0);
+    });
+
+    it('rejects a payload carrying both a category and a tag', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+
+        $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), categoryBudgetPayload(Category::Utilities, $currency, [
+                'tag_id' => $tag->getKey(),
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['tag_id']);
+
+        expect(BudgetPeriod::query()->count())->toBe(0);
+    });
+
+    it('rejects a payload carrying neither a category nor a tag', function (): void {
+        [$user, $team, $currency] = budgetingTeam();
+
+        $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), categoryBudgetPayload(Category::Utilities, $currency, [
+                'category' => null,
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['category']);
+
+        expect(BudgetPeriod::query()->count())->toBe(0);
+    });
+
+    it('rejects a category budget overlapping another of the same category and currency', function (): void {
+        [$user, $team, $currency] = budgetingTeam();
+        BudgetPeriod::factory()->running()->forCategory(Category::Utilities)->for($team)->for($currency)->create();
+
+        $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), categoryBudgetPayload(Category::Utilities, $currency))
+            ->assertRedirect()
+            ->assertInvalid(['from_month']);
+
+        expect(BudgetPeriod::query()->count())->toBe(1);
+    });
+
+    it('allows the same category months in another currency', function (): void {
+        [$user, $team, $currency, $tag, $account] = budgetingTeam();
+        $dollar = Currency::factory()->active()->fiat()->create(['code' => 'USD', 'decimal_places' => 2]);
+        $account->currencies()->attach($dollar, ['balance' => '0']);
+        BudgetPeriod::factory()->running()->forCategory(Category::Utilities)->for($team)->for($currency)->create();
+
+        $this->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), categoryBudgetPayload(Category::Utilities, $dollar))
+            ->assertRedirect();
+
+        expect(BudgetPeriod::query()->count())->toBe(2);
+    });
+
+    it('allows a category budget beside a tag budget on the same months', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create();
+
+        $this->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), categoryBudgetPayload(Category::Food, $currency))
+            ->assertRedirect();
+
+        expect(BudgetPeriod::query()->count())->toBe(2);
+    });
+
+    it('rejects a category that is not one of the known ones', function (): void {
+        [$user, $team, $currency] = budgetingTeam();
+
+        $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), categoryBudgetPayload(Category::Utilities, $currency, [
+                'category' => 'yachts',
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['category']);
     });
 
     it('rejects a currency the team does not hold on an active account', function (): void {
@@ -378,7 +569,7 @@ describe('store', function (): void {
 describe('edit', function (): void {
     it('renders the edit budget modal', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        $period = BudgetPeriod::factory()->running()->for($tag)->for($currency)->create();
+        $period = BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create();
 
         $this->withHeaders(inertiaModalHeaders())
             ->get(route('finance.teams.budgets.edit', [
@@ -393,7 +584,7 @@ describe('edit', function (): void {
 
     it('returns 404 when the budget belongs to another team', function (): void {
         [$user, $team] = budgetingTeam();
-        $foreign = BudgetPeriod::factory()->running()->for(Tag::factory()->for(Team::factory()))->create();
+        $foreign = BudgetPeriod::factory()->running()->forTag(Tag::factory()->for(Team::factory())->create())->create();
 
         $this->get(route('finance.teams.budgets.edit', [
             'team' => $team->getRouteKey(),
@@ -405,7 +596,7 @@ describe('edit', function (): void {
 describe('update', function (): void {
     it('changes the amount and the months', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        $period = BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        $period = BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
         $next = CarbonImmutable::now()->addMonth();
 
         $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
@@ -430,12 +621,12 @@ describe('update', function (): void {
 
     it('rejects months another stretch already covers', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        BudgetPeriod::factory()->for($tag)->for($currency)->create([
+        BudgetPeriod::factory()->forTag($tag)->for($currency)->create([
             'amount' => '300',
             'from_month' => CarbonImmutable::now()->subMonths(4),
             'until_month' => CarbonImmutable::now()->subMonth(),
         ]);
-        $period = BudgetPeriod::factory()->running()->for($tag)->for($currency)->create();
+        $period = BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create();
 
         $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
             ->patch(route('finance.teams.budgets.update', [
@@ -453,7 +644,7 @@ describe('update', function (): void {
 
     it('lets a stretch keep its own months', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        $period = BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        $period = BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
 
         $this->patch(route('finance.teams.budgets.update', [
             'team' => $team->getRouteKey(),
@@ -468,9 +659,32 @@ describe('update', function (): void {
         expect((float) $period->fresh()?->amount)->toBe(700.0);
     });
 
+    it('keeps the target of a category budget on an edit', function (): void {
+        [$user, $team, $currency] = budgetingTeam();
+        $period = BudgetPeriod::factory()->running()->forCategory(Category::Utilities)->for($team)->for($currency)->create(['amount' => '8000']);
+
+        $this->patch(route('finance.teams.budgets.update', [
+            'team' => $team->getRouteKey(),
+            'budget' => $period->getKey(),
+        ]), [
+            'amount' => '9000',
+            'category' => Category::Food->value,
+            'currency_id' => $currency->getKey(),
+            'from_month' => $period->from_month->format('Y-m'),
+            'tag_id' => Tag::factory()->for($team)->create()->getKey(),
+            'until_month' => null,
+        ])->assertRedirect();
+
+        $period->refresh();
+
+        expect((float) $period->amount)->toBe(9000.0)
+            ->and($period->category)->toBe(Category::Utilities)
+            ->and($period->tag_id)->toBeNull();
+    });
+
     it('redirects a free team to the upgrade modal', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        $period = BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        $period = BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
         $team->subscriptions()->delete();
         $team->unsetRelation('subscriptions');
 
@@ -491,9 +705,25 @@ describe('update', function (): void {
 });
 
 describe('pause', function (): void {
+    it('stops a category budget at the end of the current month', function (): void {
+        [$user, $team, $currency] = budgetingTeam();
+        $period = BudgetPeriod::factory()->forCategory(Category::Utilities)->for($team)->for($currency)->create([
+            'amount' => '8000',
+            'from_month' => CarbonImmutable::now()->subMonths(3),
+            'until_month' => null,
+        ]);
+
+        $this->patch(route('finance.teams.budgets.pause', [
+            'team' => $team->getRouteKey(),
+            'budget' => $period->getKey(),
+        ]))->assertRedirect();
+
+        expect($period->fresh()?->until_month?->format('Y-m'))->toBe(CarbonImmutable::now()->format('Y-m'));
+    });
+
     it('stops the running stretch at the end of the current month', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        $period = BudgetPeriod::factory()->for($tag)->for($currency)->create([
+        $period = BudgetPeriod::factory()->forTag($tag)->for($currency)->create([
             'amount' => '500',
             'from_month' => CarbonImmutable::now()->subMonths(3),
             'until_month' => null,
@@ -513,9 +743,25 @@ describe('pause', function (): void {
 });
 
 describe('resume', function (): void {
+    it('reopens a category budget on the same category', function (): void {
+        [$user, $team, $currency] = budgetingTeam();
+        $period = BudgetPeriod::factory()->paused()->forCategory(Category::Utilities)->for($team)->for($currency)->create(['amount' => '8000']);
+
+        $this->patch(route('finance.teams.budgets.resume', [
+            'team' => $team->getRouteKey(),
+            'budget' => $period->getKey(),
+        ]))->assertRedirect();
+
+        $resumed = BudgetPeriod::query()->whereKeyNot($period)->sole();
+
+        expect($resumed->category)->toBe(Category::Utilities)
+            ->and($resumed->tag_id)->toBeNull()
+            ->and($resumed->from_month->format('Y-m'))->toBe(CarbonImmutable::now()->format('Y-m'));
+    });
+
     it('opens a fresh stretch from the current month on the same amount', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        $period = BudgetPeriod::factory()->paused()->for($tag)->for($currency)->create(['amount' => '400']);
+        $period = BudgetPeriod::factory()->paused()->forTag($tag)->for($currency)->create(['amount' => '400']);
 
         $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
             ->patch(route('finance.teams.budgets.resume', [
@@ -537,7 +783,7 @@ describe('resume', function (): void {
 describe('destroy', function (): void {
     it('removes the budget period', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        $period = BudgetPeriod::factory()->running()->for($tag)->for($currency)->create();
+        $period = BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create();
 
         $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
             ->delete(route('finance.teams.budgets.destroy', [
@@ -553,7 +799,7 @@ describe('destroy', function (): void {
 
     it('returns 404 for a budget of another team', function (): void {
         [$user, $team] = budgetingTeam();
-        $foreign = BudgetPeriod::factory()->running()->for(Tag::factory()->for(Team::factory()))->create();
+        $foreign = BudgetPeriod::factory()->running()->forTag(Tag::factory()->for(Team::factory())->create())->create();
 
         $this->delete(route('finance.teams.budgets.destroy', [
             'team' => $team->getRouteKey(),
@@ -565,7 +811,7 @@ describe('destroy', function (): void {
 
     it('records the removal in the activity log', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
-        $period = BudgetPeriod::factory()->running()->for($tag)->for($currency)->create();
+        $period = BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create();
         clearActivities();
 
         $this->delete(route('finance.teams.budgets.destroy', [

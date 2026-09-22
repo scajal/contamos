@@ -6,6 +6,7 @@ namespace App\Modules\Core\Finance\Http\Controllers\Team;
 
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetTargetKind;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\CalculatesBudgetProgress;
 use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\SumsTaggedActivity;
@@ -288,7 +289,11 @@ class MonthlyController
      */
     protected function tagsByCurrency(Team $team, CarbonImmutable $month): Collection
     {
-        $budgets = $this->budgetPeriodsFor($team, $month);
+        // The breakdown is by tag, so the budgets following a
+        // category are left out of it.
+        $budgets = $this->budgetPeriodsFor($team, $month)
+            ->filter(fn (BudgetPeriod $period): bool => $period->targetKind() === BudgetTargetKind::Tag);
+
         $rows = $this->taggedByCurrency($team, $month, $budgets);
 
         // Money carrying no tag at all still has to show up, so
@@ -323,7 +328,7 @@ class MonthlyController
                         $this->text($row->getAttribute('tag_name')),
                         $this->decimal($row->getAttribute('income')),
                         $this->decimal($row->getAttribute('expenses')),
-                        $budgets->get($this->budgetKey(
+                        $budgets->get($this->tagBudgetKey(
                             $this->text($row->getAttribute('tag_id')),
                             $this->text($row->getAttribute($currencyKey)),
                         )),
@@ -375,7 +380,7 @@ class MonthlyController
 
             $rows[$currency] = [
                 ...$rows[$currency] ?? [],
-                $this->tagRow($tagId, $period->tag->name, '0', '0', $period),
+                $this->tagRow($tagId, $this->text($period->tag?->name), '0', '0', $period),
             ];
         }
 

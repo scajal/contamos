@@ -478,7 +478,7 @@ describe('switch features', function (): void {
                 ->where('features.4.pro', true));
     });
 
-    it('lists budgets per tag as a pro-only feature on the upgrade modal', function (): void {
+    it('lists budgets as a pro-only feature on the upgrade modal', function (): void {
         [$user, $team] = actingMember();
 
         $this->withHeaders(inertiaModalHeaders())

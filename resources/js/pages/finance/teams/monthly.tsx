@@ -524,7 +524,7 @@ const BudgetsUpsell = () => {
             </ItemMedia>
             <ItemContent>
                 <ItemDescription>
-                    {t("Set budgets per tag with Pro and follow every category against its limit.")}
+                    {t("Set budgets by category or tag with Pro and follow every area against its limit.")}
                 </ItemDescription>
             </ItemContent>
             <ItemActions>

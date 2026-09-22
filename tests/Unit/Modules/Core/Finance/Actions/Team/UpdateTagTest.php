@@ -28,7 +28,7 @@ it('drops a running stretch that only ever covered this month when the amount is
     $team = Team::factory()->create();
     $currency = Currency::factory()->fiat()->create();
     $tag = Tag::factory()->for($team)->create();
-    $period = $tag->budgetPeriods()->create([
+    $period = BudgetPeriod::factory()->forTag($tag)->create([
         'amount' => '100.00',
         'currency_id' => $currency->getKey(),
         'from_month' => now()->startOfMonth(),
@@ -46,7 +46,7 @@ it('leaves a running budget untouched when the amount has not moved', function (
     $team = Team::factory()->create();
     $currency = Currency::factory()->fiat()->create();
     $tag = Tag::factory()->for($team)->create();
-    $period = $tag->budgetPeriods()->create([
+    $period = BudgetPeriod::factory()->forTag($tag)->create([
         'amount' => '100.00',
         'currency_id' => $currency->getKey(),
         'from_month' => now()->startOfMonth(),

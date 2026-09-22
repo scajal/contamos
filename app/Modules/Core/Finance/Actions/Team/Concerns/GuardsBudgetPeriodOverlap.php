@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Actions\Team\Concerns;
 
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
+use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
 use Exception;
 
 /**
- * Keeps a tag's budget unambiguous by refusing two periods that
- * cover the same month in the same currency, and by refusing a
- * stretch that ends before it starts.
+ * Keeps a budget unambiguous by refusing two periods that cover
+ * the same month on the same target in the same currency, and
+ * by refusing a stretch that ends before it starts.
  */
 trait GuardsBudgetPeriodOverlap
 {
+    use ResolvesBudgetTargets;
+
     /**
      * Refuse a stretch that a sibling period already covers, or
      * one whose months run backwards. The period being written
@@ -23,7 +27,8 @@ trait GuardsBudgetPeriodOverlap
      * own months.
      */
     protected function guardAgainstOverlap(
-        Tag $tag,
+        Team $team,
+        Category|Tag $target,
         string $currencyId,
         CarbonImmutable $from,
         ?CarbonImmutable $until,
@@ -37,8 +42,8 @@ trait GuardsBudgetPeriodOverlap
             throw new Exception('A budget period cannot end before it starts.');
         }
 
-        $siblings = $tag->budgetPeriods()
-            ->where($tag->budgetPeriods()->getRelated()->currency()->getForeignKeyName(), $currencyId)
+        $siblings = $this->whereTarget($team->budgets()->getQuery(), $target)
+            ->where(new BudgetPeriod()->currency()->getForeignKeyName(), $currencyId)
             ->when($except instanceof BudgetPeriod, fn ($query) => $query->whereKeyNot($except))
             ->get();
 
@@ -46,7 +51,7 @@ trait GuardsBudgetPeriodOverlap
         // month with two budgets and no way to choose.
         foreach ($siblings as $sibling) {
             if ($sibling->overlaps($from, $until)) {
-                throw new Exception('A budget period cannot overlap another one on the same tag and currency.');
+                throw new Exception('A budget period cannot overlap another one on the same target and currency.');
             }
         }
     }

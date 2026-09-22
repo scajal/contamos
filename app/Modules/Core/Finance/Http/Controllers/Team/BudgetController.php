@@ -8,7 +8,10 @@ use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Finance\Actions\Team\CreateBudgetPeriod;
 use App\Modules\Core\Finance\Actions\Team\DeleteBudgetPeriod;
 use App\Modules\Core\Finance\Actions\Team\UpdateBudgetPeriod;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\CalculatesBudgetProgress;
+use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\OffersMovementCategories;
+use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\SumsCategorizedActivity;
 use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\SumsTaggedActivity;
 use App\Modules\Core\Finance\Http\Requests\Team\Budget\StoreRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Budget\UpdateRequest;
@@ -30,6 +33,8 @@ use InertiaUI\Modal\Modal;
 class BudgetController
 {
     use CalculatesBudgetProgress;
+    use OffersMovementCategories;
+    use SumsCategorizedActivity;
     use SumsTaggedActivity;
 
     /**
@@ -52,6 +57,7 @@ class BudgetController
             'budgets' => Inertia::defer(
                 fn (): LengthAwarePaginator => $this->listing($team),
             ),
+            'categories' => $this->categoryChoices(),
             'currencies' => $team->heldCurrencies(),
             'is_locked' => $isLocked,
             'month' => CarbonImmutable::now()->format(self::MONTH_FORMAT),
@@ -66,6 +72,7 @@ class BudgetController
     public function create(Team $team): Modal
     {
         return Inertia::modal('finance/teams/budgets/create', [
+            'categories' => $this->categoryChoices(),
             'currencies' => $team->heldCurrencies(),
             'month' => CarbonImmutable::now()->format(self::MONTH_FORMAT),
             'tags' => $team->tags()->orderBy('name')->get(),
@@ -77,11 +84,10 @@ class BudgetController
      */
     public function store(Team $team, StoreRequest $request, CreateBudgetPeriod $createBudgetPeriod, #[CurrentUser] User $user): RedirectResponse
     {
-        /** @var \App\Modules\Core\Finance\Models\Team\Tag $tag */
-        $tag = $team->tags()->findOrFail($request->validated(new BudgetPeriod()->tag()->getForeignKeyName()));
-
-        // Open the budget period on the tag.
-        $createBudgetPeriod->for($tag)
+        // Open the budget period on the category or the tag the
+        // form chose, whichever kind it asked for.
+        $createBudgetPeriod->for($team)
+            ->targeting($this->submittedTarget($team, $request))
             ->by($user)
             ->using($request->safe(['amount', new BudgetPeriod()->currency()->getForeignKeyName(), 'from_month', 'until_month']));
 
@@ -109,7 +115,7 @@ class BudgetController
     public function update(Team $team, BudgetPeriod $budget, UpdateRequest $request, UpdateBudgetPeriod $updateBudgetPeriod, #[CurrentUser] User $user): RedirectResponse
     {
         // Change the period's amount, currency or months.
-        $updateBudgetPeriod->for($budget->tag)
+        $updateBudgetPeriod->for($team)
             ->by($user)
             ->using($budget, $request->safe(['amount', $budget->currency()->getForeignKeyName(), 'from_month', 'until_month']));
 
@@ -130,7 +136,7 @@ class BudgetController
         $month = CarbonImmutable::now()->startOfMonth();
 
         // Close the stretch on the current month.
-        $updateBudgetPeriod->for($budget->tag)
+        $updateBudgetPeriod->for($team)
             ->by($user)
             ->using($budget, ['until_month' => $month->format(self::MONTH_FORMAT)]);
 
@@ -149,8 +155,10 @@ class BudgetController
     {
         $month = CarbonImmutable::now()->startOfMonth();
 
-        // Open a fresh unbounded stretch from this month.
-        $createBudgetPeriod->for($budget->tag)
+        // Open a fresh unbounded stretch from this month, on
+        // whatever the stopped one followed.
+        $createBudgetPeriod->for($team)
+            ->targeting($budget->target())
             ->by($user)
             ->using([
                 'amount' => (string) $budget->amount,
@@ -172,7 +180,7 @@ class BudgetController
     public function destroy(Team $team, BudgetPeriod $budget, DeleteBudgetPeriod $deleteBudgetPeriod): RedirectResponse
     {
         // Remove the period outright.
-        $deleteBudgetPeriod->for($budget->tag)
+        $deleteBudgetPeriod->for($team)
             ->using($budget);
 
         // Show a success message.
@@ -183,26 +191,32 @@ class BudgetController
     }
 
     /**
-     * The team's budget periods, grouped tag by tag and newest
-     * stretch first within each, with what the current month
-     * has made of the one in force.
+     * The team's budget periods, categories first and newest
+     * stretch first within each target, with what the
+     * current month has made of the one in force.
      *
      * @return \Illuminate\Pagination\LengthAwarePaginator<int, array<string, mixed>>
      */
     protected function listing(Team $team): LengthAwarePaginator
     {
         $period = new BudgetPeriod;
+        $tag = new Tag;
         $month = CarbonImmutable::now();
 
         /** @var \Illuminate\Pagination\LengthAwarePaginator<int, \App\Modules\Core\Finance\Models\Team\BudgetPeriod> $paginator */
         $paginator = $team->budgets()
             ->with(['currency', 'tag'])
-            ->orderBy(new Tag()->qualifyColumn('name'))
+            ->orderBy($period->qualifyColumn('category'))
+            // A tag budget reads under the tag's name, which the
+            // period only knows the key of.
+            ->orderBy(Tag::query()
+                ->select('name')
+                ->whereColumn($tag->getQualifiedKeyName(), $period->qualifyColumn($period->tag()->getForeignKeyName())))
             ->orderByDesc($period->qualifyColumn('from_month'))
             ->paginate(10)
             ->withQueryString();
 
-        $totals = $this->taggedTotalsByKey($team, $month);
+        $totals = $this->budgetedTotalsByKey($team, $month);
         $successors = $this->successorMonths($team);
 
         return $paginator->through(fn (BudgetPeriod $budget): array => $this->row(
@@ -214,9 +228,9 @@ class BudgetController
     }
 
     /**
-     * Whether a later stretch took the tag's budget over in the
-     * same currency, which is what tells a replaced period
-     * from one somebody stopped.
+     * Whether a later stretch took the target's budget over in
+     * the same currency, which is what tells a replaced
+     * period from one somebody stopped.
      *
      * @param  array<string, \Carbon\CarbonImmutable>  $successors
      */
@@ -226,30 +240,23 @@ class BudgetController
             return false;
         }
 
-        $latest = $successors[$this->budgetKey(
-            $this->text($budget->getAttribute($budget->tag()->getForeignKeyName())),
-            $this->text($budget->getAttribute($budget->currency()->getForeignKeyName())),
-        )] ?? null;
+        $latest = $successors[$this->budgetKeyFor($budget)] ?? null;
 
         return $latest instanceof CarbonImmutable && $latest->greaterThan($budget->from_month);
     }
 
     /**
-     * One budget row for the page: the stretch itself, where it
-     * sits relative to the current month, and how the month is
-     * going against it when it is the one in force.
+     * One budget row for the page: the stretch itself, what it
+     * follows, where it sits relative to the current month,
+     * and how the month is going against it when it is
+     * the one in force.
      *
      * @param  \Illuminate\Support\Collection<string, array{expenses: numeric-string, income: numeric-string}>  $totals
      * @return array<string, mixed>
      */
     protected function row(BudgetPeriod $budget, CarbonImmutable $month, Collection $totals, bool $isSuperseded): array
     {
-        $key = $this->budgetKey(
-            $this->text($budget->getAttribute($budget->tag()->getForeignKeyName())),
-            $this->text($budget->getAttribute($budget->currency()->getForeignKeyName())),
-        );
-
-        $activity = $totals->get($key, ['expenses' => '0', 'income' => '0']);
+        $activity = $totals->get($this->budgetKeyFor($budget), ['expenses' => '0', 'income' => '0']);
 
         return [
             'amount' => $budget->amount,
@@ -262,52 +269,127 @@ class BudgetController
                 ? $this->budgetProgress($budget, $activity['income'], $activity['expenses'])
                 : null,
             'status' => $budget->status($month, $isSuperseded),
-            'tag' => $budget->tag->only([$budget->tag->getKeyName(), 'is_active', 'name']),
+            'target' => $this->target($budget),
             'until_month' => $budget->until_month?->format(self::MONTH_FORMAT),
         ];
     }
 
     /**
-     * The current month's income and expenses per tag and
+     * What a budget follows, as the page reads it: a category
+     * with the icon and label it renders, or the tag.
+     *
+     * @return array<string, mixed>
+     */
+    protected function target(BudgetPeriod $budget): array
+    {
+        $target = $budget->target();
+
+        // A category carries no row of its own, so the label
+        // and the icon travel with it.
+        if ($target instanceof Category) {
+            return [
+                'category' => [
+                    'icon' => $target->icon(),
+                    'label' => $target->getLabel(),
+                    'value' => $target->value,
+                ],
+                'kind' => $budget->targetKind(),
+            ];
+        }
+
+        return [
+            'kind' => $budget->targetKind(),
+            'tag' => $target?->only([$target->getKeyName(), 'is_active', 'name']),
+        ];
+    }
+
+    /**
+     * The category or tag the create form chose, resolved from
+     * the payload the request has already validated.
+     */
+    protected function submittedTarget(Team $team, StoreRequest $request): Category|Tag
+    {
+        $category = $request->validated('category');
+
+        // Exactly one of the two travels, which the request
+        // has already made sure of.
+        if (is_string($category)) {
+            return Category::from($category);
+        }
+
+        /** @var \App\Modules\Core\Finance\Models\Team\Tag $tag */
+        $tag = $team->tags()->findOrFail($request->validated(new BudgetPeriod()->tag()->getForeignKeyName()));
+
+        return $tag;
+    }
+
+    /**
+     * The current month's income and expenses per target and
      * currency, keyed the way a budget looks them up.
      *
      * @return \Illuminate\Support\Collection<string, array{expenses: numeric-string, income: numeric-string}>
      */
-    protected function taggedTotalsByKey(Team $team, CarbonImmutable $month): Collection
+    protected function budgetedTotalsByKey(Team $team, CarbonImmutable $month): Collection
     {
-        $currencyKey = new Transaction()->currency()->getForeignKeyName();
+        // A movement counts under every tag it carries and once
+        // more under the one category it was filed under, so
+        // both breakdowns are read side by side.
+        $tagged = $this->taggedTotals($team, $month)
+            ->mapWithKeys(fn (Transaction $row): array => [$this->budgetKeyOf($row) => $this->totalsOf($row)]);
 
-        return $this->taggedTotals($team, $month)
-            ->mapWithKeys(fn (Transaction $row): array => [
-                $this->budgetKey(
-                    $this->text($row->getAttribute('tag_id')),
-                    $this->text($row->getAttribute($currencyKey)),
-                ) => [
-                    'expenses' => $this->decimal($row->getAttribute('expenses')),
-                    'income' => $this->decimal($row->getAttribute('income')),
-                ],
-            ]);
+        $categorized = $this->categorizedTotals($team, $month)
+            ->mapWithKeys(fn (Transaction $row): array => [$this->budgetKeyOf($row) => $this->totalsOf($row)]);
+
+        return $tagged->union($categorized);
+    }
+
+    /**
+     * The income and expenses one aggregated row reports.
+     *
+     * @return array{expenses: numeric-string, income: numeric-string}
+     */
+    protected function totalsOf(Transaction $row): array
+    {
+        return [
+            'expenses' => $this->decimal($row->getAttribute('expenses')),
+            'income' => $this->decimal($row->getAttribute('income')),
+        ];
+    }
+
+    /**
+     * The budget an aggregated row reports against, read from
+     * the breakdown the row came out of.
+     */
+    protected function budgetKeyOf(Transaction $row): string
+    {
+        // An aggregate row only carries the columns its own
+        // breakdown selected, so the raw attributes are what
+        // says which one it came out of.
+        $attributes = $row->getAttributes();
+        $currency = $this->text($attributes[new Transaction()->currency()->getForeignKeyName()] ?? null);
+
+        if (array_key_exists('tag_id', $attributes)) {
+            return $this->tagBudgetKey($this->text($attributes['tag_id']), $currency);
+        }
+
+        return $this->categoryBudgetKey($this->text($attributes['category'] ?? null), $currency);
     }
 
     /**
      * The latest month any of the team's budgets starts in, per
-     * tag and currency. A stretch that closed before one of
+     * target and currency. A stretch that closed before one of
      * them was replaced rather than stopped.
      *
      * @return array<string, \Carbon\CarbonImmutable>
      */
     protected function successorMonths(Team $team): array
     {
-        $period = new BudgetPeriod;
         $latest = [];
 
         $periods = $team->budgets()->get();
 
         foreach ($periods as $one) {
-            $key = $this->budgetKey(
-                $this->text($one->getAttribute($period->tag()->getForeignKeyName())),
-                $this->text($one->getAttribute($period->currency()->getForeignKeyName())),
-            );
+            $key = $this->budgetKeyFor($one);
 
             if (! isset($latest[$key]) || $one->from_month->greaterThan($latest[$key])) {
                 $latest[$key] = $one->from_month;

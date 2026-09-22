@@ -10,6 +10,7 @@ use App\Modules\Core\Finance\Actions\Team\DeleteBudgetPeriod;
 use App\Modules\Core\Finance\Actions\Team\UpdateBudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
+use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Helpers\Amount;
 use CodeWithDennis\FilamentLucideIcons\Enums\LucideIcon;
@@ -139,7 +140,8 @@ class BudgetPeriodsRelationManager extends RelationManager
         return [
             Actions\CreateAction::make()
                 ->using(fn (array $data): BudgetPeriod => $this->createBudgetPeriod
-                    ->for($this->getTag())
+                    ->for($this->getTeam())
+                    ->targeting($this->getTag())
                     ->by($this->getOperator())
                     ->using($this->attributes($data)))
                 ->modalWidth(Width::Medium)
@@ -160,7 +162,7 @@ class BudgetPeriodsRelationManager extends RelationManager
             Actions\ActionGroup::make([
                 Actions\EditAction::make()
                     ->using(fn (BudgetPeriod $record, array $data): BudgetPeriod => $this->updateBudgetPeriod
-                        ->for($this->getTag())
+                        ->for($this->getTeam())
                         ->by($this->getOperator())
                         ->using($record, $this->attributes($data)))
                     ->modalWidth(Width::Medium)
@@ -169,7 +171,7 @@ class BudgetPeriodsRelationManager extends RelationManager
                 Actions\DeleteAction::make()
                     ->using(function (BudgetPeriod $record): bool {
                         $this->deleteBudgetPeriod
-                            ->for($this->getTag())
+                            ->for($this->getTeam())
                             ->using($record);
 
                         return true;
@@ -214,5 +216,14 @@ class BudgetPeriodsRelationManager extends RelationManager
         $tag = $this->getOwnerRecord();
 
         return $tag;
+    }
+
+    /**
+     * Get the team the budget periods are written for, which
+     * is the one the tag belongs to.
+     */
+    protected function getTeam(): Team
+    {
+        return $this->getTag()->team;
     }
 }

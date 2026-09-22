@@ -7,7 +7,7 @@ namespace App\Modules\Core\Finance\Actions\Team;
 use App\Modules\Core\Finance\Actions\Team\Concerns\GuardsBudgetPeriodOverlap;
 use App\Modules\Core\Finance\Actions\Team\Concerns\ReadsBudgetMonths;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
-use App\Modules\Core\Finance\Models\Team\Tag;
+use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Helpers\TeamActivity;
 use Exception;
@@ -19,9 +19,9 @@ class UpdateBudgetPeriod
     use ReadsBudgetMonths;
 
     /**
-     * The tag the period belongs to.
+     * The team the period belongs to.
      */
-    public ?Tag $tag = null;
+    public ?Team $team = null;
 
     /**
      * The user changing the period.
@@ -39,29 +39,32 @@ class UpdateBudgetPeriod
     }
 
     /**
-     * Set the tag the period belongs to.
+     * Set the team the period belongs to.
      */
-    public function for(Tag $tag): self
+    public function for(Team $team): self
     {
-        $this->tag = $tag;
+        $this->team = $team;
 
         return $this;
     }
 
     /**
      * Change the period's amount, currency or months, keeping
-     * the tag's budget free of overlapping stretches.
+     * the target's budget free of overlapping stretches. What
+     * the period follows is fixed: a budget moved to another
+     * target is a new budget, not an edit.
      *
      * @param  array<string, mixed>  $attributes
      */
     public function using(BudgetPeriod $period, array $attributes): BudgetPeriod
     {
-        // If the tag is not set, throw an exception.
-        if (! $this->tag instanceof Tag) {
-            throw new Exception('A budget period cannot be updated without a tag.');
+        // If the team is not set, throw an exception.
+        if (! $this->team instanceof Team) {
+            throw new Exception('A budget period cannot be updated without a team.');
         }
 
-        $tag = $this->tag;
+        $team = $this->team;
+        $target = $this->guardTarget($team, $period->target());
         $currencyKey = $period->currency()->getForeignKeyName();
 
         $currencyId = $this->currencyId($attributes[$currencyKey] ?? $period->getAttribute($currencyKey));
@@ -74,9 +77,9 @@ class UpdateBudgetPeriod
             ? $this->month($attributes['until_month'])
             : $period->until_month;
 
-        // The new months must stay clear of the tag's other
+        // The new months must stay clear of the target's other
         // periods in the same currency.
-        $this->guardAgainstOverlap($tag, $currencyId, $from, $until, $period);
+        $this->guardAgainstOverlap($team, $target, $currencyId, $from, $until, $period);
 
         // Everything the change writes reads as one entry in
         // the team's activity log.

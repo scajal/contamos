@@ -6,6 +6,9 @@ namespace App\Modules\Core\Finance\Models\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetPeriodStatus;
+use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetTargetKind;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
+use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\LogsTeamActivity;
 use Carbon\CarbonImmutable;
@@ -18,20 +21,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * One dated stretch of a tag's budget in a single currency:
- * how much the tag is allowed each month, from which month,
- * and until which month if it ever stops.
+ * One dated stretch of a budget in a single currency: how much
+ * the target it follows is allowed each month, from which
+ * month, and until which month if it ever stops. The
+ * target is a category or a tag, never both.
  *
  * @property string $id
  * @property numeric $amount
+ * @property \App\Modules\Core\Finance\Enums\Transaction\Category|null $category
  * @property string $currency_id
  * @property \Carbon\CarbonImmutable $from_month
- * @property string $tag_id
+ * @property string $team_id
+ * @property string|null $tag_id
  * @property \Carbon\CarbonImmutable|null $until_month
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
- * @property-read \App\Modules\Core\Finance\Models\Team\Tag $tag
+ * @property-read \App\Modules\Core\Finance\Models\Team\Tag|null $tag
+ * @property-read \App\Modules\Core\Identity\Models\Team $team
  *
  * @method static \Database\Factories\Modules\Core\Finance\Models\Team\BudgetPeriodFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\BudgetPeriod covering(\Carbon\CarbonImmutable $month)
@@ -41,7 +48,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @mixin \Eloquent
  */
-#[Fillable('amount', 'currency_id', 'from_month', 'until_month')]
+#[Fillable('amount', 'category', 'currency_id', 'from_month', 'until_month')]
 class BudgetPeriod extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
@@ -62,6 +69,7 @@ class BudgetPeriod extends Model
     {
         return [
             'amount' => 'decimal:18',
+            'category' => Category::class,
             // The bounds are whole months, so they are stored
             // as plain dates rather than as timestamps that a
             // string comparison would then sort wrongly.
@@ -98,14 +106,12 @@ class BudgetPeriod extends Model
     }
 
     /**
-     * Get the key of the team the period belongs to, which it
-     * only reaches through its tag.
+     * Get the key of the team the period belongs to, which a
+     * category budget has no tag to reach through.
      */
     public function activityTeamKey(): ?string
     {
-        $tag = $this->relationLoaded('tag') ? $this->tag : $this->tag()->first();
-
-        return $tag?->activityTeamKey();
+        return is_string($key = $this->getAttribute($this->team()->getForeignKeyName())) ? $key : null;
     }
 
     /**
@@ -126,6 +132,36 @@ class BudgetPeriod extends Model
     public function tag(): BelongsTo
     {
         return $this->belongsTo(Tag::class);
+    }
+
+    /**
+     * Get the team the budget belongs to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\Team, $this>
+     */
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * Get what the budget measures: the category it caps or
+     * the tag it follows.
+     */
+    public function target(): Category|Tag|null
+    {
+        return $this->category instanceof Category ? $this->category : $this->tag;
+    }
+
+    /**
+     * Get which kind of target the budget follows, taken from
+     * the column the period was written with.
+     */
+    public function targetKind(): BudgetTargetKind
+    {
+        return $this->category instanceof Category
+            ? BudgetTargetKind::Category
+            : BudgetTargetKind::Tag;
     }
 
     /**

@@ -103,7 +103,7 @@ enum Feature: string implements HasLabel
             self::AddMembers => trans('Members per team'),
             self::AddTeams => trans('Free teams per user'),
             self::AssignRoles => trans('Member roles'),
-            self::ManageBudgets => trans('Budgets per tag'),
+            self::ManageBudgets => trans('Budgets'),
             self::RecurTransactions => trans('Recurring transactions'),
             self::ViewActivity => trans('Activity log'),
             self::ViewHistory => trans('Months of history'),

@@ -6,8 +6,10 @@ namespace App\Modules\Core\Finance\Actions\Team;
 
 use App\Modules\Core\Finance\Actions\Team\Concerns\GuardsBudgetPeriodOverlap;
 use App\Modules\Core\Finance\Actions\Team\Concerns\ReadsBudgetMonths;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
+use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Helpers\TeamActivity;
 use Carbon\CarbonImmutable;
@@ -20,9 +22,14 @@ class CreateBudgetPeriod
     use ReadsBudgetMonths;
 
     /**
-     * The tag the period will be created on.
+     * The team the period will be created for.
      */
-    public ?Tag $tag = null;
+    public ?Team $team = null;
+
+    /**
+     * The category or tag the period will follow.
+     */
+    public Category|Tag|null $target = null;
 
     /**
      * The user creating the period.
@@ -40,29 +47,42 @@ class CreateBudgetPeriod
     }
 
     /**
-     * Set the tag the period will be created on.
+     * Set the team the period will be created for.
      */
-    public function for(Tag $tag): self
+    public function for(Team $team): self
     {
-        $this->tag = $tag;
+        $this->team = $team;
 
         return $this;
     }
 
     /**
-     * Open a budget period on the tag with the provided months
-     * and amount, in the provided currency.
+     * Set the category or tag the period will follow. Nothing
+     * to follow is refused when the period is written, not
+     * when it is named.
+     */
+    public function targeting(Category|Tag|null $target): self
+    {
+        $this->target = $target;
+
+        return $this;
+    }
+
+    /**
+     * Open a budget period on the target with the provided
+     * months and amount, in the provided currency.
      *
      * @param  array<string, mixed>  $attributes
      */
     public function using(array $attributes): BudgetPeriod
     {
-        // If the tag is not set, throw an exception.
-        if (! $this->tag instanceof Tag) {
-            throw new Exception('A budget period cannot be created without a tag.');
+        // If the team is not set, throw an exception.
+        if (! $this->team instanceof Team) {
+            throw new Exception('A budget period cannot be created without a team.');
         }
 
-        $tag = $this->tag;
+        $team = $this->team;
+        $target = $this->guardTarget($team, $this->target);
         $currencyKey = new BudgetPeriod()->currency()->getForeignKeyName();
 
         $currencyId = $this->currencyId($attributes[$currencyKey] ?? null);
@@ -75,16 +95,17 @@ class CreateBudgetPeriod
         }
 
         // The months must be free of any other period on the
-        // same tag and currency.
-        $this->guardAgainstOverlap($tag, $currencyId, $from, $until);
+        // same target and currency.
+        $this->guardAgainstOverlap($team, $target, $currencyId, $from, $until);
 
         // Everything the creation writes reads as one entry in
         // the team's activity log.
-        return TeamActivity::within(fn (): BudgetPeriod => DB::transaction(function () use ($tag, $attributes, $currencyId, $from, $until): BudgetPeriod {
+        return TeamActivity::within(fn (): BudgetPeriod => DB::transaction(function () use ($team, $target, $attributes, $currencyKey, $currencyId, $from, $until): BudgetPeriod {
             /** @var \App\Modules\Core\Finance\Models\Team\BudgetPeriod $period */
-            $period = $tag->budgetPeriods()->create([
+            $period = $team->budgets()->create([
+                ...$this->targetAttributes($target),
                 'amount' => $attributes['amount'],
-                new BudgetPeriod()->currency()->getForeignKeyName() => $currencyId,
+                $currencyKey => $currencyId,
                 'from_month' => $from,
                 'until_month' => $until,
             ]);

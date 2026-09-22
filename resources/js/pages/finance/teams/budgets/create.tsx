@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
+import { type CategoryOption } from "@/lib/categories";
 import budgets from "@/routes/finance/teams/budgets";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
@@ -20,12 +21,13 @@ import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 import { Fields } from "./_components/fields";
 
 type PageProps = {
+    categories: Array<CategoryOption>;
     currencies: Array<Currency>;
     month: string;
     tags: Array<Tag>;
 };
 
-export default function Create({ currencies, month, tags }: PageProps) {
+export default function Create({ categories, currencies, month, tags }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -57,13 +59,14 @@ export default function Create({ currencies, month, tags }: PageProps) {
                                     <DialogHeader>
                                         <DialogTitle>{t("Create :name", { name: t("budget") })}</DialogTitle>
                                         <DialogDescription>
-                                            {t("Set how much this tag may spend each month.")}
+                                            {t("Set how much may be spent on it each month.")}
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="flex-1">
                                         <Fields
+                                            categories={categories ?? []}
                                             currencies={currencies ?? []}
-                                            defaultValues={{ from_month: month }}
+                                            defaultValues={{ from_month: month, target_kind: "category" }}
                                             tags={tags ?? []}
                                             {...formProps}
                                         />

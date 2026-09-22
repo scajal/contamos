@@ -35,4 +35,26 @@ trait OffersMovementCategories
 
         return $options;
     }
+
+    /**
+     * Get every category a movement can carry, once each and in
+     * label order, for the pickers that budget an area of
+     * spending rather than one movement.
+     *
+     * @return array<int, array{icon: string, label: string, value: string}>
+     */
+    protected function categoryChoices(): array
+    {
+        $choices = array_map(fn (Category $category): array => [
+            'icon' => $category->icon(),
+            'label' => $category->getLabel(),
+            'value' => $category->value,
+        ], Category::cases());
+
+        // The picker reads as a list of names, so the order is
+        // the reader's rather than the enum's.
+        usort($choices, fn (array $one, array $other): int => $one['label'] <=> $other['label']);
+
+        return $choices;
+    }
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Http\Controllers\Team\Concerns;
 
 use App\Modules\Billing\Enums\Feature;
+use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetTargetKind;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Identity\Models\Team;
@@ -12,13 +14,14 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
 /**
- * Works out how much of a tag's budget a month has used. The
- * monthly report and the Budgets page both show the same
- * figures, so they are computed in one place.
+ * Works out how much of a budget a month has used, whether the
+ * budget follows a category or a tag. The monthly report and
+ * the Budgets page both show the same figures, so they are
+ * computed in one place.
  */
 trait CalculatesBudgetProgress
 {
-    use SumsTaggedActivity;
+    use SumsMonthlyActivity;
 
     /**
      * The scale the money strings are computed with, matching
@@ -28,9 +31,9 @@ trait CalculatesBudgetProgress
 
     /**
      * The team's budget periods that apply in the month, keyed
-     * by tag and currency. A team whose plan does not include
-     * budgets has none, which is what hides them on a
-     * downgrade without deleting anything.
+     * by target and currency. A team whose plan does not
+     * include budgets has none, which is what hides them
+     * on a downgrade without deleting anything.
      *
      * @return \Illuminate\Support\Collection<string, \App\Modules\Core\Finance\Models\Team\BudgetPeriod>
      */
@@ -40,34 +43,61 @@ trait CalculatesBudgetProgress
             return new Collection;
         }
 
-        $period = new BudgetPeriod;
-        $tagKey = $period->tag()->getForeignKeyName();
-        $currencyKey = $period->currency()->getForeignKeyName();
-
-        return BudgetPeriod::query()
-            ->whereIn($tagKey, $team->tags()->select(new Tag()->getKeyName()))
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\BudgetPeriod> $periods */
+        $periods = $team->budgets()
             ->covering($month)
             ->with('tag')
-            ->get()
-            ->mapWithKeys(fn (BudgetPeriod $period): array => [
-                $this->budgetKey(
-                    $this->text($period->getAttribute($tagKey)),
-                    $this->text($period->getAttribute($currencyKey)),
-                ) => $period,
-            ]);
+            ->get();
+
+        return new Collection($periods->mapWithKeys(fn (BudgetPeriod $period): array => [
+            $this->budgetKeyFor($period) => $period,
+        ]));
     }
 
     /**
-     * The key a period is looked up by, so a tag budgeted in
-     * two currencies keeps one entry per currency.
+     * The key a period is looked up by, so one target budgeted
+     * in two currencies keeps one entry per currency and a
+     * tag key can never read as a category.
      */
-    protected function budgetKey(string $tagId, string $currencyId): string
+    protected function budgetKey(BudgetTargetKind $kind, string $target, string $currencyId): string
     {
-        return $tagId.'|'.$currencyId;
+        return $kind->value.'|'.$target.'|'.$currencyId;
     }
 
     /**
-     * What the month has made of a tag's budget: the pot it had
+     * The key a period itself is filed under, read from the
+     * target it was written with.
+     */
+    protected function budgetKeyFor(BudgetPeriod $period): string
+    {
+        $target = $period->target();
+
+        return $this->budgetKey(
+            $period->targetKind(),
+            $target instanceof Category ? $target->value : $this->text($target?->getKey()),
+            $this->text($period->getAttribute($period->currency()->getForeignKeyName())),
+        );
+    }
+
+    /**
+     * The key the month's figures for a tag are filed under.
+     */
+    protected function tagBudgetKey(string $tagId, string $currencyId): string
+    {
+        return $this->budgetKey(BudgetTargetKind::Tag, $tagId, $currencyId);
+    }
+
+    /**
+     * The key the month's figures for a category are filed
+     * under.
+     */
+    protected function categoryBudgetKey(string $category, string $currencyId): string
+    {
+        return $this->budgetKey(BudgetTargetKind::Category, $category, $currencyId);
+    }
+
+    /**
+     * What the month has made of a budget: the pot it had
      * to spend, how much of it went, what is left and how far
      * along that is. Income tagged into the budget enlarges
      * the pot, so a money injection shows up in what

@@ -13,15 +13,15 @@ use Livewire\Livewire;
 /**
  * Feature tests for \App\Modules\Administration\Panels\Team\Resources\Tags\RelationManagers\BudgetPeriodsRelationManager.
  *
- * Budget periods carry no team of their own, so they reach the tenant
- * through their tag. They are managed here rather than as a resource
- * of their own, and written through the domain actions that guard
- * overlapping stretches.
+ * Budget periods have a resource of their own, and this relation
+ * manager keeps the tag-side view of the ones following a tag. Both
+ * write through the domain actions that guard overlapping
+ * stretches.
  */
 it('lists the budget periods of the tag', function (): void {
     [, $team] = actingOperatorOnTeamPanel();
     $tag = Tag::factory()->for($team)->create();
-    $period = BudgetPeriod::factory()->for($tag)->create();
+    $period = BudgetPeriod::factory()->forTag($tag)->create();
 
     Livewire::test(BudgetPeriodsRelationManager::class, [
         'ownerRecord' => $tag,
@@ -61,7 +61,7 @@ it('refuses a budget period that overlaps another on the same currency', functio
     [, $team] = actingOperatorOnTeamPanel();
     $tag = Tag::factory()->for($team)->create();
     $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
-    BudgetPeriod::factory()->for($tag)->for($currency)->create([
+    BudgetPeriod::factory()->forTag($tag)->for($currency)->create([
         'from_month' => '2026-01-01',
         'until_month' => null,
     ]);
@@ -83,7 +83,7 @@ it('refuses a budget period that overlaps another on the same currency', functio
 it('removes a budget period from the tag', function (): void {
     [, $team] = actingOperatorOnTeamPanel();
     $tag = Tag::factory()->for($team)->create();
-    $period = BudgetPeriod::factory()->for($tag)->create();
+    $period = BudgetPeriod::factory()->forTag($tag)->create();
 
     Livewire::test(BudgetPeriodsRelationManager::class, [
         'ownerRecord' => $tag,

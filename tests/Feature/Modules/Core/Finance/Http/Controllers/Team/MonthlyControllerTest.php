@@ -671,7 +671,7 @@ describe('budgets', function (): void {
 
     it('reports what the month made of a budgeted tag', function () use ($budgetingTeam): void {
         [$team, $currency, $account, $tag] = $budgetingTeam();
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
 
         $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
             'amount' => '120',
@@ -693,7 +693,7 @@ describe('budgets', function (): void {
 
     it('enlarges the pot with income tagged into the budget', function () use ($budgetingTeam): void {
         [$team, $currency, $account, $tag] = $budgetingTeam();
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
         $month = CarbonImmutable::now()->startOfMonth()->addDay();
 
         $earned = Transaction::factory()->income()->for($account)->for($currency)->create(['amount' => '100', 'occurred_at' => $month]);
@@ -713,7 +713,7 @@ describe('budgets', function (): void {
 
     it('reports a tag over its budget with a negative remaining', function () use ($budgetingTeam): void {
         [$team, $currency, $account, $tag] = $budgetingTeam();
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '100']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '100']);
 
         $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
             'amount' => '150',
@@ -751,7 +751,7 @@ describe('budgets', function (): void {
     it('reports a budgeted tag the month has no figures for', function () use ($budgetingTeam): void {
         [$team, $currency, $account, $tag] = $budgetingTeam();
         $quiet = Tag::factory()->active()->for($team)->create(['name' => 'Zzz']);
-        BudgetPeriod::factory()->running()->for($quiet)->for($currency)->create(['amount' => '200']);
+        BudgetPeriod::factory()->running()->forTag($quiet)->for($currency)->create(['amount' => '200']);
 
         $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
             'amount' => '40',
@@ -774,12 +774,12 @@ describe('budgets', function (): void {
         [$team, $currency, $account, $tag] = $budgetingTeam();
         $past = CarbonImmutable::now()->startOfMonth()->subMonth();
 
-        BudgetPeriod::factory()->for($tag)->for($currency)->create([
+        BudgetPeriod::factory()->forTag($tag)->for($currency)->create([
             'amount' => '300',
             'from_month' => $past->subMonths(2),
             'until_month' => $past,
         ]);
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '900']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '900']);
 
         $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
             'amount' => '150',
@@ -800,7 +800,7 @@ describe('budgets', function (): void {
 
     it('keeps applying a budget on a deactivated tag', function () use ($budgetingTeam): void {
         [$team, $currency, $account, $tag] = $budgetingTeam();
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
 
         $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
             'amount' => '120',
@@ -819,7 +819,7 @@ describe('budgets', function (): void {
 
     it('omits the budget blocks and flags the upsell for a free team', function () use ($budgetingTeam): void {
         [$team, $currency, $account, $tag] = $budgetingTeam(false);
-        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);
 
         $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
             'amount' => '120',

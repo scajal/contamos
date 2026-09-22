@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Identity\Http\Controllers\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
@@ -382,8 +383,9 @@ class ActivityController
     }
 
     /**
-     * Name a budget period by the tag it is set on, falling back
-     * to the amount it carried once the period is gone.
+     * Name a budget period by the category or tag it follows,
+     * falling back to the amount it carried once the period
+     * is gone.
      *
      * @param  array<string, mixed>  $stored
      * @param  array<string, array<string, string>>  $names
@@ -393,7 +395,9 @@ class ActivityController
         $subject = $activity->subject;
 
         if ($subject instanceof BudgetPeriod) {
-            return $subject->tag->name;
+            $target = $subject->target();
+
+            return $target instanceof Category ? $target->getLabel() : $target?->name;
         }
 
         return $this->amountLabel($stored, $names);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Http\Requests\Team\Budget\Concerns;
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Identity\Models\Team;
@@ -14,8 +15,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
 
 /**
- * Reads the months, tag and currency a budget form submits, and
- * builds the rules that keep a tag's budget unambiguous.
+ * Reads the months, target and currency a budget form submits,
+ * and builds the rules that keep a budget unambiguous.
  */
 trait ResolvesBudgetInputs
 {
@@ -41,11 +42,24 @@ trait ResolvesBudgetInputs
     }
 
     /**
-     * The tag the budget is being set on, taken from the route
-     * on an edit and from the payload on a create.
+     * The category or tag the budget is being set on, taken
+     * from the period on an edit and from the payload on
+     * a create.
      */
-    protected function budgetTag(Team $team): ?Tag
+    protected function budgetTarget(Team $team, ?BudgetPeriod $period = null): Category|Tag|null
     {
+        // An edit never moves a budget, so the period itself
+        // says what it follows.
+        if ($period instanceof BudgetPeriod) {
+            return $period->target();
+        }
+
+        $category = $this->input('category');
+
+        if (is_string($category) && $category !== '') {
+            return Category::tryFrom($category);
+        }
+
         /** @var \App\Modules\Core\Finance\Models\Team\Tag|null $tag */
         $tag = $team->tags()
             ->whereKey($this->input(new BudgetPeriod()->tag()->getForeignKeyName()))
@@ -80,7 +94,7 @@ trait ResolvesBudgetInputs
 
     /**
      * Reject months that run backwards or that another period
-     * on the same tag and currency already covers.
+     * on the same target and currency already covers.
      */
     protected function freeMonths(Team $team, ?BudgetPeriod $except = null): Closure
     {
@@ -102,22 +116,31 @@ trait ResolvesBudgetInputs
                 return;
             }
 
-            $tag = $except instanceof BudgetPeriod ? $except->tag : $this->budgetTag($team);
+            $target = $this->budgetTarget($team, $except);
 
-            // An unknown tag or currency is somebody else's
+            // An unknown target or currency is somebody else's
             // rule to report.
-            if (! $tag instanceof Tag || ! is_string($currencyId = $this->input(new BudgetPeriod()->currency()->getForeignKeyName()))) {
+            if ($target === null || ! is_string($currencyId = $this->input(new BudgetPeriod()->currency()->getForeignKeyName()))) {
                 return;
             }
 
-            $siblings = $tag->budgetPeriods()
-                ->where(new BudgetPeriod()->currency()->getForeignKeyName(), $currencyId)
+            $period = new BudgetPeriod;
+
+            $siblings = $team->budgets()
+                ->when(
+                    $target instanceof Category,
+                    fn ($query) => $query->where('category', $target),
+                    fn ($query) => $query->where($period->tag()->getForeignKeyName(), $target instanceof Tag ? $target->getKey() : null),
+                )
+                ->where($period->currency()->getForeignKeyName(), $currencyId)
                 ->when($except instanceof BudgetPeriod, fn ($query) => $query->whereKeyNot($except))
                 ->get();
 
             foreach ($siblings as $sibling) {
                 if ($sibling->overlaps($from, $until)) {
-                    $fail(trans('This tag already has a budget covering those months in that currency.'));
+                    $fail($target instanceof Category
+                        ? trans('This category already has a budget covering those months in that currency.')
+                        : trans('This tag already has a budget covering those months in that currency.'));
 
                     return;
                 }

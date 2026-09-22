@@ -92,15 +92,21 @@ trait ReplacesRunningBudgetPeriod
      */
     protected function openRunningPeriod(Tag $tag, string $currencyId, string $amount, CarbonImmutable $month): BudgetPeriod
     {
-        /** @var \App\Modules\Core\Finance\Models\Team\BudgetPeriod $period */
-        $period = $tag->budgetPeriods()->create([
+        $period = new BudgetPeriod;
+
+        /** @var \App\Modules\Core\Finance\Models\Team\BudgetPeriod $created */
+        $created = $tag->budgetPeriods()->create([
             'amount' => $amount,
-            new BudgetPeriod()->currency()->getForeignKeyName() => $currencyId,
+            'category' => null,
+            $period->currency()->getForeignKeyName() => $currencyId,
             'from_month' => $month,
+            // The quick amount on the tag form budgets a tag,
+            // and the period carries the tag's own team.
+            $period->team()->getForeignKeyName() => $tag->getAttribute($tag->team()->getForeignKeyName()),
             'until_month' => null,
         ]);
 
-        return $period;
+        return $created;
     }
 
     /**

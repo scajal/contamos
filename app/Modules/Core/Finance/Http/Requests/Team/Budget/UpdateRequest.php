@@ -23,7 +23,7 @@ class UpdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Budgets are an attribute of the tag, so any member
+        // Budgets are an attribute of the team, so any member
         // who may edit tags may set them.
         return true;
     }
@@ -41,8 +41,9 @@ class UpdateRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * The tag a period belongs to is fixed: moving a budget to
-     * another tag is a new budget, not an edit.
+     * What a period follows is fixed: moving a budget to
+     * another category or tag is a new budget, not
+     * an edit.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */

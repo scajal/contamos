@@ -9,12 +9,13 @@ import {
     PencilIcon,
     PlayIcon,
     PlusIcon,
+    TagIcon,
     TrashIcon,
-    WalletIcon,
 } from "lucide-react";
 import { Fragment, useState } from "react";
 
 import { BudgetProgress } from "@/components/budget-progress";
+import { CategoryIcon } from "@/components/category-icon";
 import { ConfirmAction } from "@/components/confirm-action";
 import { FeatureLock } from "@/components/feature-lock";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -94,7 +95,7 @@ const Header = () => {
         <header className="flex flex-col gap-1">
             <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">{t("Budgets")}</h1>
             <p className="text-muted-foreground text-[15px] leading-relaxed">
-                {t("How much this team means to spend on each tag, month by month.")}
+                {t("How much this team means to spend on each category or tag, month by month.")}
             </p>
         </header>
     );
@@ -242,13 +243,23 @@ const Rows = () => {
                     variant="outline"
                 >
                     <ItemMedia variant="icon">
-                        <WalletIcon />
+                        {budget.target.kind === "category" ? (
+                            <CategoryIcon category={budget.target.category.value} />
+                        ) : (
+                            <TagIcon />
+                        )}
                     </ItemMedia>
                     <ItemContent className="min-w-0 gap-2">
                         <ItemTitle className="flex flex-wrap items-center gap-2">
-                            <span className="truncate">{budget.tag.name}</span>
+                            <span className="truncate">
+                                {budget.target.kind === "category"
+                                    ? budget.target.category.label
+                                    : budget.target.tag.name}
+                            </span>
                             {/** Active is the normal state, so only the exception is labelled. */}
-                            {budget.tag.is_active ? null : <Badge variant="secondary">{t("Inactive")}</Badge>}
+                            {budget.target.kind === "tag" && !budget.target.tag.is_active ? (
+                                <Badge variant="secondary">{t("Inactive")}</Badge>
+                            ) : null}
                             <StatusBadge status={budget.status} />
                         </ItemTitle>
                         <ItemDescription className="flex flex-wrap items-center gap-x-2 tabular-nums">
@@ -371,7 +382,7 @@ const LockedBudgets = () => {
         <Deferred data="budgets" fallback={<SkeletonRows />}>
             <FeatureLock
                 description={t(
-                    "Set a monthly amount per tag and follow it through the month. Any budget you already set is kept.",
+                    "Set a monthly amount per category or tag and follow it through the month. Any budget you already set is kept.",
                 )}
                 feature="budgets:manage"
                 team={team.slug}

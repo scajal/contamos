@@ -26,7 +26,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use Laravel\Paddle\Billable;
@@ -128,14 +127,14 @@ class Team extends Model
     }
 
     /**
-     * Get the budget periods set on the team's tags, which is
-     * how a budget is scoped to the team at all.
+     * Get the budget periods of the team, whichever category
+     * or tag each one of them follows.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough<\App\Modules\Core\Finance\Models\Team\BudgetPeriod, \App\Modules\Core\Finance\Models\Team\Tag, $this>
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\BudgetPeriod, $this>
      */
-    public function budgets(): HasManyThrough
+    public function budgets(): HasMany
     {
-        return $this->hasManyThrough(BudgetPeriod::class, Tag::class);
+        return $this->hasMany(BudgetPeriod::class);
     }
 
     /**
