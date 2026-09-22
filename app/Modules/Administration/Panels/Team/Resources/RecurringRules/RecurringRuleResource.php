@@ -23,31 +23,6 @@ class RecurringRuleResource extends Resource
     protected static ?string $tenantOwnershipRelationshipName = 'team';
 
     /**
-     * Get the attributes the rule and its schedule are written from,
-     * as the finance actions expect them.
-     *
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
-     */
-    public static function attributes(array $data): array
-    {
-        return [
-            'account_id' => $data['account_id'] ?? null,
-            'amount' => $data['amount'] ?? null,
-            'category' => $data['category'] ?? null,
-            'currency_id' => $data['currency_id'] ?? null,
-            'description' => $data['description'] ?? null,
-            'ends_on' => $data['ends_on'] ?? null,
-            'frequency' => $data['frequency'] ?? null,
-            'interval' => $data['interval'] ?? null,
-            'starts_on' => $data['starts_on'] ?? null,
-            'time_of_day' => $data['time_of_day'] ?? null,
-            'timezone' => $data['timezone'] ?? null,
-            'type' => $data['type'] ?? null,
-        ];
-    }
-
-    /**
      * Configure the resource's form.
      */
     #[\Override]
@@ -63,6 +38,15 @@ class RecurringRuleResource extends Resource
     public static function getNavigationGroup(): string|UnitEnum|null
     {
         return trans('Finance');
+    }
+
+    /**
+     * Configure the resource's infolist.
+     */
+    #[\Override]
+    public static function infolist(Schema $schema): Schema
+    {
+        return Schemas\RecurringRuleInfolist::configure($schema);
     }
 
     /**
@@ -84,8 +68,7 @@ class RecurringRuleResource extends Resource
     {
         return [
             'index' => Pages\ListRecurringRules::route('/'),
-            'create' => Pages\CreateRecurringRule::route('/create'),
-            'edit' => Pages\EditRecurringRule::route('/{record}/edit'),
+            'view' => Pages\ViewRecurringRule::route('/{record}'),
         ];
     }
 }
