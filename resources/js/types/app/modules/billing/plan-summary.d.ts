@@ -8,7 +8,7 @@ import { Plan } from "./enums/plan";
  * Where a subscription is in its lifecycle, as reported by
  * App\Modules\Billing\Http\Controllers\Team\SubscriptionController.
  */
-export type PlanStatus = "free" | "active" | "trialing" | "grace" | "past_due" | "paused";
+export type PlanStatus = "free" | "active" | "trialing" | "grace" | "past_due" | "paused" | "granted";
 
 /**
  * A team-scoped feature with the team's usage and what each plan
@@ -31,6 +31,8 @@ export interface PlanSummary {
     status: PlanStatus;
     cycle: BillingCycle | null;
     ends_at: string | null;
+    /** When a plan granted by hand lapses; null means indefinitely. */
+    granted_until: string | null;
     trial_ends_at: string | null;
     limits: Array<PlanLimit>;
 }

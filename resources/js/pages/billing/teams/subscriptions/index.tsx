@@ -174,6 +174,10 @@ const CurrentPlan = () => {
         switch (plan.status) {
             case "free":
                 return t("You are on the Free plan.");
+            case "granted":
+                return plan.granted_until
+                    ? t("Your team was granted this plan until :date.", { date: date(plan.granted_until) })
+                    : t("Your team was granted this plan.");
             case "grace":
                 return plan.ends_at ? t("Your subscription ends on :date.", { date: date(plan.ends_at) }) : null;
             case "past_due":
@@ -209,6 +213,7 @@ const CurrentPlan = () => {
                                     {plan.cycle === "yearly" ? t("Billed yearly") : t("Billed monthly")}
                                 </Badge>
                             )}
+                            {plan.status === "granted" && <Badge variant="secondary">{t("Granted")}</Badge>}
                             {plan.status === "grace" && <Badge variant="outline">{t("Cancelled")}</Badge>}
                             {plan.status === "past_due" && <Badge variant="destructive">{t("Payment failed")}</Badge>}
                             {plan.status === "paused" && <Badge variant="outline">{t("Paused")}</Badge>}
@@ -267,12 +272,19 @@ const CurrentPlan = () => {
 
     /**
      * The action that fits the lifecycle state. Upgrading opens
-     * the modal; everything else goes through Paddle's portal.
+     * the modal; everything else goes through Paddle's portal. A
+     * plan granted by hand has nothing to manage, and only offers
+     * the upgrade while it is Free.
      */
     function PlanActions() {
         const portal = subscriptions.redirectToCustomerPortal.url({ team: team.slug });
 
+        if (plan.status === "granted" && plan.name === "pro") {
+            return null;
+        }
+
         switch (plan.status) {
+            case "granted":
             case "free":
                 return (
                     <Button

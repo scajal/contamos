@@ -56,18 +56,22 @@ class SubscriptionController
      * after an earlier Pro period; nothing is removed, it just
      * cannot add more.
      *
-     * @return array{name: string, status: string, cycle: string|null, ends_at: string|null, trial_ends_at: string|null, limits: array<int, array{feature: string, label: string, usage: int|null, free: int|bool|null, pro: int|bool|null}>}
+     * @return array{name: string, status: string, cycle: string|null, ends_at: string|null, granted_until: string|null, trial_ends_at: string|null, limits: array<int, array{feature: string, label: string, usage: int|null, free: int|bool|null, pro: int|bool|null}>}
      */
     protected function plan(Team $team): array
     {
         $plan = $team->plan();
         $subscription = $this->subscription($team);
+        $granted = $team->planOverride() instanceof Plan;
 
         return [
             'name' => $plan->value,
-            'status' => $this->status($plan, $subscription),
-            'cycle' => $this->cycle($subscription)?->value,
+            'status' => $granted ? 'granted' : $this->status($plan, $subscription),
+            'cycle' => $granted ? null : $this->cycle($subscription)?->value,
             'ends_at' => $subscription?->ends_at?->toIso8601String(),
+            // A plan granted by hand lasts until this date, or
+            // indefinitely when there is none.
+            'granted_until' => $granted ? $team->plan_override_expires_at?->toIso8601String() : null,
             'trial_ends_at' => $subscription?->trial_ends_at?->toIso8601String(),
             'limits' => $this->limits($team),
         ];
@@ -86,7 +90,8 @@ class SubscriptionController
     /**
      * Where the subscription is in its lifecycle. A cancelled
      * subscription stays Pro until the paid period ends, which
-     * is the grace period.
+     * is the grace period. A plan granted by hand is reported
+     * as granted before this is consulted.
      */
     protected function status(Plan $plan, ?Subscription $subscription): string
     {
@@ -210,6 +215,10 @@ class SubscriptionController
      */
     public function subscribe(Team $team, BillingCycle $cycle): Modal
     {
+        // Only a Free team has something to subscribe to. A plan
+        // granted by hand would swallow the payment.
+        abort_unless($team->plan() === Plan::Free, HttpResponse::HTTP_FORBIDDEN);
+
         return Inertia::modal('billing/teams/subscriptions/subscribe', [
             // After paying, Paddle sends the browser back to the billing
             // page, which polls until the webhook activates the plan.
@@ -231,6 +240,10 @@ class SubscriptionController
      */
     public function upgrade(Team $team, UpgradeRequest $request, #[CurrentUser] User $user): Modal
     {
+        // There is nothing to upgrade to unless the team is Free,
+        // whether by subscription or by a plan granted by hand.
+        abort_unless($team->plan() === Plan::Free, HttpResponse::HTTP_FORBIDDEN);
+
         return Inertia::modal('billing/teams/subscriptions/upgrade', [
             // Only the owner pays, so everybody else is told to ask
             // them instead of being offered checkout.

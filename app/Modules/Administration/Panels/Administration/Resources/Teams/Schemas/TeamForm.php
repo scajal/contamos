@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Administration\Panels\Administration\Resources\Teams\Schemas;
 
+use App\Modules\Billing\Enums\Plan;
+use App\Modules\Core\Identity\Models\Team;
 use CodeWithDennis\FilamentLucideIcons\Enums\LucideIcon;
 use Filament\Forms;
+use Filament\Infolists;
 use Filament\Schemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Operation;
@@ -23,7 +26,7 @@ class TeamForm
             ->components([
                 Schemas\Components\Tabs::make()
                     ->columnSpan($schema->getOperation() === Operation::Create->value ? null : [Width::Medium->value => 2])
-                    ->schema(self::schema()),
+                    ->schema(self::schema($schema)),
                 Schemas\Components\Section::make()
                     ->disabled()
                     ->visible($schema->getOperation() !== Operation::Create->value)
@@ -36,10 +39,10 @@ class TeamForm
      *
      * @return array<int, \Filament\Schemas\Components\Tabs\Tab>
      */
-    protected static function schema(): array
+    protected static function schema(Schema $schema): array
     {
         return [
-            Schemas\Components\Tabs\Tab::make('General')
+            Schemas\Components\Tabs\Tab::make(trans('General'))
                 ->columns(2)
                 ->schema([
                     Forms\Components\TextInput::make('name')
@@ -55,6 +58,28 @@ class TeamForm
                         ->unique(ignoreRecord: true)
                         ->maxLength(255)
                         ->string(),
+                ]),
+            Schemas\Components\Tabs\Tab::make(trans('Plan'))
+                ->columns(2)
+                ->schema([
+                    Infolists\Components\TextEntry::make('plan')
+                        ->state(fn (Team $record): string => $record->plan()->getLabel())
+                        ->visible($schema->getOperation() !== Operation::Create->value)
+                        ->label(trans('Current'))
+                        ->columnSpanFull()
+                        ->badge(),
+                    Forms\Components\Select::make('plan_override')
+                        ->helperText(trans('If you want to grant a plan by hand, select it here. Leave it empty to use the plan from the subscription.'))
+                        ->placeholder(trans('Select a plan'))
+                        ->label(trans('Override'))
+                        ->options(Plan::class)
+                        ->enum(Plan::class)
+                        ->native(false),
+                    Forms\Components\DateTimePicker::make('plan_override_expires_at')
+                        ->helperText(trans('The plan will be granted until this date. Leave it empty to grant the plan indefinitely.'))
+                        ->placeholder(trans('Select a date'))
+                        ->prefixIcon(LucideIcon::Calendar)
+                        ->label(trans('Expires at')),
                 ]),
         ];
     }

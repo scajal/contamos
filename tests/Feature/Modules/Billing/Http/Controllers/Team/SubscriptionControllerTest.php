@@ -49,6 +49,36 @@ describe('index', function (): void {
             ->assertRedirectToRoute('login');
     });
 
+    it('renders a team granted pro by hand without a subscription', function (): void {
+        [$user, $team] = actingMember();
+        $until = CarbonImmutable::now()->addMonth()->startOfSecond();
+        $team->update(['plan_override' => Plan::Pro, 'plan_override_expires_at' => $until]);
+
+        $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->component('billing/teams/subscriptions/index')
+                ->where('plan.name', Plan::Pro->value)
+                ->where('plan.status', 'granted')
+                ->where('plan.cycle', null)
+                ->where('plan.granted_until', $until->toIso8601String())
+                ->where('plan.limits.0.usage', 0));
+    });
+
+    it('reports a granted plan over an active subscription', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $team->update(['plan_override' => Plan::Free]);
+
+        $this->get(route('billing.teams.subscriptions.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('plan.name', Plan::Free->value)
+                ->where('plan.status', 'granted')
+                ->where('plan.cycle', null)
+                ->where('plan.granted_until', null));
+    });
+
     it('renders a free team with no renewal', function (): void {
         [$user, $team] = actingMember();
 
@@ -221,6 +251,54 @@ describe('upgrade', function (): void {
 
         $this->get(route('billing.teams.subscriptions.upgrade', ['team' => $team->getRouteKey()]))
             ->assertRedirectToRoute('login');
+    });
+
+    it('forbids the upgrade modal to a team on pro', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('billing.teams.subscriptions.upgrade', ['team' => $team->getRouteKey()]))
+            ->assertForbidden();
+    });
+
+    it('forbids the upgrade modal to a team granted pro by hand', function (): void {
+        [$user, $team] = actingMember();
+        $team->update(['plan_override' => Plan::Pro]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('billing.teams.subscriptions.upgrade', ['team' => $team->getRouteKey()]))
+            ->assertForbidden();
+    });
+
+    it('renders the upgrade modal to a team granted free by hand', function (): void {
+        [$user, $team] = actingMember();
+        $team->update(['plan_override' => Plan::Free, 'plan_override_expires_at' => CarbonImmutable::now()->addWeek()]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('billing.teams.subscriptions.upgrade', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->component('billing/teams/subscriptions/upgrade')
+                ->where('plan', Plan::Free->value));
+    });
+
+    it('renders the upgrade modal once a granted pro plan expires', function (): void {
+        [$user, $team] = actingMember();
+        $team->update(['plan_override' => Plan::Pro, 'plan_override_expires_at' => CarbonImmutable::now()->subMinute()]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('billing.teams.subscriptions.upgrade', ['team' => $team->getRouteKey()]))
+            ->assertOk();
+    });
+
+    it('forbids checkout to a team granted pro by hand', function (): void {
+        [$user, $team] = actingMember();
+        $team->update(['plan_override' => Plan::Pro]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('billing.teams.subscriptions.subscribe', ['team' => $team->getRouteKey(), 'cycle' => BillingCycle::Monthly->value]))
+            ->assertForbidden();
     });
 
     it('renders the upgrade modal with every feature and its limits', function (): void {
