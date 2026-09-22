@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Administration\Panels\Team\Resources\Accounts\Tables;
 
-use App\Modules\Core\Finance\Models\Team\Account;
 use Filament\Actions;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -53,25 +51,7 @@ class AccountsTable
     {
         return [
             Actions\ActionGroup::make([
-                Actions\ActionGroup::make([
-                    Actions\ViewAction::make(),
-                ])->dropdown(false),
-                Actions\ActionGroup::make([
-                    Actions\Action::make('activate')
-                        ->action(fn (Account $record): bool => $record->activate())
-                        ->visible(fn (Account $record): bool => ! $record->is_active)
-                        ->successNotificationTitle(trans('Saved'))
-                        ->requiresConfirmation()
-                        ->icon(Heroicon::Check)
-                        ->color(Color::Green),
-                    Actions\Action::make('deactivate')
-                        ->action(fn (Account $record): bool => $record->deactivate())
-                        ->visible(fn (Account $record): bool => $record->is_active)
-                        ->successNotificationTitle(trans('Saved'))
-                        ->requiresConfirmation()
-                        ->icon(Heroicon::XMark)
-                        ->color(Color::Red),
-                ])->dropdown(false),
+                Actions\ViewAction::make(),
             ]),
         ];
     }
