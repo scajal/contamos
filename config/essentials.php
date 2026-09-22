@@ -75,7 +75,8 @@ return [
 
     'environments' => [
         NunoMaduro\Essentials\Configurables\ForceScheme::class => ['production'],
-        NunoMaduro\Essentials\Configurables\ProhibitDestructiveCommands::class => ['production'],
+        // @todo: Reactivate
+        // NunoMaduro\Essentials\Configurables\ProhibitDestructiveCommands::class => ['production'],
         NunoMaduro\Essentials\Configurables\SetDefaultPassword::class => ['production'],
     ],
 
