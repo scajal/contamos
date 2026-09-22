@@ -50,15 +50,21 @@ trait SumsCategorizedActivity
      * The expression the rows are filed under, which reads a
      * movement with no category of its own as Other. The
      * select names it, the group by repeats it, so both
-     * sides of the query agree on the bucket.
+     * sides of the query agree on the bucket. Other is
+     * written into the SQL rather than bound, because
+     * MySQL prepares each placeholder as its own parameter
+     * and then refuses the select as not matching the
+     * group by under only_full_group_by.
      *
      * @return array{0: literal-string, 1: array<int, string>}
      */
     protected function categoryOrOther(bool $aliased = true): array
     {
+        $other = Category::Other->value;
+
         return [
-            $aliased ? 'COALESCE(category, ?) AS category' : 'COALESCE(category, ?)',
-            [Category::Other->value],
+            $aliased ? "COALESCE(category, '{$other}') AS category" : "COALESCE(category, '{$other}')",
+            [],
         ];
     }
 }
