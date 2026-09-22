@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(
         fn (Middleware $middleware): Middleware => $middleware
             ->encryptCookies(except: ['appearance', 'filament_language_switch_locale'])
-            ->preventRequestForgery(except: ['paddle/*'])
+            ->preventRequestForgery(except: ['paddle/*', 'resend/*'])
             ->redirectUsersTo(fn (Request $request): string => app(ResolveAuthenticationRedirect::class)->fromRequest($request))
             ->web(append: [
                 \App\Modules\Support\Http\Middleware\HandleAppearance::class,
