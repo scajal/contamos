@@ -85,7 +85,7 @@ class Team extends Model
      *
      * @var array<int, string>
      */
-    protected static $doNotRecordEvents = [ActivityEvent::Deleted->value];
+    protected static array $doNotRecordEvents = [ActivityEvent::Deleted->value];
 
     /**
      * Get the entries of the team's activity log.
