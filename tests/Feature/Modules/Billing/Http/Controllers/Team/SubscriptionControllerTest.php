@@ -366,7 +366,7 @@ describe('redirectToCustomerPortal', function (): void {
             ->assertRedirect('https://paddle.test/portal');
 
         Http::assertSent(fn (Request $request): bool => str_contains($request->url(), '/portal-sessions')
-            && $request['subscription_ids'] === $team->subscription()?->paddle_id);
+            && $request['subscription_ids'] === [$team->subscription()?->paddle_id]);
     });
 });
 

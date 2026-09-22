@@ -341,7 +341,7 @@ class Team extends Model
 
         // Generate the corresponding payload.
         $payload = ($subscription = $this->subscription())
-            ? ['subscription_ids' => $subscription->paddle_id] // @phpstan-ignore-line property.type False positive.
+            ? ['subscription_ids' => [$subscription->paddle_id]] // @phpstan-ignore-line property.type False positive.
             : null;
 
         // Generate the Cashier session for the

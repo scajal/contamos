@@ -15,10 +15,43 @@ export type PaddleSettings = {
 export type Paddle = NonNullable<Window["Paddle"]>;
 
 /**
+ * An event emitted by Paddle.js, such as checkout.completed
+ * or checkout.closed.
+ */
+export type PaddleEvent = {
+    name: string;
+    data?: Record<string, unknown>;
+};
+
+/**
+ * A listener for Paddle.js events.
+ */
+export type PaddleListener = (event: PaddleEvent) => void;
+
+/**
  * The in-flight or settled load, so the script is only
  * ever injected and initialised once per page.
  */
 let loading: Promise<Paddle> | null = null;
+
+/**
+ * Who is listening for Paddle.js events. Paddle takes one
+ * callback at initialisation and never again, so it fans out
+ * to whichever checkout page is mounted at the time.
+ */
+const listeners = new Set<PaddleListener>();
+
+/**
+ * Listen for Paddle.js events until the returned function
+ * is called.
+ */
+export const onPaddleEvent = (listener: PaddleListener): (() => void) => {
+    listeners.add(listener);
+
+    return () => {
+        listeners.delete(listener);
+    };
+};
 
 /**
  * Load Paddle.js on demand and initialise it. Checkout is
@@ -44,7 +77,12 @@ export const loadPaddle = (settings: PaddleSettings): Promise<Paddle> => {
                 paddle.Environment.set("sandbox");
             }
 
-            paddle.Initialize({ token: settings.token });
+            paddle.Initialize({
+                eventCallback: (event) => {
+                    listeners.forEach((listener) => listener(event));
+                },
+                token: settings.token,
+            });
             resolve(paddle);
         };
 

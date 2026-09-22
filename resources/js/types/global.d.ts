@@ -13,7 +13,10 @@ declare global {
             Environment: {
                 set: (environment: "sandbox" | "production") => void;
             };
-            Initialize: (options: { token: string }) => void;
+            Initialize: (options: {
+                token: string;
+                eventCallback?: (event: { name: string; data?: Record<string, unknown> }) => void;
+            }) => void;
         };
     }
 }
