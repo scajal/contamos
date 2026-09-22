@@ -192,83 +192,46 @@ const CreateTransactionActions = ({ team }: { team: string }) => {
      */
     const t = useLaravelReactI18n().t;
 
+    // The plus opens every way of recording money as a menu, on
+    // a phone and on a desktop alike, so the header keeps one
+    // entry point instead of a row of buttons.
     return (
-        <Fragment>
-            {/** Every way of recording money, where the header has room for them. */}
-            <div className="hidden gap-1.5 sm:flex">
-                <Button
-                    nativeButton={false}
-                    render={
-                        <ModalLink href={transfers.create.url({ team })}>
-                            <ArrowLeftRightIcon data-icon="inline-start" />
-                            {t("Transfer")}
-                        </ModalLink>
-                    }
-                    size="sm"
-                    variant="ghost"
-                />
-                <Button
-                    nativeButton={false}
-                    render={
-                        <ModalLink href={transactions.create.url({ team, type: "income" })}>
-                            <ArrowDownIcon data-icon="inline-start" />
-                            {t("enums.income")}
-                        </ModalLink>
-                    }
-                    size="sm"
-                    variant="outline"
-                />
-                <Button
-                    nativeButton={false}
-                    render={
-                        <ModalLink href={transactions.create.url({ team, type: "expense" })}>
-                            <ArrowUpIcon data-icon="inline-start" />
-                            {t("enums.expense")}
-                        </ModalLink>
-                    }
-                    size="sm"
-                />
-            </div>
-
-            {/** On a phone there is no room for three buttons, so the plus
-             * opens the same three ways of recording money as a menu. */}
-            <div className="flex items-center sm:hidden">
-                <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button size="icon-sm" />}>
-                        <PlusIcon />
-                        <span className="sr-only">{t("New :name", { name: t("transaction") })}</span>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuGroup>
-                            <DropdownMenuItem
-                                render={
-                                    <ModalLink href={transactions.create.url({ team, type: "expense" })}>
-                                        <ArrowUpIcon />
-                                        <span>{t("New :name", { name: t("expense") })}</span>
-                                    </ModalLink>
-                                }
-                            />
-                            <DropdownMenuItem
-                                render={
-                                    <ModalLink href={transactions.create.url({ team, type: "income" })}>
-                                        <ArrowDownIcon />
-                                        <span>{t("New :name", { name: t("income") })}</span>
-                                    </ModalLink>
-                                }
-                            />
-                            <DropdownMenuItem
-                                render={
-                                    <ModalLink href={transfers.create.url({ team })}>
-                                        <ArrowLeftRightIcon />
-                                        <span>{t("Transfer")}</span>
-                                    </ModalLink>
-                                }
-                            />
-                        </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-        </Fragment>
+        <div className="flex items-center">
+            <DropdownMenu>
+                <DropdownMenuTrigger render={<Button size="icon-sm" />}>
+                    <PlusIcon />
+                    <span className="sr-only">{t("New :name", { name: t("transaction") })}</span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem
+                            render={
+                                <ModalLink href={transactions.create.url({ team, type: "expense" })}>
+                                    <ArrowUpIcon />
+                                    <span>{t("New :name", { name: t("expense") })}</span>
+                                </ModalLink>
+                            }
+                        />
+                        <DropdownMenuItem
+                            render={
+                                <ModalLink href={transactions.create.url({ team, type: "income" })}>
+                                    <ArrowDownIcon />
+                                    <span>{t("New :name", { name: t("income") })}</span>
+                                </ModalLink>
+                            }
+                        />
+                        <DropdownMenuItem
+                            render={
+                                <ModalLink href={transfers.create.url({ team })}>
+                                    <ArrowLeftRightIcon />
+                                    <span>{t("Transfer")}</span>
+                                </ModalLink>
+                            }
+                        />
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
     );
 };
 

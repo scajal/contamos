@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Http\Controllers\Team\Concerns;
 
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
@@ -13,7 +14,8 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 /**
  * Sums what a month moved under each category and currency. A
  * movement carries one category, so this is a plain group by
- * with none of the double counting a tag pivot brings.
+ * with none of the double counting a tag pivot brings, and
+ * the sums partition the month exactly.
  */
 trait SumsCategorizedActivity
 {
@@ -21,8 +23,11 @@ trait SumsCategorizedActivity
 
     /**
      * Sum the month's income and expenses per category and
-     * currency, leaving out the movements nobody filed
-     * under a category.
+     * currency. A movement nobody filed under a category is
+     * read as Other, the bucket for everything that fits
+     * none of the areas, so no money falls out of the
+     * breakdown and the rows still add up to the
+     * month's totals.
      *
      * @return \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction>
      */
@@ -32,17 +37,28 @@ trait SumsCategorizedActivity
         $currencyKey = $transaction->currency()->getForeignKeyName();
 
         return $this->monthly($team, $month)
-            ->select([
-                $transaction->qualifyColumn($currencyKey),
-                $transaction->qualifyColumn('category'),
-            ])
+            ->select($transaction->qualifyColumn($currencyKey))
+            ->selectRaw(...$this->categoryOrOther())
             ->selectRaw(...$this->sumOfType(TransactionType::Expense, 'expenses'))
             ->selectRaw(...$this->sumOfType(TransactionType::Income, 'income'))
-            ->whereNotNull($transaction->qualifyColumn('category'))
-            ->groupBy(
-                $transaction->qualifyColumn($currencyKey),
-                $transaction->qualifyColumn('category'),
-            )
+            ->groupBy($transaction->qualifyColumn($currencyKey))
+            ->groupByRaw(...$this->categoryOrOther(false))
             ->get();
+    }
+
+    /**
+     * The expression the rows are filed under, which reads a
+     * movement with no category of its own as Other. The
+     * select names it, the group by repeats it, so both
+     * sides of the query agree on the bucket.
+     *
+     * @return array{0: literal-string, 1: array<int, string>}
+     */
+    protected function categoryOrOther(bool $aliased = true): array
+    {
+        return [
+            $aliased ? 'COALESCE(category, ?) AS category' : 'COALESCE(category, ?)',
+            [Category::Other->value],
+        ];
     }
 }

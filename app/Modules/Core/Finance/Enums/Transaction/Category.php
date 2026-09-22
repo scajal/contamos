@@ -169,6 +169,34 @@ enum Category: string implements HasLabel
     }
 
     /**
+     * Get every category a movement can be filed under, in the
+     * order a breakdown lists them: the expense categories
+     * first, then the income ones the expenses do not
+     * already name, with Other closing the list as
+     * the bucket for everything else.
+     *
+     * @return array<int, self>
+     */
+    public static function ordered(): array
+    {
+        // The two pickers overlap on Other, so a category is kept
+        // the first time either of them names it.
+        $ordered = array_values(array_unique([
+            ...self::casesFor(TransactionType::Expense),
+            ...self::casesFor(TransactionType::Income),
+        ], SORT_REGULAR));
+
+        // Other is a residue rather than an area, so it is read
+        // last however the pickers happen to order it.
+        $ordered = array_values(array_filter(
+            $ordered,
+            fn (self $category): bool => $category !== self::Other,
+        ));
+
+        return [...$ordered, self::Other];
+    }
+
+    /**
      * Get the name of the lucide icon that stands
      * for the category.
      */

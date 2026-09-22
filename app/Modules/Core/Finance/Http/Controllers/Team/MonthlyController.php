@@ -7,8 +7,10 @@ namespace App\Modules\Core\Finance\Http\Controllers\Team;
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetTargetKind;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\CalculatesBudgetProgress;
+use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\SumsCategorizedActivity;
 use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\SumsTaggedActivity;
 use App\Modules\Core\Finance\Http\Requests\Team\Monthly\IndexRequest;
 use App\Modules\Core\Finance\Models\Team\Account;
@@ -25,6 +27,7 @@ use Inertia\Response;
 class MonthlyController
 {
     use CalculatesBudgetProgress;
+    use SumsCategorizedActivity;
     use SumsTaggedActivity;
 
     /**
@@ -127,6 +130,7 @@ class MonthlyController
     {
         $currencies = $this->currencies($team, $earliest);
         $tags = $this->tagsByCurrency($team, $month);
+        $categories = $this->categoriesByCurrency($team, $month);
 
         // The trend ends on the selected month and stops at the
         // oldest month the plan opens, so it never half-shows a
@@ -150,7 +154,7 @@ class MonthlyController
         $previousTotals = $summed->get($previousMonth->format(self::MONTH_FORMAT), new Collection);
 
         return $currencies
-            ->map(function (Currency $currency) use ($totals, $previousTotals, $isComparable, $tags, $summed): array {
+            ->map(function (Currency $currency) use ($totals, $previousTotals, $isComparable, $categories, $tags, $summed): array {
                 $key = (string) $currency->getKey();
                 $current = $totals->get($key, $this->emptyTotals());
                 $previous = $isComparable
@@ -158,6 +162,7 @@ class MonthlyController
                     : null;
 
                 return [
+                    'categories' => $categories->get($key, []),
                     'currency' => $currency->only([$currency->getKeyName(), 'code', 'decimal_places', 'symbol']),
                     'expenses' => $this->total($current['expenses'], $previous === null ? null : $previous['expenses']),
                     'income' => $this->total($current['income'], $previous === null ? null : $previous['income']),
@@ -303,6 +308,143 @@ class MonthlyController
         }
 
         return new Collection($rows);
+    }
+
+    /**
+     * Break the month down by category for each currency. A
+     * movement carries one category, so the rows add up to
+     * the month's totals exactly.
+     *
+     * @return \Illuminate\Support\Collection<string, array<int, array<string, mixed>>>
+     */
+    protected function categoriesByCurrency(Team $team, CarbonImmutable $month): Collection
+    {
+        // The breakdown is by category, so the budgets following
+        // a tag are left out of it.
+        $budgets = $this->budgetPeriodsFor($team, $month)
+            ->filter(fn (BudgetPeriod $period): bool => $period->targetKind() === BudgetTargetKind::Category);
+
+        $currencyKey = new Transaction()->currency()->getForeignKeyName();
+
+        $rows = $this->categorizedTotals($team, $month)
+            ->groupBy(fn (Transaction $row): string => $this->text($row->getAttribute($currencyKey)))
+            ->mapWithKeys(fn (EloquentCollection $group, int|string $currency): array => [
+                (string) $currency => $group
+                    ->map(fn (Transaction $row): array => $this->categoryRow(
+                        $this->category($row->getAttribute('category')),
+                        $this->decimal($row->getAttribute('income')),
+                        $this->decimal($row->getAttribute('expenses')),
+                        $budgets->get($this->categoryBudgetKey(
+                            $this->category($row->getAttribute('category'))->value,
+                            $this->text($row->getAttribute($currencyKey)),
+                        )),
+                    ))
+                    ->values()
+                    ->all(),
+            ])
+            ->all();
+
+        // A budget the month has not been spent against yet is
+        // still something to report, so its category joins the
+        // breakdown with a row of zeroes.
+        $rows = $this->withQuietCategoryBudgets($rows, $budgets);
+
+        return new Collection(array_map($this->orderedCategories(...), $rows));
+    }
+
+    /**
+     * Add a zero row for every budgeted category the month has
+     * no figures for, so the category's bar is shown from the
+     * start of the month rather than appearing on first
+     * spend.
+     *
+     * @param  array<string, array<int, array<string, mixed>>>  $rows
+     * @param  \Illuminate\Support\Collection<string, \App\Modules\Core\Finance\Models\Team\BudgetPeriod>  $budgets
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    protected function withQuietCategoryBudgets(array $rows, Collection $budgets): array
+    {
+        $currencyKey = new BudgetPeriod()->currency()->getForeignKeyName();
+
+        foreach ($budgets as $period) {
+            $currency = $this->text($period->getAttribute($currencyKey));
+            $category = $this->category($period->getAttribute('category'));
+
+            // The category already reported figures for the
+            // currency, so its row carries the budget already.
+            $isReported = new Collection($rows[$currency] ?? [])
+                ->contains(fn (array $row): bool => $row['category'] === $category->value);
+
+            if ($isReported) {
+                continue;
+            }
+
+            $rows[$currency] = [
+                ...$rows[$currency] ?? [],
+                $this->categoryRow($category, '0', '0', $period),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Order the rows of one currency the way the category list
+     * reads, with Other last, so one month can be compared
+     * with the next at a glance.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, array<string, mixed>>
+     */
+    protected function orderedCategories(array $rows): array
+    {
+        $order = array_flip(array_map(
+            fn (Category $category): string => $category->value,
+            Category::ordered(),
+        ));
+
+        return new Collection($rows)
+            ->sortBy(fn (array $row): int => $order[$this->text($row['category'])] ?? count($order))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * One row of the category breakdown. A row with no budget
+     * behind it carries a null block.
+     *
+     * @param  numeric-string  $income
+     * @param  numeric-string  $expenses
+     * @return array<string, mixed>
+     */
+    protected function categoryRow(Category $category, string $income, string $expenses, ?BudgetPeriod $budget = null): array
+    {
+        return [
+            'budget' => $budget instanceof BudgetPeriod
+                ? $this->budgetProgress($budget, $income, $expenses)
+                : null,
+            'category' => $category->value,
+            'expenses' => $expenses,
+            'income' => $income,
+            'net' => bcsub($income, $expenses, self::SCALE),
+        ];
+    }
+
+    /**
+     * Read a raw or cast category column as a case, where a
+     * value this build does not know is read as Other, the
+     * bucket the aggregate already files the uncategorized
+     * money under.
+     */
+    protected function category(mixed $value): Category
+    {
+        // The model casts the column, so the aggregate hands
+        // back a case rather than its value.
+        if ($value instanceof Category) {
+            return $value;
+        }
+
+        return Category::tryFrom($this->text($value)) ?? Category::Other;
     }
 
     /**

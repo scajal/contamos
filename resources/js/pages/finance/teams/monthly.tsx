@@ -17,6 +17,7 @@ import { useState } from "react";
 import { Bar, CartesianGrid, Cell, ComposedChart, Line, Pie, PieChart, XAxis } from "recharts";
 
 import { BudgetProgress } from "@/components/budget-progress";
+import { CategoryIcon } from "@/components/category-icon";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -39,6 +40,7 @@ import subscriptions from "@/routes/billing/teams/subscriptions";
 import accounts from "@/routes/finance/teams/accounts";
 import monthly from "@/routes/finance/teams/monthly";
 import transactions from "@/routes/finance/teams/transactions";
+import { Category } from "@/types/app/modules/core/finance/enums/transaction/category";
 import { BudgetProgress as BudgetProgressFigures } from "@/types/app/modules/core/finance/models/team/budget-period";
 import { Team } from "@/types/app/modules/core/identity/models/team";
 
@@ -53,6 +55,16 @@ const MONTH_FORMAT = "yyyy-MM";
  * expect.
  */
 const DATE_FORMAT = "yyyy-MM-dd";
+
+/**
+ * The widths the two breakdown tables share, so the category
+ * rows and the tag rows below them line up column by column
+ * however long a name or an amount happens to be.
+ */
+const BREAKDOWN_COLUMNS = {
+    name: "w-2/5",
+    amount: "w-1/5",
+} as const;
 
 /**
  * The currency a figure group is expressed in.
@@ -82,6 +94,18 @@ type Total = {
 };
 
 /**
+ * A row of the category breakdown. Every movement carries
+ * one category, so these rows partition the month.
+ */
+type CategoryRow = {
+    budget: BudgetProgressFigures | null;
+    category: Category;
+    expenses: string;
+    income: string;
+    net: string;
+};
+
+/**
  * A row of the tag breakdown, where a null tag is the
  * money that carries no tag at all.
  */
@@ -108,6 +132,7 @@ type TrendPoint = {
  * Everything the page shows for a single currency.
  */
 export type Figure = {
+    categories: Array<CategoryRow>;
     currency: FigureCurrency;
     expenses: Total;
     income: Total;
@@ -142,20 +167,28 @@ const hasActivity = (figure: Figure): boolean =>
 
 /**
  * The colour of the nth donut slice. Hues step by the golden
- * angle so neighbours never look alike however many tags a
- * month carries, at a lightness that reads on either theme.
+ * angle so neighbours never look alike however many areas a
+ * month touches, at a lightness that reads on either theme.
  */
 const sliceColor = (index: number): string => `oklch(0.68 0.14 ${(index * 137.508) % 360})`;
 
 /**
  * The transactions index filter that narrows the listing to
- * the same month, currency, type and tag a figure covers.
+ * the same month, currency, type, tag and category a figure
+ * covers.
  */
 const monthFilter = (
     month: string,
     currency: string,
-    type?: "income" | "expense" | "transfer",
-    tag?: string | null,
+    {
+        category,
+        tag,
+        type,
+    }: {
+        category?: Category;
+        tag?: string | null;
+        type?: "income" | "expense" | "transfer";
+    } = {},
 ): Record<string, string> => {
     const selected = toMonth(month);
 
@@ -165,6 +198,7 @@ const monthFilter = (
         to: format(endOfMonth(selected), DATE_FORMAT),
         ...(type ? { type } : {}),
         ...(tag ? { tags: tag } : {}),
+        ...(category ? { category } : {}),
     };
 };
 
@@ -343,15 +377,30 @@ const CurrencySection = ({ figure }: { figure: Figure }) => {
             )}
 
             {/** Where the money went */}
-            {figure.tags.length ? (
-                <div className="flex flex-col gap-2">
+            {figure.categories.length || figure.tags.length ? (
+                <div className="flex flex-col gap-6">
                     <BudgetsUpsell />
-                    <TagTable figure={figure} />
-                    <p className="text-muted-foreground text-xs">
-                        {t(
-                            "A transaction counts under each of its tags, so these rows can add up to more than the totals.",
-                        )}
-                    </p>
+
+                    {/** By area, summing to the month's totals */}
+                    {figure.categories.length ? (
+                        <div className="flex flex-col gap-2">
+                            <h3 className="text-muted-foreground text-sm">{t("By category")}</h3>
+                            <CategoryTable figure={figure} />
+                        </div>
+                    ) : null}
+
+                    {/** By marker, where a movement may count twice */}
+                    {figure.tags.length ? (
+                        <div className="flex flex-col gap-2">
+                            <h3 className="text-muted-foreground text-sm">{t("By tag")}</h3>
+                            <TagTable figure={figure} />
+                            <p className="text-muted-foreground text-xs">
+                                {t(
+                                    "A transaction counts under each of its tags, so these rows can add up to more than the totals.",
+                                )}
+                            </p>
+                        </div>
+                    ) : null}
                 </div>
             ) : (
                 <EmptyTransactions />
@@ -437,7 +486,7 @@ const TotalCell = ({
             className="hover:bg-muted flex min-w-40 flex-auto flex-col gap-1 p-4"
             href={transactions.index.url(
                 { team: team.slug },
-                { query: { filter: monthFilter(month, currency.id, type) } },
+                { query: { filter: monthFilter(month, currency.id, { type }) } },
             )}
             prefetch
         >
@@ -548,6 +597,84 @@ const BudgetsUpsell = () => {
     );
 };
 
+const CategoryTable = ({ figure }: { figure: Figure }) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { month, team } = usePage<PageProps>().props;
+
+    return (
+        <div className="min-w-0 overflow-x-auto rounded-xl border">
+            <TableComponent className="table-fixed">
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className={BREAKDOWN_COLUMNS.name}>{t("Category")}</TableHead>
+                        <TableHead className={cn(BREAKDOWN_COLUMNS.amount, "text-right whitespace-nowrap")}>
+                            {t("Income")}
+                        </TableHead>
+                        <TableHead className={cn(BREAKDOWN_COLUMNS.amount, "text-right whitespace-nowrap")}>
+                            {t("Expenses")}
+                        </TableHead>
+                        <TableHead className={cn(BREAKDOWN_COLUMNS.amount, "text-right whitespace-nowrap")}>
+                            {t("Net")}
+                        </TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {figure.categories.map((row) => (
+                        <TableRow key={row.category}>
+                            <TableCell>
+                                <Link
+                                    className="flex min-w-0 items-center gap-1.5 hover:underline"
+                                    href={transactions.index.url(
+                                        { team: team.slug },
+                                        {
+                                            query: {
+                                                filter: monthFilter(month, figure.currency.id, {
+                                                    category: row.category,
+                                                }),
+                                            },
+                                        },
+                                    )}
+                                    prefetch
+                                >
+                                    <CategoryIcon
+                                        category={row.category}
+                                        className="text-muted-foreground size-3.5 shrink-0"
+                                    />
+                                    <span className="block truncate">{t(`enums.${row.category}`)}</span>
+                                </Link>
+                                {/** A budgeted category shows how far the month
+                                 * has gone into it, right under its name. */}
+                                {row.budget ? (
+                                    <BudgetProgress
+                                        className="mt-1.5 max-w-xs"
+                                        currency={figure.currency}
+                                        progress={row.budget}
+                                    />
+                                ) : null}
+                            </TableCell>
+                            <FigureAmount amount={row.income} className="text-success" currency={figure.currency} />
+                            <FigureAmount
+                                amount={row.expenses}
+                                className="text-destructive"
+                                currency={figure.currency}
+                            />
+                            <FigureAmount amount={row.net} currency={figure.currency} signed />
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </TableComponent>
+        </div>
+    );
+};
+
 const TagTable = ({ figure }: { figure: Figure }) => {
     /**
      * Translate the provided string
@@ -562,13 +689,19 @@ const TagTable = ({ figure }: { figure: Figure }) => {
 
     return (
         <div className="min-w-0 overflow-x-auto rounded-xl border">
-            <TableComponent>
+            <TableComponent className="table-fixed">
                 <TableHeader>
                     <TableRow>
-                        <TableHead>{t("Tag")}</TableHead>
-                        <TableHead className="text-right whitespace-nowrap">{t("Income")}</TableHead>
-                        <TableHead className="text-right whitespace-nowrap">{t("Expenses")}</TableHead>
-                        <TableHead className="text-right whitespace-nowrap">{t("Net")}</TableHead>
+                        <TableHead className={BREAKDOWN_COLUMNS.name}>{t("Tag")}</TableHead>
+                        <TableHead className={cn(BREAKDOWN_COLUMNS.amount, "text-right whitespace-nowrap")}>
+                            {t("Income")}
+                        </TableHead>
+                        <TableHead className={cn(BREAKDOWN_COLUMNS.amount, "text-right whitespace-nowrap")}>
+                            {t("Expenses")}
+                        </TableHead>
+                        <TableHead className={cn(BREAKDOWN_COLUMNS.amount, "text-right whitespace-nowrap")}>
+                            {t("Net")}
+                        </TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -581,7 +714,7 @@ const TagTable = ({ figure }: { figure: Figure }) => {
                                         { team: team.slug },
                                         {
                                             query: {
-                                                filter: monthFilter(month, figure.currency.id, undefined, tag.id),
+                                                filter: monthFilter(month, figure.currency.id, { tag: tag.id }),
                                             },
                                         },
                                     )}
@@ -601,9 +734,13 @@ const TagTable = ({ figure }: { figure: Figure }) => {
                                     />
                                 ) : null}
                             </TableCell>
-                            <TagAmount amount={tag.income} className="text-success" currency={figure.currency} />
-                            <TagAmount amount={tag.expenses} className="text-destructive" currency={figure.currency} />
-                            <TagAmount amount={tag.net} currency={figure.currency} signed />
+                            <FigureAmount amount={tag.income} className="text-success" currency={figure.currency} />
+                            <FigureAmount
+                                amount={tag.expenses}
+                                className="text-destructive"
+                                currency={figure.currency}
+                            />
+                            <FigureAmount amount={tag.net} currency={figure.currency} signed />
                         </TableRow>
                     ))}
                 </TableBody>
@@ -612,7 +749,7 @@ const TagTable = ({ figure }: { figure: Figure }) => {
     );
 };
 
-const TagAmount = ({
+const FigureAmount = ({
     amount,
     className,
     currency,
@@ -692,7 +829,7 @@ const Transfers = ({ figure }: { figure: Figure }) => {
                         className="hover:bg-muted flex min-w-40 flex-auto flex-col gap-1 p-4"
                         href={transactions.index.url(
                             { team: team.slug },
-                            { query: { filter: monthFilter(month, figure.currency.id, "transfer") } },
+                            { query: { filter: monthFilter(month, figure.currency.id, { type: "transfer" }) } },
                         )}
                         key={key}
                         prefetch
@@ -800,16 +937,23 @@ const ExpensesDonut = ({ figure }: { figure: Figure }) => {
     const mask = useBalances().mask;
 
     /**
-     * The tags that spent something, since a zero slice
-     * draws nothing and clutters the legend. Untagged money
-     * keeps the muted colour it has in the table.
+     * The page's props.
      */
-    const slices = figure.tags
-        .filter((tag) => Number(tag.expenses) > 0)
-        .map((tag, index) => ({
-            color: tag.id === null ? "var(--muted-foreground)" : sliceColor(index),
-            expenses: Number(tag.expenses),
-            name: tag.name ?? t("Untagged"),
+    const { month, team } = usePage<PageProps>().props;
+
+    /**
+     * The categories that spent something, since a zero slice
+     * draws nothing and clutters the legend. Other is the
+     * residue rather than an area of its own, so it keeps
+     * the muted colour it has in the table.
+     */
+    const slices = figure.categories
+        .filter((row) => Number(row.expenses) > 0)
+        .map((row, index) => ({
+            category: row.category,
+            color: row.category === "other" ? "var(--muted-foreground)" : sliceColor(index),
+            expenses: Number(row.expenses),
+            name: t(`enums.${row.category}`),
         }));
 
     if (!slices.length) {
@@ -818,11 +962,11 @@ const ExpensesDonut = ({ figure }: { figure: Figure }) => {
 
     return (
         <figure
-            aria-label={t("Expenses by tag")}
+            aria-label={t("Expenses by category")}
             className="flex min-w-0 flex-col gap-2 rounded-xl border p-4"
             role="group"
         >
-            <figcaption className="text-muted-foreground text-sm">{t("Expenses by tag")}</figcaption>
+            <figcaption className="text-muted-foreground text-sm">{t("Expenses by category")}</figcaption>
             <ChartContainer className="aspect-video w-full" config={{}}>
                 <PieChart>
                     <ChartTooltip
@@ -849,24 +993,42 @@ const ExpensesDonut = ({ figure }: { figure: Figure }) => {
                         strokeWidth={2}
                     >
                         {slices.map((slice) => (
-                            <Cell fill={slice.color} key={slice.name} />
+                            <Cell fill={slice.color} key={slice.category} />
                         ))}
                     </Pie>
                 </PieChart>
             </ChartContainer>
 
-            {/** The legend lives outside the chart so a long tag
-             * list wraps instead of squeezing the donut. */}
+            {/** The legend lives outside the chart so a long
+             * category list wraps instead of squeezing the donut,
+             * and each entry drills into its own slice. */}
             <ul className="flex flex-wrap gap-x-3 gap-y-1.5">
                 {slices.map((slice) => (
-                    <li className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs" key={slice.name}>
-                        <span className="size-2 shrink-0 rounded-[2px]" style={{ backgroundColor: slice.color }} />
-                        <span className="truncate">{slice.name}</span>
+                    <li className="min-w-0" key={slice.category}>
+                        <Link
+                            className="text-muted-foreground hover:text-foreground flex min-w-0 items-center gap-1.5 text-xs"
+                            href={transactions.index.url(
+                                { team: team.slug },
+                                {
+                                    query: {
+                                        filter: monthFilter(month, figure.currency.id, {
+                                            category: slice.category,
+                                            type: "expense",
+                                        }),
+                                    },
+                                },
+                            )}
+                            prefetch
+                        >
+                            <span className="size-2 shrink-0 rounded-[2px]" style={{ backgroundColor: slice.color }} />
+                            <CategoryIcon category={slice.category} className="size-3 shrink-0" />
+                            <span className="truncate">{slice.name}</span>
+                        </Link>
                     </li>
                 ))}
             </ul>
 
-            <p className="text-muted-foreground text-xs">{t("Share of tagged spending")}</p>
+            <p className="text-muted-foreground text-xs">{t("Share of the month's expenses")}</p>
         </figure>
     );
 };
