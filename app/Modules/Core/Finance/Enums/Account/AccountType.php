@@ -23,6 +23,9 @@ enum AccountType: string implements HasLabel
      */
     case Crypto = 'crypto';
 
+    /**
+     * Get the label of the account type.
+     */
     public function getLabel(): string
     {
         return match ($this) {

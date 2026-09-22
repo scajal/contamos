@@ -26,9 +26,6 @@ class ViewAccount extends ViewRecord
         return [
             Actions\ActionGroup::make([
                 Actions\ActionGroup::make([
-                    Actions\EditAction::make(),
-                ])->dropdown(false),
-                Actions\ActionGroup::make([
                     Actions\Action::make('activate')
                         ->action(fn (Account $record): bool => $record->activate())
                         ->visible(fn (Account $record): bool => ! $record->is_active)

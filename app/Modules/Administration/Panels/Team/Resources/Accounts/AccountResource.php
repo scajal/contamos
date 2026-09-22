@@ -49,7 +49,6 @@ class AccountResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\CurrenciesRelationManager::class,
             RelationManagers\TransactionsRelationManager::class,
         ];
     }
@@ -82,8 +81,6 @@ class AccountResource extends Resource
     {
         return [
             'index' => Pages\ListAccounts::route('/'),
-            'create' => Pages\CreateAccount::route('/create'),
-            'edit' => Pages\EditAccount::route('/{record}/edit'),
             'view' => Pages\ViewAccount::route('/{record}'),
         ];
     }

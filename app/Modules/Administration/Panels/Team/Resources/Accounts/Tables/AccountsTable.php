@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Administration\Panels\Team\Resources\Accounts\Tables;
 
-use App\Modules\Core\Finance\Enums\Account\AccountType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use Filament\Actions;
 use Filament\Support\Colors\Color;
@@ -22,7 +21,6 @@ class AccountsTable
     {
         return $table
             ->columns(self::getColumns())
-            ->filters(self::getFilters())
             ->recordActions(self::getRecordActions());
     }
 
@@ -34,34 +32,15 @@ class AccountsTable
     protected static function getColumns(): array
     {
         return [
-            Tables\Columns\Layout\Split::make([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\TextColumn::make('name')
-                        ->weight(FontWeight::Medium)
-                        ->searchable(),
-                    Tables\Columns\TextColumn::make('type')
-                        ->badge(),
-                ]),
-                Tables\Columns\TextColumn::make('is_active')
-                    ->formatStateUsing(fn (bool $state): string => $state ? trans('Active') : trans('Inactive'))
-                    ->color(fn (bool $state): array => $state ? Color::Green : Color::Red)
-                    ->badge(),
-            ]),
-        ];
-    }
-
-    /**
-     * Get the table filters.
-     *
-     * @return array<int, \Filament\Tables\Filters\BaseFilter>
-     */
-    protected static function getFilters(): array
-    {
-        return [
-            Tables\Filters\SelectFilter::make('type')
-                ->options(AccountType::class),
-            Tables\Filters\TernaryFilter::make('is_active')
-                ->label(trans('Active')),
+            Tables\Columns\TextColumn::make('name')
+                ->weight(FontWeight::Medium)
+                ->searchable(isIndividual: true),
+            Tables\Columns\TextColumn::make('type')
+                ->badge(),
+            Tables\Columns\TextColumn::make('is_active')
+                ->formatStateUsing(fn (bool $state): string => $state ? trans('Active') : trans('Inactive'))
+                ->color(fn (bool $state): array => $state ? Color::Green : Color::Red)
+                ->badge(),
         ];
     }
 
@@ -76,7 +55,6 @@ class AccountsTable
             Actions\ActionGroup::make([
                 Actions\ActionGroup::make([
                     Actions\ViewAction::make(),
-                    Actions\EditAction::make(),
                 ])->dropdown(false),
                 Actions\ActionGroup::make([
                     Actions\Action::make('activate')
