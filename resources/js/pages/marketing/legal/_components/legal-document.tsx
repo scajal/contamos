@@ -1,31 +1,34 @@
 import { Head } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { AlertTriangleIcon } from "lucide-react";
 
 import { formatDate } from "@/lib/utils";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
-import type { Legal, LegalSection } from "@/types/app/modules/marketing/legal";
+import type { LegalSection } from "@/types/app/modules/marketing/legal";
 
 interface Props {
     alternates: Alternates;
     description: string;
-    legal: Legal;
     sections: Array<LegalSection>;
-    support: string;
     title: string;
+    updatedAt: string;
 }
 
 /**
- * The shell the three legal documents share: their head tags, the
- * notice that the text is still a draft, the title with the date it
- * last changed, and the numbered sections themselves.
- *
- * Every string reaching it is a translation key, resolved here with one
- * set of replacements, so the entity, the jurisdiction and the support
- * address are written into the copy from configuration rather than
- * repeated in each document.
+ * The address the documents tell a reader to write to.
  */
-export const LegalDocument = ({ alternates, description, legal, sections, support, title }: Props) => {
+const SUPPORT_EMAIL = "hello@contamos.xyz";
+
+/**
+ * The shell the three legal documents share: their head tags, the
+ * title with the date it last changed, and the numbered sections
+ * themselves.
+ *
+ * Every string reaching it is a translation key. The documents name the
+ * company and the law they are written under in their own copy; only
+ * the support address and the date each document carries are filled
+ * in here.
+ */
+export const LegalDocument = ({ alternates, description, sections, title, updatedAt }: Props) => {
     /**
      * Translate the provided string to the current locale.
      */
@@ -37,17 +40,15 @@ export const LegalDocument = ({ alternates, description, legal, sections, suppor
     const canonical = alternates[currentLocale() as "en" | "es"] ?? alternates.en;
 
     /**
-     * What every document needs to name: who it binds, under which
-     * law, where to write and when it last changed.
+     * What every document needs to fill in: where to write, and when
+     * the document last changed.
      */
     const replacements = {
         // The date is a plain yyyy-MM-dd, which new Date() reads as
         // UTC midnight and so shows as the day before west of UTC.
         // Naming the time makes the browser read it locally.
-        date: formatDate(new Date(`${legal.updatedAt}T00:00:00`), currentLocale()),
-        email: support,
-        entity: legal.entity,
-        jurisdiction: legal.jurisdiction,
+        date: formatDate(new Date(`${updatedAt}T00:00:00`), currentLocale()),
+        email: SUPPORT_EMAIL,
     };
 
     return (
@@ -65,18 +66,6 @@ export const LegalDocument = ({ alternates, description, legal, sections, suppor
             </Head>
 
             <div className="mx-auto flex max-w-3xl flex-col gap-10 px-4 pt-28 pb-24 sm:px-6 sm:pt-32 sm:pb-32">
-                {/** Draft notice */}
-                {legal.reviewed ? null : (
-                    <div className="flex gap-3 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4">
-                        <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                        <p className="text-sm leading-relaxed">
-                            {t(
-                                "This text is a draft. It has not been reviewed by a lawyer yet and is published so its structure can be checked. Do not rely on it.",
-                            )}
-                        </p>
-                    </div>
-                )}
-
                 {/** Title */}
                 <header className="flex flex-col gap-3">
                     <h1 className="font-heading text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">

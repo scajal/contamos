@@ -145,7 +145,7 @@ const CurrentPlan = () => {
     /**
      * The page's props.
      */
-    const { locale, plan, renewal, support, team } = usePage<PageProps>().props;
+    const { locale, plan, renewal, team } = usePage<PageProps>().props;
 
     /**
      * Format a date for the current locale.
@@ -250,8 +250,8 @@ const CurrentPlan = () => {
                 {stuck && (
                     <p className="text-muted-foreground text-sm leading-relaxed">
                         {t("Something we can help with?")}{" "}
-                        <a className="text-foreground underline underline-offset-4" href={`mailto:${support.email}`}>
-                            {t("Write to :email", { email: support.email })}
+                        <a className="text-foreground underline underline-offset-4" href={"mailto:hello@contamos.xyz"}>
+                            {t("Write to :email", { email: "hello@contamos.xyz" })}
                         </a>
                     </p>
                 )}

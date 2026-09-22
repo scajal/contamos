@@ -438,7 +438,7 @@ const Sidebar = () => {
     /**
      * The page's props.
      */
-    const { auth, support, user } = page.props;
+    const { auth, user } = page.props;
 
     /**
      * What the user may do on the current team.
@@ -624,7 +624,7 @@ const Sidebar = () => {
                                         <UserIcon />
                                         <span>{t("Account")}</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem render={<a href={`mailto:${support.email}`} />}>
+                                    <DropdownMenuItem render={<a href={"mailto:hello@contamos.xyz"} />}>
                                         <LifeBuoyIcon />
                                         <span>{t("Support")}</span>
                                     </DropdownMenuItem>

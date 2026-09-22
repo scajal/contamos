@@ -78,13 +78,6 @@ class HandleInertiaRequests extends Middleware
             // server does.
             'permissions' => fn (): array => $this->permissions($request),
 
-            // Where a user writes when something goes wrong, shared
-            // everywhere so the marketing footer, the application and
-            // the billing states all offer the same address.
-            'support' => fn (): array => [
-                'email' => config()->string('support.email'),
-            ],
-
             // The authenticated user.
             'user' => Inertia::always($user),
         ];

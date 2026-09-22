@@ -163,18 +163,16 @@ it('counts the people on the current team so the app can tell a shared ledger fr
             ->where('user.current_team.users_count', 2));
 });
 
-it('shares the support address with every page, signed in or not', function (): void {
-    config()->set('support.email', 'ayuda@contamos.app');
-
+it('leaves the support address to the pages that show it', function (): void {
     get(route('home', ['locale' => 'en']))
         ->assertOk()
         ->assertInertia(fn (Assert $page): Assert => $page
-            ->where('support.email', 'ayuda@contamos.app'));
+            ->missing('support'));
 
     [$user, $team] = actingMember();
 
     $this->get(route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]))
         ->assertOk()
         ->assertInertia(fn (Assert $page): Assert => $page
-            ->where('support.email', 'ayuda@contamos.app'));
+            ->missing('support'));
 });

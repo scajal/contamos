@@ -1,7 +1,8 @@
-import { Link, usePage } from "@inertiajs/react";
+import { Link } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
 import { BrandMark } from "@/components/brand-mark";
+import { cn } from "@/lib/utils";
 import { login } from "@/routes";
 import legal from "@/routes/legal";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
@@ -15,7 +16,6 @@ const SECTIONS = [
     { hash: "features", label: "Features" },
     { hash: "how-it-works", label: "How it works" },
     { hash: "pricing", label: "Pricing" },
-    { hash: "faq", label: "Questions" },
 ] as const;
 
 /** The documents that say what we do with your data and your money. */
@@ -24,6 +24,44 @@ const DOCUMENTS = [
     { label: "Terms of service", route: legal.terms },
     { label: "Refund policy", route: legal.refunds },
 ] as const;
+
+/**
+ * One labelled column of the footer: what the links under it have
+ * in common, and the links themselves as a list.
+ */
+const FooterColumn = ({ children, title }: { children: React.ReactNode; title: string }) => (
+    <div className="flex flex-col gap-4">
+        <h2 className="text-sm font-medium">{title}</h2>
+        <ul className="flex flex-col gap-3">{children}</ul>
+    </div>
+);
+
+/**
+ * A link of a footer column. The emphasized one is the way on into
+ * the application, which is the only thing here a visitor is
+ * being asked to do.
+ */
+const FooterLink = ({
+    children,
+    emphasized = false,
+    href,
+}: {
+    children: React.ReactNode;
+    emphasized?: boolean;
+    href: string;
+}) => (
+    <li>
+        <a
+            className={cn(
+                "hover:text-foreground text-sm transition-colors",
+                emphasized ? "font-medium" : "text-muted-foreground",
+            )}
+            href={href}
+        >
+            {children}
+        </a>
+    </li>
+);
 
 interface FooterProps {
     alternates: Alternates;
@@ -44,13 +82,6 @@ export const Footer = ({ alternates, homeUrl, dashboardUrl, appearance, onAppear
      * Translate the provided string to the current locale.
      */
     const { t, currentLocale } = useLaravelReactI18n();
-
-    /**
-     * The address a visitor writes to, shared by the server so the
-     * footer, the application and the billing states all offer the
-     * same one.
-     */
-    const { support } = usePage().props;
 
     /**
      * The locale this page is being read in, which also picks the
@@ -88,43 +119,42 @@ export const Footer = ({ alternates, homeUrl, dashboardUrl, appearance, onAppear
                         </p>
                     </div>
 
-                    <div className="flex flex-col gap-8 sm:flex-row sm:gap-16">
-                        <nav aria-label={t("Footer")} className="flex flex-wrap gap-x-7 gap-y-3">
+                    {/** One column per kind of link, each under the heading
+                     * that says what the column is for, so a reader scans
+                     * the headings rather than a run of loose links. */}
+                    <nav aria-label={t("Footer")} className="grid grid-cols-2 gap-8 sm:grid-cols-3 sm:gap-16">
+                        <FooterColumn title={t("Product")}>
                             {SECTIONS.map(({ hash, label }) => (
-                                <a
-                                    key={hash}
-                                    href={isHome ? `#${hash}` : `${homeUrl}#${hash}`}
-                                    className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                                >
+                                <FooterLink href={isHome ? `#${hash}` : `${homeUrl}#${hash}`} key={hash}>
                                     {t(label)}
-                                </a>
+                                </FooterLink>
                             ))}
-                            <a
-                                href={dashboardUrl ?? login.url()}
-                                className="hover:text-foreground text-sm font-medium transition-colors"
-                            >
+                            {/** The way on into the application closes the
+                             * column, since it is the one thing here a
+                             * visitor is being asked to do. */}
+                            <FooterLink emphasized href={dashboardUrl ?? login.url()}>
                                 {dashboardUrl ? t("Go to the dashboard") : t("Log in")}
-                            </a>
-                        </nav>
+                            </FooterLink>
+                        </FooterColumn>
 
-                        <nav aria-label={t("Legal")} className="flex flex-wrap gap-x-7 gap-y-3">
+                        <FooterColumn title={t("Support")}>
+                            <FooterLink href={isHome ? "#faq" : `${homeUrl}#faq`}>{t("Questions")}</FooterLink>
+                            <FooterLink href={"mailto:hello@contamos.xyz"}>{t("Contact")}</FooterLink>
+                        </FooterColumn>
+
+                        <FooterColumn title={t("Legal")}>
                             {DOCUMENTS.map(({ label, route }) => (
-                                <Link
-                                    key={label}
-                                    href={route.url({ locale })}
-                                    className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                                >
-                                    {t(label)}
-                                </Link>
+                                <li key={label}>
+                                    <Link
+                                        className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                                        href={route.url({ locale })}
+                                    >
+                                        {t(label)}
+                                    </Link>
+                                </li>
                             ))}
-                            <a
-                                href={`mailto:${support.email}`}
-                                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-                            >
-                                {t("Support")}
-                            </a>
-                        </nav>
-                    </div>
+                        </FooterColumn>
+                    </nav>
                 </div>
 
                 <div className="mt-12 flex flex-col-reverse items-start gap-4 border-t pt-8 sm:flex-row sm:items-center sm:justify-between">

@@ -66,48 +66,15 @@ describe('documents', function (): void {
                 ->where('homeUrl', route('home', ['locale' => 'es'])));
     })->with(legalDocuments());
 
-    it('names the entity and the law the document is written under', function (string $route): void {
-        config()->set('legal.entity', 'Contamos SAS');
-        config()->set('legal.jurisdiction', 'Uruguay');
-        config()->set('legal.updated_at', '2026-09-21');
-
+    it('leaves the entity and the law to the copy itself', function (string $route): void {
         get(route($route, ['locale' => 'en']))
             ->assertOk()
             ->assertInertia(fn (Assert $page): Assert => $page
-                ->where('legal.entity', 'Contamos SAS')
-                ->where('legal.jurisdiction', 'Uruguay')
-                ->where('legal.updatedAt', '2026-09-21'));
-    })->with(legalDocuments());
-
-    it('marks the text as unreviewed until it is signed off', function (string $route): void {
-        config()->set('legal.reviewed', false);
-
-        get(route($route, ['locale' => 'en']))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->where('legal.reviewed', false));
-    })->with(legalDocuments());
-
-    it('drops the notice once the text has been reviewed', function (string $route): void {
-        config()->set('legal.reviewed', true);
-
-        get(route($route, ['locale' => 'en']))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->where('legal.reviewed', true));
+                ->missing('legal'));
     })->with(legalDocuments());
 });
 
 describe('reachability', function (): void {
-    it('offers the support address alongside the documents', function (): void {
-        config()->set('support.email', 'ayuda@contamos.app');
-
-        get(route('legal.privacy', ['locale' => 'en']))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->where('support.email', 'ayuda@contamos.app'));
-    });
-
     it('lists every document in the sitemap', function (string $route): void {
         get(route('sitemap'))
             ->assertOk()

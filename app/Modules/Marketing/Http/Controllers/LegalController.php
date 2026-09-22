@@ -39,8 +39,8 @@ class LegalController
 
     /**
      * Render one of the legal documents, which differ only in
-     * their copy: the shell, the locale alternates and the
-     * entity behind them are the same on all three.
+     * their copy: the shell and the locale alternates are the
+     * same on all three.
      */
     protected function document(string $name, ?User $user, ResolveAuthenticationRedirect $redirect): Response
     {
@@ -53,16 +53,6 @@ class LegalController
                 'en' => route("legal.{$name}", ['locale' => 'en']),
                 'es' => route("legal.{$name}", ['locale' => 'es']),
                 'default' => route("legal.{$name}", ['locale' => 'en']),
-            ],
-            // Who the document binds and when it last changed, so the
-            // copy never hardcodes an entity or a date that would then
-            // have to be found again in three places.
-            'legal' => [
-                'address' => config()->string('legal.address'),
-                'entity' => config()->string('legal.entity'),
-                'jurisdiction' => config()->string('legal.jurisdiction'),
-                'reviewed' => config()->boolean('legal.reviewed'),
-                'updatedAt' => config()->string('legal.updated_at'),
             ],
         ]);
     }
