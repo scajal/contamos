@@ -32,19 +32,16 @@ class CurrenciesTable
     protected static function getColumns(): array
     {
         return [
-            Tables\Columns\Layout\Split::make([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\TextColumn::make('name')
-                        ->weight(FontWeight::Medium)
-                        ->searchable(),
-                    Tables\Columns\TextColumn::make('code')
-                        ->searchable(),
-                ]),
-                Tables\Columns\TextColumn::make('is_active')
-                    ->formatStateUsing(fn (bool $state): string => $state ? trans('Active') : trans('Inactive'))
-                    ->color(fn (bool $state): array => $state ? Color::Green : Color::Red)
-                    ->badge(),
-            ]),
+            Tables\Columns\TextColumn::make('code')
+                ->searchable(isIndividual: true),
+            Tables\Columns\TextColumn::make('name')
+                ->weight(FontWeight::Medium)
+                ->searchable(isIndividual: true),
+            Tables\Columns\TextColumn::make('is_active')
+                ->label(trans('Status'))
+                ->formatStateUsing(fn (bool $state): string => $state ? trans('Active') : trans('Inactive'))
+                ->color(fn (bool $state): array => $state ? Color::Green : Color::Red)
+                ->badge(),
         ];
     }
 

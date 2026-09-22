@@ -37,10 +37,10 @@ class QuotesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('observed_at')
             ->defaultSort('observed_at', 'desc')
             ->columns($this->getColumns())
-            ->headerActions($this->getHeaderActions());
+            ->headerActions($this->getHeaderActions())
+            ->recordActions($this->getRecordActions());
     }
 
     /**
@@ -51,14 +51,11 @@ class QuotesRelationManager extends RelationManager
     protected function getColumns(): array
     {
         return [
-            Tables\Columns\Layout\Stack::make([
-                Tables\Columns\TextColumn::make('rate')
-                    ->formatStateUsing(fn (Quote $record): string => new Amount()->format($record->rate, $record->currency)) // @phpstan-ignore-line argument.type False positive.
-                    ->weight(FontWeight::Medium),
-                Tables\Columns\TextColumn::make('observed_at')
-                    ->searchable(isIndividual: true)
-                    ->dateTime(),
-            ]),
+            Tables\Columns\TextColumn::make('rate')
+                ->formatStateUsing(fn (Quote $record): string => new Amount()->format($record->rate, $record->currency)) // @phpstan-ignore-line argument.type False positive.
+                ->weight(FontWeight::Medium),
+            Tables\Columns\TextColumn::make('observed_at')
+                ->dateTime('d/m/Y H:i'),
         ];
     }
 
@@ -71,6 +68,8 @@ class QuotesRelationManager extends RelationManager
     {
         return [
             Actions\CreateAction::make()
+                ->modalHeading(trans('filament-actions::create.single.modal.heading', ['label' => trans('quote')]))
+                ->label(trans('filament-actions::create.single.label', ['label' => trans('quote')]))
                 ->modalWidth(Width::Medium)
                 ->createAnother(false)
                 ->slideOver()
@@ -89,6 +88,20 @@ class QuotesRelationManager extends RelationManager
                     Forms\Components\Hidden::make('source')
                         ->default(QuoteSource::ManualOrScheduled),
                 ]),
+        ];
+    }
+
+    /**
+     * Get the record actions for the relation manager's table.
+     *
+     * @return array<\Filament\Actions\ActionGroup>
+     */
+    protected function getRecordActions(): array
+    {
+        return [
+            Actions\ActionGroup::make([
+                Actions\DeleteAction::make(),
+            ]),
         ];
     }
 }
