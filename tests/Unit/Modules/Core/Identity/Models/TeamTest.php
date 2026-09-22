@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Membership;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 use Laravel\Pennant\Feature as Pennant;
 
@@ -136,4 +138,56 @@ it('has no owner when nobody belongs to the team', function (): void {
     $team = Team::factory()->create();
 
     expect($team->owner)->toBeNull();
+});
+
+it('is on the free plan without a subscription or a granted plan', function (): void {
+    $team = Team::factory()->create();
+
+    expect($team->plan())->toBe(Plan::Free)
+        ->and($team->planOverride())->toBeNull();
+});
+
+it('is on the pro plan while a pro subscription is active', function (): void {
+    $team = Team::factory()->create();
+    subscribeToPro($team);
+
+    expect($team->plan())->toBe(Plan::Pro);
+});
+
+it('takes a granted plan over the absence of a subscription', function (): void {
+    $team = Team::factory()->grantedPlan(Plan::Pro)->create();
+
+    expect($team->plan())->toBe(Plan::Pro)
+        ->and($team->planOverride())->toBe(Plan::Pro);
+});
+
+it('takes a granted plan over the subscription', function (): void {
+    $team = Team::factory()->grantedPlan(Plan::Free)->create();
+    subscribeToPro($team);
+
+    expect($team->plan())->toBe(Plan::Free);
+});
+
+it('keeps a granted plan until it expires', function (): void {
+    $team = Team::factory()->grantedPlan(Plan::Pro, CarbonImmutable::now()->addDay())->create();
+
+    expect($team->plan())->toBe(Plan::Pro);
+});
+
+it('falls back to the subscription once the granted plan expires', function (): void {
+    $team = Team::factory()->grantedPlan(Plan::Pro, CarbonImmutable::now()->subMinute())->create();
+
+    expect($team->plan())->toBe(Plan::Free)
+        ->and($team->planOverride())->toBeNull();
+
+    subscribeToPro($team);
+
+    expect($team->plan())->toBe(Plan::Pro);
+});
+
+it('casts the granted plan and its expiry', function (): void {
+    $team = Team::factory()->grantedPlan(Plan::Pro, CarbonImmutable::now()->addWeek())->create();
+
+    expect($team->fresh()?->plan_override)->toBe(Plan::Pro)
+        ->and($team->fresh()?->plan_override_expires_at)->toBeInstanceOf(CarbonImmutable::class);
 });

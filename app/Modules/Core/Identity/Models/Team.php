@@ -18,6 +18,8 @@ use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\LogsTeamActivity;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -39,6 +41,8 @@ use Spatie\Activitylog\Enums\ActivityEvent;
  * @property string $id
  * @property string $name
  * @property string $slug
+ * @property \App\Modules\Billing\Enums\Plan|null $plan_override
+ * @property \Carbon\CarbonImmutable|null $plan_override_expires_at
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Account> $accounts
@@ -63,6 +67,7 @@ use Spatie\Activitylog\Enums\ActivityEvent;
  *
  * @mixin \Eloquent
  */
+#[Fillable(['name', 'slug', 'plan_override', 'plan_override_expires_at'])]
 class Team extends Model
 {
     use Billable;
@@ -164,6 +169,19 @@ class Team extends Model
             ->get();
 
         return $currencies;
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'plan_override' => Plan::class,
+            'plan_override_expires_at' => 'datetime',
+        ];
     }
 
     /**
@@ -324,11 +342,38 @@ class Team extends Model
     }
 
     /**
-     * Get the current plan of the team.
+     * Get the current plan of the team. A plan granted by
+     * hand wins while it lasts; otherwise the plan follows
+     * the Paddle subscription.
      */
     public function plan(): Plan
     {
+        // An unexpired override stands in for a subscription.
+        if (($override = $this->planOverride()) instanceof Plan) {
+            return $override;
+        }
+
+        // Otherwise the plan is whatever Paddle says it is.
         return $this->subscribedToProduct(Plan::Pro->productId()) ? Plan::Pro : Plan::Free;
+    }
+
+    /**
+     * Get the plan granted to the team by hand, or null when
+     * there is none or the grant has lapsed.
+     */
+    public function planOverride(): ?Plan
+    {
+        // Without a grant there is nothing to apply.
+        if (! $this->plan_override instanceof Plan) {
+            return null;
+        }
+
+        // A grant past its expiry no longer applies.
+        if ($this->plan_override_expires_at instanceof CarbonImmutable && $this->plan_override_expires_at->isPast()) {
+            return null;
+        }
+
+        return $this->plan_override;
     }
 
     /**

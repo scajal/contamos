@@ -89,7 +89,7 @@ abstract class PanelProvider extends \Filament\PanelProvider
     {
         return $panel
             ->authMiddleware([\Filament\Http\Middleware\Authenticate::class, \Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS::class])
-            ->favicon('favico.ico')
+            ->favicon('/favicon.ico')
             ->maxContentWidth(Width::Full)
             ->middleware([
                 \Illuminate\Cookie\Middleware\EncryptCookies::class,

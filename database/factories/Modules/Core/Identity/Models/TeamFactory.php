@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Database\Factories\Modules\Core\Identity\Models;
 
+use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -33,6 +35,18 @@ class TeamFactory extends Factory
             'name' => $name = fake()->unique()->company(),
             'slug' => Str::slug($name),
         ];
+    }
+
+    /**
+     * Indicate that the team was granted the given plan by
+     * hand, optionally until the given moment.
+     */
+    public function grantedPlan(Plan $plan, ?CarbonImmutable $until = null): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'plan_override' => $plan,
+            'plan_override_expires_at' => $until,
+        ]);
     }
 
     /**
