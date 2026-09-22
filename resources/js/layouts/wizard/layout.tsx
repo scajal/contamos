@@ -1,41 +1,18 @@
 import { usePage } from "@inertiajs/react";
-import { useLaravelReactI18n } from "laravel-react-i18n";
-import { LogOutIcon } from "lucide-react";
 
+import { BrandMark } from "@/components/brand-mark";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { logout } from "@/routes";
-
-/**
- * The initials of the given name, used as the
- * avatar fallback.
- */
-const initials = (name: string) =>
-    name
-        .split(" ")
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase() ?? "")
-        .join("");
+import { UserMenuItems } from "@/components/user-menu";
+import { initials } from "@/lib/utils";
+import { home } from "@/routes";
 
 export const WizardLayout = ({ children }: { children: React.ReactNode }) => {
     /**
-     * Translate the provided string to the
-     * current locale.
-     */
-    const t = useLaravelReactI18n().t;
-
-    /**
      * The page's props.
      */
-    const { user } = usePage().props;
+    const { locale, user } = usePage().props;
 
     return (
         <SidebarProvider>
@@ -45,26 +22,25 @@ export const WizardLayout = ({ children }: { children: React.ReactNode }) => {
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
                     <div className="w-full px-4 md:px-10">
                         <div className="mx-auto flex w-full max-w-5xl items-center justify-between">
-                            <div>Logo</div>
+                            {/** Logo */}
+                            <a href={home.url({ locale })} className="flex shrink-0 items-center gap-2">
+                                <BrandMark />
+                                <span className="font-heading text-base font-semibold tracking-tight">contamos</span>
+                            </a>
+                            {/** User menu */}
                             <DropdownMenu>
-                                <DropdownMenuTrigger>
+                                <DropdownMenuTrigger className="rounded-full">
                                     <Avatar>
                                         <AvatarImage src={user?.avatar ?? undefined} />
                                         <AvatarFallback>{initials(user?.name ?? "")}</AvatarFallback>
                                     </Avatar>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                    align="center"
-                                    className="w-auto min-w-(--anchor-width)"
-                                    side="bottom"
-                                    sideOffset={4}
-                                >
-                                    <DropdownMenuGroup>
-                                        <DropdownMenuItem render={<a href={logout.url()} />}>
-                                            <LogOutIcon />
-                                            <span>{t("Logout")}</span>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuGroup>
+                                <DropdownMenuContent align="end" className="min-w-56" side="bottom" sideOffset={4}>
+                                    <div className="flex flex-col px-2 py-1.5">
+                                        <span className="truncate text-sm font-medium">{user?.name}</span>
+                                        <span className="text-muted-foreground truncate text-xs">{user?.email}</span>
+                                    </div>
+                                    <UserMenuItems />
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>

@@ -14,21 +14,16 @@ import {
     CalendarRangeIcon,
     HistoryIcon,
     LayoutDashboardIcon,
-    LifeBuoyIcon,
-    LogOutIcon,
     PlusIcon,
     RepeatIcon,
     SettingsIcon,
-    ShieldCheckIcon,
     TagIcon,
-    UserIcon,
     UsersIcon,
     WalletIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
-import { AppearanceMenu } from "@/components/appearance-menu";
 import { BalancesToggle } from "@/components/balances-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
@@ -47,7 +42,6 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -68,13 +62,12 @@ import {
     SidebarRail,
     SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { UserMenuItems } from "@/components/user-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { initials } from "@/lib/utils";
-import { logout } from "@/routes";
 import subscriptions from "@/routes/billing/teams/subscriptions";
-import administration from "@/routes/filament/administration";
 import accounts from "@/routes/finance/teams/accounts";
 import budgets from "@/routes/finance/teams/budgets";
 import dashboard from "@/routes/finance/teams/dashboard";
@@ -88,7 +81,6 @@ import activity from "@/routes/identity/teams/activity";
 import invitations from "@/routes/identity/teams/invitations";
 import members from "@/routes/identity/teams/members";
 import settings from "@/routes/identity/teams/settings";
-import account from "@/routes/identity/users/account";
 
 const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/accounts", title: "Accounts" },
@@ -438,7 +430,7 @@ const Sidebar = () => {
     /**
      * The page's props.
      */
-    const { auth, user } = page.props;
+    const { user } = page.props;
 
     /**
      * What the user may do on the current team.
@@ -604,43 +596,7 @@ const Sidebar = () => {
                                 <ChevronsUpDownIcon className="ml-auto size-4" />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent side={isMobile ? "bottom" : "right"} align="end" sideOffset={4}>
-                                {auth.canAccessAdministration && (
-                                    <Fragment>
-                                        <DropdownMenuGroup>
-                                            <DropdownMenuItem
-                                                render={
-                                                    <a href={administration.pages.dashboard.url()} target="_blank" />
-                                                }
-                                            >
-                                                <ShieldCheckIcon />
-                                                <span>{t("Administration")}</span>
-                                            </DropdownMenuItem>
-                                        </DropdownMenuGroup>
-                                        <DropdownMenuSeparator />
-                                    </Fragment>
-                                )}
-                                <DropdownMenuGroup>
-                                    <DropdownMenuItem render={<Link href={account.index.url()} />}>
-                                        <UserIcon />
-                                        <span>{t("Account")}</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem render={<a href={"mailto:hello@contamos.xyz"} />}>
-                                        <LifeBuoyIcon />
-                                        <span>{t("Support")}</span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuGroup>
-                                    <DropdownMenuLabel>{t("Theme")}</DropdownMenuLabel>
-                                    <AppearanceMenu />
-                                </DropdownMenuGroup>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuGroup>
-                                    <DropdownMenuItem render={<a href={logout.url()} />}>
-                                        <LogOutIcon />
-                                        <span>{t("Log Out")}</span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuGroup>
+                                <UserMenuItems />
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </SidebarMenuItem>
