@@ -1,12 +1,20 @@
 import type { ClassValue } from "clsx";
 import { clsx } from "clsx";
 import { formatDistanceToNow, isToday, isYesterday } from "date-fns";
-import { enUS, es } from "date-fns/locale";
+import { enUS, es, type Locale } from "date-fns/locale";
 import { twMerge } from "tailwind-merge";
 
 import type { Currency } from "@/types/app/modules/core/catalog/models/currency";
 
 type AmountCurrency = Pick<Currency, "decimal_places" | "symbol">;
+
+/**
+ * The date-fns locale for an application locale, so calendars
+ * and relative dates speak the language of the UI.
+ */
+export function dateFnsLocale(locale: string): Locale {
+    return locale.startsWith("es") ? es : enUS;
+}
 
 /**
  * Merge class names into a single string.
@@ -23,7 +31,7 @@ export function cn(...inputs: ClassValue[]) {
 export function formatRelativeTime(value: string, locale: string): string {
     return formatDistanceToNow(new Date(value), {
         addSuffix: true,
-        locale: locale.startsWith("es") ? es : enUS,
+        locale: dateFnsLocale(locale),
     });
 }
 

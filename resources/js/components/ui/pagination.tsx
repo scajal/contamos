@@ -1,14 +1,17 @@
 import { cn } from "cn";
+import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
+    const { t } = useLaravelReactI18n();
+
     return (
         <nav
             role="navigation"
-            aria-label="pagination"
+            aria-label={t("Pagination")}
             data-slot="pagination"
             className={cn("mx-auto flex w-full justify-center", className)}
             {...props}
@@ -50,31 +53,42 @@ function PaginationLink({ className, isActive, size = "icon", ...props }: Pagina
 
 function PaginationPrevious({
     className,
-    text = "Previous",
+    text,
     ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+    const { t } = useLaravelReactI18n();
+
     return (
-        <PaginationLink aria-label="Go to previous page" size="default" className={cn("pl-2!", className)} {...props}>
+        <PaginationLink
+            aria-label={t("Go to previous page")}
+            size="default"
+            className={cn("pl-2!", className)}
+            {...props}
+        >
             <ChevronLeftIcon data-icon="inline-start" />
-            <span className="hidden sm:block">{text}</span>
+            <span className="hidden sm:block">{text ?? t("Previous")}</span>
         </PaginationLink>
     );
 }
 
 function PaginationNext({
     className,
-    text = "Next",
+    text,
     ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+    const { t } = useLaravelReactI18n();
+
     return (
-        <PaginationLink aria-label="Go to next page" size="default" className={cn("pr-2!", className)} {...props}>
-            <span className="hidden sm:block">{text}</span>
+        <PaginationLink aria-label={t("Go to next page")} size="default" className={cn("pr-2!", className)} {...props}>
+            <span className="hidden sm:block">{text ?? t("Next")}</span>
             <ChevronRightIcon data-icon="inline-end" />
         </PaginationLink>
     );
 }
 
 function PaginationEllipsis({ className, ...props }: React.ComponentProps<"span">) {
+    const { t } = useLaravelReactI18n();
+
     return (
         <span
             aria-hidden
@@ -83,7 +97,7 @@ function PaginationEllipsis({ className, ...props }: React.ComponentProps<"span"
             {...props}
         >
             <MoreHorizontalIcon />
-            <span className="sr-only">More pages</span>
+            <span className="sr-only">{t("More pages")}</span>
         </span>
     );
 }

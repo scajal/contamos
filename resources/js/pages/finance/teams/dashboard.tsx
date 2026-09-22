@@ -260,7 +260,10 @@ const RecentActivity = () => {
                                                 TRANSACTION_COLUMNS.time,
                                             )}
                                         >
-                                            {format(new Date(transaction.occurred_at), "HH:mm")}
+                                            {new Intl.DateTimeFormat(currentLocale(), {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            }).format(new Date(transaction.occurred_at))}
                                         </TableCell>
                                         <TableCell className={TRANSACTION_COLUMNS.account}>
                                             <span className="block truncate" title={transaction.account?.name ?? "-"}>

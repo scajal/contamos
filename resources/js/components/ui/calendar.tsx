@@ -1,11 +1,13 @@
 "use client";
 
 import { cn } from "cn";
+import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from "lucide-react";
 import * as React from "react";
 import { DayPicker, getDefaultClassNames, type DayButton, type Locale } from "react-day-picker";
 
 import { Button, buttonVariants } from "@/components/ui/button";
+import { dateFnsLocale } from "@/lib/utils";
 
 function Calendar({
     className,
@@ -13,7 +15,7 @@ function Calendar({
     showOutsideDays = true,
     captionLayout = "label",
     buttonVariant = "ghost",
-    locale,
+    locale: givenLocale,
     formatters,
     components,
     ...props
@@ -21,6 +23,13 @@ function Calendar({
     buttonVariant?: React.ComponentProps<typeof Button>["variant"];
 }) {
     const defaultClassNames = getDefaultClassNames();
+
+    /**
+     * The calendar speaks the language of the UI unless a
+     * locale is handed in.
+     */
+    const { currentLocale } = useLaravelReactI18n();
+    const locale = givenLocale ?? dateFnsLocale(currentLocale());
 
     return (
         <DayPicker

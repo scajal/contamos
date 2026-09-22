@@ -1,11 +1,14 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cn } from "cn";
+import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react";
 import * as React from "react";
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
-    return <nav aria-label="breadcrumb" data-slot="breadcrumb" className={cn(className)} {...props} />;
+    const { t } = useLaravelReactI18n();
+
+    return <nav aria-label={t("Breadcrumb")} data-slot="breadcrumb" className={cn(className)} {...props} />;
 }
 
 function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
@@ -69,6 +72,8 @@ function BreadcrumbSeparator({ children, className, ...props }: React.ComponentP
 }
 
 function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<"span">) {
+    const { t } = useLaravelReactI18n();
+
     return (
         <span
             data-slot="breadcrumb-ellipsis"
@@ -78,7 +83,7 @@ function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<"span"
             {...props}
         >
             <MoreHorizontalIcon />
-            <span className="sr-only">More</span>
+            <span className="sr-only">{t("More")}</span>
         </span>
     );
 }

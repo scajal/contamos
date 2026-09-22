@@ -69,17 +69,7 @@ const Index = () => {
             {/** Header */}
             <Header />
 
-            {is_locked ? (
-                <LockedBudgets />
-            ) : (
-                <div className="flex flex-col gap-4">
-                    <div className="flex justify-end">
-                        <CreateBudgetButton className="max-sm:w-full" />
-                    </div>
-
-                    <Listing />
-                </div>
-            )}
+            {is_locked ? <LockedBudgets /> : <Listing />}
         </div>
     );
 };
@@ -91,12 +81,22 @@ const Header = () => {
      */
     const t = useLaravelReactI18n().t;
 
+    /**
+     * The page's props.
+     */
+    const { is_locked } = usePage<PageProps>().props;
+
     return (
-        <header className="flex flex-col gap-1">
-            <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">{t("Budgets")}</h1>
-            <p className="text-muted-foreground text-[15px] leading-relaxed">
-                {t("How much this team means to spend on each category or tag, month by month.")}
-            </p>
+        <header className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-1">
+                <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">
+                    {t("Budgets")}
+                </h1>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">
+                    {t("How much this team means to spend on each category or tag, month by month.")}
+                </p>
+            </div>
+            {!is_locked && <CreateBudgetButton />}
         </header>
     );
 };

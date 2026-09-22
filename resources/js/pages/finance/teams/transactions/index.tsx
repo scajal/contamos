@@ -638,7 +638,7 @@ const TransactionRow = ({ transaction }: { transaction: Transaction }) => {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * Whether the team is shared, and so whether the row says who
@@ -655,7 +655,9 @@ const TransactionRow = ({ transaction }: { transaction: Transaction }) => {
     return (
         <TableRow>
             <TableCell className={cn("text-muted-foreground tabular-nums", TRANSACTION_COLUMNS.time)}>
-                {format(new Date(transaction.occurred_at), "HH:mm")}
+                {new Intl.DateTimeFormat(currentLocale(), { hour: "2-digit", minute: "2-digit" }).format(
+                    new Date(transaction.occurred_at),
+                )}
             </TableCell>
             <TableCell className={TRANSACTION_COLUMNS.account}>
                 <TruncatedText className="w-full" fallback="-" value={transaction.account?.name} />

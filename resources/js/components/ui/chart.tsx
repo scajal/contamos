@@ -1,4 +1,5 @@
 import { cn } from "cn";
+import { useLaravelReactI18n } from "laravel-react-i18n";
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 import type { TooltipValueType } from "recharts";
@@ -124,6 +125,8 @@ function ChartTooltipContent({
         nameKey?: string;
         labelKey?: string;
     } & Omit<RechartsPrimitive.DefaultTooltipContentProps<TooltipValueType, TooltipNameType>, "accessibilityLayer">) {
+    const { currentLocale } = useLaravelReactI18n();
+
     const { config } = useChart();
 
     const tooltipLabel = React.useMemo(() => {
@@ -220,7 +223,7 @@ function ChartTooltipContent({
                                             {item.value != null && (
                                                 <span className="text-foreground font-mono font-medium tabular-nums">
                                                     {typeof item.value === "number"
-                                                        ? item.value.toLocaleString()
+                                                        ? item.value.toLocaleString(currentLocale())
                                                         : String(item.value)}
                                                 </span>
                                             )}

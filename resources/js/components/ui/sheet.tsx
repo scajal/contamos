@@ -2,6 +2,7 @@
 
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog";
 import { cn } from "cn";
+import { useLaravelReactI18n } from "laravel-react-i18n";
 import { XIcon } from "lucide-react";
 import * as React from "react";
 
@@ -46,6 +47,8 @@ function SheetContent({
     side?: "top" | "right" | "bottom" | "left";
     showCloseButton?: boolean;
 }) {
+    const { t } = useLaravelReactI18n();
+
     return (
         <SheetPortal>
             <SheetOverlay />
@@ -67,7 +70,7 @@ function SheetContent({
                         }
                     >
                         <XIcon />
-                        <span className="sr-only">Close</span>
+                        <span className="sr-only">{t("Close")}</span>
                     </SheetPrimitive.Close>
                 )}
             </SheetPrimitive.Popup>

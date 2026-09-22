@@ -216,6 +216,16 @@ class TeamInvitation extends Model
     }
 
     /**
+     * Indicate if the invitation was emailed within the last
+     * hour. Creating and renewing are the only writes before
+     * acceptance, so the update timestamp is when it was sent.
+     */
+    public function wasSentRecently(): bool
+    {
+        return $this->updated_at !== null && $this->updated_at->gt(CarbonImmutable::now()->subHour());
+    }
+
+    /**
      * Get the team that the invitation belongs to.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Identity\Models\Team, $this>

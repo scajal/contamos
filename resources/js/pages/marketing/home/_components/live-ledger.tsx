@@ -152,7 +152,7 @@ export const LiveLedger = () => {
     /**
      * Translate the provided string to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * Whether the visitor prefers reduced motion.
@@ -294,7 +294,7 @@ export const LiveLedger = () => {
                             <span className="mr-1.5 text-zinc-400">{currency}</span>
                             <NumberFlow
                                 value={balances[currency]}
-                                locales="en"
+                                locales={currentLocale()}
                                 format={{
                                     minimumFractionDigits: decimalPlaces,
                                     maximumFractionDigits: decimalPlaces,
@@ -336,7 +336,7 @@ export const LiveLedger = () => {
                                     <div className="flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
                                         <div className="flex min-w-0 items-center gap-3">
                                             <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
-                                                {transaction.tag}
+                                                {t(transaction.tag)}
                                             </span>
                                             <span className="truncate text-sm text-zinc-300">
                                                 {t(transaction.label)}
@@ -350,7 +350,7 @@ export const LiveLedger = () => {
                                             )}
                                         >
                                             {transaction.kind === "income" ? "+" : "-"}{" "}
-                                            {formatAmount(transaction.amount, "en", {
+                                            {formatAmount(transaction.amount, currentLocale(), {
                                                 symbol: transaction.symbol,
                                                 decimal_places: transaction.decimalPlaces,
                                             })}

@@ -309,6 +309,67 @@ describe('store', function (): void {
             ->and($activity->attribute_changes['attributes']['email'])->toBe('ada@example.com')
             ->and($activity->attribute_changes['attributes']['role'])->toBe(Role::Admin->value);
     });
+    it('refuses the sixth invitation email of the day and allows one again the next day', function (): void {
+        Notification::fake();
+        $this->travelTo(CarbonImmutable::parse('2026-09-06 12:00:00'));
+        [$user, $team] = actingMember();
+
+        foreach (range(1, 5) as $number) {
+            $this->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload([
+                'email' => "invitee-{$number}@example.com",
+            ]))->assertRedirect();
+        }
+
+        $this->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload([
+            'email' => 'invitee-6@example.com',
+        ]))->assertTooManyRequests();
+
+        expect($team->invitations()->count())->toBe(5);
+        Notification::assertCount(5);
+
+        $this->travel(1)->day();
+
+        $this->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload([
+            'email' => 'invitee-6@example.com',
+        ]))->assertRedirect();
+
+        expect($team->invitations()->count())->toBe(6);
+    });
+
+    it('does not count a rejected invitation against the daily emails', function (): void {
+        Notification::fake();
+        [$user, $team] = actingMember();
+
+        foreach (range(1, 5) as $number) {
+            $this->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload([
+                'email' => 'not-an-email',
+            ]))->assertInvalid(['email']);
+        }
+
+        $this->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload())
+            ->assertRedirect();
+
+        expect($team->invitations()->count())->toBe(1);
+    });
+
+    it('counts the daily emails per member, not per team', function (): void {
+        Notification::fake();
+        [$user, $team] = actingMember();
+
+        foreach (range(1, 5) as $number) {
+            $this->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload([
+                'email' => "invitee-{$number}@example.com",
+            ]))->assertRedirect();
+        }
+
+        $this->actingAs(memberOf($team)->refresh())
+            ->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload([
+                'email' => 'invitee-6@example.com',
+            ]))
+            ->assertRedirect();
+
+        expect($team->invitations()->count())->toBe(6);
+    });
 });
 
 describe('resend', function (): void {
@@ -316,7 +377,7 @@ describe('resend', function (): void {
         Notification::fake();
         $this->travelTo(CarbonImmutable::parse('2026-09-06 12:00:00'));
         [$user, $team] = actingMember();
-        $invitation = TeamInvitation::factory()->for($team)->expired()->create(['code' => str_repeat('a', 64)]);
+        $invitation = TeamInvitation::factory()->for($team)->expired()->sentHoursAgo(2)->create(['code' => str_repeat('a', 64)]);
 
         $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
             ->patch(route('identity.teams.invitations.resend', [
@@ -352,6 +413,45 @@ describe('resend', function (): void {
         Notification::assertNothingSent();
     });
 
+    it('refuses to resend an invitation sent less than an hour ago', function (): void {
+        Notification::fake();
+        [$user, $team] = actingMember();
+        $invitation = TeamInvitation::factory()->for($team)->create(['code' => str_repeat('a', 64)]);
+
+        $this->from(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('identity.teams.invitations.resend', [
+                'team' => $team->getRouteKey(),
+                'invitation' => $invitation,
+            ]))
+            ->assertRedirect(route('identity.teams.invitations.index', ['team' => $team->getRouteKey()]));
+
+        expect($invitation->refresh()->code)->toBe(str_repeat('a', 64));
+
+        assertFlashedToast(trans('This invitation was sent less than an hour ago'));
+        Notification::assertNothingSent();
+    });
+
+    it('refuses to resend once the member sent the daily emails', function (): void {
+        Notification::fake();
+        [$user, $team] = actingMember();
+        $invitation = TeamInvitation::factory()->for($team)->sentHoursAgo(2)->create(['code' => str_repeat('a', 64)]);
+
+        foreach (range(1, 5) as $number) {
+            $this->post(route('identity.teams.invitations.store', ['team' => $team->getRouteKey()]), invitationPayload([
+                'email' => "invitee-{$number}@example.com",
+            ]))->assertRedirect();
+        }
+
+        $this->patch(route('identity.teams.invitations.resend', [
+            'team' => $team->getRouteKey(),
+            'invitation' => $invitation,
+        ]))
+            ->assertTooManyRequests();
+
+        expect($invitation->refresh()->code)->toBe(str_repeat('a', 64));
+        Notification::assertCount(5);
+    });
+
     it('returns 404 for an invitation of another team', function (): void {
         [$user, $team] = actingMember();
         $invitation = TeamInvitation::factory()->create();
@@ -367,7 +467,7 @@ describe('resend', function (): void {
         Notification::fake();
         $this->travelTo(CarbonImmutable::parse('2026-09-06 12:00:00'));
         [$user, $team] = actingMember();
-        $invitation = TeamInvitation::factory()->for($team)->expired()->create();
+        $invitation = TeamInvitation::factory()->for($team)->expired()->sentHoursAgo(2)->create();
         clearActivities();
 
         $this->patch(route('identity.teams.invitations.resend', [

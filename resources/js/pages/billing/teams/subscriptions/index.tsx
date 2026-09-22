@@ -140,17 +140,17 @@ const CurrentPlan = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { currentLocale, t } = useLaravelReactI18n();
 
     /**
      * The page's props.
      */
-    const { locale, plan, renewal, team } = usePage<PageProps>().props;
+    const { plan, renewal, team } = usePage<PageProps>().props;
 
     /**
      * Format a date for the current locale.
      */
-    const date = (value: string) => new Date(value).toLocaleDateString(locale, { dateStyle: "long" });
+    const date = (value: string) => formatDate(value, currentLocale());
 
     /**
      * What the team holds above the Free plan limits, left
@@ -202,7 +202,7 @@ const CurrentPlan = () => {
                 </p>
             </header>
             <div className="flex flex-col gap-4 rounded-xl border p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                             <span className="font-heading text-lg font-medium">

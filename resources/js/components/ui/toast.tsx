@@ -1,5 +1,6 @@
 import { Toast as ToastPrimitive } from "@base-ui/react/toast";
 import { cn } from "cn";
+import { useLaravelReactI18n } from "laravel-react-i18n";
 import { XIcon, CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react";
 import * as React from "react";
 
@@ -103,10 +104,12 @@ function ToastClose({
     render = <Button variant="ghost" size="icon-sm" />,
     ...props
 }: ToastPrimitive.Close.Props) {
+    const { t } = useLaravelReactI18n();
+
     return (
         <ToastPrimitive.Close
             data-slot="toast-close"
-            aria-label="Close toast"
+            aria-label={t("Close toast")}
             render={render}
             className={cn(
                 "text-muted-foreground hover:text-foreground relative shrink-0 after:absolute after:-inset-2 after:content-['']",

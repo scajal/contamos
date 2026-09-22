@@ -72,4 +72,15 @@ class TeamInvitationFactory extends Factory
             'expires_at' => CarbonImmutable::now()->subDay(),
         ]);
     }
+
+    /**
+     * Indicate that the invitation was last sent the given
+     * number of hours ago.
+     */
+    public function sentHoursAgo(int $hours): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'updated_at' => CarbonImmutable::now()->subHours($hours),
+        ]);
+    }
 }

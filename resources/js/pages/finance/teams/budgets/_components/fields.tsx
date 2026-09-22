@@ -1,20 +1,33 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
+import { format, parse, startOfMonth } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CoinsIcon } from "lucide-react";
+import { CalendarIcon, CoinsIcon } from "lucide-react";
 import { useState } from "react";
 
 import { CategoryIcon } from "@/components/category-icon";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { type CategoryOption } from "@/lib/categories";
-import { markFormDirty } from "@/lib/utils";
+import { formatMonth, markFormDirty } from "@/lib/utils";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { BudgetTargetKind } from "@/types/app/modules/core/finance/enums/budget-period/budget-target-kind";
 import { Category } from "@/types/app/modules/core/finance/enums/transaction/category";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
+
+/**
+ * The month format the form submits and the server expects.
+ */
+const MONTH_FORMAT = "yyyy-MM";
+
+/**
+ * Read a yyyy-MM string as the first day of that month.
+ */
+const toMonth = (month: string): Date => startOfMonth(parse(month, MONTH_FORMAT, new Date()));
 
 type FormProps = Partial<{
     amount: string;
@@ -244,12 +257,11 @@ export const Fields = ({ categories, currencies, defaultValues, errors, invalid,
             {/** First month */}
             <Field data-invalid={invalid("from_month") || undefined}>
                 <FieldLabel htmlFor="budget-from-month">{t("First month")}</FieldLabel>
-                <Input
-                    aria-invalid={invalid("from_month")}
-                    defaultValue={defaultValues?.from_month}
+                <MonthField
+                    defaultValue={defaultValues?.from_month ?? null}
                     id="budget-from-month"
+                    invalid={invalid("from_month")}
                     name="from_month"
-                    type="month"
                 />
                 {invalid("from_month") && <FieldError>{errors.from_month}</FieldError>}
             </Field>
@@ -257,12 +269,12 @@ export const Fields = ({ categories, currencies, defaultValues, errors, invalid,
             {/** Last month */}
             <Field data-invalid={invalid("until_month") || undefined}>
                 <FieldLabel htmlFor="budget-until-month">{t("Last month")}</FieldLabel>
-                <Input
-                    aria-invalid={invalid("until_month")}
-                    defaultValue={defaultValues?.until_month ?? ""}
+                <MonthField
+                    clearable
+                    defaultValue={defaultValues?.until_month ?? null}
                     id="budget-until-month"
+                    invalid={invalid("until_month")}
                     name="until_month"
-                    type="month"
                 />
                 <FieldDescription>
                     {t("Leave it empty to keep the budget running. Set it to the first month for a one-off goal.")}
@@ -270,5 +282,96 @@ export const Fields = ({ categories, currencies, defaultValues, errors, invalid,
                 {invalid("until_month") && <FieldError>{errors.until_month}</FieldError>}
             </Field>
         </FieldGroup>
+    );
+};
+
+type MonthFieldProps = {
+    /** Whether the month may be left empty, shown as ongoing. */
+    clearable?: boolean;
+    defaultValue: string | null;
+    id: string;
+    invalid: boolean;
+    name: string;
+};
+
+/**
+ * A month picked from the calendar, submitted as yyyy-MM through
+ * a hidden input. Any day of a month selects that month.
+ */
+const MonthField = ({ clearable = false, defaultValue, id, invalid, name }: MonthFieldProps) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const { currentLocale, t } = useLaravelReactI18n();
+
+    /**
+     * Whether the month picker is open.
+     */
+    const [isOpen, setIsOpen] = useState(false);
+
+    /**
+     * The month picked, kept in state so the hidden input
+     * submits it and the form reads as dirty.
+     */
+    const [month, setMonth] = useState<string | null>(defaultValue);
+
+    const selected = month ? toMonth(month) : undefined;
+
+    /**
+     * Keep the month picked and close the picker.
+     */
+    const pick = (value: string | null) => {
+        setMonth(value);
+        setIsOpen(false);
+        markFormDirty();
+    };
+
+    return (
+        <>
+            <input name={name} type="hidden" value={month ?? ""} />
+            <Popover onOpenChange={setIsOpen} open={isOpen}>
+                <PopoverTrigger
+                    render={
+                        <Button
+                            aria-invalid={invalid}
+                            className="w-full justify-start font-normal"
+                            id={id}
+                            type="button"
+                            variant="outline"
+                        />
+                    }
+                >
+                    <CalendarIcon data-icon="inline-start" />
+                    {selected ? (
+                        formatMonth(selected, currentLocale())
+                    ) : (
+                        <span className="text-muted-foreground">{t("Ongoing")}</span>
+                    )}
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-auto p-0">
+                    <Calendar
+                        captionLayout="dropdown"
+                        defaultMonth={selected}
+                        mode="single"
+                        onSelect={(day) => day && pick(format(startOfMonth(day), MONTH_FORMAT))}
+                        selected={selected}
+                    />
+                    {clearable && month && (
+                        <div className="border-t p-2">
+                            <Button
+                                className="w-full"
+                                onClick={() => pick(null)}
+                                size="sm"
+                                type="button"
+                                variant="ghost"
+                            >
+                                {t("Ongoing")}
+                            </Button>
+                        </div>
+                    )}
+                </PopoverContent>
+            </Popover>
+        </>
     );
 };

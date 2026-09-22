@@ -22,10 +22,11 @@ export const LanguageSwitcher = ({ alternates, className }: LanguageSwitcherProp
     /**
      * The current locale.
      */
-    const current = useLaravelReactI18n().currentLocale();
+    const { currentLocale, t } = useLaravelReactI18n();
+    const current = currentLocale();
 
     return (
-        <div className={cn("bg-muted/70 flex items-center rounded-full p-0.5", className)} aria-label="Language">
+        <div className={cn("bg-muted/70 flex items-center rounded-full p-0.5", className)} aria-label={t("Language")}>
             {LOCALES.map(({ locale, label }) => {
                 const active = current === locale;
 
