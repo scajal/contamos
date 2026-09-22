@@ -31,7 +31,7 @@ export const BalancesToggle = () => {
         <Tooltip>
             <TooltipTrigger
                 render={
-                    <Button aria-pressed={hidden} onClick={toggle} size="icon-sm" variant="ghost">
+                    <Button aria-pressed={hidden} onClick={toggle} size="icon-sm" variant="outline">
                         {hidden ? <EyeOffIcon /> : <EyeIcon />}
                         <span className="sr-only">{label}</span>
                     </Button>

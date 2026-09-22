@@ -256,7 +256,9 @@ class Team extends Model
      */
     public function paddleName(): ?string
     {
-        return $this->name;
+        // The Paddle customer is the owner, not the team, so the
+        // name on invoices and in the customer portal is theirs.
+        return $this->owner?->name;
     }
 
     /**

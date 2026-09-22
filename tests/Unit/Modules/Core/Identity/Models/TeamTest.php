@@ -80,13 +80,16 @@ it('bills the owner of the team even when another member is acting', function ()
     $this->actingAs($admin);
 
     expect($team->paddleEmail())->toBe($owner->email)
-        ->and($team->paddleEmail())->not->toBe($admin->email);
+        ->and($team->paddleEmail())->not->toBe($admin->email)
+        ->and($team->paddleName())->toBe($owner->name)
+        ->and($team->paddleName())->not->toBe($team->name);
 });
 
-it('has no paddle email for a team without an owner', function (): void {
+it('has no paddle email or name for a team without an owner', function (): void {
     $team = Team::factory()->create();
 
-    expect($team->paddleEmail())->toBeNull();
+    expect($team->paddleEmail())->toBeNull()
+        ->and($team->paddleName())->toBeNull();
 });
 
 it('lists the roles the team may hand out', function (): void {

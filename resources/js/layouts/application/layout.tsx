@@ -6,12 +6,12 @@ import {
     ArrowLeftRightIcon,
     ArrowUpIcon,
     BanknoteIcon,
+    CalendarRangeIcon,
     CheckIcon,
     ChevronRightIcon,
     ChevronsUpDownIcon,
     CircleDashedIcon,
     CreditCardIcon,
-    CalendarRangeIcon,
     HistoryIcon,
     LayoutDashboardIcon,
     PlusIcon,
@@ -161,8 +161,8 @@ export const ApplicationLayout = ({
                         </div>
                         {user?.current_team && (
                             <div className="flex items-center gap-1.5">
-                                <BalancesToggle />
                                 <OnboardingMenu />
+                                <BalancesToggle />
                                 <CreateTransactionActions team={user.current_team.slug} />
                             </div>
                         )}
