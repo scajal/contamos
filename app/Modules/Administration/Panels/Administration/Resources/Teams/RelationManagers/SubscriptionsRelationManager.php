@@ -43,16 +43,12 @@ class SubscriptionsRelationManager extends RelationManager
     protected function getColumns(): array
     {
         return [
-            Tables\Columns\Layout\Split::make([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\TextColumn::make('type')
-                        ->weight(FontWeight::Medium),
-                    Tables\Columns\TextColumn::make('paddle_id')
-                        ->searchable(),
-                ]),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge(),
-            ]),
+            Tables\Columns\TextColumn::make('paddle_id')
+                ->searchable(isIndividual: true),
+            Tables\Columns\TextColumn::make('type')
+                ->weight(FontWeight::Medium),
+            Tables\Columns\TextColumn::make('status')
+                ->badge(),
         ];
     }
 }

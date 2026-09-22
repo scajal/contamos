@@ -50,18 +50,14 @@ class MembersRelationManager extends RelationManager
     protected function getColumns(): array
     {
         return [
-            Tables\Columns\Layout\Split::make([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\TextColumn::make('name')
-                        ->weight(FontWeight::Medium)
-                        ->searchable(),
-                    Tables\Columns\TextColumn::make('email')
-                        ->searchable(),
-                ]),
-                Tables\Columns\TextColumn::make('membership.role')
-                    ->label(trans('Role'))
-                    ->badge(),
-            ]),
+            Tables\Columns\TextColumn::make('email')
+                ->searchable(isIndividual: true),
+            Tables\Columns\TextColumn::make('name')
+                ->weight(FontWeight::Medium)
+                ->searchable(isIndividual: true),
+            Tables\Columns\TextColumn::make('membership.role')
+                ->label(trans('Role'))
+                ->badge(),
         ];
     }
 
@@ -74,9 +70,10 @@ class MembersRelationManager extends RelationManager
     {
         return [
             Actions\AttachAction::make()
+                ->modalHeading(trans('filament-actions::attach.single.modal.heading', ['label' => trans('user')]))
                 ->modalWidth(Width::Medium)
                 ->preloadRecordSelect()
-                ->slideOver()
+                ->attachAnother(false)
                 ->schema(fn (Actions\AttachAction $action): array => [
                     $action->getRecordSelect(),
                     Forms\Components\Select::make('role')
@@ -84,6 +81,7 @@ class MembersRelationManager extends RelationManager
                         ->default(Role::Member)
                         ->options(Role::class)
                         ->enum(Role::class)
+                        ->native(false)
                         ->required(),
                 ]),
         ];
@@ -98,16 +96,6 @@ class MembersRelationManager extends RelationManager
     {
         return [
             Actions\ActionGroup::make([
-                Actions\EditAction::make()
-                    ->modalWidth(Width::Medium)
-                    ->slideOver()
-                    ->schema([
-                        Forms\Components\Select::make('role')
-                            ->placeholder(trans('Select a role'))
-                            ->options(Role::class)
-                            ->enum(Role::class)
-                            ->required(),
-                    ]),
                 Actions\DetachAction::make(),
             ]),
         ];

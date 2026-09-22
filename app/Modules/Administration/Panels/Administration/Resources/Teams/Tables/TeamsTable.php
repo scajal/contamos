@@ -32,19 +32,9 @@ class TeamsTable
     protected static function getColumns(): array
     {
         return [
-            Tables\Columns\Layout\Split::make([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\TextColumn::make('name')
-                        ->weight(FontWeight::Medium)
-                        ->searchable(),
-                    Tables\Columns\TextColumn::make('slug')
-                        ->searchable(),
-                ]),
-                Tables\Columns\TextColumn::make('users_count')
-                    ->label(trans('Members'))
-                    ->counts('users')
-                    ->badge(),
-            ]),
+            Tables\Columns\TextColumn::make('name')
+                ->weight(FontWeight::Medium)
+                ->searchable(isIndividual: true),
         ];
     }
 
@@ -66,6 +56,8 @@ class TeamsTable
                 Actions\ActionGroup::make([
                     Actions\ViewAction::make(),
                     Actions\EditAction::make(),
+                ])->dropdown(false),
+                Actions\ActionGroup::make([
                     Actions\DeleteAction::make(),
                 ])->dropdown(false),
             ]),

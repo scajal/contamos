@@ -6,10 +6,10 @@ namespace App\Modules\Administration\Panels\Administration\Resources\Teams\Pages
 
 use App\Modules\Administration\Panels\Administration\Resources\Teams\TeamResource;
 use App\Modules\Core\Identity\Models\Team;
+use CodeWithDennis\FilamentLucideIcons\Enums\LucideIcon;
 use Filament\Actions;
 use Filament\Facades\Filament;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Support\Icons\Heroicon;
 
 class ViewTeam extends ViewRecord
 {
@@ -28,7 +28,7 @@ class ViewTeam extends ViewRecord
                 Actions\ActionGroup::make([
                     Actions\Action::make('view-panel')
                         ->label(trans('Team panel'))
-                        ->icon(Heroicon::OutlinedRectangleGroup)
+                        ->icon(LucideIcon::Group)
                         ->url(fn (Team $record): ?string => Filament::getPanel('team')->getUrl($record)),
                 ])->dropdown(false),
                 Actions\ActionGroup::make([

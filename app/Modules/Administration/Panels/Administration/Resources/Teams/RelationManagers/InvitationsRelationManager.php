@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Administration\Panels\Administration\Resources\Teams\RelationManagers;
 
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
+use CodeWithDennis\FilamentLucideIcons\Enums\LucideIcon;
 use Filament\Actions;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Colors\Color;
@@ -49,27 +50,23 @@ class InvitationsRelationManager extends RelationManager
     protected function getColumns(): array
     {
         return [
-            Tables\Columns\Layout\Split::make([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\TextColumn::make('email')
-                        ->weight(FontWeight::Medium)
-                        ->searchable(),
-                    Tables\Columns\TextColumn::make('role')
-                        ->badge(),
-                ]),
-                Tables\Columns\TextColumn::make('status')
-                    ->state(fn (TeamInvitation $record): string => match (true) {
-                        $record->isAccepted() => trans('Accepted'),
-                        $record->isExpired() => trans('Expired'),
-                        default => trans('Pending'),
-                    })
-                    ->color(fn (TeamInvitation $record): array => match (true) {
-                        $record->isAccepted() => Color::Green,
-                        $record->isExpired() => Color::Red,
-                        default => Color::Amber,
-                    })
-                    ->badge(),
-            ]),
+            Tables\Columns\TextColumn::make('email')
+                ->searchable(isIndividual: true)
+                ->weight(FontWeight::Medium),
+            Tables\Columns\TextColumn::make('role')
+                ->badge(),
+            Tables\Columns\TextColumn::make('status')
+                ->state(fn (TeamInvitation $record): string => match (true) {
+                    $record->isAccepted() => trans('Accepted'),
+                    $record->isExpired() => trans('Expired'),
+                    default => trans('Pending'),
+                })
+                ->color(fn (TeamInvitation $record): array => match (true) {
+                    $record->isAccepted() => Color::Green,
+                    $record->isExpired() => Color::Red,
+                    default => Color::Amber,
+                })
+                ->badge(),
         ];
     }
 
@@ -86,7 +83,9 @@ class InvitationsRelationManager extends RelationManager
                     ->action(fn (TeamInvitation $record): TeamInvitation => $record->renew())
                     ->visible(fn (TeamInvitation $record): bool => ! $record->isAccepted())
                     ->successNotificationTitle(trans('Saved'))
-                    ->requiresConfirmation(),
+                    ->icon(LucideIcon::RefreshCcw)
+                    ->requiresConfirmation()
+                    ->label(trans('Resend')),
                 Actions\DeleteAction::make(),
             ]),
         ];
