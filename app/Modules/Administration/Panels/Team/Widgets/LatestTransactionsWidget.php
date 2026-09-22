@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Administration\Panels\Team\Widgets;
 
-use App\Modules\Administration\Panels\Team\Resources\Transactions\TransactionResource;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Support\Helpers\Amount;
 use Filament\Facades\Filament;
@@ -50,8 +49,7 @@ class LatestTransactionsWidget extends TableWidget
                     ->formatStateUsing(fn (Transaction $record): string => new Amount()->format((string) $record->amount, $record->currency)),
                 Tables\Columns\TextColumn::make('occurred_at')
                     ->dateTime(),
-            ])
-            ->recordUrl(fn (Transaction $record): string => TransactionResource::getUrl('view', ['record' => $record]));
+            ]);
     }
 
     /**

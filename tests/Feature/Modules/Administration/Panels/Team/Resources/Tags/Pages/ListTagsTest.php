@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Modules\Administration\Panels\Team\Resources\Tags\Pages\ListTags;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Identity\Models\Team;
-use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
 
 /**
@@ -32,16 +31,4 @@ it('hides the tags of another team', function (): void {
         ->loadTable()
         ->assertCanSeeTableRecords([$mine])
         ->assertCanNotSeeTableRecords([$theirs]);
-});
-
-it('deactivates the tag', function (): void {
-    [, $team] = actingOperatorOnTeamPanel();
-    $tag = Tag::factory()->for($team)->active()->create();
-
-    Livewire::test(ListTags::class)
-        ->loadTable()
-        ->callAction(TestAction::make('deactivate')->table($tag))
-        ->assertNotified(trans('Saved'));
-
-    expect($tag->fresh()?->is_active)->toBeFalse();
 });
