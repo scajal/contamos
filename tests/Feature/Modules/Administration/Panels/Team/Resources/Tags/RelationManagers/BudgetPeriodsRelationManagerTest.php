@@ -79,3 +79,18 @@ it('refuses a budget period that overlaps another on the same currency', functio
 
     expect($tag->budgetPeriods()->count())->toBe(1);
 })->throws(Exception::class);
+
+it('removes a budget period from the tag', function (): void {
+    [, $team] = actingOperatorOnTeamPanel();
+    $tag = Tag::factory()->for($team)->create();
+    $period = BudgetPeriod::factory()->for($tag)->create();
+
+    Livewire::test(BudgetPeriodsRelationManager::class, [
+        'ownerRecord' => $tag,
+        'pageClass' => EditTag::class,
+    ])
+        ->callAction(TestAction::make('delete')->table($period))
+        ->assertNotified();
+
+    expect(BudgetPeriod::query()->find($period->getKey()))->toBeNull();
+});

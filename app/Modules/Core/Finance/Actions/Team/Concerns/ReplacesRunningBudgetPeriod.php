@@ -28,18 +28,16 @@ trait ReplacesRunningBudgetPeriod
         $month = CarbonImmutable::now()->startOfMonth();
         $running = $this->runningPeriod($tag, $currencyId, $month);
 
-        // Nothing to set and nothing running: the tag simply
-        // has no budget in this currency.
-        if (blank($amount) && ! $running instanceof BudgetPeriod) {
-            return null;
-        }
-
         // The amount was cleared, so the running stretch stops
         // at the end of last month. A stretch that only ever
         // covered this month is removed outright, since it
-        // cannot close before it opens.
+        // cannot close before it opens. Nothing running and
+        // nothing to set simply leaves the tag without a
+        // budget in this currency.
         if (blank($amount)) {
-            $this->stopRunningPeriod($running, $month);
+            if ($running instanceof BudgetPeriod) {
+                $this->stopRunningPeriod($running, $month);
+            }
 
             return null;
         }
@@ -109,12 +107,8 @@ trait ReplacesRunningBudgetPeriod
      * Close the running stretch at the end of last month, or
      * drop it when it never covered a month before this one.
      */
-    protected function stopRunningPeriod(?BudgetPeriod $running, CarbonImmutable $month): void
+    protected function stopRunningPeriod(BudgetPeriod $running, CarbonImmutable $month): void
     {
-        if (! $running instanceof BudgetPeriod) {
-            return;
-        }
-
         if ($running->from_month->greaterThanOrEqualTo($month)) {
             $running->delete();
 

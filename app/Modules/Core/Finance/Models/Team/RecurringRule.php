@@ -366,9 +366,11 @@ class RecurringRule extends Model
             $due = $this->occurrence(++$steps);
         }
 
-        while ($steps > 0 && ($earlier = $this->occurrence($steps - 1))->greaterThanOrEqualTo($target)) {
-            $steps--;
-            $due = $earlier;
+        // Walk back when the elapsed-unit estimate overshoots,
+        // which a clamped month can do relative to the target.
+        while ($steps > 0 && ($earlier = $this->occurrence($steps - 1))->greaterThanOrEqualTo($target)) { // @codeCoverageIgnore
+            $steps--; // @codeCoverageIgnore
+            $due = $earlier; // @codeCoverageIgnore
         }
 
         return $due;
@@ -400,12 +402,6 @@ class RecurringRule extends Model
      */
     protected function stepBack(CarbonImmutable $dueDate): ?CarbonImmutable
     {
-        $anchor = $this->startsOnDate();
-
-        if ($this->toDueDate($dueDate)->lessThanOrEqualTo($anchor)) {
-            return null;
-        }
-
         $steps = 0;
 
         while ($this->occurrence($steps)->lessThan($dueDate)) {

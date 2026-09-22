@@ -36,11 +36,13 @@ class ViewTransfer extends ViewRecord
         return [
             Actions\ActionGroup::make([
                 Actions\DeleteAction::make()
-                    ->using(function (Transfer $record): void {
+                    ->using(function (Transfer $record): bool {
                         /** @var \App\Modules\Core\Identity\Models\Team $team */
                         $team = Filament::getTenant();
 
                         $this->deleteTransfer->for($team)->using($record);
+
+                        return true;
                     }),
             ]),
         ];

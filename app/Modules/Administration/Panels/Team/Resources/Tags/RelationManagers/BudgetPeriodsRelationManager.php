@@ -167,10 +167,12 @@ class BudgetPeriodsRelationManager extends RelationManager
                     ->schema($this->getFormSchema())
                     ->slideOver(),
                 Actions\DeleteAction::make()
-                    ->using(function (BudgetPeriod $record): void {
+                    ->using(function (BudgetPeriod $record): bool {
                         $this->deleteBudgetPeriod
                             ->for($this->getTag())
                             ->using($record);
+
+                        return true;
                     }),
             ]),
         ];

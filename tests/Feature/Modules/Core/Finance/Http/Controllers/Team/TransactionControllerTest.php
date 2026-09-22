@@ -1336,6 +1336,28 @@ describe('store', function (): void {
             ->and($transaction->due_date?->toDateString())->toBe($today->toDateString());
     });
 
+    it('rejects a repeating transaction whose timezone is invalid', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'repeat' => true,
+                'recurring_frequency' => 'monthly',
+                'recurring_interval' => 1,
+                'timezone' => 'Not/AZone',
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['timezone']);
+
+        expect(RecurringRule::query()->count())->toBe(0);
+    });
+
     it('does not create a transaction when the recurring start date is in the future', function (): void {
         [$user, $team] = actingMember();
         subscribeToPro($team);

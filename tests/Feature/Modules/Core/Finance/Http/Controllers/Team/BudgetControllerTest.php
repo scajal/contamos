@@ -93,6 +93,17 @@ describe('index', function (): void {
                     ->where('budgets.data.0.progress.percentage', fn (mixed $value): bool => (float) $value === 40.0)));
     });
 
+    it('omits the percentage when the budget pot is empty', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '0']);
+
+        $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('budgets.data.0.progress.percentage', null)));
+    });
+
     it('reports a scheduled, a paused and an ended budget', function (): void {
         [$user, $team, $currency] = budgetingTeam();
         $later = Tag::factory()->active()->for($team)->create(['name' => 'Aaa']);
@@ -257,6 +268,28 @@ describe('store', function (): void {
             ->assertInvalid(['from_month']);
 
         expect(BudgetPeriod::query()->count())->toBe(1);
+    });
+
+    it('skips overlap checks when the first month cannot be read', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+
+        $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), budgetPayload($tag, $currency, [
+                'from_month' => '',
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['from_month']);
+    });
+
+    it('skips the held-currency check when the key is not a string', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+
+        $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), budgetPayload($tag, $currency, [
+                'currency_id' => [$currency->getKey()],
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['currency_id']);
     });
 
     it('allows the same months on another currency of the same tag', function (): void {

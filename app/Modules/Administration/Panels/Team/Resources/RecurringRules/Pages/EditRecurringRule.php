@@ -41,11 +41,13 @@ class EditRecurringRule extends EditRecord
         return [
             Actions\ActionGroup::make([
                 Actions\DeleteAction::make()
-                    ->using(function (RecurringRule $record): void {
+                    ->using(function (RecurringRule $record): bool {
                         /** @var \App\Modules\Core\Identity\Models\Team $team */
                         $team = Filament::getTenant();
 
                         $this->deleteRecurringRule->for($team)->using($record);
+
+                        return true;
                     }),
             ]),
         ];

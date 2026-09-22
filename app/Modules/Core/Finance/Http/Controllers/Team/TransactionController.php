@@ -90,8 +90,10 @@ class TransactionController
         return response()->streamDownload(function () use ($transactions, $timezone): void {
             $handle = fopen('php://output', 'wb');
 
-            if ($handle === false) {
-                throw new RuntimeException('The CSV export could not open the output stream.');
+            // php://output is always writable; this guard is
+            // defensive for a stream the runtime failed to open.
+            if ($handle === false) { // @codeCoverageIgnore
+                throw new RuntimeException('The CSV export could not open the output stream.'); // @codeCoverageIgnore
             }
 
             // A byte-order mark so Excel reads the file as UTF-8 and

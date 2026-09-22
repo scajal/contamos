@@ -196,6 +196,20 @@ describe('store', function (): void {
         expect(RecurringRule::query()->count())->toBe(0);
     });
 
+    it('skips the inactive-tag check when a key is not a string', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        [$account, $currency] = ledgerFor($team);
+
+        $this->post(route('finance.teams.recurring-rules.store', ['team' => $team->getRouteKey()]), rulePayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'tag_ids' => [1],
+        ]))->assertSessionHasErrors('tag_ids.0');
+
+        expect(RecurringRule::query()->count())->toBe(0);
+    });
+
     it('rejects an end date before the start date', function (): void {
         [$user, $team] = actingMember();
         subscribeToPro($team);
@@ -347,6 +361,54 @@ describe('update', function (): void {
         ]))->assertRedirect();
 
         expect($rule->refresh()->tags->modelKeys())->toBe([$tag->getKey()]);
+    });
+
+    it('rejects moving the start date into the past', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        [$account, $currency] = ledgerFor($team);
+        $rule = RecurringRule::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'starts_on' => CarbonImmutable::now()->addWeek()->toDateString(),
+            'team_id' => $team->getKey(),
+        ]);
+
+        $this->patch(route('finance.teams.recurring-rules.update', [
+            'team' => $team->getRouteKey(),
+            'recurringRule' => $rule->getRouteKey(),
+        ]), rulePayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'starts_on' => CarbonImmutable::now()->subDay()->toDateString(),
+        ]))->assertSessionHasErrors('starts_on');
+
+        expect($rule->fresh()?->starts_on?->toDateString())
+            ->toBe($rule->starts_on->toDateString());
+    });
+
+    it('allows moving the start date to another day from today on', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        [$account, $currency] = ledgerFor($team);
+        $rule = RecurringRule::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'starts_on' => CarbonImmutable::now()->addWeek()->toDateString(),
+            'team_id' => $team->getKey(),
+        ]);
+        $startsOn = CarbonImmutable::now()->addDays(3)->toDateString();
+
+        $this->patch(route('finance.teams.recurring-rules.update', [
+            'team' => $team->getRouteKey(),
+            'recurringRule' => $rule->getRouteKey(),
+        ]), rulePayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'starts_on' => $startsOn,
+        ]))->assertRedirect();
+
+        expect($rule->fresh()?->starts_on?->toDateString())->toBe($startsOn);
     });
 
     it('rejects a newly chosen tag that is inactive', function (): void {

@@ -89,7 +89,8 @@ it('converts a due date to an instant at the local time of day', function (): vo
     $rule = rule(['time_of_day' => '09:00:00', 'timezone' => 'America/Argentina/Buenos_Aires']);
 
     expect($rule->dueInstantFor(CarbonImmutable::parse('2026-03-10'))->toIso8601String())
-        ->toBe('2026-03-10T12:00:00+00:00');
+        ->toBe('2026-03-10T12:00:00+00:00')
+        ->and($rule->dueInstant()->toIso8601String())->toBe($rule->dueInstantFor($rule->starts_on)->toIso8601String());
 });
 
 it('takes the next due date from the last one generated', function (): void {
@@ -136,6 +137,19 @@ it('reports the due date it skipped while it was not generating', function (): v
     ]);
 
     expect($rule->skipped_due_date->toDateString())->toBe('2026-05-15');
+});
+
+it('walks back from the end date when the schedule has already ended', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-05-20 10:00:00'));
+
+    $rule = rule([
+        'frequency' => Frequency::Monthly,
+        'starts_on' => '2026-01-15',
+        'ends_on' => '2026-04-15',
+        'last_generated_due_date' => '2026-01-15',
+    ]);
+
+    expect($rule->skipped_due_date->toDateString())->toBe('2026-03-15');
 });
 
 it('reports the rule status from its flag and failure', function (): void {

@@ -3,14 +3,17 @@
 declare(strict_types=1);
 
 use App\Modules\Billing\Enums\Feature;
+use App\Modules\Billing\Models\Subscription;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Enums\Team\Activity\ActivitySubject;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\Activity;
+use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
 use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -246,6 +249,131 @@ describe('index', function (): void {
                 ->loadDeferredProps(fn (Assert $page): Assert => $page
                     ->where('activities.data.0.subject_label', '25.5 UYU')));
     });
+
+    it('names a budget by the tag it belongs to', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $tag = Tag::factory()->for($team)->create(['name' => 'Comida']);
+        $period = BudgetPeriod::factory()->for($tag)->create();
+        clearActivities();
+        recordActivity($team, [
+            'event' => 'created',
+            'subject_type' => BudgetPeriod::class,
+            'subject_id' => $period->getKey(),
+        ]);
+
+        visitActivity($team)
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('activities.data.0.subject_label', 'Comida')));
+    });
+
+    it('names a deleted budget by the amount it carried', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $currency = Currency::factory()->active()->fiat()->create(['code' => 'UYU']);
+        clearActivities();
+        recordActivity($team, [
+            'event' => 'deleted',
+            'subject_type' => BudgetPeriod::class,
+            'subject_id' => 'gone',
+            'attribute_changes' => ['old' => [
+                'amount' => '50.000000000000000000',
+                'currency_id' => $currency->getKey(),
+            ]],
+        ]);
+
+        visitActivity($team)
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('activities.data.0.subject_label', '50 UYU')));
+    });
+
+    it('names a team by its own name', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $team->update(['name' => 'Los Pinos']);
+        clearActivities();
+        recordActivity($team, [
+            'event' => 'updated',
+            'subject_type' => Team::class,
+            'subject_id' => $team->getKey(),
+        ]);
+
+        visitActivity($team)
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('activities.data.0.subject_label', 'Los Pinos')));
+    });
+
+    it('names an account by its own name', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $account = Account::factory()->bank()->for($team)->create(['name' => 'Caja']);
+        clearActivities();
+        recordActivity($team, [
+            'event' => 'created',
+            'subject_type' => Account::class,
+            'subject_id' => $account->getKey(),
+        ]);
+
+        visitActivity($team)
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('activities.data.0.subject_label', 'Caja')));
+    });
+
+    it('names an invitation by its email', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $invitation = TeamInvitation::factory()->for($team)->create([
+            'email' => 'ada@example.com',
+        ]);
+        clearActivities();
+        recordActivity($team, [
+            'event' => 'created',
+            'subject_type' => TeamInvitation::class,
+            'subject_id' => $invitation->getKey(),
+        ]);
+
+        visitActivity($team)
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('activities.data.0.subject_label', 'ada@example.com')));
+    });
+
+    it('names a member by their own name', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        clearActivities();
+        recordActivity($team, [
+            'event' => 'updated',
+            'subject_type' => User::class,
+            'subject_id' => $user->getKey(),
+        ]);
+
+        visitActivity($team)
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('activities.data.0.subject_label', $user->name)));
+    });
+
+    it('names a subscription by the subject label', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $subscription = $team->subscriptions()->sole();
+        clearActivities();
+        recordActivity($team, [
+            'event' => 'created',
+            'subject_type' => Subscription::class,
+            'subject_id' => $subscription->getKey(),
+        ]);
+
+        visitActivity($team)
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('activities.data.0.subject_label', trans('Subscription'))));
+    });
 });
 
 describe('show', function (): void {
@@ -346,6 +474,41 @@ describe('show', function (): void {
                 ->where('entries.0.changes.0.new_label', 'Checking')
                 ->where('entries.0.changes.1.field', 'tags')
                 ->where('entries.0.changes.1.new_label', ['Comida', 'missing-tag']));
+    });
+
+    it('names a role through the enum', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        clearActivities();
+        recordActivity($team, [
+            'attribute_changes' => [
+                'old' => ['role' => Role::Member->value],
+                'attributes' => ['role' => Role::Admin->value],
+            ],
+        ]);
+
+        openActivity($team, activitiesOf($team)->sole())
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('entries.0.changes.0.field', 'role')
+                ->where('entries.0.changes.0.old_label', trans('Member'))
+                ->where('entries.0.changes.0.new_label', trans('Admin')));
+    });
+
+    it('leaves a role unlabeled when the value is not a string', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        clearActivities();
+        recordActivity($team, [
+            'attribute_changes' => [
+                'old' => [],
+                'attributes' => ['role' => ['admin']],
+            ],
+        ]);
+
+        openActivity($team, activitiesOf($team)->sole())
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('entries.0.changes.0.field', 'role')
+                ->where('entries.0.changes.0.new_label', null));
     });
 
     it('lists a change with only the values it recorded', function (): void {

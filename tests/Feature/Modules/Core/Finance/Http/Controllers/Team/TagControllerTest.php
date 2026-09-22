@@ -458,6 +458,32 @@ describe('budgets on the tag form', function (): void {
         expect(BudgetPeriod::query()->count())->toBe(0);
     });
 
+    it('leaves out a held currency the form did not submit', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam();
+        $dollar = Currency::factory()->active()->fiat()->create(['code' => 'USD', 'decimal_places' => 2]);
+        Account::factory()->active()->for($team)->create()
+            ->currencies()
+            ->attach($dollar, ['balance' => '0']);
+
+        $this->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload([
+            'budgets' => [$currency->getKey() => '750.00'],
+        ]))->assertRedirect();
+
+        expect(BudgetPeriod::query()->count())->toBe(1)
+            ->and(BudgetPeriod::query()->sole()->currency_id)->toBe($currency->getKey());
+    });
+
+    it('skips held-currency keys when the payload is not an array', function () use ($budgetingTeam): void {
+        [$team] = $budgetingTeam();
+
+        $this->from(route('finance.teams.tags.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.tags.store', ['team' => $team->getRouteKey()]), tagPayload([
+                'budgets' => 'nope',
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['budgets']);
+    });
+
     it('rejects an amount that is not positive', function () use ($budgetingTeam): void {
         [$team, $currency] = $budgetingTeam();
 

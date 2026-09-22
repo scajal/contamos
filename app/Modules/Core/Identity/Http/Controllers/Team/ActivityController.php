@@ -351,18 +351,36 @@ class ActivityController
             return is_string($value = $stored[$attribute] ?? null) ? $value : null;
         };
 
-        return match ($subject) {
-            ActivitySubject::Account, ActivitySubject::Tag, ActivitySubject::Team => $named('name'),
-            // A budget period has no name of its own, so it goes
-            // by the tag it belongs to, and by what it was set
-            // at once the period is gone.
-            ActivitySubject::Budget => $this->budgetLabel($activity, $stored, $names),
-            ActivitySubject::Invitation => $named('email'),
-            ActivitySubject::Member => is_string($name = $activity->subject?->getAttribute('name')) ? $name : null,
-            ActivitySubject::Subscription => ActivitySubject::Subscription->getLabel(),
-            ActivitySubject::Transaction, ActivitySubject::Transfer => $named('description') ?? $this->amountLabel($stored, $names),
-            null => null,
-        };
+        if ($subject === ActivitySubject::Account
+            || $subject === ActivitySubject::Tag
+            || $subject === ActivitySubject::Team) {
+            return $named('name');
+        }
+
+        // A budget period has no name of its own, so it goes
+        // by the tag it belongs to, and by what it was set
+        // at once the period is gone.
+        if ($subject === ActivitySubject::Budget) {
+            return $this->budgetLabel($activity, $stored, $names);
+        }
+
+        if ($subject === ActivitySubject::Invitation) {
+            return $named('email');
+        }
+
+        if ($subject === ActivitySubject::Member) {
+            return is_string($name = $activity->subject?->getAttribute('name')) ? $name : null;
+        }
+
+        if ($subject === ActivitySubject::Subscription) {
+            return ActivitySubject::Subscription->getLabel();
+        }
+
+        if ($subject === ActivitySubject::Transaction || $subject === ActivitySubject::Transfer) {
+            return $named('description') ?? $this->amountLabel($stored, $names);
+        }
+
+        return null;
     }
 
     /**

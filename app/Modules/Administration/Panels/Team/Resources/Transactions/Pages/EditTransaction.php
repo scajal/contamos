@@ -42,11 +42,13 @@ class EditTransaction extends EditRecord
             Actions\ActionGroup::make([
                 Actions\ViewAction::make(),
                 Actions\DeleteAction::make()
-                    ->using(function (Transaction $record): void {
+                    ->using(function (Transaction $record): bool {
                         /** @var \App\Modules\Core\Identity\Models\Team $team */
                         $team = Filament::getTenant();
 
                         $this->deleteTransaction->for($team)->using($record);
+
+                        return true;
                     }),
             ]),
         ];

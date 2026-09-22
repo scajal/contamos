@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Administration\Panels\Team\Resources\Transfers\Pages\CreateTransfer;
+use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transfer;
 use Livewire\Livewire;
 
@@ -19,6 +20,7 @@ it('records the transfer and moves both balances', function (): void {
     actingOperator();
     memberOf($team);
     onTeamPanel($team);
+    Tag::factory()->for($team)->create(['name' => 'Comida']);
 
     Livewire::test(CreateTransfer::class)
         ->fillForm(transferAttributes($origin, $destination, $currency, $currency, ['tag_ids' => []]))

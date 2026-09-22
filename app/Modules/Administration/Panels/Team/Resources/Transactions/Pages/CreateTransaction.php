@@ -70,10 +70,11 @@ class CreateTransaction extends CreateRecord
         }
 
         $currencyId = $data['currency_id'] ?? null;
+        $currency = null;
 
-        $currency = is_string($currencyId)
-            ? Currency::query()->whereKey($currencyId)->first()
-            : null;
+        if (is_string($currencyId)) {
+            $currency = Currency::query()->whereKey($currencyId)->first();
+        }
 
         return Instant::resolveQuote($currency, $data['occurred_at'] ?? null)?->rate;
     }
