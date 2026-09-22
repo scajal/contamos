@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Administration\Panels\Team\Resources\Transactions\Pages\EditTransaction;
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
@@ -46,6 +47,7 @@ it('updates the transaction and the tags it carries', function (): void {
             'quote' => '1',
             'tag_ids' => [$tag->getKey()],
             'type' => TransactionType::Income->value,
+            'category' => Category::Salary->value,
         ])
         ->call('save')
         ->assertHasNoFormErrors()

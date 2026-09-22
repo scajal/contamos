@@ -6,7 +6,7 @@ import { DollarSignIcon, ListIcon, LockIcon, RepeatIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { ChipSetCheck } from "@/components/chip-set-check";
-import { DateChip, NotesChip, TagsChip } from "@/components/movement-chips";
+import { CategoryChip, DateChip, NotesChip, TagsChip } from "@/components/movement-chips";
 import { Button } from "@/components/ui/button";
 import {
     Combobox,
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { CategoryOptions } from "@/lib/categories";
 import {
     TRANSACTION_AMOUNT_COLOR,
     parseDateTimeLocal,
@@ -37,6 +38,7 @@ import {
 import { cn, markFormDirty } from "@/lib/utils";
 import subscriptions from "@/routes/billing/teams/subscriptions";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
+import { Category } from "@/types/app/modules/core/finance/enums/transaction/category";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
@@ -96,6 +98,7 @@ type Props = FormComponentSlotProps<FormProps> & {
     accounts: Array<Account>;
     allowRepeat?: boolean;
     canRepeat?: boolean;
+    categories: CategoryOptions;
     defaultValues?: FormProps;
     onTypeChange: (type: TransactionType) => void;
     tags: Array<Tag>;
@@ -107,6 +110,7 @@ export const Fields = ({
     accounts,
     allowRepeat = false,
     canRepeat = false,
+    categories,
     defaultValues,
     errors,
     invalid,
@@ -145,6 +149,12 @@ export const Fields = ({
             (currencies.length === 1 ? currencies[0] : null)
         );
     });
+
+    /**
+     * The category the transaction is filed under. Nothing is
+     * preselected, so the list is never silently filled in.
+     */
+    const [category, setCategory] = useState<Category | null>(defaultValues?.category ?? null);
 
     /**
      * The tags currently selected for the transaction.
@@ -259,6 +269,10 @@ export const Fields = ({
 
                             if (nextType === "income" || nextType === "expense") {
                                 onTypeChange(nextType);
+
+                                // The two lists do not overlap, so a
+                                // category never survives a switch.
+                                setCategory(null);
 
                                 if (trackTypeChanges) {
                                     markFormDirty(fields.current);
@@ -383,6 +397,7 @@ export const Fields = ({
             </Field>
 
             {/** Date, note, tags, rate */}
+            <input name="category" type="hidden" value={category ?? ""} />
             <input name="occurred_at" type="hidden" value={occurredAt} />
             <input name="description" type="hidden" value={description} />
             {selectedTags.map((tag) => (
@@ -402,7 +417,18 @@ export const Fields = ({
                 </>
             )}
             <div className="grid min-w-0 grid-cols-6 gap-2">
-                <div className="col-span-2 min-w-0">
+                <div className="col-span-3 min-w-0">
+                    <CategoryChip
+                        categories={categories[type] ?? []}
+                        category={category}
+                        error={errors.category}
+                        fields={fields}
+                        idPrefix="transaction"
+                        invalid={invalid("category")}
+                        onCategoryChange={setCategory}
+                    />
+                </div>
+                <div className="col-span-3 min-w-0">
                     <DateChip
                         fields={fields}
                         idPrefix="transaction"
@@ -410,7 +436,7 @@ export const Fields = ({
                         onOccurredAtChange={setOccurredAt}
                     />
                 </div>
-                <div className="col-span-2 min-w-0">
+                <div className="col-span-3 min-w-0">
                     <NotesChip
                         description={description}
                         error={errors.description}
@@ -420,7 +446,7 @@ export const Fields = ({
                         onDescriptionChange={setDescription}
                     />
                 </div>
-                <div className="col-span-2 min-w-0">
+                <div className="col-span-3 min-w-0">
                     <TagsChip
                         error={errors.tag_ids}
                         fields={fields}

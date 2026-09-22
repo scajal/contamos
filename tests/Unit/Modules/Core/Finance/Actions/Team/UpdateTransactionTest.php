@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Actions\Team\UpdateTransaction;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
@@ -16,6 +17,7 @@ use App\Modules\Core\Identity\Models\Team;
 it('throws when a team was not provided', function (): void {
     (new UpdateTransaction)->using(Transaction::factory()->create(), [
         'amount' => '10',
+        'category' => Category::Food->value,
         'occurred_at' => '2024-01-01 00:00:00',
         'quote' => '1',
         'type' => TransactionType::Expense->value,
@@ -32,6 +34,7 @@ it('reverts and reapplies the balance when the amount changes', function (): voi
     $transaction = Transaction::factory()->expense()->create([
         'account_id' => $account->getKey(),
         'amount' => '10.50',
+        'category' => Category::Food->value,
         'currency_id' => $currency->getKey(),
         'team_id' => $team->getKey(),
     ]);
@@ -41,6 +44,7 @@ it('reverts and reapplies the balance when the amount changes', function (): voi
         ->using($transaction, [
             'account_id' => $account->getKey(),
             'amount' => '20.50',
+            'category' => Category::Food->value,
             'currency_id' => $currency->getKey(),
             'occurred_at' => $transaction->occurred_at,
             'quote' => '1',
@@ -61,6 +65,7 @@ it('moves the balance across accounts when the account changes', function (): vo
     $transaction = Transaction::factory()->expense()->create([
         'account_id' => $originAccount->getKey(),
         'amount' => '10.50',
+        'category' => Category::Food->value,
         'currency_id' => $currency->getKey(),
         'team_id' => $team->getKey(),
     ]);
@@ -70,6 +75,7 @@ it('moves the balance across accounts when the account changes', function (): vo
         ->using($transaction, [
             'account_id' => $destinationAccount->getKey(),
             'amount' => '10.50',
+            'category' => Category::Food->value,
             'currency_id' => $currency->getKey(),
             'occurred_at' => $transaction->occurred_at,
             'quote' => '1',
@@ -90,6 +96,7 @@ it('moves the balance across currencies when the currency changes', function ():
     $transaction = Transaction::factory()->expense()->create([
         'account_id' => $account->getKey(),
         'amount' => '10.50',
+        'category' => Category::Food->value,
         'currency_id' => $originCurrency->getKey(),
         'decimal_places' => 2,
         'team_id' => $team->getKey(),
@@ -100,6 +107,7 @@ it('moves the balance across currencies when the currency changes', function ():
         ->using($transaction, [
             'account_id' => $account->getKey(),
             'amount' => '10.50',
+            'category' => Category::Food->value,
             'currency_id' => $destinationCurrency->getKey(),
             'occurred_at' => $transaction->occurred_at,
             'quote' => '1',
@@ -120,6 +128,7 @@ it('reverts and reapplies the balance with the inverse sign when the type flips'
     $transaction = Transaction::factory()->expense()->create([
         'account_id' => $account->getKey(),
         'amount' => '10.50',
+        'category' => Category::Food->value,
         'currency_id' => $currency->getKey(),
         'team_id' => $team->getKey(),
     ]);
@@ -129,6 +138,7 @@ it('reverts and reapplies the balance with the inverse sign when the type flips'
         ->using($transaction, [
             'account_id' => $account->getKey(),
             'amount' => '10.50',
+            'category' => Category::Salary->value,
             'currency_id' => $currency->getKey(),
             'occurred_at' => $transaction->occurred_at,
             'quote' => '1',
@@ -148,6 +158,7 @@ it('syncs the tag set to the submitted ids', function (): void {
     $transaction = Transaction::factory()->expense()->create([
         'account_id' => $account->getKey(),
         'amount' => '10.50',
+        'category' => Category::Food->value,
         'currency_id' => $currency->getKey(),
         'team_id' => $team->getKey(),
     ]);
@@ -158,6 +169,7 @@ it('syncs the tag set to the submitted ids', function (): void {
         ->using($transaction, [
             'account_id' => $account->getKey(),
             'amount' => '10.50',
+            'category' => Category::Food->value,
             'currency_id' => $currency->getKey(),
             'occurred_at' => $transaction->occurred_at,
             'quote' => '1',
@@ -176,6 +188,7 @@ it('throws when a tag belongs to another team', function (): void {
     $transaction = Transaction::factory()->expense()->create([
         'account_id' => $account->getKey(),
         'amount' => '10.50',
+        'category' => Category::Food->value,
         'currency_id' => $currency->getKey(),
         'team_id' => $team->getKey(),
     ]);
@@ -185,6 +198,7 @@ it('throws when a tag belongs to another team', function (): void {
         ->using($transaction, [
             'account_id' => $account->getKey(),
             'amount' => '10.50',
+            'category' => Category::Food->value,
             'currency_id' => $currency->getKey(),
             'occurred_at' => $transaction->occurred_at,
             'quote' => '1',
@@ -202,6 +216,7 @@ it('refuses an account belonging to another team', function (): void {
     $transaction = Transaction::factory()->expense()->create([
         'account_id' => $account->getKey(),
         'amount' => '10.50',
+        'category' => Category::Food->value,
         'currency_id' => $currency->getKey(),
         'team_id' => $team->getKey(),
     ]);
@@ -211,6 +226,7 @@ it('refuses an account belonging to another team', function (): void {
         ->using($transaction, [
             'account_id' => $otherAccount->getKey(),
             'amount' => '10.50',
+            'category' => Category::Food->value,
             'currency_id' => $currency->getKey(),
             'occurred_at' => $transaction->occurred_at,
             'quote' => '1',
@@ -218,3 +234,82 @@ it('refuses an account belonging to another team', function (): void {
         ]))
         ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
 });
+
+it('recategorizes a transaction', function (): void {
+    $team = Team::factory()->create();
+    $currency = Currency::factory()->fiat()->create(['decimal_places' => 2]);
+    $account = Account::factory()->bank()->for($team)->create();
+    $account->currencies()->attach($currency, ['balance' => '100.00']);
+    $transaction = Transaction::factory()->expense()->create([
+        'account_id' => $account->getKey(),
+        'amount' => '10.50',
+        'category' => Category::Food->value,
+        'currency_id' => $currency->getKey(),
+        'team_id' => $team->getKey(),
+    ]);
+
+    $updated = (new UpdateTransaction)
+        ->for($team)
+        ->using($transaction, [
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'category' => Category::Transport->value,
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => $transaction->occurred_at,
+            'quote' => '1',
+            'type' => TransactionType::Expense->value,
+        ]);
+
+    expect($updated->category)->toBe(Category::Transport);
+});
+
+it('refuses a category that does not belong to the type it is saved with', function (): void {
+    $team = Team::factory()->create();
+    $currency = Currency::factory()->fiat()->create(['decimal_places' => 2]);
+    $account = Account::factory()->bank()->for($team)->create();
+    $account->currencies()->attach($currency, ['balance' => '100.00']);
+    $transaction = Transaction::factory()->expense()->create([
+        'account_id' => $account->getKey(),
+        'amount' => '10.50',
+        'category' => Category::Food->value,
+        'currency_id' => $currency->getKey(),
+        'team_id' => $team->getKey(),
+    ]);
+
+    (new UpdateTransaction)
+        ->for($team)
+        ->using($transaction, [
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'category' => Category::Food->value,
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => $transaction->occurred_at,
+            'quote' => '1',
+            'type' => TransactionType::Income->value,
+        ]);
+})->throws(Exception::class, 'The category food does not belong to a movement of type income.');
+
+it('refuses a category on a transfer leg', function (): void {
+    $team = Team::factory()->create();
+    $currency = Currency::factory()->fiat()->create(['decimal_places' => 2]);
+    $account = Account::factory()->bank()->for($team)->create();
+    $account->currencies()->attach($currency, ['balance' => '100.00']);
+    $transaction = Transaction::factory()->transferOut()->create([
+        'account_id' => $account->getKey(),
+        'amount' => '10.50',
+        'currency_id' => $currency->getKey(),
+        'team_id' => $team->getKey(),
+    ]);
+
+    (new UpdateTransaction)
+        ->for($team)
+        ->using($transaction, [
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'category' => Category::Food->value,
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => $transaction->occurred_at,
+            'quote' => '1',
+            'type' => TransactionType::TransferOut->value,
+        ]);
+})->throws(Exception::class, 'A movement of type transfer_out cannot carry a category.');

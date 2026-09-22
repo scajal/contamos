@@ -6,6 +6,7 @@ namespace App\Modules\Core\Finance\Http\Requests\Team\RecurringRule\Concerns;
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
@@ -60,6 +61,7 @@ trait ResolvesScheduleInputs
                 ($currency = $this->currency()) instanceof Currency ? "decimal:0,{$currency->decimal_places}" : 'decimal:0,18',
                 'gt:0',
             ],
+            'category' => $this->categoryRules(),
             new RecurringRule()->currency()->getForeignKeyName() => [
                 'required',
                 'string',
@@ -120,6 +122,42 @@ trait ResolvesScheduleInputs
                 Rule::in(array_column(TransactionType::recordableCases(), 'value')),
             ],
         ];
+    }
+
+    /**
+     * Get the rules for the category the rule stamps on every
+     * transaction it generates, restricted to the list
+     * its type offers.
+     *
+     * @return array<int, \Illuminate\Validation\Rules\Enum|string>
+     */
+    protected function categoryRules(): array
+    {
+        $type = $this->submittedType();
+
+        $cases = $type instanceof TransactionType ? Category::casesFor($type) : [];
+
+        // A type that is never recorded by hand, such as an opening
+        // balance, carries no category at all.
+        if ($cases === []) {
+            return ['prohibited'];
+        }
+
+        return [
+            'required',
+            'string',
+            Rule::enum(Category::class)->only($cases),
+        ];
+    }
+
+    /**
+     * Get the type the request is recording the rule with.
+     */
+    protected function submittedType(): ?TransactionType
+    {
+        $type = $this->input('type');
+
+        return is_string($type) ? TransactionType::tryFrom($type) : null;
     }
 
     /**
@@ -212,6 +250,7 @@ trait ResolvesScheduleInputs
         return $this->safe([
             new RecurringRule()->account()->getForeignKeyName(),
             'amount',
+            'category',
             new RecurringRule()->currency()->getForeignKeyName(),
             'description',
             'ends_on',

@@ -34,6 +34,7 @@ class TransactionResource extends Resource
         return [
             'account_id' => $data['account_id'] ?? null,
             'amount' => $data['amount'] ?? null,
+            'category' => $data['category'] ?? null,
             'currency_id' => $data['currency_id'] ?? null,
             'description' => $data['description'] ?? null,
             'occurred_at' => $data['occurred_at'] ?? null,

@@ -34,8 +34,8 @@ const FEATURES: Array<Feature> = [
     },
     {
         icon: TagsIcon,
-        title: "Tags, not rigid categories.",
-        body: "Label a movement the way you actually think about it. Rent, the trip, the dog — the vocabulary is yours.",
+        title: "A short list of categories, plus tags.",
+        body: "Every movement is filed under one category you never had to design, and tagged the way you actually think about it: rent, the trip, the dog.",
         span: "lg:col-span-2",
     },
     {

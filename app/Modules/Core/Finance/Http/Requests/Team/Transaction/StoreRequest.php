@@ -79,6 +79,7 @@ class StoreRequest extends FormRequest
                 (($currency = $this->currency()) instanceof \App\Modules\Core\Catalog\Models\Currency) ? "decimal:0,{$currency->decimal_places}" : 'decimal:0,18',
                 'gt:0',
             ],
+            'category' => $this->categoryRules(),
             new Transaction()->currency()->getForeignKeyName() => [
                 'required',
                 'string',
@@ -172,6 +173,7 @@ class StoreRequest extends FormRequest
             ...$this->safe([
                 new Transaction()->account()->getForeignKeyName(),
                 'amount',
+                'category',
                 new Transaction()->currency()->getForeignKeyName(),
                 'description',
                 'type',

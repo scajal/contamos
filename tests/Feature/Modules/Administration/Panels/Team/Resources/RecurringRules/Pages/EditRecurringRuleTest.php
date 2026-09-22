@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Administration\Panels\Team\Resources\RecurringRules\Pages\EditRecurringRule;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
@@ -51,6 +52,7 @@ it('updates the rule and the tags it carries', function (): void {
             'time_of_day' => '09:00',
             'timezone' => 'UTC',
             'type' => TransactionType::Expense->value,
+            'category' => Category::Food->value,
         ])
         ->call('save')
         ->assertHasNoFormErrors()

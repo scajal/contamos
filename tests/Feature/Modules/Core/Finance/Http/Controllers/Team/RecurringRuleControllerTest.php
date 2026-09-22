@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
 use App\Modules\Core\Finance\Enums\RecurringRule\Status;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
+use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Finance\Models\Team\Tag;
@@ -40,8 +42,14 @@ function ledgerFor(Team $team, string $balance = '0'): array
  */
 function rulePayload(array $overrides = []): array
 {
+    $type = TransactionType::tryFrom(is_string($overrides['type'] ?? null) ? $overrides['type'] : TransactionType::Expense->value);
+    $categories = $type instanceof TransactionType ? Category::casesFor($type) : [];
+
     return [
         'amount' => '25.00',
+        // A rule names the category it stamps on every
+        // transaction it generates.
+        ...($categories === [] ? [] : ['category' => $categories[0]->value]),
         'description' => 'Rent',
         'ends_on' => null,
         'frequency' => Frequency::Monthly->value,
@@ -153,6 +161,20 @@ describe('create', function (): void {
 
         $this->get(route('finance.teams.recurring-rules.create', ['team' => $team->getRouteKey()]))
             ->assertRedirect();
+    });
+    it('offers the categories each type carries', function (): void {
+        [, $team] = actingMember();
+        subscribeToPro($team);
+        ledgerFor($team);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.recurring-rules.create', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->has('categories.expense', count(Category::casesFor(TransactionType::Expense)))
+                ->has('categories.income', count(Category::casesFor(TransactionType::Income)))
+                ->where('categories.expense.0.value', Category::Housing->value)
+                ->etc());
     });
 });
 
@@ -271,6 +293,52 @@ describe('store', function (): void {
             $account->getForeignKey() => $account->getKey(),
             $currency->getForeignKey() => $currency->getKey(),
         ]))->assertRedirect();
+
+        expect(RecurringRule::query()->count())->toBe(0);
+    });
+    it('records the category the rule type offers', function (): void {
+        [, $team] = actingMember();
+        subscribeToPro($team);
+        [$account, $currency] = ledgerFor($team);
+
+        $this->post(route('finance.teams.recurring-rules.store', ['team' => $team->getRouteKey()]), rulePayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'category' => Category::Salary->value,
+            'type' => TransactionType::Income->value,
+        ]))->assertRedirect();
+
+        expect(RecurringRule::query()->sole()->category)->toBe(Category::Salary);
+    });
+
+    it('rejects a rule category that belongs to the other type', function (): void {
+        [, $team] = actingMember();
+        subscribeToPro($team);
+        [$account, $currency] = ledgerFor($team);
+
+        $this->post(route('finance.teams.recurring-rules.store', ['team' => $team->getRouteKey()]), rulePayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'category' => Category::Salary->value,
+            'type' => TransactionType::Expense->value,
+        ]))->assertSessionHasErrors('category');
+
+        expect(RecurringRule::query()->count())->toBe(0);
+    });
+
+    it('rejects a rule created without a category', function (): void {
+        [, $team] = actingMember();
+        subscribeToPro($team);
+        [$account, $currency] = ledgerFor($team);
+
+        $payload = rulePayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+        ]);
+        unset($payload['category']);
+
+        $this->post(route('finance.teams.recurring-rules.store', ['team' => $team->getRouteKey()]), $payload)
+            ->assertSessionHasErrors('category');
 
         expect(RecurringRule::query()->count())->toBe(0);
     });
@@ -452,6 +520,52 @@ describe('update', function (): void {
         ]))->assertRedirect();
 
         expect((float) $rule->refresh()->amount)->not->toBe(99.0);
+    });
+    it('recategorizes the rule', function (): void {
+        [, $team] = actingMember();
+        subscribeToPro($team);
+        [$account, $currency] = ledgerFor($team);
+        $rule = RecurringRule::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'category' => Category::Food,
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+        ]);
+
+        $this->patch(route('finance.teams.recurring-rules.update', [
+            'team' => $team->getRouteKey(),
+            'recurringRule' => $rule->getKey(),
+        ]), rulePayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'category' => Category::Transport->value,
+        ]))->assertRedirect();
+
+        expect($rule->refresh()->category)->toBe(Category::Transport);
+    });
+
+    it('rejects a rule category that does not belong to the type it is saved with', function (): void {
+        [, $team] = actingMember();
+        subscribeToPro($team);
+        [$account, $currency] = ledgerFor($team);
+        $rule = RecurringRule::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'category' => Category::Food,
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+        ]);
+
+        $this->patch(route('finance.teams.recurring-rules.update', [
+            'team' => $team->getRouteKey(),
+            'recurringRule' => $rule->getKey(),
+        ]), rulePayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'category' => Category::Food->value,
+            'type' => TransactionType::Income->value,
+        ]))->assertSessionHasErrors('category');
+
+        expect($rule->refresh()->category)->toBe(Category::Food);
     });
 });
 

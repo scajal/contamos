@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
@@ -28,8 +29,14 @@ use Inertia\Testing\AssertableInertia as Assert;
  */
 function transactionPayload(array $overrides = []): array
 {
+    $type = TransactionType::tryFrom(is_string($overrides['type'] ?? null) ? $overrides['type'] : TransactionType::Expense->value);
+    $categories = $type instanceof TransactionType ? Category::casesFor($type) : [];
+
     return [
         'amount' => '10.50',
+        // A type recorded by hand always names a category; one that
+        // is not, such as an opening balance, never carries one.
+        ...($categories === [] ? [] : ['category' => $categories[0]->value]),
         'description' => 'Lunch',
         'occurred_at' => '2024-06-01 12:00:00',
         'quote' => '1',
@@ -449,6 +456,53 @@ describe('index', function (): void {
                     ->has('transactions.data', 1)
                     ->where('transactions.data.0.id', $mine->getKey())));
     });
+    it('filters transactions by category and offers the options each type carries', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $matching = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'category' => Category::Food,
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'category' => Category::Transport,
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->get(route('finance.teams.transactions.index', [
+            'team' => $team->getRouteKey(),
+            'filter' => ['category' => Category::Food->value],
+        ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('filters.category', Category::Food->value)
+                ->has('categories.expense', count(Category::casesFor(TransactionType::Expense)))
+                ->has('categories.income', count(Category::casesFor(TransactionType::Income)))
+                ->where('categories.expense.0.value', Category::Housing->value)
+                ->where('categories.income.0.value', Category::Salary->value)
+                ->has('categories.expense.0.icon')
+                ->has('categories.expense.0.label')
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('transactions.data', 1)
+                    ->where('transactions.data.0.id', $matching->getKey())));
+    });
+
+    it('rejects a category filter that is not a category', function (): void {
+        [, $team] = actingMember();
+
+        $this->get(route('finance.teams.transactions.index', [
+            'team' => $team->getRouteKey(),
+            'filter' => ['category' => 'groceries'],
+        ]))->assertSessionHasErrors('filter.category');
+    });
 });
 
 describe('export', function (): void {
@@ -483,6 +537,7 @@ describe('export', function (): void {
             'Date',
             'Time',
             'Type',
+            'Category',
             'Amount',
             'Currency',
             'Description',
@@ -506,6 +561,7 @@ describe('export', function (): void {
             'Fecha',
             'Hora',
             'Tipo',
+            'Categoría',
             'Monto',
             'Moneda',
             'Descripción',
@@ -526,6 +582,7 @@ describe('export', function (): void {
             'account_id' => $account->getKey(),
             'amount' => '1234.5',
             'currency_id' => $currency->getKey(),
+            'category' => Category::Food,
             'decimal_places' => 2,
             'description' => 'Almuerzo compartido',
             'occurred_at' => CarbonImmutable::now()->setTime(15, 45),
@@ -549,6 +606,7 @@ describe('export', function (): void {
             $transaction->occurred_at->format('Y-m-d'),
             '15:45',
             'Expense',
+            'Food',
             '-1234.50',
             'UYU',
             'Almuerzo compartido',
@@ -577,7 +635,7 @@ describe('export', function (): void {
             ->assertOk()
             ->streamedContent();
 
-        expect(csvRows($body)[1][3])->toBe('90');
+        expect(csvRows($body)[1][4])->toBe('90');
     });
 
     it('writes the date and time in the requested timezone', function (): void {
@@ -675,7 +733,7 @@ describe('export', function (): void {
         $rows = csvRows($body);
 
         expect($rows)->toHaveCount(2);
-        expect($rows[1][10])->toBe($matching->getKey());
+        expect($rows[1][11])->toBe($matching->getKey());
     });
 
     it('exports every visible transaction of the team, newest first, and nothing from another team', function (): void {
@@ -699,8 +757,8 @@ describe('export', function (): void {
         $rows = csvRows($body);
 
         expect($rows)->toHaveCount(3);
-        expect($rows[1][10])->toBe($newer->getKey());
-        expect($rows[2][10])->toBe($older->getKey());
+        expect($rows[1][11])->toBe($newer->getKey());
+        expect($rows[2][11])->toBe($older->getKey());
     });
 
     it('leaves out a transaction the free plan no longer shows', function (): void {
@@ -721,7 +779,7 @@ describe('export', function (): void {
         $rows = csvRows($body);
 
         expect($rows)->toHaveCount(2);
-        expect($rows[1][10])->toBe($visible->getKey());
+        expect($rows[1][11])->toBe($visible->getKey());
     });
 
     it('writes only the header row when nothing matches', function (): void {
@@ -751,8 +809,8 @@ describe('export', function (): void {
 
         $row = csvRows($body)[1];
 
-        expect($row[8])->toBe('');
-        expect($row[5])->toBe('');
+        expect($row[9])->toBe('');
+        expect($row[6])->toBe('');
     });
 
     it('rejects an account filter from another team', function (): void {
@@ -785,6 +843,35 @@ describe('export', function (): void {
         }
 
         $this->get($url)->assertTooManyRequests();
+    });
+    it('writes the translated category label and leaves it empty for a transfer leg', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        Transaction::factory()->income()->create([
+            'account_id' => $account->getKey(),
+            'category' => Category::Salary,
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => CarbonImmutable::now(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+        Transaction::factory()->transferOut()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => CarbonImmutable::now()->subDay(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $body = $this->get(route('finance.teams.transactions.export', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->streamedContent();
+
+        $rows = csvRows($body);
+
+        expect($rows[1][3])->toBe('Salary')
+            ->and($rows[2][3])->toBe('');
     });
 });
 
@@ -1415,6 +1502,76 @@ describe('store', function (): void {
         expect(RecurringRule::query()->count())->toBe(0)
             ->and(Transaction::query()->count())->toBe(0)
             ->and((float) $account->currencies()->first()?->pivot->balance)->toBe(0.0);
+    });
+    it('records the category the type offers', function (): void {
+        [, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'category' => Category::Salary->value,
+            'type' => TransactionType::Income->value,
+        ]))->assertRedirect();
+
+        expect(Transaction::query()->sole()->category)->toBe(Category::Salary);
+    });
+
+    it('rejects a category that belongs to the other type', function (): void {
+        [, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'category' => Category::Salary->value,
+            'type' => TransactionType::Expense->value,
+        ]))->assertSessionHasErrors('category');
+
+        expect(Transaction::query()->count())->toBe(0);
+    });
+
+    it('rejects a movement recorded without a category', function (): void {
+        [, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $payload = transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+        ]);
+        unset($payload['category']);
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), $payload)
+            ->assertSessionHasErrors('category');
+
+        expect(Transaction::query()->count())->toBe(0);
+    });
+
+    it('carries the category onto the rule a repeating entry creates', function (): void {
+        [, $team] = actingMember();
+        subscribeToPro($team);
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'category' => Category::Housing->value,
+            'occurred_at' => CarbonImmutable::now()->format('Y-m-d\\TH:i'),
+            'repeat' => true,
+            'recurring_frequency' => Frequency::Monthly->value,
+            'recurring_interval' => 1,
+            'timezone' => 'UTC',
+        ]))->assertRedirect();
+
+        expect(RecurringRule::query()->sole()->category)->toBe(Category::Housing);
     });
 });
 
@@ -2255,6 +2412,7 @@ describe('update', function (): void {
         $transaction = Transaction::factory()->expense()->create([
             'account_id' => $account->getKey(),
             'amount' => '10.50',
+            'category' => Category::Housing,
             'currency_id' => $currency->getKey(),
             'description' => 'Lunch',
             'occurred_at' => '2024-06-01 12:00:00',
@@ -2291,6 +2449,7 @@ describe('update', function (): void {
         $transaction = Transaction::factory()->expense()->create([
             'account_id' => $account->getKey(),
             'amount' => '10.50',
+            'category' => Category::Housing,
             'currency_id' => $currency->getKey(),
             'description' => 'Lunch',
             'occurred_at' => '2024-06-01 12:00:00',
@@ -2308,6 +2467,58 @@ describe('update', function (): void {
         ]))->assertRedirect();
 
         expect(activitiesOf($team))->toHaveCount(0);
+    });
+    it('recategorizes the transaction', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '100.00']);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'category' => Category::Food,
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->patch(route('finance.teams.transactions.update', [
+            'team' => $team->getRouteKey(),
+            'transaction' => $transaction->getKey(),
+        ]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'category' => Category::Transport->value,
+        ]))->assertRedirect();
+
+        expect($transaction->refresh()->category)->toBe(Category::Transport);
+    });
+
+    it('rejects a category that does not belong to the type it is saved with', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '100.00']);
+        $transaction = Transaction::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'amount' => '10.50',
+            'category' => Category::Food,
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->patch(route('finance.teams.transactions.update', [
+            'team' => $team->getRouteKey(),
+            'transaction' => $transaction->getKey(),
+        ]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'category' => Category::Food->value,
+            'type' => TransactionType::Income->value,
+        ]))->assertSessionHasErrors('category');
+
+        expect($transaction->refresh()->category)->toBe(Category::Food);
     });
 });
 

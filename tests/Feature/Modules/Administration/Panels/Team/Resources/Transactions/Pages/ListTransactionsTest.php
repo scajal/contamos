@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Administration\Panels\Team\Resources\Transactions\Pages\ListTransactions;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
@@ -51,4 +52,20 @@ it('hides the transactions of another team', function (): void {
         ->loadTable()
         ->assertCanSeeTableRecords([$mine])
         ->assertCanNotSeeTableRecords([$theirs]);
+});
+
+it('filters transactions by category', function (): void {
+    [, $team] = actingOperatorOnTeamPanel();
+    $matching = Transaction::factory()->expense()->for(Account::factory()->for($team))->create([
+        'category' => Category::Food,
+    ]);
+    $other = Transaction::factory()->expense()->for(Account::factory()->for($team))->create([
+        'category' => Category::Transport,
+    ]);
+
+    Livewire::test(ListTransactions::class)
+        ->loadTable()
+        ->filterTable('category', Category::Food->value)
+        ->assertCanSeeTableRecords([$matching])
+        ->assertCanNotSeeTableRecords([$other]);
 });

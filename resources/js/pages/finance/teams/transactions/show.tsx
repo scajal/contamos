@@ -4,6 +4,7 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ArrowLeftRightIcon, CheckIcon, CopyIcon, PencilIcon, RepeatIcon } from "lucide-react";
 import { useState } from "react";
 
+import { CategoryIcon } from "@/components/category-icon";
 import { ConfirmAction } from "@/components/confirm-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -122,6 +123,19 @@ export default function Show({ transaction }: PageProps) {
                                         {t(`enums.${transaction.type}`)}
                                     </span>
                                 </div>
+
+                                {transaction.category ? (
+                                    <Field>
+                                        <FieldLabel>{t("Category")}</FieldLabel>
+                                        <p className="flex items-center gap-1.5 text-sm">
+                                            <CategoryIcon
+                                                category={transaction.category}
+                                                className="text-muted-foreground size-4 shrink-0"
+                                            />
+                                            {t(`enums.${transaction.category}`)}
+                                        </p>
+                                    </Field>
+                                ) : null}
 
                                 {transaction.account?.name ? (
                                     <Field>

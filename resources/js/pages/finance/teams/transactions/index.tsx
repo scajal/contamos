@@ -24,6 +24,7 @@ import { useState } from "react";
 import { type DateRange } from "react-day-picker";
 import { Fragment } from "react/jsx-runtime";
 
+import { CategoryIcon } from "@/components/category-icon";
 import { ConfirmAction } from "@/components/confirm-action";
 import { TransactionAmount, TransactionAuthor, TransactionRow as MovementRow } from "@/components/transaction-row";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,7 @@ import { TableBody, TableCell, Table as TableComponent, TableRow } from "@/compo
 import { useFilters } from "@/hooks/use-filters";
 import { useSharedTeam } from "@/hooks/use-shared-team";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { CategoryOptions, flattenCategories } from "@/lib/categories";
 import { TRANSACTION_COLUMNS, TRANSACTION_TABLE_CLASS, type TransactionTypeFilter } from "@/lib/transactions";
 import { counterpartAccountName } from "@/lib/transfers";
 import { cn, formatDate, formatDayHeading } from "@/lib/utils";
@@ -63,6 +65,7 @@ import subscriptions from "@/routes/billing/teams/subscriptions";
 import routes from "@/routes/finance/teams/transactions";
 import transferRoutes from "@/routes/finance/teams/transfers";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
+import { Category } from "@/types/app/modules/core/finance/enums/transaction/category";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 import { Transaction } from "@/types/app/modules/core/finance/models/team/transaction";
@@ -72,6 +75,7 @@ import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware
 type PageFilters = {
     search: string | null;
     type: TransactionTypeFilter | null;
+    category: Category | null;
     account: string | null;
     currency: string | null;
     tags: string | null;
@@ -81,6 +85,7 @@ type PageFilters = {
 
 type PageProps = {
     accounts: Account[];
+    categories: CategoryOptions;
     currencies: Currency[];
     filters: Partial<PageFilters>;
     history: TransactionHistory;
@@ -304,7 +309,16 @@ const Filters = () => {
     /**
      * The page's props.
      */
-    const { accounts, currencies, filters: initial, history, tags, types, user } = usePage<PageProps>().props;
+    const {
+        accounts,
+        categories,
+        currencies,
+        filters: initial,
+        history,
+        tags,
+        types,
+        user,
+    } = usePage<PageProps>().props;
 
     /**
      * The first day the plan still reaches, so the picker cannot
@@ -319,6 +333,7 @@ const Filters = () => {
         initial: {
             search: initial?.search ?? null,
             type: initial?.type ?? null,
+            category: initial?.category ?? null,
             account: initial?.account ?? null,
             currency: initial?.currency ?? null,
             tags: initial?.tags ?? null,
@@ -384,6 +399,28 @@ const Filters = () => {
                                         {types.map((type) => (
                                             <SelectItem key={type} value={type}>
                                                 {t(`enums.${type}`)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </Field>
+
+                        {/** Category */}
+                        <Field>
+                            <FieldLabel>{t("Category")}</FieldLabel>
+                            <Select onValueChange={(value) => setFilters({ category: value })} value={filters.category}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue>
+                                        {(value: Category | null) => `${value ? t(`enums.${value}`) : t("All")}`}
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value={null}>{t("All")}</SelectItem>
+                                        {flattenCategories(categories).map((option) => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
                                             </SelectItem>
                                         ))}
                                     </SelectGroup>
@@ -625,6 +662,13 @@ const TransactionRow = ({ transaction }: { transaction: Transaction }) => {
             </TableCell>
             <TableCell className={TRANSACTION_COLUMNS.description}>
                 <div className="flex min-w-0 items-center gap-1.5">
+                    {transaction.category ? (
+                        <CategoryIcon
+                            aria-label={t(`enums.${transaction.category}`)}
+                            className="text-muted-foreground size-3.5 shrink-0"
+                            category={transaction.category}
+                        />
+                    ) : null}
                     {transaction.transfer_id ? (
                         <ArrowLeftRightIcon
                             aria-label={t("Transfer")}

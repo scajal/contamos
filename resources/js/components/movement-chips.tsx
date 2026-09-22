@@ -1,5 +1,5 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CalendarIcon, StickyNoteIcon, TagIcon } from "lucide-react";
+import { CalendarIcon, ShapesIcon, StickyNoteIcon, TagIcon } from "lucide-react";
 
 import { ChipSetCheck } from "@/components/chip-set-check";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,10 @@ import { Input } from "@/components/ui/input";
 import { InputGroupAddon } from "@/components/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
+import { CategoryOption, categoryIcon } from "@/lib/categories";
 import { isSameLocalDay, parseDateTimeLocal, withLocalDate, withLocalTime } from "@/lib/transactions";
 import { markFormDirty } from "@/lib/utils";
+import { Category } from "@/types/app/modules/core/finance/enums/transaction/category";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 
 /**
@@ -70,7 +72,9 @@ export const DateChip = ({
                 <span className="min-w-0 truncate">
                     {isSameLocalDay(occurredAtDate, new Date())
                         ? t("Today")
-                        : new Intl.DateTimeFormat(currentLocale(), { dateStyle: "medium" }).format(occurredAtDate)}
+                        : new Intl.DateTimeFormat(currentLocale(), {
+                              dateStyle: "medium",
+                          }).format(occurredAtDate)}
                 </span>
                 <ChipSetCheck show={!isSameLocalDay(occurredAtDate, new Date())} />
             </PopoverTrigger>
@@ -156,6 +160,126 @@ export const NotesChip = ({
                         placeholder={t("Enter a description")}
                         value={description}
                     />
+                    {invalid && <FieldError>{error}</FieldError>}
+                </Field>
+            </PopoverContent>
+        </Popover>
+    );
+};
+
+/**
+ * The single category the movement is filed under, picked from the
+ * short list its type offers. Unlike the tags beside it, exactly
+ * one is required and none is preselected.
+ */
+export const CategoryChip = ({
+    categories,
+    category,
+    error,
+    fields,
+    idPrefix,
+    invalid,
+    onCategoryChange,
+}: ChipProps & {
+    categories: Array<CategoryOption>;
+    category: Category | null;
+    error?: string;
+    invalid: boolean;
+    onCategoryChange: (category: Category | null) => void;
+}) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * Anchor the category dropdown to the full field.
+     */
+    const categoryAnchor = useComboboxAnchor();
+
+    /**
+     * The option the movement currently carries, if the
+     * type still offers it.
+     */
+    const selected = categories.find((option) => option.value === category) ?? null;
+
+    /**
+     * The mark of the chosen category, so the chip confirms
+     * the choice at a glance.
+     */
+    const ChosenIcon = selected ? categoryIcon(selected.value) : ShapesIcon;
+
+    return (
+        <Popover
+            onOpenChange={(open, details) => {
+                if (
+                    !open &&
+                    details.reason === "outside-press" &&
+                    details.event.target instanceof Element &&
+                    details.event.target.closest("[data-slot=combobox-content]")
+                ) {
+                    details.cancel();
+                }
+            }}
+        >
+            <PopoverTrigger
+                className="w-full min-w-0"
+                render={
+                    <Button
+                        aria-invalid={invalid}
+                        className="w-full min-w-0 justify-start max-sm:h-10"
+                        type="button"
+                        variant="outline"
+                    />
+                }
+            >
+                <ChosenIcon data-icon="inline-start" />
+                <span className="min-w-0 truncate">{selected ? selected.label : t("Category")}</span>
+                <ChipSetCheck show={selected !== null} />
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80">
+                <Field data-invalid={invalid || undefined}>
+                    <FieldLabel htmlFor={`${idPrefix}-category`}>{t("Category")}</FieldLabel>
+                    <Combobox<CategoryOption, false>
+                        isItemEqualToValue={(left, right) => left.value === right.value}
+                        items={categories}
+                        itemToStringLabel={(item) => item.label}
+                        itemToStringValue={(item) => item.value}
+                        onValueChange={(value) => {
+                            onCategoryChange(value?.value ?? null);
+                            markFormDirty(fields.current);
+                        }}
+                        value={selected}
+                    >
+                        <ComboboxChips aria-invalid={invalid} className="w-full" ref={categoryAnchor}>
+                            <InputGroupAddon>
+                                <ChosenIcon />
+                            </InputGroupAddon>
+                            <ComboboxValue>
+                                {selected ? <ComboboxChip>{selected.label}</ComboboxChip> : null}
+                            </ComboboxValue>
+                            <ComboboxChipsInput
+                                id={`${idPrefix}-category`}
+                                placeholder={selected ? undefined : t("Select a category")}
+                            />
+                        </ComboboxChips>
+                        <ComboboxContent anchor={categoryAnchor}>
+                            <ComboboxEmpty>{t("No categories found")}</ComboboxEmpty>
+                            <ComboboxList>
+                                {(option: CategoryOption) => {
+                                    const OptionIcon = categoryIcon(option.value);
+
+                                    return (
+                                        <ComboboxItem key={option.value} value={option}>
+                                            <OptionIcon data-icon="inline-start" />
+                                            {option.label}
+                                        </ComboboxItem>
+                                    );
+                                }}
+                            </ComboboxList>
+                        </ComboboxContent>
+                    </Combobox>
                     {invalid && <FieldError>{error}</FieldError>}
                 </Field>
             </PopoverContent>

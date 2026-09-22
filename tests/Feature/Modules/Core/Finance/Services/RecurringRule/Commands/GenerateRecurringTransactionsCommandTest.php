@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Finance\Models\Team\Tag;
@@ -75,6 +76,33 @@ it('generates the occurrence of a due rule', function (): void {
         ->and($transaction->user?->is($rule->user))->toBeTrue()
         ->and((float) $account->currencies()->first()?->pivot->balance)->toBe(75.0)
         ->and($rule->refresh()->last_generated_due_date?->toDateString())->toBe('2026-05-20');
+});
+
+it('carries the rule\'s category onto the occurrence', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-05-20 10:00:00'));
+
+    dueRule(['category' => Category::Transport, 'starts_on' => '2026-05-20']);
+
+    $this->artisan('finance:generate-recurring-transactions')->assertSuccessful();
+
+    expect(Transaction::query()->sole()->category)->toBe(Category::Transport);
+});
+
+it('leaves the occurrences it already generated on the category they were recorded with', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-05-20 10:00:00'));
+
+    [$rule] = dueRule(['category' => Category::Transport, 'starts_on' => '2026-05-20']);
+
+    $this->artisan('finance:generate-recurring-transactions')->assertSuccessful();
+
+    $rule->update(['category' => Category::Food]);
+
+    $this->travelTo(CarbonImmutable::parse('2026-06-20 10:00:00'));
+
+    $this->artisan('finance:generate-recurring-transactions')->assertSuccessful();
+
+    expect(Transaction::query()->orderBy('occurred_at')->pluck('category')->all())
+        ->toBe([Category::Transport, Category::Food]);
 });
 
 it('carries the rule\'s tags onto the occurrence', function (): void {

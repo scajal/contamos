@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
+import { CategoryOptions } from "@/lib/categories";
 import transactions from "@/routes/finance/teams/transactions";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
@@ -24,11 +25,12 @@ import { Fields } from "./_components/fields";
 type PageProps = {
     accounts: Array<Account>;
     canRecur: boolean;
+    categories: CategoryOptions;
     tags: Array<Tag>;
     type: TransactionType;
 };
 
-export default function Create({ accounts, canRecur, tags, type: initialType }: PageProps) {
+export default function Create({ accounts, canRecur, categories, tags, type: initialType }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -81,6 +83,7 @@ export default function Create({ accounts, canRecur, tags, type: initialType }: 
                                             accounts={accounts}
                                             allowRepeat
                                             canRepeat={canRecur}
+                                            categories={categories}
                                             defaultValues={{ type: initialType }}
                                             onTypeChange={setType}
                                             tags={tags}

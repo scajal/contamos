@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Administration\Panels\Team\Resources\Transactions\Tables;
 
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Support\Helpers\Amount;
@@ -47,6 +48,9 @@ class TransactionsTable
                 ]),
                 Tables\Columns\TextColumn::make('type')
                     ->badge(),
+                Tables\Columns\TextColumn::make('category')
+                    ->placeholder('-')
+                    ->badge(),
                 Tables\Columns\TextColumn::make('amount')
                     ->formatStateUsing(fn (Transaction $record): string => new Amount()->format((string) $record->amount, $record->currency)),
                 Tables\Columns\TextColumn::make('occurred_at')
@@ -65,6 +69,8 @@ class TransactionsTable
         return [
             Tables\Filters\SelectFilter::make('type')
                 ->options(TransactionType::class),
+            Tables\Filters\SelectFilter::make('category')
+                ->options(Category::class),
             Tables\Filters\SelectFilter::make('account')
                 ->relationship('account', 'name')
                 ->searchable()

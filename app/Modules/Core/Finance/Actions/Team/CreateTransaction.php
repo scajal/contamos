@@ -3,6 +3,7 @@
 namespace App\Modules\Core\Finance\Actions\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Actions\Team\Concerns\GuardsMovementCategory;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class CreateTransaction
 {
+    use GuardsMovementCategory;
+
     /**
      * The team for which the transaction will be created.
      */
@@ -55,6 +58,10 @@ class CreateTransaction
         if (! $this->team instanceof \App\Modules\Core\Identity\Models\Team) {
             throw new Exception('A transaction cannot be created without a team.');
         }
+
+        // A movement carries a category when, and only when, its
+        // type is one a member records by hand.
+        $this->guardCategory($attributes);
 
         // Everything the action writes reads as one entry in
         // the team's activity log.

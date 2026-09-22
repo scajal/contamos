@@ -6,6 +6,7 @@ use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
 use App\Modules\Core\Finance\Enums\RecurringRule\Status;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $id
  * @property string $account_id
  * @property numeric $amount
+ * @property \App\Modules\Core\Finance\Enums\Transaction\Category|null $category
  * @property string $currency_id
  * @property int $decimal_places
  * @property string|null $description
@@ -58,7 +60,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @mixin \Eloquent
  */
-#[Fillable('amount', 'decimal_places', 'description', 'ends_on', 'failed_at', 'failure_reason', 'frequency', 'interval', 'is_active', 'last_generated_due_date', 'starts_on', 'time_of_day', 'timezone', 'type')]
+#[Fillable('amount', 'category', 'decimal_places', 'description', 'ends_on', 'failed_at', 'failure_reason', 'frequency', 'interval', 'is_active', 'last_generated_due_date', 'starts_on', 'time_of_day', 'timezone', 'type')]
 class RecurringRule extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
@@ -84,6 +86,7 @@ class RecurringRule extends Model
         return [
             $this->account()->getForeignKeyName(),
             'amount',
+            'category',
             $this->currency()->getForeignKeyName(),
             'description',
             'ends_on',
@@ -139,6 +142,7 @@ class RecurringRule extends Model
     {
         return [
             'amount' => 'decimal:18',
+            'category' => Category::class,
             'decimal_places' => 'integer',
             'ends_on' => 'date',
             'failed_at' => 'datetime',

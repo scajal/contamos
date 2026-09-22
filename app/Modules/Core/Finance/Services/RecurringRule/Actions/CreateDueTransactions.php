@@ -77,6 +77,7 @@ class CreateDueTransactions
             ->using([
                 $rule->account()->getForeignKeyName() => $rule->getAttribute($rule->account()->getForeignKeyName()),
                 'amount' => $rule->amount,
+                'category' => $rule->category,
                 $rule->currency()->getForeignKeyName() => $rule->getAttribute($rule->currency()->getForeignKeyName()),
                 'description' => $rule->description,
                 'due_date' => $dueDate,

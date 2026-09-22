@@ -34,6 +34,7 @@ class RecurringRuleResource extends Resource
         return [
             'account_id' => $data['account_id'] ?? null,
             'amount' => $data['amount'] ?? null,
+            'category' => $data['category'] ?? null,
             'currency_id' => $data['currency_id'] ?? null,
             'description' => $data['description'] ?? null,
             'ends_on' => $data['ends_on'] ?? null,

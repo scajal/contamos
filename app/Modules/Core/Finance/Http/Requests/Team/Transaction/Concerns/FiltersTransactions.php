@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Http\Requests\Team\Transaction\Concerns;
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
@@ -33,6 +34,7 @@ trait FiltersTransactions
         return [
             AllowedFilter::scope('type', 'of_type'),
             AllowedFilter::exact('account', new Transaction()->account()->getForeignKeyName()),
+            AllowedFilter::exact('category'),
             AllowedFilter::exact('currency', new Transaction()->currency()->getForeignKeyName()),
             AllowedFilter::groupOr('search', [AllowedFilter::exact('id'), AllowedFilter::partial('description')]),
             AllowedFilter::scope('from', 'occurred_from'),
@@ -80,6 +82,12 @@ trait FiltersTransactions
                 'nullable',
                 'string',
                 Rule::in(Transaction::typeFilters()),
+            ],
+            'filter.category' => [
+                'sometimes',
+                'nullable',
+                'string',
+                Rule::enum(Category::class),
             ],
             'filter.account' => [
                 'sometimes',

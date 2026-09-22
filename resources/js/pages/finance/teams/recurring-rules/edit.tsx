@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
+import { CategoryOptions } from "@/lib/categories";
 import recurringRules from "@/routes/finance/teams/recurring-rules";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { RecurringRule } from "@/types/app/modules/core/finance/models/team/recurring-rule";
@@ -22,11 +23,12 @@ import { Fields } from "./_components/fields";
 
 type PageProps = {
     accounts: Array<Account>;
+    categories: CategoryOptions;
     rule: RecurringRule;
     tags: Array<Tag>;
 };
 
-export default function Edit({ accounts, rule, tags }: PageProps) {
+export default function Edit({ accounts, categories, rule, tags }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -67,6 +69,7 @@ export default function Edit({ accounts, rule, tags }: PageProps) {
                                     <div className="flex-1">
                                         <Fields
                                             accounts={accounts}
+                                            categories={categories}
                                             defaultValues={{
                                                 ...rule,
                                                 tag_ids: (rule.tags ?? []).map((tag) => tag.id),

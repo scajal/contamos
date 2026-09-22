@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Actions\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Actions\Team\Concerns\GuardsMovementCategory;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Support\Helpers\TeamActivity;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 class UpdateTransaction
 {
+    use GuardsMovementCategory;
+
     /**
      * The team that owns the transaction to update.
      */
@@ -42,6 +45,11 @@ class UpdateTransaction
         if (! $this->team instanceof \App\Modules\Core\Identity\Models\Team) {
             throw new Exception('A transaction cannot be updated without a team.');
         }
+
+        // The category is held against the type the transaction is
+        // being saved with, so a switched type never keeps the
+        // category of the type it left behind.
+        $this->guardCategory($attributes, $transaction->type);
 
         // Everything the action writes reads as one entry in
         // the team's activity log.

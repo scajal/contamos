@@ -4,6 +4,7 @@
 import type { Currency } from "../../../catalog/models/currency";
 import type { Team } from "../../../identity/models/team";
 import type { User } from "../../../identity/models/user";
+import { Category } from "../../enums/transaction/category";
 import { TransactionType } from "../../enums/transaction/transaction-type";
 import type { Account } from "./account";
 import type { RecurringRule } from "./recurring-rule";
@@ -14,6 +15,7 @@ export interface Transaction {
     id: string;
     account_id: string;
     amount: string;
+    category: Category | null;
     currency_id: string;
     decimal_places: number;
     description: string | null;

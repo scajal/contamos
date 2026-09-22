@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Administration\Panels\Team\Resources\Transactions\Pages\CreateTransaction;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Tag;
@@ -30,6 +31,7 @@ it('records the transaction and moves the account balance', function (): void {
             'account_id' => $account->getKey(),
             'currency_id' => $currency->getKey(),
             'type' => TransactionType::Income->value,
+            'category' => Category::Salary->value,
             'amount' => '100',
             'quote' => '1',
             'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
@@ -65,6 +67,7 @@ it('falls back to the catalog quote when the rate is left empty', function (): v
             'quote' => '',
             'tag_ids' => [$tag->getKey()],
             'type' => TransactionType::Income->value,
+            'category' => Category::Salary->value,
         ])
         ->call('create')
         ->assertHasNoFormErrors();
@@ -106,4 +109,27 @@ it('skips the catalog lookup when the currency key is not a string', function ()
         'occurred_at' => '2024-06-01 12:00:00',
         'quote' => 'not-a-rate',
     ]))->toBeNull();
+});
+
+it('offers only the categories the selected type carries', function (): void {
+    [, $team] = actingOperatorOnTeamPanel();
+    $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+    $account = Account::factory()->for($team)->active()->create();
+    $account->currencies()->attach($currency, ['balance' => '0']);
+
+    Livewire::test(CreateTransaction::class)
+        ->fillForm([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'type' => TransactionType::Expense->value,
+            'category' => Category::Salary->value,
+            'amount' => '100',
+            'quote' => '1',
+            'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
+            'description' => 'Alquiler',
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['category']);
+
+    expect(Transaction::query()->count())->toBe(0);
 });

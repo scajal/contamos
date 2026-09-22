@@ -6,6 +6,7 @@ namespace Database\Factories\Modules\Core\Finance\Models\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
@@ -26,6 +27,7 @@ class RecurringRuleFactory extends Factory
         return [
             'account_id' => Account::factory()->for(Team::factory()),
             'amount' => (string) fake()->randomFloat(2, 1, 9999),
+            'category' => $this->categoryForType(...),
             'currency_id' => Currency::factory(),
             'decimal_places' => 2,
             'description' => fake()->sentence(),
@@ -70,6 +72,26 @@ class RecurringRuleFactory extends Factory
     public function income(): static
     {
         return $this->state(fn (array $attributes): array => ['type' => TransactionType::Income]);
+    }
+
+    /**
+     * Pick a category the drawn type can carry, and none at all for
+     * the types that never carry one, such as the legs of a
+     * transfer and an opening balance.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    protected function categoryForType(array $attributes): ?Category
+    {
+        $type = $attributes['type'] ?? null;
+
+        // The state may have set the type as the enum itself
+        // or as its backing value.
+        $type = $type instanceof TransactionType ? $type : TransactionType::tryFrom(is_string($type) ? $type : '');
+
+        $cases = $type instanceof TransactionType ? Category::casesFor($type) : [];
+
+        return $cases === [] ? null : $cases[array_rand($cases)];
     }
 
     /**

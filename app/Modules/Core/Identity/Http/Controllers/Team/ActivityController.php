@@ -351,9 +351,7 @@ class ActivityController
             return is_string($value = $stored[$attribute] ?? null) ? $value : null;
         };
 
-        if ($subject === ActivitySubject::Account
-            || $subject === ActivitySubject::Tag
-            || $subject === ActivitySubject::Team) {
+        if (in_array($subject, [ActivitySubject::Account, ActivitySubject::Tag, ActivitySubject::Team], true)) {
             return $named('name');
         }
 

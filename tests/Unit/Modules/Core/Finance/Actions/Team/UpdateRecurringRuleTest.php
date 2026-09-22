@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Actions\Team\UpdateRecurringRule;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
@@ -19,6 +20,7 @@ it('throws when a team was not provided', function (): void {
     (new UpdateRecurringRule)->using($rule, [
         'account_id' => $rule->account_id,
         'amount' => '25',
+        'category' => Category::Food->value,
         'currency_id' => $rule->currency_id,
         'frequency' => Frequency::Monthly,
         'interval' => 1,
@@ -42,6 +44,7 @@ it('updates the rule amount', function (): void {
     $updated = (new UpdateRecurringRule)->for($team)->using($rule, [
         'account_id' => $account->getKey(),
         'amount' => '40',
+        'category' => Category::Food->value,
         'currency_id' => $currency->getKey(),
         'frequency' => Frequency::Monthly,
         'interval' => 1,
@@ -53,3 +56,55 @@ it('updates the rule amount', function (): void {
 
     expect((float) $updated->amount)->toBe(40.0);
 });
+
+it('recategorizes the rule', function (): void {
+    $team = Team::factory()->create();
+    $currency = Currency::factory()->fiat()->create(['decimal_places' => 2]);
+    $account = Account::factory()->for($team)->create();
+    $rule = RecurringRule::factory()->expense()->create([
+        'account_id' => $account->getKey(),
+        'category' => Category::Food->value,
+        'currency_id' => $currency->getKey(),
+        'team_id' => $team->getKey(),
+    ]);
+
+    $updated = (new UpdateRecurringRule)->for($team)->using($rule, [
+        'account_id' => $account->getKey(),
+        'amount' => '40',
+        'category' => Category::Transport->value,
+        'currency_id' => $currency->getKey(),
+        'frequency' => Frequency::Monthly,
+        'interval' => 1,
+        'starts_on' => '2026-01-15',
+        'time_of_day' => '09:00:00',
+        'timezone' => 'UTC',
+        'type' => TransactionType::Expense,
+    ]);
+
+    expect($updated->category)->toBe(Category::Transport);
+});
+
+it('refuses a rule category that does not belong to the type it is saved with', function (): void {
+    $team = Team::factory()->create();
+    $currency = Currency::factory()->fiat()->create(['decimal_places' => 2]);
+    $account = Account::factory()->for($team)->create();
+    $rule = RecurringRule::factory()->expense()->create([
+        'account_id' => $account->getKey(),
+        'category' => Category::Food->value,
+        'currency_id' => $currency->getKey(),
+        'team_id' => $team->getKey(),
+    ]);
+
+    (new UpdateRecurringRule)->for($team)->using($rule, [
+        'account_id' => $account->getKey(),
+        'amount' => '40',
+        'category' => Category::Food->value,
+        'currency_id' => $currency->getKey(),
+        'frequency' => Frequency::Monthly,
+        'interval' => 1,
+        'starts_on' => '2026-01-15',
+        'time_of_day' => '09:00:00',
+        'timezone' => 'UTC',
+        'type' => TransactionType::Income,
+    ]);
+})->throws(Exception::class, 'The category food does not belong to a movement of type income.');

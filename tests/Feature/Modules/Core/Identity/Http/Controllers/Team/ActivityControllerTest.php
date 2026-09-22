@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Models\Subscription;
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
@@ -421,6 +422,7 @@ describe('show', function (): void {
 
         $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), [
             'amount' => '10.50',
+            'category' => Category::Food->value,
             'description' => 'Lunch',
             'occurred_at' => '2024-06-01 12:00:00',
             'quote' => '1',

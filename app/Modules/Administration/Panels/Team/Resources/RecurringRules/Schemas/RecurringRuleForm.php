@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Administration\Panels\Team\Resources\RecurringRules\Schemas;
 
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Identity\Models\Team;
@@ -14,6 +15,7 @@ use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Schemas;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class RecurringRuleForm
@@ -47,7 +49,18 @@ class RecurringRuleForm
                                 TransactionType::Expense->value => TransactionType::Expense->getLabel(),
                                 TransactionType::Income->value => TransactionType::Income->getLabel(),
                             ])
-                            ->required(),
+                            // The two lists do not overlap, so the
+                            // category is dropped on a switch.
+                            ->afterStateUpdated(fn (Set $set): mixed => $set('category', null))
+                            ->required()
+                            ->live(),
+                        Forms\Components\Select::make('category')
+                            ->placeholder(trans('Select a category'))
+                            ->options(self::categories(...))
+                            ->required(fn (Get $get): bool => self::categories($get) !== [])
+                            ->disabled(fn (Get $get): bool => self::categories($get) === [])
+                            ->searchable()
+                            ->preload(),
                         Forms\Components\TextInput::make('amount')
                             ->placeholder(trans('Enter an amount'))
                             ->prefixIcon(LucideIcon::DollarSign)
@@ -137,6 +150,29 @@ class RecurringRuleForm
         }
 
         return $currencies;
+    }
+
+    /**
+     * Get the categories the selected type offers, which is the list
+     * every transaction the rule generates is filed under.
+     *
+     * @return array<string, string>
+     */
+    protected static function categories(Get $get): array
+    {
+        $value = $get('type');
+
+        // The select casts its state to the enum when the type is
+        // one of its cases, and leaves it a plain string until then.
+        $type = $value instanceof TransactionType ? $value : TransactionType::tryFrom(is_string($value) ? $value : '');
+
+        $categories = [];
+
+        foreach ($type instanceof TransactionType ? Category::casesFor($type) : [] as $category) {
+            $categories[$category->value] = $category->getLabel();
+        }
+
+        return $categories;
     }
 
     /**

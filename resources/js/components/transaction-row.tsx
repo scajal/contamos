@@ -1,6 +1,7 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ArrowLeftRightIcon } from "lucide-react";
 
+import { CategoryIcon } from "@/components/category-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Item, ItemActions, ItemContent } from "@/components/ui/item";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -93,8 +94,17 @@ export const TransactionRow = ({ actions, showsAuthor = false, transaction }: Pr
         <Item className="rounded-none border-0 border-b last:border-b-0" size="sm" variant="outline">
             <ItemContent className="gap-0.5">
                 <div className="flex items-baseline justify-between gap-3">
-                    <span className="min-w-0 truncate font-medium">
-                        {counterpart ?? (transaction.description || t(`enums.${transaction.type}`))}
+                    <span className="flex min-w-0 items-center gap-1.5 truncate font-medium">
+                        {transaction.category ? (
+                            <CategoryIcon
+                                aria-label={t(`enums.${transaction.category}`)}
+                                category={transaction.category}
+                                className="text-muted-foreground size-3.5 shrink-0"
+                            />
+                        ) : null}
+                        <span className="min-w-0 truncate">
+                            {counterpart ?? (transaction.description || t(`enums.${transaction.type}`))}
+                        </span>
                     </span>
                     <TransactionAmount className="shrink-0" transaction={transaction} />
                 </div>

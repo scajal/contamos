@@ -3,6 +3,7 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ListIcon, TagIcon, TypeIcon } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { CategoryChip } from "@/components/movement-chips";
 import {
     Combobox,
     ComboboxChip,
@@ -29,10 +30,12 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { CategoryOptions } from "@/lib/categories";
 import { frequencyUnitKey, TRANSACTION_AMOUNT_COLOR, trimTrailingZeros } from "@/lib/transactions";
 import { cn, markFormDirty } from "@/lib/utils";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Frequency } from "@/types/app/modules/core/finance/enums/recurring-rule/frequency";
+import { Category } from "@/types/app/modules/core/finance/enums/transaction/category";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { RecurringRule } from "@/types/app/modules/core/finance/models/team/recurring-rule";
@@ -49,11 +52,12 @@ type FormProps = Partial<
 
 type Props = FormComponentSlotProps<FormProps> & {
     accounts: Array<Account>;
+    categories: CategoryOptions;
     defaultValues?: FormProps;
     tags: Array<Tag>;
 };
 
-export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props) => {
+export const Fields = ({ accounts, categories, defaultValues, errors, invalid, tags }: Props) => {
     /**
      * Translate the provided string
      * to the current locale.
@@ -98,6 +102,12 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
      * How often the rule repeats, kept in state so the unit beside the
      * interval reads as a noun ("2 months", not "Monthly").
      */
+    /**
+     * The category every transaction the rule generates
+     * is filed under.
+     */
+    const [category, setCategory] = useState<Category | null>(defaultValues?.category ?? null);
+
     const [frequency, setFrequency] = useState<Frequency>(defaultValues?.frequency ?? "monthly");
 
     /**
@@ -140,6 +150,10 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
 
                         if (next === "income" || next === "expense") {
                             setType(next);
+
+                            // The two lists do not overlap, so a
+                            // category never survives a switch.
+                            setCategory(null);
                             markFormDirty(fields.current);
                         }
                     }}
@@ -365,6 +379,22 @@ export const Fields = ({ accounts, defaultValues, errors, invalid, tags }: Props
                 />
                 <FieldDescription>{t("Leave it empty to repeat forever.")}</FieldDescription>
                 {invalid("ends_on") && <FieldError>{errors.ends_on}</FieldError>}
+            </Field>
+
+            {/** Category */}
+            <input name="category" type="hidden" value={category ?? ""} />
+            <Field data-invalid={invalid("category") || undefined}>
+                <FieldLabel htmlFor="rule-category">{t("Category")}</FieldLabel>
+                <CategoryChip
+                    categories={categories[type] ?? []}
+                    category={category}
+                    error={errors.category}
+                    fields={fields}
+                    idPrefix="rule"
+                    invalid={invalid("category")}
+                    onCategoryChange={setCategory}
+                />
+                {invalid("category") && <FieldError>{errors.category}</FieldError>}
             </Field>
 
             {/** Tags */}

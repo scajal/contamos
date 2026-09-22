@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Administration\Panels\Team\Resources\RecurringRules\Tables;
 
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Support\Helpers\Amount;
 use Filament\Actions;
@@ -45,6 +46,9 @@ class RecurringRulesTable
                     Tables\Columns\TextColumn::make('account.name')
                         ->searchable(),
                 ]),
+                Tables\Columns\TextColumn::make('category')
+                    ->placeholder('-')
+                    ->badge(),
                 Tables\Columns\TextColumn::make('frequency')
                     ->badge(),
                 Tables\Columns\TextColumn::make('amount')
@@ -65,6 +69,8 @@ class RecurringRulesTable
     protected static function getFilters(): array
     {
         return [
+            Tables\Filters\SelectFilter::make('category')
+                ->options(Category::class),
             Tables\Filters\SelectFilter::make('frequency')
                 ->options(Frequency::class),
             Tables\Filters\TernaryFilter::make('is_active')

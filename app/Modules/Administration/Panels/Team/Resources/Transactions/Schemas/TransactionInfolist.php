@@ -26,6 +26,9 @@ class TransactionInfolist
                             ->placeholder('-'),
                         Infolists\Components\TextEntry::make('type')
                             ->badge(),
+                        Infolists\Components\TextEntry::make('category')
+                            ->placeholder('-')
+                            ->badge(),
                         Infolists\Components\TextEntry::make('amount')
                             ->state(fn (Transaction $record): string => new Amount()->format((string) $record->amount, $record->currency)),
                         Infolists\Components\TextEntry::make('quote'),

@@ -57,7 +57,7 @@ export const HowItWorks = () => {
                     </h2>
                     <p className="text-muted-foreground max-w-[54ch] text-lg">
                         {t(
-                            "There is nothing to set up, no categories to design and no chart of accounts to learn. You write down money as it moves and the ledger keeps the rest.",
+                            "There is nothing to set up, no chart of accounts to learn and no categories to design: the short list comes with the ledger. You write down money as it moves and the ledger keeps the rest.",
                         )}
                     </p>
                 </m.div>

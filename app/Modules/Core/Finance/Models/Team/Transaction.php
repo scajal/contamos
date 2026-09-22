@@ -3,6 +3,7 @@
 namespace App\Modules\Core\Finance\Models\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
@@ -22,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property string $account_id
  * @property numeric $amount
+ * @property \App\Modules\Core\Finance\Enums\Transaction\Category|null $category
  * @property string $currency_id
  * @property int $decimal_places
  * @property string|null $description
@@ -54,7 +56,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @mixin \Eloquent
  */
-#[Fillable('amount', 'decimal_places', 'description', 'due_date', 'occurred_at', 'quote', 'type')]
+#[Fillable('amount', 'category', 'decimal_places', 'description', 'due_date', 'occurred_at', 'quote', 'type')]
 class Transaction extends Model
 {
     /**
@@ -83,6 +85,7 @@ class Transaction extends Model
         return [
             $this->account()->getForeignKeyName(),
             'amount',
+            'category',
             $this->currency()->getForeignKeyName(),
             'description',
             'occurred_at',
@@ -133,6 +136,7 @@ class Transaction extends Model
     {
         return [
             'amount' => 'decimal:18',
+            'category' => Category::class,
             'decimal_places' => 'integer',
             'due_date' => 'date',
             'occurred_at' => 'datetime',

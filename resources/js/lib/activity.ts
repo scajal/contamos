@@ -22,6 +22,7 @@ export const ACTIVITY_FIELD_LABELS: Record<string, string> = {
     accepted_at: "Accepted",
     account_id: "Account",
     amount: "Amount",
+    category: "Category",
     currency_id: "Currency",
     description: "Description",
     email: "Email",

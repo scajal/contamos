@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
+import { CategoryOptions } from "@/lib/categories";
 import transactions from "@/routes/finance/teams/transactions";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
@@ -23,11 +24,12 @@ import { Fields } from "./_components/fields";
 
 type PageProps = {
     accounts: Array<Account>;
+    categories: CategoryOptions;
     tags: Array<Tag>;
     transaction: Transaction;
 };
 
-export default function Edit({ accounts, tags, transaction }: PageProps) {
+export default function Edit({ accounts, categories, tags, transaction }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -75,9 +77,11 @@ export default function Edit({ accounts, tags, transaction }: PageProps) {
                                     <div className="flex-1">
                                         <Fields
                                             accounts={accounts}
+                                            categories={categories}
                                             defaultValues={{
                                                 account_id: transaction.account_id,
                                                 amount: transaction.amount,
+                                                category: transaction.category,
                                                 currency_id: transaction.currency_id,
                                                 description: transaction.description ?? undefined,
                                                 occurred_at: transaction.occurred_at,

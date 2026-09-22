@@ -8,6 +8,7 @@ use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Finance\Actions\Team\CreateRecurringRule;
 use App\Modules\Core\Finance\Actions\Team\DeleteRecurringRule;
 use App\Modules\Core\Finance\Actions\Team\UpdateRecurringRule;
+use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\OffersMovementCategories;
 use App\Modules\Core\Finance\Http\Requests\Team\RecurringRule\StoreRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\RecurringRule\UpdateRequest;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
@@ -27,6 +28,8 @@ use InertiaUI\Modal\Modal;
 
 class RecurringRuleController
 {
+    use OffersMovementCategories;
+
     /**
      * How many rules a page of the listing holds.
      */
@@ -162,6 +165,7 @@ class RecurringRuleController
             'accounts' => $team->accounts()->isActive()->with(['currencies' => function (Relation $currencies): void {
                 $currencies->isActive(); // @phpstan-ignore-line argument.type
             }])->get(),
+            'categories' => $this->categoryOptions(),
             'tags' => $team->tags()->isActive()->orderBy('name')->get(),
         ];
     }

@@ -3,6 +3,7 @@
 namespace App\Modules\Core\Finance\Actions\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Actions\Team\Concerns\GuardsMovementCategory;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class CreateRecurringRule
 {
+    use GuardsMovementCategory;
+
     /**
      * The team for which the rule will be created.
      */
@@ -54,6 +57,10 @@ class CreateRecurringRule
         if (! $this->team instanceof Team) {
             throw new Exception('A recurring rule cannot be created without a team.');
         }
+
+        // The rule is the template of a transaction, so it holds
+        // the same category invariant.
+        $this->guardCategory($attributes);
 
         return TeamActivity::within(fn (): RecurringRule => DB::transaction(function () use ($attributes): RecurringRule {
             // Get the currency for the rule.

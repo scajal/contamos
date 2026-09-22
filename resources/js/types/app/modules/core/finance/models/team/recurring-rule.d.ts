@@ -6,6 +6,7 @@ import type { Team } from "../../../identity/models/team";
 import type { User } from "../../../identity/models/user";
 import { Frequency } from "../../enums/recurring-rule/frequency";
 import { Status } from "../../enums/recurring-rule/status";
+import { Category } from "../../enums/transaction/category";
 import { TransactionType } from "../../enums/transaction/transaction-type";
 import type { Account } from "./account";
 import type { Tag } from "./tag";
@@ -14,6 +15,7 @@ export interface RecurringRule {
     id: string;
     account_id: string;
     amount: string;
+    category: Category | null;
     currency_id: string;
     decimal_places: number;
     description: string | null;

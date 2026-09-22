@@ -3,6 +3,7 @@
 namespace App\Modules\Core\Finance\Actions\Team;
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Actions\Team\Concerns\GuardsMovementCategory;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Support\Helpers\TeamActivity;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class UpdateRecurringRule
 {
+    use GuardsMovementCategory;
+
     /**
      * The team that owns the rule to update.
      */
@@ -41,6 +44,11 @@ class UpdateRecurringRule
         if (! $this->team instanceof Team) {
             throw new Exception('A recurring rule cannot be updated without a team.');
         }
+
+        // The category is held against the type the rule is being
+        // saved with, so a switched type never keeps the category
+        // of the type it left behind.
+        $this->guardCategory($attributes, $rule->type);
 
         return TeamActivity::within(fn (): RecurringRule => DB::transaction(function () use ($rule, $attributes, $tagIds): RecurringRule {
             // Get the currency for the rule, whose scale the amount is held at.

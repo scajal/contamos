@@ -11,6 +11,7 @@ use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
 use App\Modules\Core\Finance\Actions\Team\DeleteTransaction;
 use App\Modules\Core\Finance\Actions\Team\UpdateTransaction;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
+use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\OffersMovementCategories;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\ExportRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\IndexRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\StoreRequest;
@@ -40,6 +41,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TransactionController
 {
+    use OffersMovementCategories;
+
     /**
      * Display a listing of the resource.
      */
@@ -49,6 +52,7 @@ class TransactionController
 
         return Inertia::render('finance/teams/transactions/index', [
             'accounts' => $team->accounts()->orderBy('name')->get(),
+            'categories' => $this->categoryOptions(),
             'currencies' => Currency::query()->isActive()->orderBy('name')->get(),
             'filters' => $request->presentedFilters($since?->toDateString()),
             'history' => $this->history($team, $since),
@@ -122,6 +126,7 @@ class TransactionController
                 $currencies->isActive()->with('quotes'); // @phpstan-ignore-line argument.type
             }])->get(),
             'canRecur' => Feature::RecurTransactions->enabled($team),
+            'categories' => $this->categoryOptions(),
             'tags' => $team->tags()->isActive()->orderBy('name')->get(),
             'type' => $type,
         ])->baseRoute('finance.teams.transactions.index', ['team' => $team->getRouteKey()]);
@@ -154,6 +159,7 @@ class TransactionController
                     ...$request->safe([
                         (new Transaction)->account()->getForeignKeyName(),
                         'amount',
+                        'category',
                         (new Transaction)->currency()->getForeignKeyName(),
                         'description',
                         'occurred_at',
@@ -230,6 +236,7 @@ class TransactionController
                     $currencies->where(fn (Builder $query): Builder => $query->isActive()->orWhereKey($transaction->currency_id))->with('quotes'); // @phpstan-ignore-line argument.type
                 }])
                 ->get(),
+            'categories' => $this->categoryOptions(),
             'tags' => $team->tags()
                 ->where(fn (Builder $tags): Builder => $tags->isActive()->orWhereIn(new Tag()->getKeyName(), $transaction->tags->pluck(new Tag()->getKeyName())))
                 ->orderBy('name')
@@ -251,6 +258,7 @@ class TransactionController
             ->using($transaction, $request->safe([
                 (new Transaction)->account()->getForeignKeyName(),
                 'amount',
+                'category',
                 (new Transaction)->currency()->getForeignKeyName(),
                 'description',
                 'occurred_at',
@@ -300,6 +308,7 @@ class TransactionController
             trans('Date'),
             trans('Time'),
             trans('Type'),
+            trans('Category'),
             trans('Amount'),
             trans('Currency'),
             trans('Description'),
@@ -326,6 +335,7 @@ class TransactionController
             $occurredAt->format('Y-m-d'),
             $occurredAt->format('H:i'),
             $transaction->type->getLabel(),
+            $transaction->category?->getLabel() ?? '',
             $this->exportAmount($transaction),
             $transaction->currency->code,
             $transaction->description ?? '',

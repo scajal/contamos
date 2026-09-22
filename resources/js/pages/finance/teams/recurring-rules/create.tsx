@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Modal } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
+import { CategoryOptions } from "@/lib/categories";
 import recurringRules from "@/routes/finance/teams/recurring-rules";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
@@ -21,10 +22,11 @@ import { Fields } from "./_components/fields";
 
 type PageProps = {
     accounts: Array<Account>;
+    categories: CategoryOptions;
     tags: Array<Tag>;
 };
 
-export default function Create({ accounts, tags }: PageProps) {
+export default function Create({ accounts, categories, tags }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -60,7 +62,12 @@ export default function Create({ accounts, tags }: PageProps) {
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="flex-1">
-                                        <Fields accounts={accounts} tags={tags} {...formProps} />
+                                        <Fields
+                                            accounts={accounts}
+                                            categories={categories}
+                                            tags={tags}
+                                            {...formProps}
+                                        />
                                     </div>
                                     <DialogFooter>
                                         <Button disabled={formProps.processing || !formProps.isDirty} type="submit">
