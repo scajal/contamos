@@ -176,7 +176,7 @@ describe('store', function (): void {
         expect($activity->event)->toBe('created')
             ->and($activity->causer?->is($user))->toBeTrue()
             ->and($activity->subject?->is(Tag::query()->sole()))->toBeTrue()
-            ->and($activity->attribute_changes['attributes'])->toBe(['is_active' => true, 'name' => 'Comida']);
+            ->and(collect($activity->attribute_changes['attributes'])->sortKeys()->all())->toBe(['is_active' => true, 'name' => 'Comida']);
     });
 });
 

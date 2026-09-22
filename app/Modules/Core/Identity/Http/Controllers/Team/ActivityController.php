@@ -103,13 +103,18 @@ class ActivityController
         $old = $this->side($activity, 'old');
         $new = $this->side($activity, 'attributes');
 
+        // MySQL stores JSON objects with their keys reordered, so
+        // the fields are sorted here to read the same everywhere.
+        $fields = array_keys($old + $new);
+        sort($fields);
+
         return array_map(fn (string $field): array => [
             'field' => $field,
             'old' => $old[$field] ?? null,
             'new' => $new[$field] ?? null,
             'old_label' => $this->label($field, $old[$field] ?? null, $names),
             'new_label' => $this->label($field, $new[$field] ?? null, $names),
-        ], array_keys($old + $new));
+        ], $fields);
     }
 
     /**
