@@ -24,6 +24,17 @@ use Symfony\Component\HttpFoundation\Response;
 class BillingServiceProvider extends ServiceProvider
 {
     /**
+     * Register services.
+     */
+    public function register(): void
+    {
+        // The module registers the webhook route itself, on a
+        // controller that keeps Paddle transactions out of the
+        // team's finance ledger.
+        Cashier::ignoreRoutes();
+    }
+
+    /**
      * Bootstrap services.
      */
     public function boot(): void

@@ -19,6 +19,19 @@ use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
 |
 */
 
+/*
+|--------------------------------------------------------------------------
+| Webhooks
+|--------------------------------------------------------------------------
+|
+| Paddle posts billing events here. The path is exempt from CSRF in
+| bootstrap/app.php and the controller verifies Paddle's signature.
+|
+*/
+
+Route::post('paddle/webhook', [\App\Modules\Billing\Http\Controllers\WebhookController::class, 'handle'])
+    ->name('billing.webhook');
+
 Route::as('billing.teams.')
     ->prefix('teams/{team}')
     ->middleware([Authenticate::class, ValidateSessionWithWorkOS::class, EnsureTeamMembership::class])

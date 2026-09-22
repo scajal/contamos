@@ -6,6 +6,7 @@ namespace App\Modules\Core\Identity\Models;
 
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
+use App\Modules\Billing\Models\Transaction as BillingTransaction;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\AccountCurrency;
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use Laravel\Paddle\Billable;
@@ -63,9 +65,7 @@ use Spatie\Activitylog\Enums\ActivityEvent;
  */
 class Team extends Model
 {
-    use Billable {
-        transactions as billingTransactions;
-    }
+    use Billable;
 
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
@@ -370,6 +370,18 @@ class Team extends Model
     public function tags(): HasMany
     {
         return $this->hasMany(Tag::class);
+    }
+
+    /**
+     * Get the Paddle transactions of the team. Cashier's own
+     * transactions() is shadowed by the finance ledger below, so
+     * billing reads and the webhook use this relation instead.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany<\App\Modules\Billing\Models\Transaction, $this>
+     */
+    public function billingTransactions(): MorphMany
+    {
+        return $this->morphMany(BillingTransaction::class, 'billable');
     }
 
     /**
