@@ -7,7 +7,6 @@ namespace App\Modules\Administration\Panels\Team\Resources\BudgetPeriods;
 use App\Modules\Administration\Resources\Resource;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use BackedEnum;
-use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
@@ -21,15 +20,6 @@ class BudgetPeriodResource extends Resource
     protected static ?string $recordTitleAttribute = 'from_month';
 
     protected static ?string $tenantOwnershipRelationshipName = 'team';
-
-    /**
-     * Configure the resource's form.
-     */
-    #[\Override]
-    public static function form(Schema $schema): Schema
-    {
-        return Schemas\BudgetPeriodForm::configure($schema);
-    }
 
     /**
      * Get the resource's label.
@@ -77,8 +67,6 @@ class BudgetPeriodResource extends Resource
     {
         return [
             'index' => Pages\ListBudgetPeriods::route('/'),
-            'create' => Pages\CreateBudgetPeriod::route('/create'),
-            'edit' => Pages\EditBudgetPeriod::route('/{record}/edit'),
         ];
     }
 }

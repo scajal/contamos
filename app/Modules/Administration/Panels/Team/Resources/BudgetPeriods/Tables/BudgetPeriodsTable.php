@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Administration\Panels\Team\Resources\BudgetPeriods\Tables;
 
-use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetPeriodStatus;
 use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetTargetKind;
 use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
-use App\Modules\Support\Helpers\Amount;
 use Carbon\CarbonImmutable;
-use Filament\Actions;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
@@ -27,9 +24,7 @@ class BudgetPeriodsTable
     {
         return $table
             ->defaultSort('from_month', 'desc')
-            ->columns(self::getColumns())
-            ->filters(self::getFilters())
-            ->recordActions(self::getRecordActions());
+            ->columns(self::getColumns());
     }
 
     /**
@@ -40,65 +35,17 @@ class BudgetPeriodsTable
     protected static function getColumns(): array
     {
         return [
-            Tables\Columns\Layout\Split::make([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\TextColumn::make('target')
-                        ->label(trans('Target'))
-                        ->state(fn (BudgetPeriod $record): string => self::targetLabel($record))
-                        ->weight(FontWeight::Medium),
-                    Tables\Columns\TextColumn::make('amount')
-                        ->formatStateUsing(fn (BudgetPeriod $record): string => new Amount()->format((string) $record->amount, $record->currency))
-                        ->description(fn (BudgetPeriod $record): string => $record->currency->code),
-                ]),
-                Tables\Columns\TextColumn::make('from_month')
-                    ->date('m/Y'),
-                Tables\Columns\TextColumn::make('until_month')
-                    ->placeholder(trans('Ongoing'))
-                    ->date('m/Y'),
-                Tables\Columns\TextColumn::make('status')
-                    ->state(fn (BudgetPeriod $record): string => $record->status(CarbonImmutable::now())->getLabel())
-                    ->color(fn (BudgetPeriod $record): array => $record->status(CarbonImmutable::now()) === BudgetPeriodStatus::Running ? Color::Green : Color::Gray)
-                    ->badge(),
-            ]),
-        ];
-    }
-
-    /**
-     * Get the table filters.
-     *
-     * @return array<int, \Filament\Tables\Filters\BaseFilter>
-     */
-    protected static function getFilters(): array
-    {
-        return [
-            Tables\Filters\SelectFilter::make('target_kind')
+            Tables\Columns\TextColumn::make('target')
                 ->label(trans('Target'))
-                ->options(fn (): array => collect(BudgetTargetKind::cases())
-                    ->mapWithKeys(fn (BudgetTargetKind $kind): array => [$kind->value => $kind->getLabel()])
-                    ->all())
-                ->query(fn (Builder $query, array $data): Builder => self::whereKind($query, $data['value'] ?? null)),
-            Tables\Filters\SelectFilter::make('status')
-                ->options(fn (): array => collect(BudgetPeriodStatus::cases())
-                    ->mapWithKeys(fn (BudgetPeriodStatus $status): array => [$status->value => $status->getLabel()])
-                    ->all())
-                ->query(fn (Builder $query, array $data): Builder => self::whereStatus($query, $data['value'] ?? null)),
-            Tables\Filters\SelectFilter::make('currency_id')
-                ->label(trans('Currency'))
-                ->options(fn (): array => Currency::query()->orderBy('code')->pluck('code', new Currency()->getKeyName())->all()),
-        ];
-    }
-
-    /**
-     * Get the row actions for the table.
-     *
-     * @return array<int, \Filament\Actions\ActionGroup>
-     */
-    protected static function getRecordActions(): array
-    {
-        return [
-            Actions\ActionGroup::make([
-                Actions\EditAction::make(),
-            ]),
+                ->state(fn (BudgetPeriod $record): string => self::targetLabel($record)." ({$record->targetKind()->getLabel()})")
+                ->weight(FontWeight::Medium),
+            Tables\Columns\TextColumn::make('range')
+                ->state(fn (BudgetPeriod $record): string => "{$record->from_month->format('m/Y')} - {$record->until_month?->format('m/Y')}")
+                ->placeholder(trans('Ongoing')),
+            Tables\Columns\TextColumn::make('status')
+                ->state(fn (BudgetPeriod $record): string => $record->status(CarbonImmutable::now())->getLabel())
+                ->color(fn (BudgetPeriod $record): array => $record->status(CarbonImmutable::now()) === BudgetPeriodStatus::Running ? Color::Green : Color::Gray)
+                ->badge(),
         ];
     }
 
