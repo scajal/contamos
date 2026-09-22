@@ -1,4 +1,5 @@
 import { Feature } from "@/types/app/modules/billing/enums/feature";
+import { Transaction } from "@/types/app/modules/billing/models/transaction";
 import { PlanPrice } from "@/types/app/modules/billing/plan-price";
 
 /**
@@ -91,4 +92,40 @@ export function majorUnits(price: PlanPrice): string | null {
             .maximumFractionDigits ?? 2;
 
     return (price.amount / 10 ** decimals).toFixed(decimals);
+}
+
+/**
+ * The English label for a Paddle transaction status, to translate
+ * on the page. Paddle marks a transaction paid when the payment
+ * lands and completed once it has been fulfilled, which is the
+ * same thing to the person reading the list.
+ */
+export function transactionStatusLabel(status: Transaction["status"]): string {
+    switch (status) {
+        case "paid":
+        case "completed":
+            return "Paid";
+        case "billed":
+        case "ready":
+        case "draft":
+            return "Pending";
+        case "canceled":
+            return "Cancelled";
+        case "past_due":
+            return "Payment failed";
+    }
+}
+
+/**
+ * The badge variant that fits a Paddle transaction status.
+ */
+export function transactionStatusVariant(status: Transaction["status"]): "ghost" | "outline" | "destructive" {
+    switch (status) {
+        case "past_due":
+            return "destructive";
+        case "canceled":
+            return "outline";
+        default:
+            return "ghost";
+    }
 }

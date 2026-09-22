@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Administration\Panels\Administration\Resources\Users\Schemas;
 
 use Filament\Forms;
+use Filament\Infolists;
 use Filament\Schemas;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Operation;
@@ -41,6 +42,10 @@ class UserForm
             Schemas\Components\Tabs\Tab::make('General')
                 ->columns(2)
                 ->schema([
+                    Infolists\Components\ImageEntry::make('avatar')
+                        ->columnSpanFull()
+                        ->imageSize(48)
+                        ->circular(),
                     Forms\Components\TextInput::make('name')
                         ->required()
                         ->string()

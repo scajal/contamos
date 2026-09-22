@@ -28,7 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import { isOverAddableLimit } from "@/lib/billing";
+import { isOverAddableLimit, transactionStatusLabel, transactionStatusVariant } from "@/lib/billing";
 import { formatDate } from "@/lib/utils";
 import subscriptions from "@/routes/billing/teams/subscriptions";
 import { Transaction } from "@/types/app/modules/billing/models/transaction";
@@ -371,7 +371,9 @@ const Transactions = () => {
                                             <ItemDescription>{`${transaction.currency} ${transaction.total}`}</ItemDescription>
                                         </ItemContent>
                                         <ItemActions className="flex-wrap justify-end">
-                                            <Badge variant="ghost">{transaction.status}</Badge>
+                                            <Badge variant={transactionStatusVariant(transaction.status)}>
+                                                {t(transactionStatusLabel(transaction.status))}
+                                            </Badge>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
                                                     <MoreHorizontalIcon />

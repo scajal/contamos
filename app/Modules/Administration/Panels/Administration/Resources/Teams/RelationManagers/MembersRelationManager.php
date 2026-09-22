@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Administration\Panels\Administration\Resources\Teams\RelationManagers;
 
+use App\Modules\Administration\Panels\Administration\Resources\Users\UserResource;
 use App\Modules\Core\Identity\Enums\Team\Role;
+use App\Modules\Core\Identity\Models\User;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Width;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -96,7 +99,14 @@ class MembersRelationManager extends RelationManager
     {
         return [
             Actions\ActionGroup::make([
-                Actions\DetachAction::make(),
+                Actions\ActionGroup::make([
+                    Actions\Action::make('view')
+                        ->icon(Heroicon::OutlinedEye)
+                        ->url(fn (User $record): string => UserResource::getUrl('view', ['record' => $record])),
+                ])->dropdown(false),
+                Actions\ActionGroup::make([
+                    Actions\DetachAction::make(),
+                ])->dropdown(false),
             ]),
         ];
     }

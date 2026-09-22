@@ -50,18 +50,12 @@ class TeamsRelationManager extends RelationManager
     protected function getColumns(): array
     {
         return [
-            Tables\Columns\Layout\Split::make([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\TextColumn::make('name')
-                        ->weight(FontWeight::Medium)
-                        ->searchable(),
-                    Tables\Columns\TextColumn::make('slug')
-                        ->searchable(),
-                ]),
-                Tables\Columns\TextColumn::make('membership.role')
-                    ->label(trans('Role'))
-                    ->badge(),
-            ]),
+            Tables\Columns\TextColumn::make('name')
+                ->weight(FontWeight::Medium)
+                ->searchable(isIndividual: true),
+            Tables\Columns\TextColumn::make('membership.role')
+                ->label(trans('Role'))
+                ->badge(),
         ];
     }
 
@@ -74,13 +68,17 @@ class TeamsRelationManager extends RelationManager
     {
         return [
             Actions\ActionGroup::make([
-                Actions\Action::make('view')
-                    ->icon(Heroicon::OutlinedEye)
-                    ->url(fn (Team $record): string => TeamResource::getUrl('view', ['record' => $record])),
-                Actions\Action::make('view-panel')
-                    ->label(trans('Team panel'))
-                    ->icon(Heroicon::OutlinedRectangleGroup)
-                    ->url(fn (Team $record): ?string => Filament::getPanel('team')->getUrl($record)),
+                Actions\ActionGroup::make([
+                    Actions\Action::make('view-panel')
+                        ->label(trans('Team panel'))
+                        ->icon(Heroicon::OutlinedRectangleGroup)
+                        ->url(fn (Team $record): ?string => Filament::getPanel('team')->getUrl($record)),
+                ])->dropdown(false),
+                Actions\ActionGroup::make([
+                    Actions\Action::make('view')
+                        ->icon(Heroicon::OutlinedEye)
+                        ->url(fn (Team $record): string => TeamResource::getUrl('view', ['record' => $record])),
+                ])->dropdown(false),
             ]),
         ];
     }
