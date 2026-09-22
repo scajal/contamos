@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('teams', function (Blueprint $table): void {
-            $table->string('plan_override')->nullable()->after('plan');
+            $table->string('plan_override')->nullable()->after('name');
             $table->timestamp('plan_override_expires_at')->nullable()->after('plan_override');
         });
     }
