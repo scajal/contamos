@@ -16,7 +16,7 @@ it('renders the team dashboard with its stats', function (): void {
     [, $team] = actingOperatorOnTeamPanel();
     Account::factory()->for($team)->count(2)->create();
 
-    $this->get(route('filament.administration:team.pages.dashboard', ['tenant' => $team->getRouteKey()]))
+    $this->get(route('filament.team.pages.dashboard', ['tenant' => $team->getRouteKey()]))
         ->assertOk();
 
     Livewire::test(StatsOverviewWidget::class)

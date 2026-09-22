@@ -5,7 +5,7 @@
     "Role updated": "Rol actualizado",
     "Choose what :name may do on this team.": "Elige qué puede hacer :name en este equipo.",
     "Admins manage the team and its people. Members invite people and leave.": "Los administradores gestionan el equipo y su gente. Los miembros invitan personas y se van.",
-    "Everyone joins as an admin. Inviting members is a Pro feature.": "Todos se unen como administradores. Invitar miembros es una función Pro.",
+    "Everyone joins as an admin. Pro lets you choose roles and pass the member limit.": "Todos se unen como administradores. Con Pro eliges el rol y superas el límite de miembros.",
     "Ask the team owner to upgrade to Pro.": "Pídele al propietario del equipo que se pase a Pro.",
     ":feature is part of Pro.": ":feature es parte de Pro.",
     "Included": "Incluido",
@@ -630,7 +630,6 @@
     ":price/month": ":price/mes",
     "Billed :price a year": "Se factura :price al año",
     "Billed month to month": "Se factura mes a mes",
-    "Ledger": "Libro",
     "Billing": "Facturación",
     "Delete account": "Eliminar cuenta",
     "Type :email to confirm.": "Escribe :email para confirmar.",
@@ -885,5 +884,9 @@
     "Teams": "Equipos",
     "The first month the budget applies to.": "El primer mes al que se aplica el presupuesto.",
     "Users": "Usuarios",
-    "billing transaction": "transacción de facturación"
+    "billing transaction": "transacción de facturación",
+    "A rule records an income or an expense on its own schedule. The rules you already created are kept.": "Una regla registra un ingreso o un gasto según su propio calendario. Las reglas que ya creaste se conservan.",
+    "Recurring transactions are part of Pro": "Las recurrentes son parte de Pro",
+    "Day to day": "Día a día",
+    "Planning": "Planificación"
 }

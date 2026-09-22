@@ -5,7 +5,7 @@
     "Role updated": "Role updated",
     "Choose what :name may do on this team.": "Choose what :name may do on this team.",
     "Admins manage the team and its people. Members invite people and leave.": "Admins manage the team and its people. Members invite people and leave.",
-    "Everyone joins as an admin. Inviting members is a Pro feature.": "Everyone joins as an admin. Inviting members is a Pro feature.",
+    "Everyone joins as an admin. Pro lets you choose roles and pass the member limit.": "Everyone joins as an admin. Pro lets you choose roles and pass the member limit.",
     "Ask the team owner to upgrade to Pro.": "Ask the team owner to upgrade to Pro.",
     ":feature is part of Pro.": ":feature is part of Pro.",
     "Included": "Included",
@@ -819,5 +819,9 @@
     "Teams": "Teams",
     "The first month the budget applies to.": "The first month the budget applies to.",
     "Users": "Users",
-    "billing transaction": "billing transaction"
+    "billing transaction": "billing transaction",
+    "A rule records an income or an expense on its own schedule. The rules you already created are kept.": "A rule records an income or an expense on its own schedule. The rules you already created are kept.",
+    "Recurring transactions are part of Pro": "Recurring transactions are part of Pro",
+    "Day to day": "Day to day",
+    "Planning": "Planning"
 }

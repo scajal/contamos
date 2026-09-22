@@ -196,7 +196,7 @@ function actingOperator(): array
  */
 function onTeamPanel(Team $team): void
 {
-    Filament::setCurrentPanel('administration:team');
+    Filament::setCurrentPanel('team');
     Filament::bootCurrentPanel();
     Filament::setTenant($team);
 }
@@ -248,6 +248,17 @@ function subscribeToPro(Team $team): void
         'status' => \Laravel\Paddle\Subscription::STATUS_ACTIVE,
         'quantity' => 1,
     ]);
+
+    $team->unsetRelation('subscriptions');
+}
+
+/**
+ * Cancel the pro subscription of a \App\Modules\Core\Identity\Models\Team,
+ * leaving it on the free plan with whatever it recorded while subscribed.
+ */
+function cancelPro(Team $team): void
+{
+    $team->subscriptions()->update(['status' => \Laravel\Paddle\Subscription::STATUS_CANCELED]);
 
     $team->unsetRelation('subscriptions');
 }

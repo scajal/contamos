@@ -4,7 +4,6 @@ import { parse } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
     CircleDashedIcon,
-    LockIcon,
     MoreHorizontalIcon,
     PauseIcon,
     PencilIcon,
@@ -17,6 +16,7 @@ import { Fragment, useState } from "react";
 
 import { BudgetProgress } from "@/components/budget-progress";
 import { ConfirmAction } from "@/components/confirm-action";
+import { FeatureLock } from "@/components/feature-lock";
 import { PaginationControls } from "@/components/pagination-controls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useBalances } from "@/hooks/use-balances";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { formatAmount, formatMonth } from "@/lib/utils";
-import subscriptions from "@/routes/billing/teams/subscriptions";
 import routes from "@/routes/finance/teams/budgets";
 import { BudgetPeriodStatus } from "@/types/app/modules/core/finance/enums/budget-period/budget-period-status";
 import { BudgetRow } from "@/types/app/modules/core/finance/models/team/budget-period";
@@ -169,19 +168,12 @@ const Listing = () => {
      * Translate the provided string
      * to the current locale.
      */
-    const { currentLocale, t } = useLaravelReactI18n();
+    const t = useLaravelReactI18n().t;
 
     /**
      * The page's props.
      */
-    const { budgets, user } = usePage<PageProps>().props;
-
-    /**
-     * Mask the amounts while balances are hidden.
-     */
-    const mask = useBalances().mask;
-
-    const team = user?.current_team?.slug ?? "";
+    const { budgets } = usePage<PageProps>().props;
 
     return (
         <Deferred data="budgets" fallback={<SkeletonRows />}>
@@ -205,53 +197,84 @@ const Listing = () => {
             ) : (
                 <div className="flex flex-col gap-4">
                     <div className="overflow-hidden rounded-xl border">
-                        <ItemGroup className="gap-0">
-                            {(budgets?.data ?? []).map((budget) => (
-                                <Item
-                                    className="items-start rounded-none border-0 border-b last:border-b-0"
-                                    key={budget.id}
-                                    size="sm"
-                                    variant="outline"
-                                >
-                                    <ItemMedia variant="icon">
-                                        <WalletIcon />
-                                    </ItemMedia>
-                                    <ItemContent className="min-w-0 gap-2">
-                                        <ItemTitle className="flex flex-wrap items-center gap-2">
-                                            <span className="truncate">{budget.tag.name}</span>
-                                            {/** Active is the normal state, so only the exception is labelled. */}
-                                            {budget.tag.is_active ? null : (
-                                                <Badge variant="secondary">{t("Inactive")}</Badge>
-                                            )}
-                                            <StatusBadge status={budget.status} />
-                                        </ItemTitle>
-                                        <ItemDescription className="flex flex-wrap items-center gap-x-2 tabular-nums">
-                                            <span className="font-medium">
-                                                {mask(formatAmount(budget.amount, currentLocale(), budget.currency))}
-                                            </span>
-                                            <span>{budget.currency.code}</span>
-                                            <span aria-hidden>·</span>
-                                            <Months budget={budget} />
-                                        </ItemDescription>
-                                        {budget.progress ? (
-                                            <BudgetProgress
-                                                className="max-w-sm"
-                                                currency={budget.currency}
-                                                progress={budget.progress}
-                                            />
-                                        ) : null}
-                                    </ItemContent>
-                                    <ItemActions className="flex-wrap justify-end">
-                                        <ActionsMenu budget={budget} team={team} />
-                                    </ItemActions>
-                                </Item>
-                            ))}
-                        </ItemGroup>
+                        <Rows />
                     </div>
                     <PaginationControls nextUrl={budgets?.next_page_url} previousUrl={budgets?.prev_page_url} />
                 </div>
             )}
         </Deferred>
+    );
+};
+
+/**
+ * The budgets themselves, shared by the listing and by what a team
+ * without the feature sees behind the lock.
+ */
+const Rows = () => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const { currentLocale, t } = useLaravelReactI18n();
+
+    /**
+     * The page's props.
+     */
+    const { budgets, is_locked, user } = usePage<PageProps>().props;
+
+    /**
+     * Mask the amounts while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
+    /**
+     * The team the budgets belong to.
+     */
+    const team = user?.current_team?.slug ?? "";
+
+    return (
+        <ItemGroup className="gap-0">
+            {(budgets?.data ?? []).map((budget) => (
+                <Item
+                    className="items-start rounded-none border-0 border-b last:border-b-0"
+                    key={budget.id}
+                    size="sm"
+                    variant="outline"
+                >
+                    <ItemMedia variant="icon">
+                        <WalletIcon />
+                    </ItemMedia>
+                    <ItemContent className="min-w-0 gap-2">
+                        <ItemTitle className="flex flex-wrap items-center gap-2">
+                            <span className="truncate">{budget.tag.name}</span>
+                            {/** Active is the normal state, so only the exception is labelled. */}
+                            {budget.tag.is_active ? null : <Badge variant="secondary">{t("Inactive")}</Badge>}
+                            <StatusBadge status={budget.status} />
+                        </ItemTitle>
+                        <ItemDescription className="flex flex-wrap items-center gap-x-2 tabular-nums">
+                            <span className="font-medium">
+                                {mask(formatAmount(budget.amount, currentLocale(), budget.currency))}
+                            </span>
+                            <span>{budget.currency.code}</span>
+                            <span aria-hidden>·</span>
+                            <Months budget={budget} />
+                        </ItemDescription>
+                        {budget.progress ? (
+                            <BudgetProgress
+                                className="max-w-sm"
+                                currency={budget.currency}
+                                progress={budget.progress}
+                            />
+                        ) : null}
+                    </ItemContent>
+                    {is_locked ? null : (
+                        <ItemActions className="flex-wrap justify-end">
+                            <ActionsMenu budget={budget} team={team} />
+                        </ItemActions>
+                    )}
+                </Item>
+            ))}
+        </ItemGroup>
     );
 };
 
@@ -326,6 +349,12 @@ const ActionsMenu = ({ budget, team }: { budget: BudgetRow; team: string }) => {
     );
 };
 
+/**
+ * What a team on a plan without budgets sees: the budgets it already
+ * recorded stay on the page, blurred behind the lock, since nothing is
+ * lost — they simply cannot be followed or changed until the team
+ * upgrades.
+ */
 const LockedBudgets = () => {
     /**
      * Translate the provided string
@@ -336,39 +365,21 @@ const LockedBudgets = () => {
     /**
      * The page's props.
      */
-    const { team } = usePage<PageProps>().props;
+    const { budgets, team } = usePage<PageProps>().props;
 
     return (
-        <div className="overflow-hidden rounded-xl border">
-            <Empty>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <LockIcon />
-                    </EmptyMedia>
-                    <EmptyTitle>{t("Budgets are part of Pro")}</EmptyTitle>
-                    <EmptyDescription>
-                        {t(
-                            "Set a monthly amount per tag and follow it through the month. Any budget you already set is kept.",
-                        )}
-                    </EmptyDescription>
-                </EmptyHeader>
-                <EmptyContent>
-                    <Button
-                        nativeButton={false}
-                        render={
-                            <ModalLink
-                                href={subscriptions.upgrade.url(
-                                    { team: team.slug },
-                                    { query: { feature: "budgets:manage" } },
-                                )}
-                            >
-                                {t("Upgrade to Pro")}
-                            </ModalLink>
-                        }
-                    />
-                </EmptyContent>
-            </Empty>
-        </div>
+        <Deferred data="budgets" fallback={<SkeletonRows />}>
+            <FeatureLock
+                description={t(
+                    "Set a monthly amount per tag and follow it through the month. Any budget you already set is kept.",
+                )}
+                feature="budgets:manage"
+                team={team.slug}
+                title={t("Budgets are part of Pro")}
+            >
+                {budgets?.data?.length ? <Rows /> : null}
+            </FeatureLock>
+        </Deferred>
     );
 };
 

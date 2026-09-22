@@ -48,6 +48,6 @@ it('links every team to its own panel', function (): void {
     actingOperator();
     $team = Team::factory()->create();
 
-    expect(Filament::getPanel('administration:team')->getUrl($team))
+    expect(Filament::getPanel('team')->getUrl($team))
         ->toContain('/administration/team/'.$team->getRouteKey());
 });

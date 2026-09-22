@@ -42,13 +42,14 @@ class BudgetController
      */
     public function index(Team $team): Response
     {
-        // A plan without budgets keeps the ones it recorded
-        // while it had them, so the page is locked rather
-        // than emptied.
+        // A plan without budgets keeps the ones it recorded while it
+        // had them, so the page is locked rather than emptied: the
+        // listing still travels and the page blurs it behind the
+        // upgrade panel.
         $isLocked = ! Feature::ManageBudgets->enabled($team);
 
         return Inertia::render('finance/teams/budgets/index', [
-            'budgets' => $isLocked ? [] : Inertia::defer(
+            'budgets' => Inertia::defer(
                 fn (): LengthAwarePaginator => $this->listing($team),
             ),
             'currencies' => $team->heldCurrencies(),

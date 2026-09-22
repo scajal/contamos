@@ -9,9 +9,9 @@ use Filament\Facades\Filament;
  * Unit tests for \App\Modules\Administration\Panels\Team\Providers\TeamPanelProvider.
  */
 it('registers the team panel with tenancy on the team slug', function (): void {
-    $panel = Filament::getPanel('administration:team');
+    $panel = Filament::getPanel('team');
 
-    expect($panel->getId())->toBe('administration:team')
+    expect($panel->getId())->toBe('team')
         ->and($panel->getPath())->toBe('administration/team')
         ->and($panel->hasTenancy())->toBeTrue()
         ->and($panel->getTenantModel())->toBe(Team::class)

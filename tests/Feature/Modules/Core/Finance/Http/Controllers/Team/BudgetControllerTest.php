@@ -163,8 +163,22 @@ describe('index', function (): void {
             ->assertOk()
             ->assertInertia(fn (Assert $page): Assert => $page
                 ->component('finance/teams/budgets/index')
+                ->where('is_locked', true));
+    });
+
+    it('keeps listing the budgets a free team already recorded', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        BudgetPeriod::factory()->running()->for($tag)->for($currency)->create(['amount' => '500']);
+        cancelPro($team);
+
+        $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('finance/teams/budgets/index')
                 ->where('is_locked', true)
-                ->where('budgets', []));
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->has('budgets.data', 1)
+                    ->where('budgets.data.0.tag.name', 'Food')));
     });
 });
 

@@ -22,7 +22,7 @@ class TeamPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return parent::panel($panel)
-            ->id('administration:team')
+            ->id('team')
             ->colors(['primary' => Color::Lime])
             ->discoverClusters(in: app_path('Modules/Administration/Panels/Team/Clusters'), for: 'App\Modules\Administration\Panels\Team\Clusters')
             ->discoverLivewireComponents(in: app_path('Modules/Administration/Panels/Team/Livewire/Components'), for: 'App\Modules\Administration\Panels\Team\Livewire\Components')

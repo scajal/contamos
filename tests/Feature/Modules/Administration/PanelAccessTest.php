@@ -20,7 +20,7 @@ it('redirects guests to login', function (): void {
     $this->get(route('filament.administration.pages.dashboard'))
         ->assertRedirectToRoute('login');
 
-    $this->get(route('filament.administration:team.pages.dashboard', ['tenant' => $team->getRouteKey()]))
+    $this->get(route('filament.team.pages.dashboard', ['tenant' => $team->getRouteKey()]))
         ->assertRedirectToRoute('login');
 });
 
@@ -36,7 +36,7 @@ it('denies the administration panel to a user outside the allowlist', function (
 it('denies the team panel to a user outside the allowlist', function (): void {
     [, $team] = actingMember();
 
-    $this->get(route('filament.administration:team.pages.dashboard', ['tenant' => $team->getRouteKey()]))
+    $this->get(route('filament.team.pages.dashboard', ['tenant' => $team->getRouteKey()]))
         ->assertForbidden();
 });
 
@@ -53,7 +53,7 @@ it('allows an operator into the panel of a team they hold no membership in', fun
 
     expect($operator->belongsToTeam($foreign))->toBeFalse();
 
-    $this->get(route('filament.administration:team.pages.dashboard', ['tenant' => $foreign->getRouteKey()]))
+    $this->get(route('filament.team.pages.dashboard', ['tenant' => $foreign->getRouteKey()]))
         ->assertOk();
 });
 
@@ -61,7 +61,7 @@ it('offers every team as a tenant of the team panel', function (): void {
     [$operator] = actingOperator();
     $foreign = Team::factory()->create();
 
-    $tenants = $operator->getTenants(Filament::getPanel('administration:team'));
+    $tenants = $operator->getTenants(Filament::getPanel('team'));
 
     expect($tenants->pluck('id'))->toContain($foreign->getKey());
 });

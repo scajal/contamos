@@ -84,14 +84,15 @@ export const Fields = ({ defaultValues, errors, invalid, roles }: Props) => {
                     <input name="role" type="hidden" value="admin" />
                     <FieldDescription>
                         <ModalLink
-                            className="inline-flex items-center gap-1 underline underline-offset-4"
+                            className="inline-flex items-start gap-1 underline underline-offset-4"
                             href={subscriptions.upgrade.url(
                                 { team: user?.current_team?.slug ?? "" },
                                 { query: { feature: "members:roles" } },
                             )}
                         >
-                            <SparklesIcon className="size-3" />
-                            {t("Everyone joins as an admin. Inviting members is a Pro feature.")}
+                            {/** Sits on the first line rather than centred on the wrapped block. */}
+                            <SparklesIcon className="mt-[0.3em] size-3 shrink-0" />
+                            {t("Everyone joins as an admin. Pro lets you choose roles and pass the member limit.")}
                         </ModalLink>
                     </FieldDescription>
                 </Field>

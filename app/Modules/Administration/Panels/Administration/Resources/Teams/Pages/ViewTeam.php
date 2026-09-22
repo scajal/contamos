@@ -29,7 +29,7 @@ class ViewTeam extends ViewRecord
                     Actions\Action::make('view-panel')
                         ->label(trans('Team panel'))
                         ->icon(Heroicon::OutlinedRectangleGroup)
-                        ->url(fn (Team $record): ?string => Filament::getPanel('administration:team')->getUrl($record)),
+                        ->url(fn (Team $record): ?string => Filament::getPanel('team')->getUrl($record)),
                 ])->dropdown(false),
                 Actions\ActionGroup::make([
                     Actions\EditAction::make(),
