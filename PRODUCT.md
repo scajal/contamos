@@ -48,7 +48,7 @@ A shared ledger, not a debt splitter and not accounting software. Unlike Splitwi
 ## Evidence on Hand
 
 - Working product with real screens for finance, identity and billing under resources/js/pages.
-- Marketing home page at resources/js/pages/marketing/home (out of scope for the app design pass).
+- Marketing home page at resources/js/pages/marketing/home.
 - No testimonials, customer logos, press or case studies exist. Do not fabricate any.
 
 ## Product Principles
