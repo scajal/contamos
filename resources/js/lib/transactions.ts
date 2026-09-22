@@ -2,6 +2,7 @@ import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { Quote } from "@/types/app/modules/core/catalog/models/currency/quote";
 import { Frequency } from "@/types/app/modules/core/finance/enums/recurring-rule/frequency";
 import { TransactionType } from "@/types/app/modules/core/finance/enums/transaction/transaction-type";
+import { RecurringRule } from "@/types/app/modules/core/finance/models/team/recurring-rule";
 
 /**
  * The value the type filter uses to match both legs of a transfer.
@@ -150,6 +151,38 @@ export function frequencyUnitKey(frequency: Frequency, interval: number): string
     const [singular, plural] = FREQUENCY_UNITS[frequency];
 
     return interval === 1 ? singular : plural;
+}
+
+/**
+ * Describe a rule's schedule in words, such as "Every month on the 3rd"
+ * or "Every 2 weeks on Monday", so a member reads the cadence rather
+ * than decoding a frequency and an interval.
+ */
+export function scheduleLabel(
+    rule: RecurringRule,
+    locale: string,
+    t: (key: string, replacements?: Record<string, string | number>) => string,
+): string {
+    const every =
+        rule.interval === 1
+            ? t("Every :unit", { unit: t(frequencyUnitKey(rule.frequency, 1)) })
+            : t("Every :count :unit", {
+                  count: rule.interval,
+                  unit: t(frequencyUnitKey(rule.frequency, rule.interval)),
+              });
+
+    const anchor = new Date(`${rule.starts_on.slice(0, 10)}T00:00:00`);
+
+    switch (rule.frequency) {
+        case "weekly":
+            return `${every} · ${new Intl.DateTimeFormat(locale, { weekday: "long" }).format(anchor)}`;
+        case "monthly":
+            return `${every} · ${new Intl.DateTimeFormat(locale, { day: "numeric" }).format(anchor)}`;
+        case "yearly":
+            return `${every} · ${new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(anchor)}`;
+        default:
+            return every;
+    }
 }
 
 /**

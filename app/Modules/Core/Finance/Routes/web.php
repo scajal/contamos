@@ -244,6 +244,13 @@ Route::as('finance.teams.')
         Route::get('/recurring-rules', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'index'])
             ->name('recurring-rules.index');
 
+        // The key constraint keeps this from swallowing the create
+        // route, which shares the segment and is registered later.
+        Route::get('/recurring-rules/{recurringRule}', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'show'])
+            ->name('recurring-rules.show')
+            ->whereUlid('recurringRule')
+            ->scopeBindings();
+
         Route::get('/recurring-rules/{recurringRule}/edit', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'edit'])
             ->name('recurring-rules.edit')
             ->scopeBindings();

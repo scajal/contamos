@@ -1,19 +1,38 @@
 import { Deferred, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CircleDashedIcon, PauseIcon, PlayIcon, PlusIcon, RepeatIcon, TrashIcon } from "lucide-react";
+import {
+    CircleDashedIcon,
+    EyeIcon,
+    MoreHorizontalIcon,
+    PauseIcon,
+    PencilIcon,
+    PlayIcon,
+    PlusIcon,
+    RepeatIcon,
+    TrashIcon,
+} from "lucide-react";
+import { Fragment, useState } from "react";
 
 import { ConfirmAction } from "@/components/confirm-action";
 import { FeatureLock } from "@/components/feature-lock";
 import { PaginationControls } from "@/components/pagination-controls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBalances } from "@/hooks/use-balances";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import { frequencyUnitKey, TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
+import { scheduleLabel, TRANSACTION_AMOUNT_COLOR, TRANSACTION_AMOUNT_SIGN } from "@/lib/transactions";
 import { cn, formatAmount, formatDate } from "@/lib/utils";
 import routes from "@/routes/finance/teams/recurring-rules";
 import { RecurringRule } from "@/types/app/modules/core/finance/models/team/recurring-rule";
@@ -22,38 +41,6 @@ import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware
 type PageProps = {
     canRecur: boolean;
     rules: LengthAwarePaginator<RecurringRule>;
-};
-
-/**
- * Describe a rule's schedule in words, such as "Every month on the 3rd"
- * or "Every 2 weeks on Monday", so a member reads the cadence rather
- * than decoding a frequency and an interval.
- */
-const scheduleLabel = (
-    rule: RecurringRule,
-    locale: string,
-    t: (key: string, replacements?: Record<string, string | number>) => string,
-): string => {
-    const every =
-        rule.interval === 1
-            ? t("Every :unit", { unit: t(frequencyUnitKey(rule.frequency, 1)) })
-            : t("Every :count :unit", {
-                  count: rule.interval,
-                  unit: t(frequencyUnitKey(rule.frequency, rule.interval)),
-              });
-
-    const anchor = new Date(`${rule.starts_on.slice(0, 10)}T00:00:00`);
-
-    switch (rule.frequency) {
-        case "weekly":
-            return `${every} · ${new Intl.DateTimeFormat(locale, { weekday: "long" }).format(anchor)}`;
-        case "monthly":
-            return `${every} · ${new Intl.DateTimeFormat(locale, { day: "numeric" }).format(anchor)}`;
-        case "yearly":
-            return `${every} · ${new Intl.DateTimeFormat(locale, { day: "numeric", month: "long" }).format(anchor)}`;
-        default:
-            return every;
-    }
 };
 
 const Index = () => {
@@ -232,16 +219,7 @@ const Rows = () => {
                     </ItemMedia>
                     <ItemContent>
                         <ItemTitle className="flex flex-wrap items-center gap-2">
-                            {canRecur ? (
-                                <ModalLink
-                                    className="hover:underline"
-                                    href={routes.edit.url({ recurringRule: rule.id, team })}
-                                >
-                                    {rule.description || t(`enums.${rule.type}`)}
-                                </ModalLink>
-                            ) : (
-                                (rule.description ?? t(`enums.${rule.type}`))
-                            )}
+                            {rule.description || t(`enums.${rule.type}`)}
                             <StatusBadge rule={rule} />
                         </ItemTitle>
                         <ItemDescription>
@@ -269,54 +247,110 @@ const Rows = () => {
                                 `${TRANSACTION_AMOUNT_SIGN[rule.type]} ${formatAmount(rule.amount, currentLocale(), rule.currency)}`,
                             )}
                         </span>
-                        {canRecur && (
-                            <Button
-                                nativeButton={false}
-                                render={
-                                    <Link
-                                        as="button"
-                                        href={
-                                            rule.is_active
-                                                ? routes.pause.url({ recurringRule: rule.id, team })
-                                                : routes.resume.url({ recurringRule: rule.id, team })
-                                        }
-                                        method="patch"
-                                        preserveScroll
-                                    />
-                                }
-                                size="icon"
-                                variant="ghost"
-                            >
-                                {rule.is_active ? <PauseIcon /> : <PlayIcon />}
-                                <span className="sr-only">{rule.is_active ? t("Pause") : t("Resume")}</span>
-                            </Button>
-                        )}
-                        <ConfirmAction
-                            action={
-                                <Link
-                                    as="button"
-                                    href={routes.destroy.url({ recurringRule: rule.id, team })}
-                                    method="delete"
-                                    preserveScroll
-                                >
-                                    {t("Delete")}
-                                </Link>
-                            }
-                            confirmLabel={t("Delete")}
-                            description={t(
-                                "The transactions it already created stay in your ledger. It will not create any more.",
-                            )}
-                            title={t("Delete this rule?")}
-                        >
-                            <Button size="icon" variant="ghost">
-                                <TrashIcon />
-                                <span className="sr-only">{t("Delete")}</span>
-                            </Button>
-                        </ConfirmAction>
+                        <RuleActions canRecur={canRecur} rule={rule} team={team} />
                     </ItemActions>
                 </Item>
             ))}
         </ItemGroup>
+    );
+};
+
+/**
+ * The View, Edit, Pause or Resume, and Delete actions of a rule. A
+ * team whose plan cannot recur only gets to look and to delete.
+ */
+const RuleActions = ({ canRecur, rule, team }: { canRecur: boolean; rule: RecurringRule; team: string }) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * Whether the delete confirmation dialog is open.
+     */
+    const [deleteOpen, setDeleteOpen] = useState(false);
+
+    return (
+        <Fragment>
+            <DropdownMenu>
+                <DropdownMenuTrigger render={<Button size="icon" variant="ghost" />}>
+                    <MoreHorizontalIcon />
+                    <span className="sr-only">{t("Actions")}</span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem
+                            render={
+                                <ModalLink href={routes.show.url({ recurringRule: rule.id, team })}>
+                                    <EyeIcon />
+                                    <span>{t("View")}</span>
+                                </ModalLink>
+                            }
+                        />
+                        {canRecur && (
+                            <DropdownMenuItem
+                                render={
+                                    <ModalLink href={routes.edit.url({ recurringRule: rule.id, team })}>
+                                        <PencilIcon />
+                                        <span>{t("Edit")}</span>
+                                    </ModalLink>
+                                }
+                            />
+                        )}
+                    </DropdownMenuGroup>
+                    {canRecur && (
+                        <Fragment>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem
+                                    render={
+                                        <Link
+                                            as="button"
+                                            className="w-full"
+                                            href={
+                                                rule.is_active
+                                                    ? routes.pause.url({ recurringRule: rule.id, team })
+                                                    : routes.resume.url({ recurringRule: rule.id, team })
+                                            }
+                                            method="patch"
+                                            preserveScroll
+                                        >
+                                            {rule.is_active ? <PauseIcon /> : <PlayIcon />}
+                                            <span>{rule.is_active ? t("Pause") : t("Resume")}</span>
+                                        </Link>
+                                    }
+                                />
+                            </DropdownMenuGroup>
+                        </Fragment>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={() => setDeleteOpen(true)} variant="destructive">
+                            <TrashIcon />
+                            <span>{t("Delete")}</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <ConfirmAction
+                action={
+                    <Link
+                        as="button"
+                        href={routes.destroy.url({ recurringRule: rule.id, team })}
+                        method="delete"
+                        preserveScroll
+                    >
+                        {t("Delete")}
+                    </Link>
+                }
+                confirmLabel={t("Delete")}
+                description={t("The transactions it already created stay in your ledger. It will not create any more.")}
+                onOpenChange={setDeleteOpen}
+                open={deleteOpen}
+                title={t("Delete this rule?")}
+            />
+        </Fragment>
     );
 };
 

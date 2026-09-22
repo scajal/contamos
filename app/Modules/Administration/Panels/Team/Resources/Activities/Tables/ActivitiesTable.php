@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Administration\Panels\Team\Resources\Activities\Tables;
 
-use Filament\Actions;
-use Filament\Support\Enums\FontWeight;
+use App\Modules\Core\Identity\Models\Team\Activity;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -18,8 +17,7 @@ class ActivitiesTable
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->columns(self::getColumns())
-            ->recordActions(self::getRecordActions());
+            ->columns(self::getColumns());
     }
 
     /**
@@ -30,35 +28,13 @@ class ActivitiesTable
     protected static function getColumns(): array
     {
         return [
-            Tables\Columns\Layout\Split::make([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\TextColumn::make('description')
-                        ->weight(FontWeight::Medium)
-                        ->searchable(),
-                    Tables\Columns\TextColumn::make('created_at')
-                        ->dateTime(),
-                ]),
-                Tables\Columns\TextColumn::make('event')
-                    ->placeholder('-')
-                    ->badge(),
-                Tables\Columns\TextColumn::make('causer.email')
-                    ->label(trans('Caused by'))
-                    ->placeholder('-'),
-            ]),
-        ];
-    }
-
-    /**
-     * Get the row actions for the table.
-     *
-     * @return array<int, \Filament\Actions\ActionGroup>
-     */
-    protected static function getRecordActions(): array
-    {
-        return [
-            Actions\ActionGroup::make([
-                Actions\ViewAction::make(),
-            ]),
+            Tables\Columns\TextColumn::make('description')
+                ->formatStateUsing(fn (Activity $record): string => class_basename($record->subject::class).' '.$record->description),
+            Tables\Columns\TextColumn::make('created_at')
+                ->dateTime(),
+            Tables\Columns\TextColumn::make('causer.email')
+                ->label(trans('Caused by'))
+                ->placeholder('-'),
         ];
     }
 }

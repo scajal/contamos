@@ -72,6 +72,18 @@ class RecurringRuleController
     }
 
     /**
+     * Display the specified resource, with when it fires next and
+     * whether it runs, the way the listing reports them.
+     */
+    public function show(Team $team, RecurringRule $recurringRule): Modal
+    {
+        return Inertia::modal('finance/teams/recurring-rules/show', [
+            'canRecur' => Feature::RecurTransactions->enabled($team),
+            'rule' => $recurringRule->load('account', 'currency', 'tags', 'user')->append(['next_due_date', 'status']),
+        ])->baseRoute('finance.teams.recurring-rules.index', ['team' => $team->getRouteKey()]);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Team $team, RecurringRule $recurringRule): Modal

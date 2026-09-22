@@ -344,6 +344,70 @@ describe('store', function (): void {
     });
 });
 
+describe('show', function (): void {
+    it('renders the rule with when it fires next and its status', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        [$account, $currency] = ledgerFor($team);
+        $rule = RecurringRule::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+        ]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.recurring-rules.show', [
+                'team' => $team->getRouteKey(),
+                'recurringRule' => $rule->getRouteKey(),
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->component('finance/teams/recurring-rules/show')
+                ->where('canRecur', true)
+                ->where('rule.id', $rule->getKey())
+                ->where('rule.status', 'active')
+                ->where('rule.account.id', $account->getKey())
+                ->has('rule.next_due_date'));
+    });
+
+    it('lets a free team look at its rule', function (): void {
+        [$user, $team] = actingMember();
+        [$account, $currency] = ledgerFor($team);
+        $rule = RecurringRule::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $team->getKey(),
+        ]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.recurring-rules.show', [
+                'team' => $team->getRouteKey(),
+                'recurringRule' => $rule->getRouteKey(),
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('canRecur', false));
+    });
+
+    it('hides a rule of another team', function (): void {
+        [$user, $team] = actingMember();
+        $other = Team::factory()->create();
+        [$account, $currency] = ledgerFor($other);
+        $rule = RecurringRule::factory()->expense()->create([
+            'account_id' => $account->getKey(),
+            'currency_id' => $currency->getKey(),
+            'team_id' => $other->getKey(),
+        ]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.recurring-rules.show', [
+                'team' => $team->getRouteKey(),
+                'recurringRule' => $rule->getRouteKey(),
+            ]))
+            ->assertNotFound();
+    });
+});
+
 describe('edit', function (): void {
     it('renders the rule in the form', function (): void {
         [$user, $team] = actingMember();

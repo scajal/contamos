@@ -7,7 +7,6 @@ namespace App\Modules\Administration\Panels\Team\Resources\Activities;
 use App\Modules\Administration\Resources\Resource;
 use App\Modules\Core\Identity\Models\Team\Activity;
 use BackedEnum;
-use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
@@ -32,12 +31,12 @@ class ActivityResource extends Resource
     }
 
     /**
-     * Configure the resource's infolist.
+     * Get the resource model's plural label.
      */
     #[\Override]
-    public static function infolist(Schema $schema): Schema
+    public static function getPluralModelLabel(): string
     {
-        return Schemas\ActivityInfolist::configure($schema);
+        return trans('Activities');
     }
 
     /**
@@ -59,7 +58,6 @@ class ActivityResource extends Resource
     {
         return [
             'index' => Pages\ListActivities::route('/'),
-            'view' => Pages\ViewActivity::route('/{record}'),
         ];
     }
 }
