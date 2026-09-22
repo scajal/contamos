@@ -9,6 +9,7 @@ use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\Activity;
 use App\Modules\Core\Identity\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -160,6 +161,57 @@ function actingMember(Role $role = Role::Owner): array
     [$user, $team] = memberWithTeam($role);
 
     actingAs($user);
+
+    return [$user, $team];
+}
+
+/**
+ * Create a \App\Modules\Core\Identity\Models\User that operates the
+ * platform, owning a \App\Modules\Core\Identity\Models\Team, and
+ * authenticate as that user.
+ *
+ * Reaching the administration panels is an allowlist check on the
+ * address, so a member created with a random one is turned away.
+ *
+ * @return array{0: \App\Modules\Core\Identity\Models\User, 1: \App\Modules\Core\Identity\Models\Team}
+ */
+function actingOperator(): array
+{
+    [$user, $team] = memberWithTeam();
+
+    $user->forceFill(['email' => 'operator@example.com'])->save();
+
+    actingAs($user);
+
+    return [$user, $team];
+}
+
+/**
+ * Point Filament at the team panel, scoped to the given team.
+ *
+ * Booting the panel is what registers the tenancy global scope its
+ * resources read through, and what makes Filament stamp the tenant
+ * on records created from here on. Records that must belong to
+ * another team are therefore written before this call.
+ */
+function onTeamPanel(Team $team): void
+{
+    Filament::setCurrentPanel('administration:team');
+    Filament::bootCurrentPanel();
+    Filament::setTenant($team);
+}
+
+/**
+ * Authenticate as an operator and point Filament at the team panel,
+ * scoped to the team that operator owns.
+ *
+ * @return array{0: \App\Modules\Core\Identity\Models\User, 1: \App\Modules\Core\Identity\Models\Team}
+ */
+function actingOperatorOnTeamPanel(): array
+{
+    [$user, $team] = actingOperator();
+
+    onTeamPanel($team);
 
     return [$user, $team];
 }

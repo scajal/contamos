@@ -10,16 +10,20 @@ use App\Modules\Core\Identity\Enums\Team\Permission;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\HasActivation;
+use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -49,7 +53,7 @@ use Illuminate\Support\Facades\URL;
  */
 #[Fillable(['avatar', 'email', 'external_id', 'is_active', 'name'])]
 #[Hidden(['external_id', 'remember_token'])]
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasTenants
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
@@ -89,6 +93,29 @@ class User extends Authenticatable implements FilamentUser
     {
         // @todo: Add security validation.
         return in_array($this->email, ['operator@example.com', 'operator@example.com']);
+    }
+
+    /**
+     * Determine if the user can access the given team panel tenant.
+     *
+     * Operators support every team without holding a membership first, so
+     * reaching a tenant is the same check as reaching the panel itself.
+     *
+     * @param  \App\Modules\Core\Identity\Models\Team  $tenant
+     */
+    public function canAccessTenant(Model $tenant): bool
+    {
+        return $this->canAccessPanel(Filament::getPanel('administration:team'));
+    }
+
+    /**
+     * Get the teams the user can administer as Filament tenants.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Modules\Core\Identity\Models\Team>
+     */
+    public function getTenants(Panel $panel): Collection
+    {
+        return Team::query()->orderBy('name')->get();
     }
 
     /**

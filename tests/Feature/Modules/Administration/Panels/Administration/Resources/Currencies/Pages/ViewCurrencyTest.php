@@ -18,7 +18,7 @@ it('redirects guests to login', function (): void {
 });
 
 it('renders the currency', function (): void {
-    actingMember();
+    actingOperator();
     $currency = Currency::factory()->active()->fiat()->create(['name' => 'Peso', 'code' => 'ARS']);
 
     Livewire::test(ViewCurrency::class, ['record' => $currency->getKey()])
@@ -26,7 +26,7 @@ it('renders the currency', function (): void {
 });
 
 it('activates the currency', function (): void {
-    actingMember();
+    actingOperator();
     $currency = Currency::factory()->inactive()->create();
 
     Livewire::test(ViewCurrency::class, ['record' => $currency->getKey()])
@@ -37,7 +37,7 @@ it('activates the currency', function (): void {
 });
 
 it('deactivates the currency', function (): void {
-    actingMember();
+    actingOperator();
     $currency = Currency::factory()->active()->create();
 
     Livewire::test(ViewCurrency::class, ['record' => $currency->getKey()])

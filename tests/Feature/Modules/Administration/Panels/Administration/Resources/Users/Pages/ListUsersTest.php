@@ -15,15 +15,15 @@ it('redirects guests to login', function (): void {
         ->assertRedirectToRoute('login');
 });
 
-it('renders the users index for an authenticated member', function (): void {
-    actingMember();
+it('renders the users index for an operator', function (): void {
+    actingOperator();
 
     $this->get(route('filament.administration.resources.users.index'))
         ->assertOk();
 });
 
 it('lists users', function (): void {
-    actingMember();
+    actingOperator();
     $user = User::factory()->create(['name' => 'Ada Lovelace', 'email' => 'ada@example.com']);
 
     Livewire::test(ListUsers::class)
@@ -33,7 +33,7 @@ it('lists users', function (): void {
 });
 
 it('searches users by email', function (): void {
-    actingMember();
+    actingOperator();
     $matching = User::factory()->create(['name' => 'Ada Lovelace', 'email' => 'ada@example.com']);
     $other = User::factory()->create(['name' => 'Grace Hopper', 'email' => 'grace@example.com']);
 
@@ -45,7 +45,7 @@ it('searches users by email', function (): void {
 });
 
 it('activates the user', function (): void {
-    actingMember();
+    actingOperator();
     $user = User::factory()->inactive()->create();
 
     Livewire::test(ListUsers::class)
@@ -57,7 +57,7 @@ it('activates the user', function (): void {
 });
 
 it('deactivates the user', function (): void {
-    actingMember();
+    actingOperator();
     $user = User::factory()->create();
 
     Livewire::test(ListUsers::class)

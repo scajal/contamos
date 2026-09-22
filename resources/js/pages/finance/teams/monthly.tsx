@@ -449,9 +449,7 @@ const TotalCell = ({
                     !className && isNegative && "text-destructive",
                 )}
             >
-                {mask(
-                    `${isNegative ? "- " : ""}${formatAmount(total.amount, currentLocale(), currency, { trimZeros: true })}`,
-                )}
+                {mask(`${isNegative ? "- " : ""}${formatAmount(total.amount, currentLocale(), currency)}`)}
             </span>
             <DeltaLabel currency={currency} delta={total.delta} isGood={isGood} />
         </Link>

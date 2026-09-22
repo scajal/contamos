@@ -125,15 +125,15 @@ function trimPaddedDecimals(formatted: string, locale: string, decimalPlaces: nu
 }
 
 /**
- * Format a major-unit amount for display (grouping + currency decimals + catalog symbol).
- * Tables already grouped by currency pass `symbol: false` so the code is not
- * repeated in every cell.
+ * Format a major-unit amount for display (grouping + currency decimals + catalog
+ * symbol), with the zeros the currency's scale padded on stripped. Tables already
+ * grouped by currency pass `symbol: false` so the code is not repeated in every cell.
  */
 export function formatAmount(
     amount: string,
     locale: string,
     currency?: AmountCurrency,
-    options: { symbol?: boolean; trimZeros?: boolean } = {},
+    options: { symbol?: boolean } = {},
 ): string {
     // Get the decimal places of the currency.
     const decimalPlaces = currency?.decimal_places ?? 0;
@@ -156,11 +156,11 @@ export function formatAmount(
             ? formattedInteger
             : `${formattedInteger}${decimalSeparator(locale)}${fractionPart.slice(0, decimalPlaces).padEnd(decimalPlaces, "0")}`;
 
-    // A total pads to the currency's scale, which turns a six-decimal crypto
-    // balance into a figure too wide to read. Summaries drop the padding
-    // beyond the two decimals money is normally written with, and never a
-    // digit the amount actually carries.
-    const trimmed = options.trimZeros ? trimPaddedDecimals(formatted, locale, decimalPlaces) : formatted;
+    // Padding to the currency's scale turns a six-decimal crypto balance into
+    // a figure too wide to read, so the padding beyond the two decimals money
+    // is normally written with is dropped. A digit the amount actually
+    // carries is never removed.
+    const trimmed = trimPaddedDecimals(formatted, locale, decimalPlaces);
 
     return options.symbol === false ? trimmed : `${currency?.symbol} ${trimmed}`;
 }

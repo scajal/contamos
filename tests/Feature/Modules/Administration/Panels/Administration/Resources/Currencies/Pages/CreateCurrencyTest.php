@@ -17,7 +17,7 @@ it('redirects guests to login', function (): void {
 });
 
 it('creates a currency with an uppercased code', function (): void {
-    actingMember();
+    actingOperator();
 
     Livewire::test(CreateCurrency::class)
         ->fillForm([
@@ -40,7 +40,7 @@ it('creates a currency with an uppercased code', function (): void {
 });
 
 it('rejects an empty payload', function (): void {
-    actingMember();
+    actingOperator();
 
     Livewire::test(CreateCurrency::class)
         ->fillForm([
@@ -58,7 +58,7 @@ it('rejects an empty payload', function (): void {
 });
 
 it('rejects a duplicate code', function (): void {
-    actingMember();
+    actingOperator();
     Currency::factory()->create(['code' => 'ARS']);
 
     Livewire::test(CreateCurrency::class)

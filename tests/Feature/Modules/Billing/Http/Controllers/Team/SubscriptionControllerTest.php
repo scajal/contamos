@@ -471,11 +471,11 @@ describe('switch features', function (): void {
                 ->where('canManageBilling', true)
                 ->where('owner.id', $user->getKey())
                 ->has('features', count(Feature::cases()))
-                ->where('features.3.feature', Feature::AssignRoles->value)
-                ->where('features.3.label', Feature::AssignRoles->getLabel())
-                ->where('features.3.usage', null)
-                ->where('features.3.free', false)
-                ->where('features.3.pro', true));
+                ->where('features.4.feature', Feature::AssignRoles->value)
+                ->where('features.4.label', Feature::AssignRoles->getLabel())
+                ->where('features.4.usage', null)
+                ->where('features.4.free', false)
+                ->where('features.4.pro', true));
     });
 
     it('lists budgets per tag as a pro-only feature on the upgrade modal', function (): void {
@@ -490,11 +490,11 @@ describe('switch features', function (): void {
             ->assertInertia(fn (Assert $page): Assert => $page
                 ->component('billing/teams/subscriptions/upgrade')
                 ->where('feature', Feature::ManageBudgets->value)
-                ->where('features.4.feature', Feature::ManageBudgets->value)
-                ->where('features.4.label', Feature::ManageBudgets->getLabel())
-                ->where('features.4.usage', null)
-                ->where('features.4.free', false)
-                ->where('features.4.pro', true));
+                ->where('features.5.feature', Feature::ManageBudgets->value)
+                ->where('features.5.label', Feature::ManageBudgets->getLabel())
+                ->where('features.5.usage', null)
+                ->where('features.5.free', false)
+                ->where('features.5.pro', true));
     });
 
     it('keeps reporting a quota feature with its limits', function (): void {

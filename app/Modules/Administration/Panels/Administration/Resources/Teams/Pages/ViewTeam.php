@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Administration\Panels\Administration\Resources\Teams\Pages;
+
+use App\Modules\Administration\Panels\Administration\Resources\Teams\TeamResource;
+use App\Modules\Core\Identity\Models\Team;
+use Filament\Actions;
+use Filament\Facades\Filament;
+use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Icons\Heroicon;
+
+class ViewTeam extends ViewRecord
+{
+    protected static string $resource = TeamResource::class;
+
+    /**
+     * Get the header actions.
+     *
+     * @return array<int, \Filament\Actions\ActionGroup>
+     */
+    #[\Override]
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\ActionGroup::make([
+                Actions\ActionGroup::make([
+                    Actions\Action::make('view-panel')
+                        ->label(trans('Team panel'))
+                        ->icon(Heroicon::OutlinedRectangleGroup)
+                        ->url(fn (Team $record): ?string => Filament::getPanel('administration:team')->getUrl($record)),
+                ])->dropdown(false),
+                Actions\ActionGroup::make([
+                    Actions\EditAction::make(),
+                ])->dropdown(false),
+            ]),
+        ];
+    }
+}

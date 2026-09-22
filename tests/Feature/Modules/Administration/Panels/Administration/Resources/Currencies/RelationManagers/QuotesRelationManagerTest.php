@@ -14,7 +14,7 @@ use Livewire\Livewire;
  * Feature tests for \App\Modules\Administration\Panels\Administration\Resources\Currencies\RelationManagers\QuotesRelationManager.
  */
 it('lists quotes newest first', function (): void {
-    actingMember();
+    actingOperator();
     $currency = Currency::factory()->create();
     $older = Quote::factory()->for($currency)->create(['observed_at' => '2024-01-01 00:00:00']);
     $newer = Quote::factory()->for($currency)->create(['observed_at' => '2024-06-01 00:00:00']);
@@ -29,7 +29,7 @@ it('lists quotes newest first', function (): void {
 });
 
 it('creates a quote with a forced manual source', function (): void {
-    actingMember();
+    actingOperator();
     $currency = Currency::factory()->create();
 
     Livewire::test(QuotesRelationManager::class, [
@@ -51,7 +51,7 @@ it('creates a quote with a forced manual source', function (): void {
 });
 
 it('rejects a missing rate and observed at', function (): void {
-    actingMember();
+    actingOperator();
     $currency = Currency::factory()->create();
 
     Livewire::test(QuotesRelationManager::class, [

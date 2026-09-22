@@ -44,6 +44,15 @@ enum Feature: string implements HasLabel
     case AddTeams = 'teams:create';
 
     /**
+     * Represents how far back a team may open its own
+     * history. The plan's limit is the number of months
+     * reachable, counting the current one.
+     *
+     * @see \App\Modules\Billing\Features\ViewHistory
+     */
+    case ViewHistory = 'history:view';
+
+    /**
      * Represents choosing the role a team's members carry.
      * A switch feature: the plan includes it or it does not.
      *
@@ -74,15 +83,6 @@ enum Feature: string implements HasLabel
      * @see \App\Modules\Billing\Features\ViewActivity
      */
     case ViewActivity = 'activity:view';
-
-    /**
-     * Represents how far back a team may open its own
-     * history. The plan's limit is the number of months
-     * reachable, counting the current one.
-     *
-     * @see \App\Modules\Billing\Features\ViewHistory
-     */
-    case ViewHistory = 'history:view';
 
     /**
      * Check if the feature is active for the given

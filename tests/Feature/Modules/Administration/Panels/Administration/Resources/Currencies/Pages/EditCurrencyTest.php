@@ -11,7 +11,7 @@ use Livewire\Livewire;
  * Feature tests for \App\Modules\Administration\Panels\Administration\Resources\Currencies\Pages\EditCurrency.
  */
 it('updates the currency name, symbol, and quote source', function (): void {
-    actingMember();
+    actingOperator();
     $currency = Currency::factory()->fiat()->create([
         'code' => 'ARS',
         'name' => 'Old',

@@ -47,20 +47,20 @@ it('lists every feature with its limit or inclusion on the plan', function (): v
         'accounts:create' => 3,
         'members:create' => 2,
         'teams:create' => 1,
+        'history:view' => 6,
         'members:roles' => false,
         'budgets:manage' => false,
         'transactions:recur' => false,
         'activity:view' => false,
-        'history:view' => 6,
     ])->and(Plan::Pro->features())->toBe([
         'accounts:create' => null,
         'members:create' => null,
         'teams:create' => null,
+        'history:view' => null,
         'members:roles' => true,
         'budgets:manage' => true,
         'transactions:recur' => true,
         'activity:view' => true,
-        'history:view' => null,
     ]);
 });
 

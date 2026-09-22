@@ -88,8 +88,7 @@ abstract class PanelProvider extends \Filament\PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->authMiddleware([\Illuminate\Auth\Middleware\Authenticate::class, \Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS::class])
-            ->default()
+            ->authMiddleware([\Filament\Http\Middleware\Authenticate::class, \Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS::class])
             ->favicon('favico.ico')
             ->maxContentWidth(Width::Full)
             ->middleware([

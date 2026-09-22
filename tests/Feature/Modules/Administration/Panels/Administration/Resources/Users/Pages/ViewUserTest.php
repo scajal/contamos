@@ -17,7 +17,7 @@ it('redirects guests to login', function (): void {
 });
 
 it('renders the user', function (): void {
-    actingMember();
+    actingOperator();
     $user = User::factory()->create(['name' => 'Ada Lovelace', 'email' => 'ada@example.com']);
 
     Livewire::test(ViewUser::class, ['record' => $user->getKey()])

@@ -15,15 +15,15 @@ it('redirects guests to login', function (): void {
         ->assertRedirectToRoute('login');
 });
 
-it('renders the currencies index for an authenticated member', function (): void {
-    actingMember();
+it('renders the currencies index for an operator', function (): void {
+    actingOperator();
 
     $this->get(route('filament.administration.resources.currencies.index'))
         ->assertOk();
 });
 
 it('lists currencies', function (): void {
-    actingMember();
+    actingOperator();
     $currency = Currency::factory()->active()->fiat()->create(['name' => 'Peso', 'code' => 'ARS']);
 
     Livewire::test(ListCurrencies::class)
@@ -33,7 +33,7 @@ it('lists currencies', function (): void {
 });
 
 it('searches currencies by code', function (): void {
-    actingMember();
+    actingOperator();
     $matching = Currency::factory()->create(['name' => 'Peso', 'code' => 'ARS']);
     $other = Currency::factory()->create(['name' => 'Real', 'code' => 'BRL']);
 
@@ -45,7 +45,7 @@ it('searches currencies by code', function (): void {
 });
 
 it('activates the currency', function (): void {
-    actingMember();
+    actingOperator();
     $currency = Currency::factory()->inactive()->create();
 
     Livewire::test(ListCurrencies::class)
@@ -57,7 +57,7 @@ it('activates the currency', function (): void {
 });
 
 it('deactivates the currency', function (): void {
-    actingMember();
+    actingOperator();
     $currency = Currency::factory()->active()->create();
 
     Livewire::test(ListCurrencies::class)

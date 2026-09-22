@@ -155,9 +155,7 @@ const BalanceCell = ({ balance, team }: { balance: AccountBalance; team: string 
                     isNegative && "text-destructive",
                 )}
             >
-                {mask(
-                    `${isNegative ? "- " : ""}${formatAmount(amount, currentLocale(), balance, { trimZeros: true })}`,
-                )}
+                {mask(`${isNegative ? "- " : ""}${formatAmount(amount, currentLocale(), balance)}`)}
             </span>
         </Link>
     );
