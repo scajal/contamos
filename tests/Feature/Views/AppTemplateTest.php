@@ -18,6 +18,16 @@ describe('google analytics', function (): void {
             ->assertSee("gtag('config', \"G-TESTID1234\")", escape: false);
     });
 
+    it('fetches the tag only after the page has loaded', function (): void {
+        app()['env'] = 'production';
+        config()->set('services.google.analytics.measurement_id', 'G-TESTID1234');
+
+        get(route('home', ['locale' => 'en']))
+            ->assertOk()
+            ->assertSeeInOrder(["window.addEventListener('load'", 'googletagmanager.com/gtag/js'], escape: false)
+            ->assertDontSee('<script async src="https://www.googletagmanager.com', escape: false);
+    });
+
     it('leaves the tag out in production when no measurement id is configured', function (): void {
         app()['env'] = 'production';
         config()->set('services.google.analytics.measurement_id', null);

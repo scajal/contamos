@@ -21,13 +21,21 @@
 
         @if (app()->isProduction() && ($measurementId = config('services.google.analytics.measurement_id')))
             {{-- Google tag (gtag.js). GA4's enhanced measurement reports
-                 Inertia's history changes as page views on its own. --}}
-            <script async src="https://www.googletagmanager.com/gtag/js?id={{ $measurementId }}"></script>
+                 Inertia's history changes as page views on its own. The
+                 library is fetched only once the page has loaded, so its
+                 ~170 KiB stops competing with the fonts and the bundle on
+                 a slow connection; the calls below queue in the meantime. --}}
             <script>
                 window.dataLayer = window.dataLayer || [];
                 function gtag() { dataLayer.push(arguments); }
                 gtag('js', new Date());
                 gtag('config', @json($measurementId));
+                window.addEventListener('load', function () {
+                    var script = document.createElement('script');
+                    script.async = true;
+                    script.src = 'https://www.googletagmanager.com/gtag/js?id={{ $measurementId }}';
+                    document.head.appendChild(script);
+                });
             </script>
         @endif
 
@@ -38,6 +46,10 @@
              download it alongside the bundle instead of after it. --}}
         @unless (Vite::isRunningHot())
             <link rel="modulepreload" href="{{ Vite::asset('lang/'.app()->getLocale().'.json') }}">
+            {{-- Headings are set in Switzer, and the hero headline is the
+                 page's largest paint. Left to the stylesheet, the font is
+                 only discovered once the CSS has been parsed. --}}
+            <link rel="preload" as="font" type="font/woff2" href="{{ Vite::asset('resources/fonts/switzer/Switzer-Variable.woff2') }}" crossorigin>
         @endunless
         <x-inertia::head>
             <title>{{ config('app.name', 'Laravel') }}</title>
