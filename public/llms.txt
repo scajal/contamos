@@ -1,14 +1,21 @@
 # Contamos
 
-Contamos is a shared ledger for people who share money: couples, flatmates,
-families, side projects or any group with a common pot. A ledger keeps
-accounts, cards and cash across multiple currencies, logs income and
-expense transactions with tags, and shows balances per currency, fiat and
-crypto alike, without converting everything into a single blended number.
-Every transaction stores the exchange rate of the day it happened. Free
-plan available, no card required; Pro removes the free plan's account,
-member and transaction limits.
+> Contamos is a shared ledger for people who share money: couples, flatmates, families, side projects or any group with a common pot. It keeps accounts, cards and cash across multiple currencies, fiat and crypto alike, and shows balances per currency without blending everything into one converted number.
 
-- Homepage (English): http://127.0.0.1:8000/en
-- Homepage (Spanish): http://127.0.0.1:8000/es
-- Sign up / log in: http://127.0.0.1:8000/login
+A ledger logs income and expense transactions with tags, and every transaction stores the exchange rate of the day it happened. The free plan needs no card; Pro removes the free plan's account, member and transaction limits.
+
+## Pages
+
+- [Homepage (English)](https://contamos.xyz/en): what Contamos does, how it works, pricing and frequently asked questions.
+- [Homepage (Spanish)](https://contamos.xyz/es): the same page in Spanish.
+- [Log in or sign up](https://contamos.xyz/login): create a free ledger or open an existing one.
+
+## Legal
+
+- [Terms of service](https://contamos.xyz/en/terms)
+- [Privacy policy](https://contamos.xyz/en/privacy)
+- [Refund policy](https://contamos.xyz/en/refunds)
+
+## Optional
+
+- [Sitemap](https://contamos.xyz/sitemap.xml): every indexable page.

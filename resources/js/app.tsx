@@ -49,6 +49,35 @@ router.on("flash", (event) => {
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
 /**
+ * The dictionaries, one loader per locale, each its own chunk.
+ */
+const dictionaries = import.meta.glob("/lang/*.json");
+
+/**
+ * Fetch the dictionaries for the given locales, keyed as the i18n
+ * provider expects them.
+ */
+const loadDictionaries = async (paths: Array<string>): Promise<Record<string, unknown>> =>
+    Object.fromEntries(await Promise.all(paths.map(async (path) => [path, await dictionaries[path]()])));
+
+/**
+ * The translation dictionaries handed to the i18n provider.
+ *
+ * The server renders every locale from one process, so it loads them
+ * all. The browser only ever shows one, so it downloads that one alone
+ * instead of shipping every language inside the main bundle on every
+ * visit. The server sets `<html lang>` from the request's locale before
+ * any script runs, which is what tells the browser which one to fetch.
+ */
+const translations = import.meta.env.SSR
+    ? await loadDictionaries(Object.keys(dictionaries))
+    : await loadDictionaries(
+          Object.keys(dictionaries).filter(
+              (path) => path === `/lang/${document.documentElement.lang.split("-")[0] || "en"}.json`,
+          ),
+      );
+
+/**
  * Create the Inertia app.
  */
 void createInertiaApp({
@@ -69,11 +98,7 @@ void createInertiaApp({
         // Create the app to render.
         const app = (
             <StrictMode>
-                <I18nProvider
-                    locale={locale}
-                    fallbackLocale="en"
-                    files={import.meta.glob("/lang/*.json", { eager: true })}
-                >
+                <I18nProvider locale={locale} fallbackLocale="en" files={translations}>
                     <TooltipProvider>
                         {renderApp(App as unknown as Parameters<typeof renderApp>[0], props as ModalPageProps)}
                         <Toaster />

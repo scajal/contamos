@@ -1,19 +1,30 @@
 import BorderBeam from "border-beam";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ArrowRightIcon } from "lucide-react";
-import { m, useReducedMotion } from "motion/react";
-import { lazy, Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { login } from "@/routes";
 
 import { HeroScene } from "./hero-scene";
-
-const LiveLedger = lazy(() => import("./live-ledger").then((module) => ({ default: module.LiveLedger })));
+import { LiveLedger } from "./live-ledger";
 
 interface HeroProps {
     dashboardUrl: string | null;
 }
+
+/**
+ * The entrance shared by every piece of the opening act, as CSS rather
+ * than a motion component. The page is server-rendered, and a motion
+ * `initial` of opacity 0 is what the server would send, leaving the
+ * headline invisible until the whole bundle has downloaded, parsed and
+ * hydrated — on a slow phone that is seconds of blank stage and the
+ * page's largest paint pushed just as late. A CSS animation starts the
+ * moment the stylesheet lands, and reduced-motion visitors get the
+ * settled layout straight away.
+ */
+const ENTRANCE =
+    "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 motion-safe:fill-mode-both duration-700 ease-out";
 
 /**
  * The hero: one stage holding the whole opening act — headline, CTAs
@@ -28,42 +39,27 @@ export const Hero = ({ dashboardUrl }: HeroProps) => {
      */
     const t = useLaravelReactI18n().t;
 
-    /**
-     * Whether the visitor prefers reduced motion.
-     */
-    const reducedMotion = useReducedMotion();
-
     return (
         <section className="relative">
             <HeroScene />
 
             <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center gap-8 px-4 pt-20 pb-28 text-center sm:px-6 sm:pt-28">
-                <m.h1
-                    initial={reducedMotion ? false : { opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7, ease: "easeOut" }}
-                    className="font-heading text-[clamp(2.75rem,5.5vw,4.5rem)] leading-[1.02] font-semibold tracking-tight text-balance"
+                <h1
+                    className={cn(
+                        ENTRANCE,
+                        "font-heading text-[clamp(2.75rem,5.5vw,4.5rem)] leading-[1.02] font-semibold tracking-tight text-balance",
+                    )}
                 >
                     {t("The peace of mind of knowing exactly what you have.")}
-                </m.h1>
+                </h1>
 
-                <m.p
-                    initial={reducedMotion ? false : { opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7, ease: "easeOut", delay: 0.12 }}
-                    className="text-muted-foreground max-w-[46ch] text-lg"
-                >
+                <p className={cn(ENTRANCE, "text-muted-foreground max-w-[46ch] text-lg delay-120")}>
                     {t(
                         "No more guessing, no spreadsheets, no arguing about who paid what. Every currency you share, fiat or crypto, lands in one clear picture — so you always know exactly where you stand, together.",
                     )}
-                </m.p>
+                </p>
 
-                <m.div
-                    initial={reducedMotion ? false : { opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7, ease: "easeOut", delay: 0.24 }}
-                    className="flex flex-col items-center gap-4"
-                >
+                <div className={cn(ENTRANCE, "flex flex-col items-center gap-4 delay-240")}>
                     <BorderBeam size="pulse-outside">
                         <Button
                             nativeButton={false}
@@ -71,26 +67,23 @@ export const Hero = ({ dashboardUrl }: HeroProps) => {
                             size="lg"
                             variant="outline"
                         >
-                            {t("Start")} <ArrowRightIcon />
+                            {dashboardUrl ? t("Go to dashboard") : t("Start free")} <ArrowRightIcon />
                         </Button>
                     </BorderBeam>
                     {!dashboardUrl && (
                         <p className="text-muted-foreground text-sm">{t("Free plan. No card required.")}</p>
                     )}
-                </m.div>
+                </div>
 
-                <m.div
-                    initial={reducedMotion ? false : { opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7, ease: "easeOut", delay: 0.36 }}
-                    className="mt-4 w-full"
-                >
-                    <Suspense
-                        fallback={<div className="min-h-[340px] rounded-2xl bg-zinc-950/95" aria-hidden="true" />}
-                    >
-                        <LiveLedger />
-                    </Suspense>
-                </m.div>
+                {/*
+                 * Imported statically on purpose: the ledger seeds itself
+                 * deterministically, so the server can render it, and it
+                 * then arrives painted in the HTML instead of as a dark
+                 * placeholder that waits on a chained chunk download.
+                 */}
+                <div className={cn(ENTRANCE, "mt-4 w-full delay-360")}>
+                    <LiveLedger />
+                </div>
             </div>
         </section>
     );

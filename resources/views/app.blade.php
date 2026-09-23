@@ -19,10 +19,6 @@
             </script>
         @endif
 
-        <link rel="preconnect" href="https://api.fontshare.com">
-        <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
-        <link href="https://api.fontshare.com/v2/css?f[]=switzer@1,2&display=swap" rel="stylesheet" />
-
         @if (app()->isProduction() && ($measurementId = config('services.google.analytics.measurement_id')))
             {{-- Google tag (gtag.js). GA4's enhanced measurement reports
                  Inertia's history changes as page views on its own. --}}
@@ -37,6 +33,12 @@
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
+        {{-- The dictionary for this locale is its own chunk, fetched by
+             the app before it mounts. Announcing it here lets the browser
+             download it alongside the bundle instead of after it. --}}
+        @unless (Vite::isRunningHot())
+            <link rel="modulepreload" href="{{ Vite::asset('lang/'.app()->getLocale().'.json') }}">
+        @endunless
         <x-inertia::head>
             <title>{{ config('app.name', 'Laravel') }}</title>
         </x-inertia::head>

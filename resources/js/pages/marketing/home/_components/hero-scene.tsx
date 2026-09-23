@@ -136,6 +136,28 @@ const filterFor = ({ blur, depth }: SceneObject): string => {
         .join(" ");
 };
 
+/**
+ * The renders are 320px squares, but each piece is shown at a fixed
+ * size well below that, so every size ships as its own file at 1x, 2x
+ * and 3x (capped at the master) and the browser picks the one its
+ * screen needs instead of downloading the master and shrinking it.
+ */
+const MASTER_SIZE = 320;
+
+/**
+ * The widths a piece is available at, from its display size up to the
+ * master, one per device pixel ratio.
+ */
+const widthsFor = (size: number): Array<number> =>
+    [1, 2, 3]
+        .map((ratio) => Math.min(size * ratio, MASTER_SIZE))
+        .filter((width, index, all) => all.indexOf(width) === index);
+
+const srcSetFor = ({ src, size }: SceneObject): string =>
+    widthsFor(size)
+        .map((width) => `/images/coins/${src}-${width}.webp ${width}w`)
+        .join(", ");
+
 const SceneObjectLayer = ({
     object,
     pointerX,
@@ -158,10 +180,14 @@ const SceneObjectLayer = ({
             style={{ x, y }}
         >
             <img
-                src={`/images/coins/${object.src}.webp`}
+                src={`/images/coins/${object.src}-${object.size}.webp`}
+                srcSet={srcSetFor(object)}
+                sizes={`${object.size}px`}
                 alt=""
                 width={object.size}
                 height={object.size}
+                decoding="async"
+                loading={object.position.includes("hidden") ? "lazy" : "eager"}
                 style={{
                     width: object.size,
                     height: object.size,

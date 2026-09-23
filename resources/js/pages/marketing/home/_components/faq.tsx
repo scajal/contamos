@@ -128,7 +128,7 @@ export const Faq = ({ dashboardUrl }: FaqProps) => {
                         {t("Know exactly what you have, starting tonight.")}
                     </h2>
                     <Button nativeButton={false} render={<a href={dashboardUrl ?? login.url()} />} size="lg">
-                        {t("Start")} <ArrowRightIcon />
+                        {dashboardUrl ? t("Go to dashboard") : t("Start free")} <ArrowRightIcon />
                     </Button>
                     {!dashboardUrl && (
                         <p className="text-muted-foreground text-sm">{t("Free plan. No card required.")}</p>
