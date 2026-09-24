@@ -10,7 +10,9 @@ use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\AccountCurrency;
 use App\Modules\Core\Finance\Models\Team\Transaction;
+use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Models\Team;
+use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
@@ -81,6 +83,137 @@ describe('index', function (): void {
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('accounts.data', 1)
                     ->where('accounts.data.0.id', $matching->getKey())));
+    });
+
+    it('renders the signed balance per currency of each account', function (): void {
+        [$user, $team] = actingMember();
+        $peso = Currency::factory()->active()->fiat()->create(['code' => 'ARS', 'decimal_places' => 2, 'symbol' => '$']);
+        $dollar = Currency::factory()->active()->fiat()->create(['code' => 'USD', 'decimal_places' => 2, 'symbol' => 'US$']);
+        $checking = Account::factory()->bank()->active()->for($team)->create(['created_at' => now()->subDay()]);
+        $checking->currencies()->attach([$peso->getKey(), $dollar->getKey()]);
+        $wallet = Account::factory()->cash()->active()->for($team)->create(['created_at' => now()]);
+        $wallet->currencies()->attach($peso);
+
+        Transaction::factory()->income()->for($checking)->for($peso)->create(['amount' => '100.50']);
+        Transaction::factory()->expense()->for($checking)->for($peso)->create(['amount' => '30.25']);
+        Transaction::factory()->expense()->for($checking)->for($dollar)->create(['amount' => '10']);
+        Transaction::factory()->income()->for($wallet)->for($peso)->create(['amount' => '40']);
+
+        $this->get(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('accounts.data', 2)
+                    ->where('accounts.data.0.id', $wallet->getKey())
+                    ->has('accounts.data.0.balances', 1)
+                    ->where('accounts.data.0.balances.0.balance', fn (mixed $balance): bool => (float) $balance === 40.0)
+                    ->where('accounts.data.1.id', $checking->getKey())
+                    ->has('accounts.data.1.balances', 2)
+                    ->where('accounts.data.1.balances.0.id', $peso->getKey())
+                    ->where('accounts.data.1.balances.0.code', 'ARS')
+                    ->where('accounts.data.1.balances.0.symbol', '$')
+                    ->where('accounts.data.1.balances.0.decimal_places', 2)
+                    ->where('accounts.data.1.balances.0.balance', fn (mixed $balance): bool => is_string($balance) && (float) $balance === 70.25)
+                    ->where('accounts.data.1.balances.1.code', 'USD')
+                    ->where('accounts.data.1.balances.1.balance', fn (mixed $balance): bool => (float) $balance === -10.0)));
+    });
+
+    it('adds an opening balance to the account balance', function (): void {
+        [$user, $team] = actingMember();
+        $peso = Currency::factory()->active()->fiat()->create(['code' => 'ARS']);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($peso);
+
+        Transaction::factory()->openingBalance()->for($account)->for($peso)->create(['amount' => '100']);
+        Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '30']);
+
+        $this->get(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('accounts.data.0.balances.0.balance', fn (mixed $balance): bool => (float) $balance === 70.0)));
+    });
+
+    it('counts a transfer and its fees on both accounts', function (): void {
+        [$user, $team] = actingMember();
+        $peso = Currency::factory()->active()->fiat()->create(['code' => 'ARS']);
+        $origin = Account::factory()->bank()->active()->for($team)->create(['created_at' => now()->subDay()]);
+        $origin->currencies()->attach($peso);
+        $destination = Account::factory()->cash()->active()->for($team)->create(['created_at' => now()]);
+        $destination->currencies()->attach($peso);
+        $transfer = Transfer::factory()->for($team)->create();
+
+        Transaction::factory()->openingBalance()->for($origin)->for($peso)->create(['amount' => '100']);
+        Transaction::factory()->transferOut()->for($origin)->for($peso)->for($transfer)->create(['amount' => '25']);
+        Transaction::factory()->transferIn()->for($destination)->for($peso)->for($transfer)->create(['amount' => '25']);
+        Transaction::factory()->expense()->for($origin)->for($peso)->for($transfer)->create(['amount' => '1.50']);
+
+        $this->get(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('accounts.data.0.id', $destination->getKey())
+                    ->where('accounts.data.0.balances.0.balance', fn (mixed $balance): bool => (float) $balance === 25.0)
+                    ->where('accounts.data.1.id', $origin->getKey())
+                    ->where('accounts.data.1.balances.0.balance', fn (mixed $balance): bool => (float) $balance === 73.5)));
+    });
+
+    it('counts transactions older than the free window in the balance', function (): void {
+        [$user, $team] = actingMember();
+        $peso = Currency::factory()->active()->fiat()->create(['code' => 'ARS']);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($peso);
+
+        Transaction::factory()->income()->for($account)->for($peso)->create([
+            'amount' => '500',
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->subMonths(5)->subDay(),
+        ]);
+        Transaction::factory()->income()->for($account)->for($peso)->create(['amount' => '100']);
+
+        $this->get(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('accounts.data.0.balances.0.balance', fn (mixed $balance): bool => (float) $balance === 600.0)));
+    });
+
+    it('renders balances of an inactive account and zero for a held currency with no transactions', function (): void {
+        [$user, $team] = actingMember();
+        $peso = Currency::factory()->active()->fiat()->create(['code' => 'ARS']);
+        $dollar = Currency::factory()->active()->fiat()->create(['code' => 'USD']);
+        $account = Account::factory()->cash()->inactive()->for($team)->create();
+        $account->currencies()->attach([$peso->getKey(), $dollar->getKey()]);
+
+        Transaction::factory()->income()->for($account)->for($peso)->create(['amount' => '500']);
+
+        $this->get(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('accounts.data.0.balances', 2)
+                    ->where('accounts.data.0.balances.0.code', 'ARS')
+                    ->where('accounts.data.0.balances.0.balance', fn (mixed $balance): bool => (float) $balance === 500.0)
+                    ->where('accounts.data.0.balances.1.code', 'USD')
+                    ->where('accounts.data.0.balances.1.balance', '0')));
+    });
+
+    it('does not count another team\'s transactions', function (): void {
+        [$user, $team] = actingMember();
+        $peso = Currency::factory()->active()->fiat()->create(['code' => 'ARS']);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($peso);
+        $foreign = Account::factory()->bank()->active()->for(Team::factory())->create();
+        $foreign->currencies()->attach($peso);
+
+        Transaction::factory()->income()->for($account)->for($peso)->create(['amount' => '100']);
+        Transaction::factory()->income()->for($foreign)->for($peso)->create(['amount' => '900']);
+
+        $this->get(route('finance.teams.accounts.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('accounts.data', 1)
+                    ->where('accounts.data.0.balances.0.balance', fn (mixed $balance): bool => (float) $balance === 100.0)));
     });
 
     it('rejects an invalid type filter', function (): void {

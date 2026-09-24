@@ -1,6 +1,6 @@
 ---
 title: "Cuentas y monedas"
-description: "Cómo las cuentas guardan dinero en una o varias monedas, cómo se muestran los saldos por moneda y cómo funciona desactivar una cuenta."
+description: "Cómo las cuentas guardan dinero en una o varias monedas, cómo se muestran los saldos por moneda en cada cuenta y en el panel, y cómo funciona desactivar una cuenta."
 pro: false
 ---
 
@@ -32,6 +32,8 @@ Para agregar o quitar una moneda, abre el menú de la cuenta en la página **Cue
 
 Contamos nunca mezcla las monedas en un total convertido. El **Panel** muestra un saldo por cada moneda que tiene el equipo, sumado entre sus cuentas activas, y la página **Mensual** muestra cada moneda en una sección propia. Elegir un saldo en el panel abre los movimientos en esa moneda.
 
+La página **Cuentas** muestra el saldo de cada cuenta en cada moneda que tiene, una línea por moneda, incluso una moneda que todavía no tiene nada. Elegir un monto abre los movimientos de esa cuenta en esa moneda. Las cuentas desactivadas siguen mostrando sus saldos.
+
 Aun así, cada movimiento guarda su [tipo de cambio](/es/docs/exchange-rates), así que lo que valía ese día queda registrado.
 
 ## Desactivar una cuenta
@@ -42,7 +44,7 @@ Las cuentas nunca se eliminan. Cuando una cuenta se cierra o ya no se usa, elige
 - deja de sumar en los saldos del panel y en los totales mensuales;
 - ya no se ofrece al registrar un movimiento o una transferencia.
 
-Elige **Activar** para recuperarla. Las cuentas desactivadas llevan la insignia **Inactivo**, y el filtro **Estado** de la página **Cuentas** las muestra u oculta.
+Elige **Activar** para recuperarla. Las cuentas desactivadas llevan la insignia **Inactivo** y siguen mostrando sus saldos en la página **Cuentas**, y el filtro **Estado** de la página **Cuentas** las muestra u oculta.
 
 ## Límites
 

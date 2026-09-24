@@ -1,6 +1,6 @@
 ---
 title: "Accounts and currencies"
-description: "How accounts hold money in one or more currencies, how balances are shown per currency, and how deactivating an account works."
+description: "How accounts hold money in one or more currencies, how balances are shown per currency on each account and on the dashboard, and how deactivating an account works."
 pro: false
 ---
 
@@ -32,6 +32,8 @@ To add or remove a currency, open the account's menu on the **Accounts** page an
 
 Contamos never blends currencies into one converted total. The **Dashboard** shows one balance for each currency the team holds, added up across its active accounts, and the **Monthly** page shows each currency in a section of its own. Choosing a balance on the dashboard opens the transactions in that currency.
 
+The **Accounts** page shows each account's balance in every currency it holds, one line per currency, including a currency with nothing in it yet. Choosing an amount opens that account's transactions in that currency. Deactivated accounts still show their balances.
+
 Each transaction still records its [exchange rate](/en/docs/exchange-rates), so what it was worth on the day stays on record.
 
 ## Deactivating an account
@@ -42,7 +44,7 @@ Accounts are never deleted. When an account is closed or no longer used, choose 
 - leaves the dashboard balances and the monthly totals;
 - is no longer offered when recording a transaction or a transfer.
 
-Choose **Activate** to bring it back. Deactivated accounts carry an **Inactive** badge, and the **Status** filter on the **Accounts** page shows or hides them.
+Choose **Activate** to bring it back. Deactivated accounts carry an **Inactive** badge and keep showing their balances on the **Accounts** page, and the **Status** filter on the **Accounts** page shows or hides them.
 
 ## Limits
 

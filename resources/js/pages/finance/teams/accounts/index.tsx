@@ -34,9 +34,12 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, 
 import { Popover, PopoverContent, PopoverHeader, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useBalances } from "@/hooks/use-balances";
 import { useFilters } from "@/hooks/use-filters";
 import { ApplicationLayout } from "@/layouts/application/layout";
+import { cn, formatAmount } from "@/lib/utils";
 import routes from "@/routes/finance/teams/accounts";
+import transactions from "@/routes/finance/teams/transactions";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { AccountType } from "@/types/app/modules/core/finance/enums/account/account-type";
 import { Account } from "@/types/app/modules/core/finance/models/team/account";
@@ -335,12 +338,8 @@ const Listing = () => {
                                             <ItemTitle>{account.name}</ItemTitle>
                                             <ItemDescription>{t(`enums.${account.type}`)}</ItemDescription>
                                         </ItemContent>
+                                        <AccountBalances account={account} team={user?.current_team?.slug ?? ""} />
                                         <ItemActions className="flex-wrap justify-end">
-                                            {(account.currencies ?? []).map((currency) => (
-                                                <Badge key={currency.id} variant="outline">
-                                                    {currency.code}
-                                                </Badge>
-                                            ))}
                                             {/** Active is the normal state, so only the exception is labelled. */}
                                             {account.is_active ? null : (
                                                 <Badge variant="secondary">{t("Inactive")}</Badge>
@@ -405,6 +404,61 @@ const Listing = () => {
                 </div>
             )}
         </Deferred>
+    );
+};
+
+const AccountBalances = ({ account, team }: { account: Account; team: string }) => {
+    /**
+     * Get the current locale.
+     */
+    const currentLocale = useLaravelReactI18n().currentLocale;
+
+    /**
+     * Whether amounts are masked, and how to mask one.
+     */
+    const { hidden, mask } = useBalances();
+
+    if (!account.balances?.length) {
+        return null;
+    }
+
+    return (
+        <div
+            className={cn(
+                "flex flex-col items-end gap-0.5 text-sm tabular-nums",
+                // On a phone the stack drops under the account name.
+                "max-sm:order-last max-sm:basis-full max-sm:items-start max-sm:pl-7.5",
+            )}
+        >
+            {account.balances.map((balance) => {
+                // Some drivers return aggregated decimals as numbers.
+                const amount = String(balance.balance);
+                const isNegative = amount.startsWith("-");
+                const isZero = /^-?0*(\.0*)?$/.test(amount);
+
+                return (
+                    <Link
+                        className={cn(
+                            "rounded-sm whitespace-nowrap underline-offset-4 hover:underline",
+                            // A masked amount keeps the neutral color, so the color never
+                            // tells which accounts are negative or empty.
+                            !hidden && !account.is_active && "text-muted-foreground",
+                            !hidden && account.is_active && isZero && "text-muted-foreground",
+                            !hidden && account.is_active && isNegative && !isZero && "text-destructive",
+                        )}
+                        href={transactions.index.url(
+                            { team },
+                            { query: { filter: { account: account.id, currency: balance.id } } },
+                        )}
+                        key={balance.id}
+                        prefetch
+                    >
+                        {mask(`${isNegative && !isZero ? "- " : ""}${formatAmount(amount, currentLocale(), balance)}`)}{" "}
+                        <span className="text-muted-foreground">{balance.code}</span>
+                    </Link>
+                );
+            })}
+        </div>
     );
 };
 

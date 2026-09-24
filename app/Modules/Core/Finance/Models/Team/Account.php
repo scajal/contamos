@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read \App\Modules\Core\Identity\Models\Team $team
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction> $transactions
  *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account balancesByAccountAndCurrency()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account balancesByCurrency()
  * @method static \Database\Factories\Modules\Core\Finance\Models\Team\AccountFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Account isActive(string|bool $value = true)
@@ -96,6 +97,24 @@ class Account extends Model
             ->join($currency->getTable(), $currency->getQualifiedKeyName(), '=', $transaction->qualifyColumn($currency->getForeignKey()))
             ->groupBy($currency->qualifyColumns([$currency->getKeyName(), 'code', 'decimal_places', 'symbol']))
             ->orderBy($currency->qualifyColumn('code'));
+    }
+
+    /**
+     * Scope the query to the balance per currency of each
+     * account matching the query.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     */
+    #[Scope]
+    protected function balancesByAccountAndCurrency(Builder $query): void
+    {
+        // Sum the balances the way the dashboard does.
+        $query->balancesByCurrency();
+
+        // Split each currency's sum by the account it belongs to.
+        $query
+            ->addSelect(sprintf('%s as %s', $this->getQualifiedKeyName(), $this->getForeignKey()))
+            ->groupBy($this->getQualifiedKeyName());
     }
 
     /**

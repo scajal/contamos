@@ -16,6 +16,7 @@ use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
@@ -31,14 +32,45 @@ class AccountController
     public function index(Team $team, IndexRequest $request): Response
     {
         return Inertia::render('finance/teams/accounts/index', [
-            'accounts' => Inertia::defer(
-                fn (): LengthAwarePaginator => QueryBuilder::for($team->accounts(), $request)
+            'accounts' => Inertia::defer(function () use ($team, $request): LengthAwarePaginator {
+                // Get the page of accounts matching the filters.
+                $accounts = QueryBuilder::for($team->accounts(), $request)
                     ->allowedFilters(...$request->filters())
                     ->with('currencies')
                     ->orderBy('created_at', 'desc')
                     ->paginate(10)
-                    ->withQueryString(),
-            ),
+                    ->withQueryString();
+
+                // Sum every transaction of the page's accounts in
+                // one query, whatever the team's plan hides, so the
+                // balances match the dashboard's.
+                $balances = $team->accounts()
+                    ->whereKey($accounts->getCollection()->modelKeys())
+                    ->balancesByAccountAndCurrency()
+                    ->get()
+                    ->groupBy(new Account()->getForeignKey());
+
+                // Give every currency an account holds its balance,
+                // zero when nothing moved in it.
+                return $accounts->through(function (Account $account) use ($balances): Account {
+                    // Index the account's sums by currency.
+                    $sums = $balances->get($account->getKey(), new Collection)
+                        ->keyBy(new Currency()->getKeyName());
+
+                    // Some drivers return the sums as numbers, so
+                    // they are passed on as decimal strings.
+                    $account->setAttribute('balances', $account->currencies
+                        ->sortBy('code')
+                        ->map(fn (Currency $currency): array => [
+                            ...$currency->only([$currency->getKeyName(), 'code', 'decimal_places', 'symbol']),
+                            'balance' => is_numeric($sum = $sums->get($currency->getKey())?->getAttribute('balance')) ? (string) $sum : '0',
+                        ])
+                        ->values()
+                        ->all());
+
+                    return $account;
+                });
+            }),
             'currencies' => Currency::query()
                 ->isActive()
                 ->orderBy('name')
