@@ -474,6 +474,7 @@ const Sidebar = () => {
                             <SidebarMenuButton
                                 isActive={isSection("finance/teams/dashboard")}
                                 render={<Link href={dashboard.index.url({ team })} />}
+                                tooltip={t("Dashboard")}
                             >
                                 <LayoutDashboardIcon />
                                 <span>{t("Dashboard")}</span>
@@ -483,6 +484,7 @@ const Sidebar = () => {
                             <SidebarMenuButton
                                 isActive={isSection("finance/teams/monthly")}
                                 render={<Link href={monthly.index.url({ team })} />}
+                                tooltip={t("Monthly")}
                             >
                                 <CalendarRangeIcon />
                                 <span>{t("Monthly")}</span>
@@ -497,6 +499,7 @@ const Sidebar = () => {
                             <SidebarMenuButton
                                 isActive={isSection("finance/teams/transactions", "finance/teams/transfers")}
                                 render={<Link href={transactions.index.url({ team })} />}
+                                tooltip={t("Transactions")}
                             >
                                 <ArrowLeftRightIcon />
                                 <span>{t("Transactions")}</span>
@@ -506,6 +509,7 @@ const Sidebar = () => {
                             <SidebarMenuButton
                                 isActive={isSection("finance/teams/accounts")}
                                 render={<Link href={accounts.index.url({ team })} />}
+                                tooltip={t("Accounts")}
                             >
                                 <BanknoteIcon />
                                 <span>{t("Accounts")}</span>
@@ -520,6 +524,7 @@ const Sidebar = () => {
                             <SidebarMenuButton
                                 isActive={isSection("finance/teams/budgets")}
                                 render={<Link href={budgets.index.url({ team })} />}
+                                tooltip={t("Budgets")}
                             >
                                 <WalletIcon />
                                 <span>{t("Budgets")}</span>
@@ -529,6 +534,7 @@ const Sidebar = () => {
                             <SidebarMenuButton
                                 isActive={isSection("finance/teams/recurring-rules")}
                                 render={<Link href={recurringRules.index.url({ team })} />}
+                                tooltip={t("Recurring")}
                             >
                                 <RepeatIcon />
                                 <span>{t("Recurring")}</span>
@@ -538,6 +544,7 @@ const Sidebar = () => {
                             <SidebarMenuButton
                                 isActive={isSection("finance/teams/tags")}
                                 render={<Link href={tags.index.url({ team })} />}
+                                tooltip={t("Tags")}
                             >
                                 <TagIcon />
                                 <span>{t("Tags")}</span>
@@ -552,6 +559,7 @@ const Sidebar = () => {
                             <SidebarMenuButton
                                 isActive={isSection("identity/teams/members")}
                                 render={<Link href={members.index.url({ team })} />}
+                                tooltip={t("Members")}
                             >
                                 <UsersIcon />
                                 <span>{t("Members")}</span>
@@ -562,6 +570,7 @@ const Sidebar = () => {
                                 <SidebarMenuButton
                                     isActive={isSection("identity/teams/activity")}
                                     render={<Link href={activity.index.url({ team })} />}
+                                    tooltip={t("Activity")}
                                 >
                                     <HistoryIcon />
                                     <span>{t("Activity")}</span>
@@ -573,6 +582,7 @@ const Sidebar = () => {
                                 <SidebarMenuButton
                                     isActive={isSection("billing/teams/subscriptions")}
                                     render={<Link href={subscriptions.index.url({ team })} />}
+                                    tooltip={t("Billing")}
                                 >
                                     <CreditCardIcon />
                                     <span>{t("Billing")}</span>
@@ -583,6 +593,7 @@ const Sidebar = () => {
                             <SidebarMenuButton
                                 isActive={isSection("identity/teams/index", "identity/teams/edit")}
                                 render={<Link href={settings.index.url({ team })} />}
+                                tooltip={t("Configuration")}
                             >
                                 <SettingsIcon />
                                 <span>{t("Configuration")}</span>
@@ -596,6 +607,7 @@ const Sidebar = () => {
                             <SidebarMenuButton
                                 isActive={isSection("identity/users/assistants")}
                                 render={<Link href={assistants.index.url()} />}
+                                tooltip={t("AI assistants")}
                             >
                                 <BotIcon />
                                 <span>{t("AI assistants")}</span>
