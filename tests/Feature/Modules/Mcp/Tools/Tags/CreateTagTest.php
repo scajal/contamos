@@ -65,6 +65,16 @@ it('refuses a currency the team does not hold', function (): void {
     expect($team->tags()->count())->toBe(0);
 });
 
+it('refuses budgets that are not keyed by currency code', function (): void {
+    [$user, $team] = mcpMember();
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateTag::class, ['team' => $team->slug, 'name' => 'Vacation', 'budgets' => '500'])
+        ->assertHasErrors(['The budgets must be an object keyed by currency code.']);
+
+    expect($team->tags()->count())->toBe(0);
+});
+
 it('refuses a name another tag of the team uses', function (): void {
     [$user, $team] = mcpMember();
     Tag::factory()->for($team)->create(['name' => 'Vacation']);

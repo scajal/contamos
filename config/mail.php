@@ -114,4 +114,23 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Markdown Mail Settings
+    |--------------------------------------------------------------------------
+    |
+    | Every Markdown email renders with the Contamos layout and theme under
+    | resources/views/vendor/mail. Components not published there fall
+    | back to the framework's own.
+    |
+    */
+
+    'markdown' => [
+        'theme' => 'contamos',
+
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+    ],
+
 ];

@@ -49,6 +49,7 @@ class BudgetPeriodFactory extends Factory
             $period->team()->getForeignKeyName() => Team::factory(),
             $period->tag()->getForeignKeyName() => $this->tagOfTeam(),
             'until_month' => null,
+            'warning_threshold' => null,
         ];
     }
 
@@ -148,6 +149,17 @@ class BudgetPeriodFactory extends Factory
         return $this->state(fn (array $attributes): array => [
             'from_month' => $month,
             'until_month' => $month,
+        ]);
+    }
+
+    /**
+     * Indicate that the team wants to be warned once the
+     * month has used the given share of the budget.
+     */
+    public function withWarningThreshold(int $percent = 80): static
+    {
+        return $this->state([
+            'warning_threshold' => $percent,
         ]);
     }
 

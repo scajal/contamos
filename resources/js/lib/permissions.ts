@@ -10,6 +10,7 @@ export const PERMISSIONS = {
     CreateInvitation: "invitation:create",
     DeleteTeam: "team:delete",
     ManageBilling: "billing:manage",
+    ManageNotifications: "notification:manage",
     RemoveMember: "member:remove",
     UpdateMember: "member:update",
     UpdateTeam: "team:update",

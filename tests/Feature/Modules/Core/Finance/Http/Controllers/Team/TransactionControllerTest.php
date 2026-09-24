@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
+use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetAlertKind;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
 use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
+use App\Modules\Core\Finance\Notifications\Team\BudgetAlertNotification;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -67,6 +72,35 @@ function csvRows(string $body): array
     fclose($handle);
 
     return $rows;
+}
+
+/**
+ * Authenticate as the Owner of a Pro team that also has an
+ * Admin and a Member, an active account in one currency and
+ * a running Food budget of 100 warning at 80%.
+ *
+ * @return array{owner: \App\Modules\Core\Identity\Models\User, admin: \App\Modules\Core\Identity\Models\User, member: \App\Modules\Core\Identity\Models\User, team: \App\Modules\Core\Identity\Models\Team, account: \App\Modules\Core\Finance\Models\Team\Account, currency: \App\Modules\Core\Catalog\Models\Currency, budget: \App\Modules\Core\Finance\Models\Team\BudgetPeriod}
+ */
+function actingOnBudgetedTeam(): array
+{
+    [$owner, $team] = actingMember();
+    subscribeToPro($team);
+    $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+    $account = Account::factory()->bank()->active()->for($team)->create();
+    $account->currencies()->attach($currency);
+
+    return [
+        'owner' => $owner,
+        'admin' => memberOf($team, Role::Admin),
+        'member' => memberOf($team, Role::Member),
+        'team' => $team,
+        'account' => $account,
+        'currency' => $currency,
+        'budget' => BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($team)->withWarningThreshold(80)->create([
+            'amount' => '100',
+            $currency->getForeignKey() => $currency->getKey(),
+        ]),
+    ];
 }
 
 describe('index', function (): void {
@@ -1474,6 +1508,27 @@ describe('store', function (): void {
         expect(RecurringRule::query()->count())->toBe(0);
     });
 
+    it('rejects a repeating transaction whose occurred_at cannot be read as a start date', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'occurred_at' => 'not-a-date',
+            'timezone' => 'UTC',
+            'repeat' => true,
+            'recurring_frequency' => 'monthly',
+            'recurring_interval' => 1,
+        ]))->assertInvalid(['occurred_at', 'recurring_starts_on', 'recurring_time_of_day']);
+
+        expect(RecurringRule::query()->count())->toBe(0)
+            ->and(Transaction::query()->count())->toBe(0);
+    });
+
     it('does not create a transaction when the recurring start date is in the future', function (): void {
         [$user, $team] = actingMember();
         subscribeToPro($team);
@@ -1601,6 +1656,68 @@ describe('store', function (): void {
         ]))->assertRedirect();
 
         expect(RecurringRule::query()->sole()->category)->toBe(Category::Housing);
+    });
+
+    it('emails the Owner and Admins, not Members, when the entry pushes a budget past its warning threshold', function (): void {
+        $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+        ['owner' => $owner, 'admin' => $admin, 'member' => $member, 'team' => $team, 'account' => $account, 'currency' => $currency, 'budget' => $budget] = actingOnBudgetedTeam();
+        Notification::fake();
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'amount' => '85',
+            'category' => Category::Food->value,
+            'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
+        ]))->assertRedirect();
+
+        Notification::assertSentTo([$owner, $admin], BudgetAlertNotification::class, fn (BudgetAlertNotification $notification): bool => $notification->budget->is($budget)
+            && $notification->kind === BudgetAlertKind::Warning);
+        Notification::assertNotSentTo($member, BudgetAlertNotification::class);
+    });
+
+    it('emails the same figures the budgets page shows', function (): void {
+        $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+        ['owner' => $owner, 'team' => $team, 'account' => $account, 'currency' => $currency] = actingOnBudgetedTeam();
+        Notification::fake();
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'amount' => '98.30',
+            'category' => Category::Food->value,
+            'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
+        ]))->assertRedirect();
+
+        /** @var \App\Modules\Core\Finance\Notifications\Team\BudgetAlertNotification $notification */
+        $notification = Notification::sent($owner, BudgetAlertNotification::class)->sole();
+
+        $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('budgets.data.0.progress.amount', $notification->amount)
+                    ->where('budgets.data.0.progress.spent', $notification->spent)
+                    ->where('budgets.data.0.progress.percentage', $notification->percentage)));
+    });
+
+    it('evaluates no budget when a repeating entry records nothing yet', function (): void {
+        $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+        ['team' => $team, 'account' => $account, 'currency' => $currency] = actingOnBudgetedTeam();
+        Notification::fake();
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'amount' => '500',
+            'category' => Category::Food->value,
+            'occurred_at' => '2026-10-01 12:00:00',
+            'repeat' => true,
+            'recurring_frequency' => Frequency::Monthly->value,
+            'recurring_interval' => 1,
+            'timezone' => 'UTC',
+        ]))->assertRedirect();
+
+        Notification::assertNothingSent();
     });
 });
 
@@ -2592,6 +2709,67 @@ describe('update', function (): void {
         ]))->assertSessionHasErrors('category');
 
         expect($transaction->refresh()->category)->toBe(Category::Food);
+    });
+
+    it('alerts when an edit pushes a budget over its amount', function (): void {
+        $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+        ['owner' => $owner, 'team' => $team, 'account' => $account, 'currency' => $currency] = actingOnBudgetedTeam();
+        $transaction = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'amount' => '10',
+            'category' => Category::Food,
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => CarbonImmutable::now(),
+        ]);
+        Notification::fake();
+
+        $this->patch(route('finance.teams.transactions.update', ['team' => $team->getRouteKey(), 'transaction' => $transaction->getKey()]), transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'amount' => '150',
+            'category' => Category::Food->value,
+            'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
+        ]))->assertRedirect();
+
+        Notification::assertSentTo($owner, BudgetAlertNotification::class, fn (BudgetAlertNotification $notification): bool => $notification->kind === BudgetAlertKind::Over);
+    });
+
+    it('does not re-arm an alert when an edit brings spending back under the threshold', function (): void {
+        $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+        ['owner' => $owner, 'team' => $team, 'account' => $account, 'currency' => $currency] = actingOnBudgetedTeam();
+        Notification::fake();
+        $payload = fn (string $amount): array => transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'amount' => $amount,
+            'category' => Category::Food->value,
+            'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
+        ]);
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), $payload('85'))->assertRedirect();
+        $transaction = Transaction::query()->sole();
+        $this->patch(route('finance.teams.transactions.update', ['team' => $team->getRouteKey(), 'transaction' => $transaction->getKey()]), $payload('10'))->assertRedirect();
+        $this->patch(route('finance.teams.transactions.update', ['team' => $team->getRouteKey(), 'transaction' => $transaction->getKey()]), $payload('90'))->assertRedirect();
+
+        Notification::assertSentToTimes($owner, BudgetAlertNotification::class, 1);
+    });
+
+    it('does not re-arm an alert when a transaction is deleted', function (): void {
+        $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+        ['owner' => $owner, 'team' => $team, 'account' => $account, 'currency' => $currency] = actingOnBudgetedTeam();
+        Notification::fake();
+        $payload = transactionPayload([
+            $account->getForeignKey() => $account->getKey(),
+            $currency->getForeignKey() => $currency->getKey(),
+            'amount' => '85',
+            'category' => Category::Food->value,
+            'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
+        ]);
+
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), $payload)->assertRedirect();
+        $this->delete(route('finance.teams.transactions.destroy', ['team' => $team->getRouteKey(), 'transaction' => Transaction::query()->sole()->getKey()]))->assertRedirect();
+        $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), $payload)->assertRedirect();
+
+        Notification::assertSentToTimes($owner, BudgetAlertNotification::class, 1);
     });
 });
 

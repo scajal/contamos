@@ -74,6 +74,18 @@ it('refuses to resume a budget that is running', function (): void {
     expect($team->budgets()->count())->toBe(1);
 });
 
+it('refuses to pause a budget that is not running open-ended', function (): void {
+    [$user, $team, $currency] = pausingBudgetTeam();
+    $budget = BudgetPeriod::factory()->paused()->forCategory(Category::Food)->for($team)->for($currency)->create();
+    $untilMonth = $budget->until_month?->format('Y-m');
+
+    ContamosServer::actingAs($user)
+        ->tool(SetBudgetPaused::class, ['team' => $team->slug, 'budget' => $budget->getKey(), 'paused' => true])
+        ->assertHasErrors(['Only a running budget with no last month can be paused. This one is paused.']);
+
+    expect($budget->refresh()->until_month?->format('Y-m'))->toBe($untilMonth);
+});
+
 it('is a destructive tool', function (): void {
     expect(new SetBudgetPaused()->annotations())->toMatchArray(['destructiveHint' => true]);
 });

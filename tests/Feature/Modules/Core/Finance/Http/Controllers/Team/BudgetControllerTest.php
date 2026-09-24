@@ -6,12 +6,15 @@ use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetPeriodStatus;
 use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetTargetKind;
 use App\Modules\Core\Finance\Enums\Transaction\Category;
+use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
+use App\Modules\Core\Finance\Notifications\Team\BudgetAlertNotification;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
@@ -114,6 +117,18 @@ describe('index', function (): void {
                     ->where('budgets.data.0.progress.spent', fn (mixed $value): bool => (float) $value === 200.0)
                     ->where('budgets.data.0.progress.remaining', fn (mixed $value): bool => (float) $value === 300.0)
                     ->where('budgets.data.0.progress.percentage', fn (mixed $value): bool => (float) $value === 40.0)));
+    });
+
+    it('reports the warning threshold on the row and its progress', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        BudgetPeriod::factory()->running()->withWarningThreshold(80)->forTag($tag)->for($currency)->create();
+
+        $this->get(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('budgets.data.0.warning_threshold', 80)
+                    ->where('budgets.data.0.progress.warning_threshold', 80)));
     });
 
     it('omits the percentage when the budget pot is empty', function (): void {
@@ -553,6 +568,44 @@ describe('store', function (): void {
             ->assertInvalid(['amount']);
     });
 
+    it('stores the warning threshold', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+
+        $this->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), budgetPayload($tag, $currency, [
+            'warning_threshold' => '80',
+        ]))->assertRedirect()->assertValid();
+
+        expect(BudgetPeriod::query()->sole()->warning_threshold)->toBe(80);
+    });
+
+    it('stores no warning threshold when it is left empty', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+
+        $this->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), budgetPayload($tag, $currency, [
+            'warning_threshold' => '',
+        ]))->assertRedirect()->assertValid();
+
+        expect(BudgetPeriod::query()->sole()->warning_threshold)->toBeNull();
+    });
+
+    it('rejects a warning threshold outside 1 to 99', function (mixed $threshold): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+
+        $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), budgetPayload($tag, $currency, [
+                'warning_threshold' => $threshold,
+            ]))
+            ->assertRedirect()
+            ->assertInvalid(['warning_threshold']);
+
+        expect(BudgetPeriod::query()->count())->toBe(0);
+    })->with([
+        'zero' => '0',
+        'a hundred' => '100',
+        'a fraction' => '50.5',
+        'a word' => 'high',
+    ]);
+
     it('redirects a free team to the upgrade modal', function (): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create();
@@ -598,6 +651,20 @@ describe('edit', function (): void {
                 ->where('budget.id', $period->getKey()));
     });
 
+    it('prefills the warning threshold', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        $period = BudgetPeriod::factory()->running()->withWarningThreshold(75)->forTag($tag)->for($currency)->create();
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.budgets.edit', [
+                'team' => $team->getRouteKey(),
+                'budget' => $period->getKey(),
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('budget.warning_threshold', 75));
+    });
+
     it('returns 404 when the budget belongs to another team', function (): void {
         [$user, $team] = budgetingTeam();
         $foreign = BudgetPeriod::factory()->running()->forTag(Tag::factory()->for(Team::factory())->create())->create();
@@ -633,6 +700,65 @@ describe('update', function (): void {
 
         expect((float) $period->amount)->toBe(650.0)
             ->and($period->until_month?->format('Y-m'))->toBe($next->format('Y-m'));
+    });
+
+    it('changes the warning threshold and logs the change', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        $period = BudgetPeriod::factory()->running()->withWarningThreshold(80)->forTag($tag)->for($currency)->create(['amount' => '500']);
+        clearActivities();
+
+        $this->patch(route('finance.teams.budgets.update', [
+            'team' => $team->getRouteKey(),
+            'budget' => $period->getKey(),
+        ]), [
+            'amount' => '500',
+            'currency_id' => $currency->getKey(),
+            'from_month' => CarbonImmutable::now()->format('Y-m'),
+            'warning_threshold' => '90',
+        ])->assertRedirect()->assertValid();
+
+        $activity = activitiesOf($team, 'updated')->sole();
+
+        expect($period->refresh()->warning_threshold)->toBe(90)
+            ->and($activity->attribute_changes['old'] ?? null)->toBe(['warning_threshold' => 80])
+            ->and($activity->attribute_changes['attributes'] ?? null)->toBe(['warning_threshold' => 90]);
+    });
+
+    it('drops the warning threshold when it is emptied', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        $period = BudgetPeriod::factory()->running()->withWarningThreshold(80)->forTag($tag)->for($currency)->create();
+
+        $this->patch(route('finance.teams.budgets.update', [
+            'team' => $team->getRouteKey(),
+            'budget' => $period->getKey(),
+        ]), [
+            'amount' => '500',
+            'currency_id' => $currency->getKey(),
+            'from_month' => CarbonImmutable::now()->format('Y-m'),
+            'warning_threshold' => '',
+        ])->assertRedirect()->assertValid();
+
+        expect($period->refresh()->warning_threshold)->toBeNull();
+    });
+
+    it('rejects a warning threshold of a hundred', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        $period = BudgetPeriod::factory()->running()->withWarningThreshold(80)->forTag($tag)->for($currency)->create();
+
+        $this->from(route('finance.teams.budgets.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.budgets.update', [
+                'team' => $team->getRouteKey(),
+                'budget' => $period->getKey(),
+            ]), [
+                'amount' => '500',
+                'currency_id' => $currency->getKey(),
+                'from_month' => CarbonImmutable::now()->format('Y-m'),
+                'warning_threshold' => '100',
+            ])
+            ->assertRedirect()
+            ->assertInvalid(['warning_threshold']);
+
+        expect($period->refresh()->warning_threshold)->toBe(80);
     });
 
     it('rejects months another stretch already covers', function (): void {
@@ -717,6 +843,33 @@ describe('update', function (): void {
         ]));
 
         expect((float) $period->fresh()?->amount)->toBe(500.0);
+    });
+
+    it('re-arms the warning once a raised amount puts the month back under it', function (): void {
+        $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+        [$user, $team, $currency, $tag, $account] = budgetingTeam();
+        $period = BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($team)->for($currency)->withWarningThreshold(80)->create(['amount' => '100']);
+        Notification::fake();
+        $spend = fn (string $amount) => $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), [
+            $account->getForeignKey() => $account->getKey(),
+            'amount' => $amount,
+            'category' => Category::Food->value,
+            $currency->getForeignKey() => $currency->getKey(),
+            'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
+            'quote' => '1',
+            'type' => TransactionType::Expense->value,
+        ])->assertRedirect();
+
+        $spend('85');
+        $this->patch(route('finance.teams.budgets.update', ['team' => $team->getRouteKey(), 'budget' => $period->getKey()]), [
+            'amount' => '200.00',
+            'currency_id' => $currency->getKey(),
+            'from_month' => CarbonImmutable::now()->format('Y-m'),
+            'warning_threshold' => 80,
+        ])->assertRedirect();
+        $spend('90');
+
+        Notification::assertSentToTimes($user, BudgetAlertNotification::class, 2);
     });
 });
 
@@ -809,6 +962,18 @@ describe('resume', function (): void {
         expect((float) $resumed->amount)->toBe(400.0)
             ->and($resumed->from_month->format('Y-m'))->toBe(CarbonImmutable::now()->format('Y-m'))
             ->and($resumed->until_month)->toBeNull();
+    });
+
+    it('keeps the warning threshold of the stopped stretch', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        $period = BudgetPeriod::factory()->paused()->withWarningThreshold(70)->forTag($tag)->for($currency)->create();
+
+        $this->patch(route('finance.teams.budgets.resume', [
+            'team' => $team->getRouteKey(),
+            'budget' => $period->getKey(),
+        ]))->assertRedirect();
+
+        expect(BudgetPeriod::query()->whereKeyNot($period)->sole()->warning_threshold)->toBe(70);
     });
 
     it('refuses a budget that is still running', function (): void {

@@ -6,6 +6,7 @@ namespace App\Modules\Core\Finance\Actions\Team;
 
 use App\Modules\Core\Finance\Actions\Team\Concerns\GuardsBudgetPeriodOverlap;
 use App\Modules\Core\Finance\Actions\Team\Concerns\ReadsBudgetMonths;
+use App\Modules\Core\Finance\Actions\Team\Concerns\RearmsBudgetAlerts;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
@@ -18,6 +19,7 @@ class UpdateBudgetPeriod
 {
     use GuardsBudgetPeriodOverlap;
     use ReadsBudgetMonths;
+    use RearmsBudgetAlerts;
 
     /**
      * The team the period belongs to.
@@ -50,10 +52,11 @@ class UpdateBudgetPeriod
     }
 
     /**
-     * Change the period's amount, currency or months, keeping
-     * the target's budget free of overlapping stretches. What
-     * the period follows is fixed: a budget moved to another
-     * target is a new budget, not an edit.
+     * Change the period's amount, currency, months or warning
+     * threshold, keeping the target's budget free of
+     * overlapping stretches. What the period follows is
+     * fixed: a budget moved to another target is a new
+     * budget, not an edit.
      *
      * @param  array<string, mixed>  $attributes
      */
@@ -78,19 +81,30 @@ class UpdateBudgetPeriod
             ? $this->month($attributes['until_month'])
             : $period->until_month;
 
+        $threshold = array_key_exists('warning_threshold', $attributes)
+            ? $this->warningThreshold($attributes['warning_threshold'])
+            : $period->warning_threshold;
+
         // The new months must stay clear of the target's other
         // periods in the same currency.
         $this->guardAgainstOverlap($team, $target, $currencyId, $from, $until, $period);
 
         // Everything the change writes reads as one entry in
         // the team's activity log.
-        return TeamActivity::within(fn (): BudgetPeriod => DB::transaction(function () use ($period, $attributes, $currencyKey, $currencyId, $from, $until): BudgetPeriod {
+        return TeamActivity::within(fn (): BudgetPeriod => DB::transaction(function () use ($period, $attributes, $currencyKey, $currencyId, $from, $until, $threshold): BudgetPeriod {
+            $previousAmount = (string) $period->amount;
+
             $period->update([
                 'amount' => $attributes['amount'] ?? $period->amount,
                 $currencyKey => $currencyId,
                 'from_month' => $from,
                 'until_month' => $until,
+                'warning_threshold' => $threshold,
             ]);
+
+            // A raised amount re-arms the month's alerts whose
+            // threshold is no longer met.
+            $this->rearmBudgetAlerts($period, $previousAmount);
 
             return $period;
         }));

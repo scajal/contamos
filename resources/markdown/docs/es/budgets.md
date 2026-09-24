@@ -23,6 +23,7 @@ Abre **Presupuestos** y elige **Crear presupuesto**. Elige qué sigue el presupu
 - **Monto mensual**: cuánto se puede gastar cada mes.
 - **Primer mes**: el mes en que empieza el presupuesto.
 - **Último mes**: déjalo vacío para que el presupuesto siga corriendo, o ponlo igual al primer mes para una meta puntual.
+- **Avísame al**: opcional; el porcentaje del monto, de 1 a 99, en el que el equipo quiere un aviso. Déjalo vacío para no recibir avisos.
 
 Dos presupuestos de la misma categoría o etiqueta en la misma moneda no pueden cubrir el mismo mes.
 
@@ -35,6 +36,18 @@ El avance se muestra para el presupuesto que corre este mes. Cuenta los gastos d
 Un movimiento cuenta en su categoría y en cada una de sus etiquetas, así que un gasto puede mover varios presupuestos. Las transferencias y los saldos iniciales nunca cuentan.
 
 Cuando el gasto supera el monto, la barra se pone roja y muestra por cuánto se excedió. La página **Mensual** muestra el mismo avance junto a cada categoría y etiqueta.
+
+## Umbral de aviso
+
+Un presupuesto con **Avísame al** definido muestra una marca en su barra de avance en ese porcentaje, y **Aviso al** el porcentaje a su lado. Un asistente de IA también puede definirlo o cambiarlo.
+
+Mientras el presupuesto está en curso, Contamos envía un correo al propietario y a los administradores del equipo cuando el gasto del mes llega al umbral, y otro cuando supera el monto, haya o no un umbral definido. Cada alerta se envía como mucho una vez por presupuesto y por mes:
+
+- un mes nuevo permite que las dos alertas vuelvan a saltar;
+- subir el monto de modo que el gasto vuelva a quedar por debajo de un umbral permite que esa alerta vuelva a saltar;
+- editar o eliminar movimientos no.
+
+El gasto se cuenta igual que en la barra de avance, sin importar dónde se registró: en la app, desde un asistente de IA, por un movimiento recurrente o en una importación. Los presupuestos pausados, programados y terminados nunca alertan. Cada persona puede desactivar las alertas de presupuesto para un equipo; consulta [Notificaciones](/es/docs/notifications).
 
 ## Estados
 

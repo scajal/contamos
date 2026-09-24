@@ -110,9 +110,9 @@ trait PresentsBudgets
     }
 
     /**
-     * Present a budget period: what it follows, its amount and
-     * months, its status and, for the stretch in force, how
-     * the month is going against it.
+     * Present a budget period: what it follows, its amount,
+     * months and warning threshold, its status and, for the
+     * stretch in force, how the month is going against it.
      *
      * @param  \Illuminate\Support\Collection<string, array{expenses: numeric-string, income: numeric-string}>  $totals
      * @param  array<string, \Carbon\CarbonImmutable>  $successors
@@ -133,6 +133,7 @@ trait PresentsBudgets
             'amount' => $this->amount($budget->amount, $decimals),
             'from_month' => $budget->from_month->format('Y-m'),
             'until_month' => $budget->until_month?->format('Y-m'),
+            'warning_threshold' => $budget->warning_threshold,
             'status' => $budget->status($month, $this->isSuperseded($budget, $successors))->value,
             // Only the stretch in force reports on the month.
             'progress' => $progress === null ? null : [

@@ -6,6 +6,7 @@ export type Permission =
     | "invitation:create"
     | "team:delete"
     | "billing:manage"
+    | "notification:manage"
     | "member:remove"
     | "member:update"
     | "team:update"

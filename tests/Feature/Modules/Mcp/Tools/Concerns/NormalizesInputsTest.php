@@ -214,3 +214,65 @@ it('refuses to guess a missing exchange rate', function (): void {
         ->assertOk()
         ->assertSee('"quote":"41"');
 });
+
+it('refuses a timezone that is not an IANA identifier', function (): void {
+    [$user, $team, $account] = memberWithAccountIn(['UYU']);
+
+    ProbeInputsServer::actingAs($user)
+        ->tool(ProbeInputsTool::class, ['team' => $team->slug, 'account' => $account->id, 'occurred_at' => '2026-08-14', 'timezone' => 'Montevideo'])
+        ->assertHasErrors(['The timezone must be an IANA identifier, such as "America/Montevideo".']);
+});
+
+it('refuses a date in another format', function (mixed $occurredAt): void {
+    [$user, $team, $account] = memberWithAccountIn(['UYU']);
+
+    ProbeInputsServer::actingAs($user)
+        ->tool(ProbeInputsTool::class, ['team' => $team->slug, 'account' => $account->id, 'occurred_at' => $occurredAt])
+        ->assertHasErrors(['The date must be "YYYY-MM-DD" or "YYYY-MM-DD HH:MM".']);
+})->with([
+    'words' => 'yesterday',
+    'day first' => '14/08/2026',
+    'a timestamp' => 1786708800,
+]);
+
+it('refuses a date that is not on the calendar', function (): void {
+    [$user, $team, $account] = memberWithAccountIn(['UYU']);
+
+    ProbeInputsServer::actingAs($user)
+        ->tool(ProbeInputsTool::class, ['team' => $team->slug, 'account' => $account->id, 'occurred_at' => '2026-02-30'])
+        ->assertHasErrors(['The date is not a valid calendar date.']);
+});
+
+it('refuses a currency that is not a code', function (): void {
+    [$user, $team, $account] = memberWithAccountIn(['UYU']);
+
+    ProbeInputsServer::actingAs($user)
+        ->tool(ProbeInputsTool::class, ['team' => $team->slug, 'account' => $account->id, 'currency' => 858])
+        ->assertHasErrors(['The account "Santander" does not hold that currency. Its currencies are: UYU.']);
+});
+
+it('refuses tags that are not a list', function (): void {
+    [$user, $team, $account] = memberWithAccountIn(['UYU']);
+    Tag::factory()->active()->for($team)->create(['name' => 'Food']);
+
+    ProbeInputsServer::actingAs($user)
+        ->tool(ProbeInputsTool::class, ['team' => $team->slug, 'account' => $account->id, 'tags' => 'Food'])
+        ->assertHasErrors(['The tags must be a list of tag ids or names.']);
+});
+
+it('refuses a tag reference that is neither an id nor a name', function (): void {
+    [$user, $team, $account] = memberWithAccountIn(['UYU']);
+
+    ProbeInputsServer::actingAs($user)
+        ->tool(ProbeInputsTool::class, ['team' => $team->slug, 'account' => $account->id, 'tags' => [42]])
+        ->assertHasErrors(['Unknown tag "42".']);
+});
+
+it('takes a numeric quote as its decimal string', function (): void {
+    [$user, $team, $account] = memberWithAccountIn(['UYU']);
+
+    ProbeInputsServer::actingAs($user)
+        ->tool(ProbeInputsTool::class, ['team' => $team->slug, 'account' => $account->id, 'with_quote' => true, 'quote' => 40.5])
+        ->assertOk()
+        ->assertSee('"quote":"40.5"');
+});

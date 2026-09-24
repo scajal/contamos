@@ -15,6 +15,8 @@ use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
+use App\Modules\Core\Identity\Enums\Team\NotificationType;
+use App\Modules\Core\Identity\Enums\Team\Permission;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\LogsTeamActivity;
@@ -43,6 +45,7 @@ use Spatie\Activitylog\Enums\ActivityEvent;
  * @property string $slug
  * @property \App\Modules\Billing\Enums\Plan|null $plan_override
  * @property \Carbon\CarbonImmutable|null $plan_override_expires_at
+ * @property \Carbon\CarbonImmutable|null $plan_override_end_handled_at
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Account> $accounts
@@ -67,7 +70,7 @@ use Spatie\Activitylog\Enums\ActivityEvent;
  *
  * @mixin \Eloquent
  */
-#[Fillable(['name', 'slug', 'plan_override', 'plan_override_expires_at'])]
+#[Fillable(['name', 'slug', 'plan_override', 'plan_override_expires_at', 'plan_override_end_handled_at'])]
 class Team extends Model
 {
     use Billable;
@@ -181,6 +184,7 @@ class Team extends Model
         return [
             'plan_override' => Plan::class,
             'plan_override_expires_at' => 'datetime',
+            'plan_override_end_handled_at' => 'datetime',
         ];
     }
 
@@ -207,6 +211,12 @@ class Team extends Model
         static::updating(function (self $team): void {
             if ($team->isDirty('name')) {
                 $team->slug = Str::lower(self::generateSlug($team->name, $team->getKey())); // @phpstan-ignore-line argument.type Key is always string.
+            }
+
+            // A new or changed grant has its own end to announce,
+            // so the end of the previous one no longer counts.
+            if ($team->isDirty(['plan_override', 'plan_override_expires_at'])) {
+                $team->plan_override_end_handled_at = null;
             }
         });
     }
@@ -326,6 +336,33 @@ class Team extends Model
         }
 
         return $role === Role::Owner || $this->assignsRoles() ? $role : Role::Admin;
+    }
+
+    /**
+     * Get the members who receive the given notification type
+     * on the team: those whose effective role lets them manage
+     * notifications, the Owner and Admins, and who kept the
+     * switch on. The causer of what the email reports, when
+     * given, is left out, since they already know.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\User>
+     */
+    public function notificationRecipients(NotificationType $type, ?User $except = null): EloquentCollection
+    {
+        $members = $this->users();
+
+        // Leave the causer out, when there is one.
+        if ($except instanceof User) {
+            $members->whereKeyNot($except->getKey());
+        }
+
+        // Keep the Owner and Admins who kept the switch on. A
+        // Member's switches are never read.
+        return $members->get()
+            ->filter(fn (User $user): bool => $user->membership instanceof Membership
+                && $this->effectiveRole($user->membership->role)?->grants(Permission::ManageNotifications) === true
+                && $user->membership->wantsNotification($type))
+            ->values();
     }
 
     /**
@@ -460,7 +497,7 @@ class Team extends Model
     {
         return $this->belongsToMany(User::class, new Membership()->getTable(), $this->getForeignKey(), new User()->getForeignKey())
             ->using(Membership::class)
-            ->withPivot('role')
+            ->withPivot('role', 'notification_preferences')
             ->withTimestamps()
             ->as('membership');
     }

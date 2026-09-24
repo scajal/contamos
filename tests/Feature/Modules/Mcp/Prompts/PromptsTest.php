@@ -27,6 +27,16 @@ it('renders the import statement prompt with its arguments', function (): void {
         ->assertSee(['`01ACCOUNT`', 'team: "home"', 'dry_run: true', 'timezone: "America/Montevideo"', 'delete_import']);
 });
 
+it('asks for the timezone in the import statement prompt when none is given', function (): void {
+    [$user] = mcpMember();
+
+    ContamosServer::actingAs($user)
+        ->prompt(ImportStatement::class, ['team' => 'home', 'account' => '01ACCOUNT'])
+        ->assertOk()
+        ->assertSee('Ask me for my timezone if any line carries a time; dates alone need none.')
+        ->assertDontSee('Pass `timezone:');
+});
+
 it('renders the monthly review prompt with its arguments', function (): void {
     [$user] = mcpMember();
 

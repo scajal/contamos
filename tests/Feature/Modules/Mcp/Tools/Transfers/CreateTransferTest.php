@@ -4,13 +4,19 @@ declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
+use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetAlertKind;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transfer;
+use App\Modules\Core\Finance\Notifications\Team\BudgetAlertNotification;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Mcp\Servers\ContamosServer;
 use App\Modules\Mcp\Tools\Transfers\CreateTransfer;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Testing\Fluent\AssertableJson;
 
 /**
@@ -213,4 +219,29 @@ it('refuses an account of another team as not found', function (): void {
         ->assertHasErrors(['Destination account not found.']);
 
     expect(Transfer::query()->count())->toBe(0);
+});
+
+it('alerts when its fee pushes a budget over', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+    [$user, $team, [$currency]] = createTransferToolMember();
+    $origin = createTransferToolAccount($team, $currency, '100.00');
+    $destination = createTransferToolAccount($team, $currency, '0.00');
+    BudgetPeriod::factory()->forCategory(Category::Other)->running()->for($team)->create([
+        'amount' => '1',
+        $currency->getForeignKey() => $currency->getKey(),
+    ]);
+    Notification::fake();
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateTransfer::class, [
+            'team' => $team->slug,
+            'origin_account' => $origin->getKey(),
+            'destination_account' => $destination->getKey(),
+            'amount_sent' => '25.00',
+            'origin_fee' => '1.50',
+            'occurred_at' => '2026-09-15',
+        ])
+        ->assertOk();
+
+    Notification::assertSentTo($user, BudgetAlertNotification::class, fn (BudgetAlertNotification $notification): bool => $notification->kind === BudgetAlertKind::Over);
 });

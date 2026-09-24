@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Modules\Billing\Enums\Plan;
+use App\Modules\Core\Identity\Enums\Team\NotificationType;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Membership;
 use App\Modules\Core\Identity\Models\Team;
@@ -185,9 +186,77 @@ it('falls back to the subscription once the granted plan expires', function (): 
     expect($team->plan())->toBe(Plan::Pro);
 });
 
+it('forgets the handled end of a grant once the grant changes', function (array $change): void {
+    $team = Team::factory()->grantedPlan(Plan::Pro, CarbonImmutable::now()->subDay())->create([
+        'plan_override_end_handled_at' => CarbonImmutable::now(),
+    ]);
+
+    $team->update($change);
+
+    expect($team->fresh()?->plan_override_end_handled_at)->toBeNull();
+})->with([
+    'new expiry' => [['plan_override_expires_at' => CarbonImmutable::now()->addMonth()]],
+    'new plan' => [['plan_override' => Plan::Free]],
+]);
+
+it('keeps the handled end of a grant when something else changes', function (): void {
+    $team = Team::factory()->grantedPlan(Plan::Pro, CarbonImmutable::now()->subDay())->create([
+        'plan_override_end_handled_at' => CarbonImmutable::now(),
+    ]);
+
+    $team->update(['name' => 'Casa']);
+
+    expect($team->fresh()?->plan_override_end_handled_at)->toBeInstanceOf(CarbonImmutable::class);
+});
+
 it('casts the granted plan and its expiry', function (): void {
     $team = Team::factory()->grantedPlan(Plan::Pro, CarbonImmutable::now()->addWeek())->create();
 
     expect($team->fresh()?->plan_override)->toBe(Plan::Pro)
         ->and($team->fresh()?->plan_override_expires_at)->toBeInstanceOf(CarbonImmutable::class);
+});
+
+it('addresses notifications to the owner and admins who kept the switch on', function (): void {
+    [$owner, $team] = memberWithTeam();
+    subscribeToPro($team);
+    $admin = memberOf($team, Role::Admin);
+    $member = memberOf($team, Role::Member);
+    $quiet = memberOf($team, Role::Admin);
+    $team->users()->updateExistingPivot($quiet->getKey(), [
+        'notification_preferences' => ['member_changes' => false],
+    ]);
+
+    expect($team->notificationRecipients(NotificationType::MemberChanges)->modelKeys())
+        ->toEqualCanonicalizing([$owner->getKey(), $admin->getKey()])
+        ->and($team->notificationRecipients(NotificationType::BudgetAlerts)->modelKeys())
+        ->toEqualCanonicalizing([$owner->getKey(), $admin->getKey(), $quiet->getKey()])
+        ->and($member->getKey())->not->toBeIn($team->notificationRecipients(NotificationType::BudgetAlerts)->modelKeys());
+});
+
+it('leaves the causer out of the notification recipients', function (): void {
+    [$owner, $team] = memberWithTeam();
+    $admin = memberOf($team, Role::Admin);
+
+    expect($team->notificationRecipients(NotificationType::MemberChanges, $owner)->modelKeys())
+        ->toBe([$admin->getKey()]);
+});
+
+it('addresses notifications to a stored member of a free team, who acts as an admin', function (): void {
+    [$owner, $team] = memberWithTeam();
+    $member = memberOf($team, Role::Member);
+
+    expect($team->notificationRecipients(NotificationType::MemberChanges)->modelKeys())
+        ->toEqualCanonicalizing([$owner->getKey(), $member->getKey()]);
+});
+
+it('ignores the switches of a member demoted on a pro team', function (): void {
+    [$owner, $team] = memberWithTeam();
+    subscribeToPro($team);
+    $member = memberOf($team, Role::Member);
+    $team->users()->updateExistingPivot($member->getKey(), [
+        'notification_preferences' => ['member_changes' => true],
+    ]);
+
+    expect($team->notificationRecipients(NotificationType::MemberChanges)->modelKeys())
+        ->toBe([$owner->getKey()]);
 });

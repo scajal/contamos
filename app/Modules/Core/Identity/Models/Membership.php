@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Models;
 
+use App\Modules\Core\Identity\Enums\Team\NotificationType;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use Illuminate\Database\Eloquent\Attributes\Table;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property string $team_id
  * @property string $user_id
  * @property \App\Modules\Core\Identity\Enums\Team\Role $role
+ * @property array<string, bool>|null $notification_preferences
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \App\Modules\Core\Identity\Models\Team $team
@@ -47,8 +49,36 @@ class Membership extends Pivot
     protected function casts(): array
     {
         return [
+            'notification_preferences' => 'array',
             'role' => Role::class,
         ];
+    }
+
+    /**
+     * Get the notification switches of the membership with
+     * every type filled in, a type the member never touched
+     * reading as on.
+     *
+     * @return array<string, bool>
+     */
+    public function notificationPreferences(): array
+    {
+        $preferences = [];
+
+        foreach (NotificationType::cases() as $type) {
+            $preferences[$type->value] = $this->wantsNotification($type);
+        }
+
+        return $preferences;
+    }
+
+    /**
+     * Indicate if the member keeps the given notification
+     * type switched on. A type they never touched is on.
+     */
+    public function wantsNotification(NotificationType $type): bool
+    {
+        return ($this->notification_preferences[$type->value] ?? true) !== false;
     }
 
     /**

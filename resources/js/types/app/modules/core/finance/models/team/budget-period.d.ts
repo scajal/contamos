@@ -16,6 +16,7 @@ export interface BudgetPeriod {
     tag_id: string | null;
     team_id: string;
     until_month: string | null;
+    warning_threshold: number | null;
     created_at: string | null;
     updated_at: string | null;
     currency?: Currency;
@@ -32,6 +33,8 @@ export interface BudgetProgress {
     spent: string;
     remaining: string;
     percentage: number | null;
+    /** The percentage the team wants a warning at, if any. */
+    warning_threshold: number | null;
 }
 
 /**
@@ -63,4 +66,5 @@ export interface BudgetRow {
     status: BudgetPeriodStatus;
     target: BudgetTarget;
     until_month: string | null;
+    warning_threshold: number | null;
 }

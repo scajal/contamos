@@ -6,6 +6,7 @@ namespace App\Modules\Mcp\Tools\Transactions;
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Actions\Team\CreateTransactionEntry;
+use App\Modules\Core\Finance\Actions\Team\EvaluateBudgetAlerts;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
@@ -82,9 +83,9 @@ class ImportTransactions extends Tool
     /**
      * Handle the tool call.
      */
-    public function handle(Request $request, CreateTransactionEntry $createTransactionEntry): Response|ResponseFactory
+    public function handle(Request $request, CreateTransactionEntry $createTransactionEntry, EvaluateBudgetAlerts $evaluateBudgetAlerts): Response|ResponseFactory
     {
-        return $this->forTeam($request, function (Team $team, User $user) use ($request, $createTransactionEntry): Response|ResponseFactory {
+        return $this->forTeam($request, function (Team $team, User $user) use ($request, $createTransactionEntry, $evaluateBudgetAlerts): Response|ResponseFactory {
             $this->validateBatch($request);
 
             /** @var array<int, array<string, mixed>> $rows */
@@ -122,6 +123,11 @@ class ImportTransactions extends Tool
 
                 return TeamActivity::uuid();
             }));
+
+            // Alert once about the budgets the whole import pushed
+            // past a threshold, rather than once per row.
+            $evaluateBudgetAlerts->for($team)
+                ->using(array_map(fn (array $row): CarbonImmutable => CarbonImmutable::parse($this->text($row['attributes']['occurred_at'])), $resolved));
 
             return Response::structured([
                 'import_id' => $importId,

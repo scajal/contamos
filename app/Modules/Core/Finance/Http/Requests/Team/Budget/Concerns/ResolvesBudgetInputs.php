@@ -17,10 +17,11 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Exists;
 
 /**
- * Reads the months, target and currency a budget is written
- * with, and builds the rules that keep a budget unambiguous.
- * Every method takes the submitted values as a plain array,
- * so the web forms and the MCP tools validate alike.
+ * Reads the months, target, currency and warning threshold a
+ * budget is written with, and builds the rules that keep a
+ * budget unambiguous. Every method takes the submitted
+ * values as a plain array, so the web forms and the MCP
+ * tools validate alike.
  */
 trait ResolvesBudgetInputs
 {
@@ -77,6 +78,7 @@ trait ResolvesBudgetInputs
                 'string',
                 'date_format:'.self::MONTH_FORMAT,
             ],
+            'warning_threshold' => $this->warningThresholdRules(),
         ];
     }
 
@@ -115,6 +117,24 @@ trait ResolvesBudgetInputs
                 'string',
                 'date_format:'.self::MONTH_FORMAT,
             ],
+            'warning_threshold' => $this->warningThresholdRules(),
+        ];
+    }
+
+    /**
+     * The rules the share of the month's pot a warning fires
+     * at is validated with: a whole percentage short of the
+     * full budget, or nothing for no warning.
+     *
+     * @return array<int, string>
+     */
+    protected function warningThresholdRules(): array
+    {
+        return [
+            'sometimes',
+            'nullable',
+            'integer',
+            'between:1,99',
         ];
     }
 

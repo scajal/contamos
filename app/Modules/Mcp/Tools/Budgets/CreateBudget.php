@@ -30,7 +30,7 @@ use Laravel\Mcp\Server\Tool;
  * tags.
  */
 #[Name('create_budget')]
-#[Description('Set a monthly budget on a category or a tag (pass exactly one) in one currency the team holds, from `from_month` and optionally until `until_month` (both "YYYY-MM", inclusive). Months may not overlap another budget on the same target and currency. Needs a plan with budgets.')]
+#[Description('Set a monthly budget on a category or a tag (pass exactly one) in one currency the team holds, from `from_month` and optionally until `until_month` (both "YYYY-MM", inclusive). Months may not overlap another budget on the same target and currency. Optionally pass `warning_threshold` (1 to 99) to be warned once the month has used that percentage. Needs a plan with budgets.')]
 class CreateBudget extends Tool
 {
     use InteractsWithTeams;
@@ -64,6 +64,11 @@ class CreateBudget extends Tool
                 ->required(),
             'until_month' => $schema->string()
                 ->description('The last month, "YYYY-MM". Leave out for a budget that never ends.'),
+            'warning_threshold' => $schema->integer()
+                ->min(1)
+                ->max(99)
+                ->nullable()
+                ->description("The percentage of the month's budget, from 1 to 99, at which the team wants a warning. Leave out for no warning."),
         ];
     }
 
@@ -96,6 +101,7 @@ class CreateBudget extends Tool
                 $currencyKey => $this->currencyByCode($request->get('currency'))->getKey(),
                 'from_month' => $request->get('from_month'),
                 'until_month' => $request->get('until_month'),
+                'warning_threshold' => $request->get('warning_threshold'),
                 'target_kind' => $tag instanceof \App\Modules\Core\Finance\Models\Team\Tag ? BudgetTargetKind::Tag->value : BudgetTargetKind::Category->value,
                 ...($tag instanceof \App\Modules\Core\Finance\Models\Team\Tag ? [$tagKey => $tag->getKey()] : ['category' => $category]),
             ];
@@ -110,7 +116,7 @@ class CreateBudget extends Tool
             $budget = $createBudgetPeriod->for($team)
                 ->targeting($tag ?? Category::from($this->text($validated['category'])))
                 ->by($user)
-                ->using($this->validatedOnly($validated, ['amount', $currencyKey, 'from_month', 'until_month']));
+                ->using($this->validatedOnly($validated, ['amount', $currencyKey, 'from_month', 'until_month', 'warning_threshold']));
 
             return Response::structured(['budget' => $this->presentOneBudget($team, $budget)]);
         });

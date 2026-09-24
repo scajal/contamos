@@ -13,6 +13,8 @@ import settings from "@/routes/identity/teams/settings";
 import { Team } from "@/types/app/modules/core/identity/models/team";
 import { User } from "@/types/app/modules/core/identity/models/user";
 
+import { SettingsTabs } from "./_components/settings-tabs";
+
 type PageProps = {
     owner: User | null;
     team: Team;
@@ -28,6 +30,9 @@ const Index = () => {
         <div className="flex flex-col gap-8">
             {/** Header */}
             <Header />
+
+            {/** Tabs */}
+            <SettingsTabs value="details" />
 
             {/** Content */}
             <div className="flex flex-col gap-8">

@@ -19,12 +19,15 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One dated stretch of a budget in a single currency: how much
  * the target it follows is allowed each month, from which
  * month, and until which month if it ever stops. The
- * target is a category or a tag, never both.
+ * target is a category or a tag, never both. A period may
+ * also name the share of the month's pot at which the team
+ * wants to be warned.
  *
  * @property string $id
  * @property numeric $amount
@@ -34,8 +37,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $team_id
  * @property string|null $tag_id
  * @property \Carbon\CarbonImmutable|null $until_month
+ * @property int|null $warning_threshold
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\BudgetAlert> $alerts
  * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
  * @property-read \App\Modules\Core\Finance\Models\Team\Tag|null $tag
  * @property-read \App\Modules\Core\Identity\Models\Team $team
@@ -48,7 +53,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @mixin \Eloquent
  */
-#[Fillable('amount', 'category', 'currency_id', 'from_month', 'until_month')]
+#[Fillable('amount', 'category', 'currency_id', 'from_month', 'until_month', 'warning_threshold')]
 class BudgetPeriod extends Model
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
@@ -75,6 +80,7 @@ class BudgetPeriod extends Model
             // string comparison would then sort wrongly.
             'from_month' => 'immutable_date:Y-m-d',
             'until_month' => 'immutable_date:Y-m-d',
+            'warning_threshold' => 'integer',
         ];
     }
 
@@ -102,7 +108,7 @@ class BudgetPeriod extends Model
      */
     public function activityLogAttributes(): array
     {
-        return ['amount', $this->currency()->getForeignKeyName(), 'from_month', 'until_month'];
+        return ['amount', $this->currency()->getForeignKeyName(), 'from_month', 'until_month', 'warning_threshold'];
     }
 
     /**
@@ -112,6 +118,17 @@ class BudgetPeriod extends Model
     public function activityTeamKey(): ?string
     {
         return is_string($key = $this->getAttribute($this->team()->getForeignKeyName())) ? $key : null;
+    }
+
+    /**
+     * Get the alerts the period sent, one per month and
+     * threshold at most.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\BudgetAlert, $this>
+     */
+    public function alerts(): HasMany
+    {
+        return $this->hasMany(BudgetAlert::class);
     }
 
     /**

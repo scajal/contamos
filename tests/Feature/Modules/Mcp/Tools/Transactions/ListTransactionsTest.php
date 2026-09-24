@@ -147,6 +147,14 @@ it('rejects an invalid filter value', function (): void {
         ->assertHasErrors(['from']);
 });
 
+it('rejects a currency code that names no currency', function (): void {
+    [$user, $team] = mcpMember();
+
+    ContamosServer::actingAs($user)
+        ->tool(ListTransactions::class, ['team' => $team->slug, 'currency' => 'nope'])
+        ->assertHasErrors(['Unknown currency "nope".']);
+});
+
 it('is a read-only tool', function (): void {
     expect(new ListTransactions()->annotations())->toMatchArray(['readOnlyHint' => true]);
 });

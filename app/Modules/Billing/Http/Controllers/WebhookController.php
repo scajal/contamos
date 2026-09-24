@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Billing\Http\Controllers;
 
+use App\Modules\Billing\Actions\Team\NotifyProEnded;
 use App\Modules\Billing\Models\Customer;
+use App\Modules\Billing\Models\Subscription;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -17,15 +19,60 @@ use Symfony\Component\HttpFoundation\Response;
  * pointed at the team's billing transactions. The team's own
  * transactions() relation is its finance ledger, so Cashier's
  * default handler would write Paddle transactions into it.
+ * The end of a subscription also tells the Owner their team
+ * dropped to Free.
  */
 class WebhookController extends CashierWebhookController
 {
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct(
+        protected NotifyProEnded $notifyProEnded,
+    ) {
+        parent::__construct();
+    }
+
     /**
      * Handle a Paddle webhook call.
      */
     public function handle(Request $request): Response
     {
         return $this->__invoke($request);
+    }
+
+    /**
+     * Handle subscription canceled. Paddle sends it when the
+     * subscription actually ends, not when a cancellation is
+     * scheduled, so this is where a team drops from Pro.
+     *
+     * @param  array{data: array{id: string, status: string, canceled_at: string}}  $payload
+     */
+    protected function handleSubscriptionCanceled(array $payload): void
+    {
+        parent::handleSubscriptionCanceled($payload);
+
+        // Claim the end of the subscription in one conditional
+        // write, so a retried or concurrent webhook finds it
+        // handled and the Owner hears about the drop once.
+        $claimed = Subscription::query()
+            ->where('paddle_id', $payload['data']['id'])
+            ->whereNull('end_handled_at')
+            ->update(['end_handled_at' => CarbonImmutable::now()]);
+
+        if ($claimed === 0) {
+            return;
+        }
+
+        // Only teams are billed, so a subscription of anything
+        // else has no Owner to tell.
+        $subscription = Subscription::query()->where('paddle_id', $payload['data']['id'])->first();
+
+        if (! ($billable = $subscription?->billable) instanceof Team) {
+            return;
+        }
+
+        $this->notifyProEnded->using($billable);
     }
 
     /**

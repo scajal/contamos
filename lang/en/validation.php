@@ -316,6 +316,7 @@ return [
         'user' => 'user',
         'username' => 'username',
         'value' => 'value',
+        'warning_threshold' => 'warning threshold',
         'winner' => 'winner',
         'work' => 'work',
         'year' => 'year',

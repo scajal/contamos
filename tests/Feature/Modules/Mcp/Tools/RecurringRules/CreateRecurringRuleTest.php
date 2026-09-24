@@ -67,6 +67,17 @@ it('creates a rule with the currency inferred and its next due date', function (
         ->and($rule->next_due_date?->toDateString())->toBe('2026-05-31');
 });
 
+it('takes a numeric amount as its decimal string', function (): void {
+    ContamosServer::actingAs($this->user)
+        ->tool(CreateRecurringRule::class, [...$this->arguments, 'amount' => 1500])
+        ->assertOk()
+        ->assertStructuredContent(fn (AssertableJson $json): AssertableJson => $json
+            ->where('rule.amount', '1500.00')
+            ->etc());
+
+    expect(RecurringRule::query()->sole()->amount)->toBe('1500.000000000000000000');
+});
+
 it('refuses a backdated start with the web rules', function (): void {
     ContamosServer::actingAs($this->user)
         ->tool(CreateRecurringRule::class, [...$this->arguments, 'starts_on' => '2026-05-01'])

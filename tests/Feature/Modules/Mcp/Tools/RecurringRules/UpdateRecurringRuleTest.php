@@ -58,6 +58,26 @@ it('changes only what the call names, from the next occurrence on', function ():
         ->and($this->rule->next_due_date?->toDateString())->toBe('2026-06-15');
 });
 
+it('switches the currency on the rule\'s own account when only the currency is named', function (): void {
+    $dollar = Currency::factory()->active()->fiat()->create(['code' => 'ZZD', 'decimal_places' => 2]);
+    $accountId = $this->rule->account_id;
+    $this->rule->account->currencies()->attach($dollar, ['balance' => '0']);
+
+    ContamosServer::actingAs($this->user)
+        ->tool(UpdateRecurringRule::class, [
+            'team' => $this->team->slug,
+            'rule' => $this->rule->getKey(),
+            'currency' => 'zzd',
+        ])
+        ->assertOk();
+
+    $this->rule->refresh();
+
+    expect($this->rule->currency_id)->toBe($dollar->getKey())
+        ->and($this->rule->account_id)->toBe($accountId)
+        ->and($this->rule->amount)->toBe('25.000000000000000000');
+});
+
 it('refuses a team whose plan lacks recurring transactions', function (): void {
     Pennant::for($this->team)->deactivate(Feature::RecurTransactions);
 

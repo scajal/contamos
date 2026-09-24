@@ -88,6 +88,7 @@ class CreateBudgetPeriod
         $currencyId = $this->currencyId($attributes[$currencyKey] ?? null);
         $from = $this->month($attributes['from_month'] ?? null);
         $until = $this->month($attributes['until_month'] ?? null);
+        $threshold = $this->warningThreshold($attributes['warning_threshold'] ?? null);
 
         // A stretch without a first month has nowhere to start.
         if (! $from instanceof CarbonImmutable) {
@@ -100,7 +101,7 @@ class CreateBudgetPeriod
 
         // Everything the creation writes reads as one entry in
         // the team's activity log.
-        return TeamActivity::within(fn (): BudgetPeriod => DB::transaction(function () use ($team, $target, $attributes, $currencyKey, $currencyId, $from, $until): BudgetPeriod {
+        return TeamActivity::within(fn (): BudgetPeriod => DB::transaction(function () use ($team, $target, $attributes, $currencyKey, $currencyId, $from, $until, $threshold): BudgetPeriod {
             /** @var \App\Modules\Core\Finance\Models\Team\BudgetPeriod $period */
             $period = $team->budgets()->create([
                 ...$this->targetAttributes($target),
@@ -108,6 +109,7 @@ class CreateBudgetPeriod
                 $currencyKey => $currencyId,
                 'from_month' => $from,
                 'until_month' => $until,
+                'warning_threshold' => $threshold,
             ]);
 
             return $period;
@@ -116,8 +118,8 @@ class CreateBudgetPeriod
 
     /**
      * Pick a stopped period's budget back up from the current
-     * month, on the target, amount and currency it was
-     * stopped at, with no last month.
+     * month, on the target, amount, currency and warning
+     * threshold it was stopped at, with no last month.
      */
     public function resume(BudgetPeriod $stopped): BudgetPeriod
     {
@@ -130,6 +132,7 @@ class CreateBudgetPeriod
             $currencyKey => $stopped->getAttribute($currencyKey),
             'from_month' => CarbonImmutable::now()->startOfMonth(),
             'until_month' => null,
+            'warning_threshold' => $stopped->warning_threshold,
         ]);
     }
 }

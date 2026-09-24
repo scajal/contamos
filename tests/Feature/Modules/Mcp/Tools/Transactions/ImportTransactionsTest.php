@@ -3,13 +3,18 @@
 declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetAlertKind;
 use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Transaction;
+use App\Modules\Core\Finance\Notifications\Team\BudgetAlertNotification;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Mcp\Servers\ContamosServer;
 use App\Modules\Mcp\Tools\Transactions\ImportTransactions;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * Feature tests for \App\Modules\Mcp\Tools\Transactions\ImportTransactions.
@@ -75,6 +80,21 @@ it('writes nothing when one row is invalid, keying the error by row', function (
             'rows' => [importRow(), importRow(['category' => 'not-a-category'])],
         ])
         ->assertHasErrors(['rows.1.category']);
+
+    expect(Transaction::query()->count())->toBe(0);
+});
+
+it('writes nothing when a row names an unknown tag, naming the row', function (): void {
+    [$user, $team] = mcpMember();
+    $account = importToolAccount($team);
+
+    ContamosServer::actingAs($user)
+        ->tool(ImportTransactions::class, [
+            'team' => $team->slug,
+            'account' => $account->getKey(),
+            'rows' => [importRow(), importRow(['tags' => ['Nope']])],
+        ])
+        ->assertHasErrors(['rows.1: Unknown tag "Nope".']);
 
     expect(Transaction::query()->count())->toBe(0);
 });
@@ -172,4 +192,39 @@ it('imports every row under one batch marked as made through MCP', function (): 
         ->and(balanceOf($account, $account->currencies()->sole()))->toBe(-15.5);
 
     $response->assertSee('"import_id":"'.$importId.'"');
+});
+
+it('alerts once per budget after the whole import', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+    [$user, $team] = mcpMember();
+    $account = importToolAccount($team);
+    $currency = $account->currencies()->sole();
+    $food = BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($team)->withWarningThreshold(50)->create([
+        'amount' => '100',
+        $currency->getForeignKey() => $currency->getKey(),
+    ]);
+    $transport = BudgetPeriod::factory()->forCategory(Category::Transport)->running()->for($team)->create([
+        'amount' => '10',
+        $currency->getForeignKey() => $currency->getKey(),
+    ]);
+    Notification::fake();
+
+    ContamosServer::actingAs($user)
+        ->tool(ImportTransactions::class, [
+            'team' => $team->slug,
+            'account' => $account->getKey(),
+            'allow_duplicates' => true,
+            'rows' => [
+                ...array_fill(0, 6, importRow(['amount' => '20.00', 'category' => Category::Food->value, 'occurred_at' => '2026-09-14'])),
+                importRow(['amount' => '15.00', 'category' => Category::Transport->value, 'occurred_at' => '2026-09-14']),
+            ],
+        ])
+        ->assertOk();
+
+    Notification::assertSentToTimes($user, BudgetAlertNotification::class, 2);
+    Notification::assertSentTo($user, BudgetAlertNotification::class, fn (BudgetAlertNotification $notification): bool => $notification->budget->is($food)
+        && $notification->kind === BudgetAlertKind::Over
+        && $notification->percentage === 120.0);
+    Notification::assertSentTo($user, BudgetAlertNotification::class, fn (BudgetAlertNotification $notification): bool => $notification->budget->is($transport)
+        && $notification->kind === BudgetAlertKind::Over);
 });

@@ -27,7 +27,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
  * Budgets page does.
  */
 #[Name('set_budget_paused')]
-#[Description('Pause (true) a running open-ended budget: it keeps this month and stops after it. Resume (false) a paused budget: a new open-ended period starts this month on the same amount. Needs a plan with budgets.')]
+#[Description('Pause (true) a running open-ended budget: it keeps this month and stops after it. Resume (false) a paused budget: a new open-ended period starts this month on the same amount and warning threshold. Needs a plan with budgets.')]
 #[IsDestructive]
 class SetBudgetPaused extends Tool
 {

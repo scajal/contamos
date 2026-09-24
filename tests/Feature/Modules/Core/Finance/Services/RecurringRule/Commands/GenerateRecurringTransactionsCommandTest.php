@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
+use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetAlertKind;
+use App\Modules\Core\Finance\Enums\RecurringRule\FailureReason;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
 use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
+use App\Modules\Core\Finance\Notifications\Team\BudgetAlertNotification;
+use App\Modules\Core\Finance\Notifications\Team\RecurringRuleFailedNotification;
+use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * Feature tests for \App\Modules\Core\Finance\Services\RecurringRule\Commands\GenerateRecurringTransactionsCommand.
@@ -249,4 +256,84 @@ it('records a failure when the currency was removed from the account', function 
 
     expect(Transaction::query()->count())->toBe(0)
         ->and($rule->refresh()->failure_reason)->toBe(trans('The currency is no longer on the account.'));
+});
+
+it('emails the owner and admins once while a rule stays failed', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-05-20 10:00:00'));
+
+    [$rule, $account, $currency] = dueRule(['description' => 'Rent', 'starts_on' => '2026-05-20']);
+    $owner = memberOf($rule->team, Role::Owner);
+    $admin = memberOf($rule->team, Role::Admin);
+    $member = memberOf($rule->team, Role::Member);
+    $account->deactivate();
+    Notification::fake();
+
+    $this->artisan('finance:generate-recurring-transactions')->assertSuccessful();
+
+    Notification::assertSentTo(
+        [$owner, $admin],
+        RecurringRuleFailedNotification::class,
+        fn (RecurringRuleFailedNotification $notification): bool => $notification->team->is($rule->team)
+            && $notification->rule->is($rule)
+            && $notification->reason === FailureReason::InactiveAccount,
+    );
+    Notification::assertNotSentTo($member, RecurringRuleFailedNotification::class);
+
+    // A later run that fails for another reason stays quiet.
+    $account->activate();
+    $account->currencies()->detach($currency);
+
+    $this->artisan('finance:generate-recurring-transactions')->assertSuccessful();
+
+    expect($rule->refresh()->failure_reason)->toBe(trans('The currency is no longer on the account.'));
+
+    Notification::assertSentToTimes($owner, RecurringRuleFailedNotification::class, 1);
+    Notification::assertSentToTimes($admin, RecurringRuleFailedNotification::class, 1);
+});
+
+it('emails again when a rule fails after its failure was cleared', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-05-20 10:00:00'));
+
+    [$rule, $account] = dueRule(['starts_on' => '2026-05-20']);
+    $owner = memberOf($rule->team, Role::Owner);
+    $account->deactivate();
+    Notification::fake();
+
+    $this->artisan('finance:generate-recurring-transactions')->assertSuccessful();
+
+    $account->activate();
+
+    $this->artisan('finance:generate-recurring-transactions')->assertSuccessful();
+
+    expect($rule->refresh()->failure_reason)->toBeNull();
+
+    $account->deactivate();
+    $this->travelTo(CarbonImmutable::parse('2026-06-20 10:00:00'));
+
+    $this->artisan('finance:generate-recurring-transactions')->assertSuccessful();
+
+    Notification::assertSentToTimes($owner, RecurringRuleFailedNotification::class, 2);
+});
+
+it('alerts once per budget about what the run generated', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-09-15 10:00:00'));
+    [$rule, $account, $currency] = dueRule(['category' => Category::Food, 'starts_on' => '2026-09-15']);
+    RecurringRule::factory()->expense()->create([
+        ...$rule->only(['account_id', 'amount', 'currency_id', 'decimal_places', 'frequency', 'interval', 'team_id', 'time_of_day', 'timezone', 'user_id']),
+        'category' => Category::Food,
+        'starts_on' => '2026-09-14',
+    ]);
+    $owner = memberOf($rule->team, Role::Owner);
+    $budget = BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($rule->team)->create([
+        'amount' => '40',
+        $currency->getForeignKey() => $currency->getKey(),
+    ]);
+    Notification::fake();
+
+    $this->artisan('finance:generate-recurring-transactions')->assertSuccessful();
+
+    Notification::assertSentToTimes($owner, BudgetAlertNotification::class, 1);
+    Notification::assertSentTo($owner, BudgetAlertNotification::class, fn (BudgetAlertNotification $notification): bool => $notification->budget->is($budget)
+        && $notification->kind === BudgetAlertKind::Over
+        && $notification->percentage === 125.0);
 });

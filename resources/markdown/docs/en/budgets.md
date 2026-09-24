@@ -23,6 +23,7 @@ Open **Budgets** and choose **Create budget**. Choose what the budget follows, t
 - **Monthly amount**: how much may be spent each month.
 - **First month**: the month the budget starts.
 - **Last month**: leave it empty to keep the budget running, or set it to the first month for a one-off goal.
+- **Warn me at**: optional; the percentage of the amount, from 1 to 99, at which the team wants a warning. Leave it empty for no warning.
 
 Two budgets for the same category or tag in the same currency cannot cover the same month.
 
@@ -35,6 +36,18 @@ Progress is shown for the budget running this month. It counts the month's expen
 A transaction counts under its category and under each of its tags, so one expense can move several budgets. Transfers and opening balances never count.
 
 When spending passes the amount, the bar turns red and shows how much it is over by. The **Monthly** page shows the same progress next to each category and tag.
+
+## Warning threshold
+
+A budget with **Warn me at** set shows a mark on its progress bar at that percentage, and **Warning at** the percentage beside it. An AI assistant can set or change it too.
+
+While the budget is running, Contamos emails the team's Owner and Admins when the month's spending reaches the threshold, and again when it goes over the amount, whether or not a threshold is set. Each alert is sent at most once per budget per month:
+
+- a new month makes both alerts able to fire again;
+- raising the amount so spending falls back under a threshold makes that alert able to fire again;
+- editing or deleting transactions does not.
+
+Spending counts the same way as the progress bar, wherever it was recorded: in the app, by an AI assistant, by a recurring transaction or by an import. Paused, scheduled and ended budgets never alert. Each person can turn budget alerts off for a team; see [Notifications](/en/docs/notifications).
 
 ## Statuses
 

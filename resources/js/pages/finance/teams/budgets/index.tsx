@@ -33,7 +33,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBalances } from "@/hooks/use-balances";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import { formatAmount, formatMonth } from "@/lib/utils";
+import { formatAmount, formatMonth, formatPercentage } from "@/lib/utils";
 import routes from "@/routes/finance/teams/budgets";
 import { BudgetPeriodStatus } from "@/types/app/modules/core/finance/enums/budget-period/budget-period-status";
 import { BudgetRow } from "@/types/app/modules/core/finance/models/team/budget-period";
@@ -269,6 +269,17 @@ const Rows = () => {
                             <span>{budget.currency.code}</span>
                             <span aria-hidden>·</span>
                             <Months budget={budget} />
+                            {/** A budget in force shows its warning under the bar instead. */}
+                            {budget.warning_threshold !== null && !budget.progress ? (
+                                <>
+                                    <span aria-hidden>·</span>
+                                    <span>
+                                        {t("Warning at :percentage", {
+                                            percentage: formatPercentage(budget.warning_threshold, currentLocale()),
+                                        })}
+                                    </span>
+                                </>
+                            ) : null}
                         </ItemDescription>
                         {budget.progress ? (
                             <BudgetProgress

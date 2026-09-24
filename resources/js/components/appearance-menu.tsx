@@ -4,6 +4,7 @@ import { CheckIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { usePreference } from "@/hooks/use-preference";
 
 /**
  * The colour schemes the app offers. "system" follows the device, which is
@@ -42,7 +43,7 @@ const apply = (appearance: Appearance): void => {
 /**
  * The colour scheme options for the user menu. The choice is written to an
  * unencrypted `appearance` cookie, so the server can render the right one on
- * the next visit's first paint.
+ * the next visit's first paint, and stored on a signed-in member's account.
  */
 export const AppearanceMenu = () => {
     /**
@@ -60,6 +61,11 @@ export const AppearanceMenu = () => {
      * The chosen scheme, seeded from the server-read cookie.
      */
     const [appearance, setAppearance] = useState<Appearance>(initialAppearance);
+
+    /**
+     * Remember the scheme in the cookie and on the account.
+     */
+    const remember = usePreference("appearance");
 
     // Following the device means following it as it changes, which a
     // cookie read on the server cannot see.
@@ -80,7 +86,7 @@ export const AppearanceMenu = () => {
      * Remember the choice and paint the app in it.
      */
     const choose = (next: Appearance) => {
-        document.cookie = `appearance=${next}; path=/; max-age=31536000; samesite=lax`;
+        void remember(next);
 
         setAppearance(next);
         apply(next);

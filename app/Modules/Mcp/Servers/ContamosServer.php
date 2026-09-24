@@ -33,6 +33,7 @@ use ReflectionClass;
     - When an account holds several currencies and the user did not say which, ask instead of guessing.
     - Before importing a bank statement, run `import_transactions` with `dry_run: true`, show the user the summary and any suspected duplicates, and only then import.
     - Destructive tools change or delete the user's records; confirm with the user before calling them.
+    - Notification preferences (which emails a person gets about a team) cannot be changed here; send the user to the Notifications tab of the team's settings in the app.
     MARKDOWN)]
 class ContamosServer extends Server
 {

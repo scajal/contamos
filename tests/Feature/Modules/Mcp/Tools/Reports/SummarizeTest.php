@@ -123,6 +123,11 @@ it('refuses an account of another team', function (): void {
         ->assertHasErrors(['Account not found.']);
 });
 
+it('refuses a currency code that names no currency', function (): void {
+    summarizeAugust(['group_by' => 'category', 'currency' => 'ZZZ'])
+        ->assertHasErrors(['Unknown currency "ZZZ".']);
+});
+
 it('refuses an unknown grouping and a backwards range', function (): void {
     summarizeAugust(['group_by' => 'member'])->assertHasErrors(['group by']);
     summarizeAugust(['group_by' => 'category', 'from' => '2026-09-01'])->assertHasErrors(['to']);

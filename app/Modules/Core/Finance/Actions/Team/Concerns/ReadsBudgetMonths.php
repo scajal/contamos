@@ -9,7 +9,8 @@ use Exception;
 
 /**
  * Reads the month bounds a budget period is written with,
- * whichever notation they arrive in.
+ * whichever notation they arrive in, along with its currency
+ * and warning threshold.
  */
 trait ReadsBudgetMonths
 {
@@ -46,5 +47,29 @@ trait ReadsBudgetMonths
         }
 
         return $value;
+    }
+
+    /**
+     * Read the share of the month's pot at which the team
+     * wants to be warned, or null when no warning is
+     * wanted. A value that is not a whole number has
+     * escaped validation, so it is refused.
+     */
+    protected function warningThreshold(mixed $value): ?int
+    {
+        // A blank threshold means no warning at all.
+        if (blank($value)) {
+            return null;
+        }
+
+        // A form submits the figure as a string and an
+        // assistant as a number, so both are read alike.
+        $threshold = filter_var($value, FILTER_VALIDATE_INT);
+
+        if (! is_int($threshold)) {
+            throw new Exception('A budget period warning threshold must be a whole number.');
+        }
+
+        return $threshold;
     }
 }

@@ -3,8 +3,11 @@
 declare(strict_types=1);
 
 use App\Modules\Core\Identity\Enums\Team\Role;
+use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Core\Identity\Notifications\Team\MemberJoinedNotification;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
@@ -195,5 +198,72 @@ describe('accept', function (): void {
             ->and($activities->first()?->attribute_changes['attributes'])->toHaveKey('accepted_at')
             ->and($activities->last()?->subject?->is($user))->toBeTrue()
             ->and($activities->last()?->attribute_changes['attributes'])->toBe(['role' => Role::Admin->value]);
+    });
+});
+
+describe('accept notifications', function (): void {
+    it('notifies the owner and admins of the team, not its members nor the one who joined', function (): void {
+        $team = Team::factory()->create();
+        subscribeToPro($team);
+        $owner = memberOf($team, Role::Owner);
+        $admin = memberOf($team, Role::Admin);
+        $member = memberOf($team, Role::Member);
+        $user = User::factory()->create(['email' => 'ada@example.com'])->refresh();
+        $this->actingAs($user);
+        $invitation = TeamInvitation::factory()->for($team)->create(['email' => 'ada@example.com', 'role' => Role::Admin]);
+        Notification::fake();
+
+        $this->post(route('identity.invitations.accept', ['invitation' => $invitation]))
+            ->assertRedirect();
+
+        Notification::assertSentTo(
+            [$owner, $admin],
+            MemberJoinedNotification::class,
+            fn (MemberJoinedNotification $notification): bool => $notification->team->is($team)
+                && $notification->memberName === $user->name
+                && $notification->role === Role::Admin,
+        );
+        Notification::assertNotSentTo([$member, $user], MemberJoinedNotification::class);
+    });
+
+    it('spares a recipient who switched member changes off on that team, but not on another', function (): void {
+        $recipient = User::factory()->create();
+        $quiet = Team::factory()->create();
+        memberOf($quiet, Role::Owner, $recipient);
+        $quiet->users()->updateExistingPivot($recipient->getKey(), [
+            'notification_preferences' => ['member_changes' => false],
+        ]);
+        $loud = Team::factory()->create();
+        memberOf($loud, Role::Owner, $recipient);
+        $user = User::factory()->create(['email' => 'ada@example.com'])->refresh();
+        $this->actingAs($user);
+        Notification::fake();
+
+        $this->post(route('identity.invitations.accept', [
+            'invitation' => TeamInvitation::factory()->for($quiet)->create(['email' => 'ada@example.com']),
+        ]))->assertRedirect();
+
+        Notification::assertNothingSentTo($recipient);
+
+        $this->post(route('identity.invitations.accept', [
+            'invitation' => TeamInvitation::factory()->for($loud)->create(['email' => 'ada@example.com']),
+        ]))->assertRedirect();
+
+        Notification::assertSentTo(
+            $recipient,
+            MemberJoinedNotification::class,
+            fn (MemberJoinedNotification $notification): bool => $notification->team->is($loud),
+        );
+    });
+
+    it('notifies nobody when the user already belongs to the team', function (): void {
+        [$user, $team] = actingMember(Role::Admin);
+        $invitation = TeamInvitation::factory()->for($team)->create(['email' => $user->email]);
+        Notification::fake();
+
+        $this->post(route('identity.invitations.accept', ['invitation' => $invitation]))
+            ->assertRedirect();
+
+        Notification::assertNothingSent();
     });
 });

@@ -23,7 +23,7 @@ Contamos no se conecta a tu banco, no mueve dinero ni calcula quién le debe a q
 - **Libro.** Cómo registran el dinero las [cuentas y monedas](/es/docs/accounts-and-currencies), los [movimientos y transferencias](/es/docs/transactions-and-transfers), las [etiquetas](/es/docs/tags) y los [tipos de cambio](/es/docs/exchange-rates).
 - **Planificación.** [Presupuestos](/es/docs/budgets) y [transacciones recurrentes](/es/docs/recurring-transactions).
 - **Equipo.** [Miembros y roles](/es/docs/members-and-roles) y el [registro de actividad](/es/docs/activity-log).
-- **Más.** [Planes y límites](/es/docs/plans-and-limits) y [asistentes de IA](/es/docs/ai-assistants).
+- **Más.** [Planes y límites](/es/docs/plans-and-limits), [notificaciones](/es/docs/notifications) y [asistentes de IA](/es/docs/ai-assistants).
 
 ## Gratis y Pro
 

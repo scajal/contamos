@@ -100,6 +100,17 @@ it('refuses an unknown team and a team the user is not in alike', function (): v
         ->assertHasErrors([$message]);
 });
 
+it('refuses a call that names no team', function (mixed $slug): void {
+    [$user] = mcpMember();
+
+    ProbeServer::actingAs($user)
+        ->tool(ProbeTeamTool::class, ['team' => $slug])
+        ->assertHasErrors(['Team not found. Call `list_teams` to see the slugs of the teams you belong to.']);
+})->with([
+    'an empty slug' => '',
+    'a number' => 42,
+]);
+
 it('reaches a free team', function (): void {
     [$user, $team] = memberWithTeam();
 
@@ -162,6 +173,22 @@ it('marks what an MCP call writes to the activity log with the assistant', funct
         'via' => 'mcp',
         'client_id' => 'https://claude.ai/oauth/mcp-oauth-client-metadata',
         'client_name' => 'claude.ai',
+    ]);
+});
+
+it('names an assistant known only by its client id by that id', function (): void {
+    [$user, $team] = mcpMember();
+    clearActivities();
+    Context::addHidden('mcp.client_id', 'client_01ABC');
+
+    ProbeServer::actingAs($user)
+        ->tool(ProbeTeamTool::class, ['team' => $team->slug])
+        ->assertOk();
+
+    expect(activitiesOf($team, 'probed')->sole()->properties?->all())->toMatchArray([
+        'via' => 'mcp',
+        'client_id' => 'client_01ABC',
+        'client_name' => 'client_01ABC',
     ]);
 });
 

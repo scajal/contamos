@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Modules\Core\Identity\Enums\Team\Permission;
 use App\Modules\Core\Identity\Enums\Team\Role;
+use App\Modules\Core\Identity\Enums\User\PreferenceKey;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Core\Identity\Models\User\Preference;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -90,4 +92,32 @@ it('holds no permissions on a team the user does not belong to', function (): vo
     $team = Team::factory()->create();
 
     expect($user->hasTeamPermission($team, Permission::CreateInvitation))->toBeFalse();
+});
+
+it('reads the value the user stored for a preference', function (): void {
+    $user = User::factory()->create();
+    Preference::factory()->for($user)->appearance('light')->create();
+
+    expect($user->preference(PreferenceKey::Appearance))->toBe('light')
+        ->and($user->preference(PreferenceKey::Locale))->toBeNull();
+});
+
+it('prefers the stored locale for mail and notifications', function (): void {
+    $user = User::factory()->create();
+    Preference::factory()->for($user)->locale('es')->create();
+
+    expect($user->preferredLocale())->toBe('es');
+});
+
+it('falls back to english for a user who never stored a locale', function (): void {
+    $user = User::factory()->create();
+
+    expect($user->preferredLocale())->toBe('en');
+});
+
+it('reads the membership that ties the user to a team', function (): void {
+    [$user, $team] = memberWithTeam(Role::Admin);
+
+    expect($user->membershipOn($team)?->role)->toBe(Role::Admin)
+        ->and($user->membershipOn(Team::factory()->create()))->toBeNull();
 });

@@ -8,6 +8,7 @@ use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Actions\Team\CreateTransactionEntry;
 use App\Modules\Core\Finance\Actions\Team\DeleteTransaction;
+use App\Modules\Core\Finance\Actions\Team\EvaluateBudgetAlerts;
 use App\Modules\Core\Finance\Actions\Team\UpdateTransaction;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\OffersMovementCategories;
@@ -134,7 +135,7 @@ class TransactionController
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateTransactionEntry $createTransactionEntry): RedirectResponse
+    public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateTransactionEntry $createTransactionEntry, EvaluateBudgetAlerts $evaluateBudgetAlerts): RedirectResponse
     {
         // Record the entry, creating its recurring rule when it
         // repeats and its first occurrence once it is due.
@@ -142,6 +143,11 @@ class TransactionController
             ->for($team)
             ->by($user)
             ->using($request->validated(), $request->tagIds());
+
+        // Alert about the budgets the new movement pushed past
+        // a threshold.
+        $evaluateBudgetAlerts->for($team)
+            ->using([$transaction?->occurred_at]);
 
         // Flash a success message to the session, offering to take the
         // entry back so a wrong tap costs one tap rather than a trip
@@ -211,7 +217,7 @@ class TransactionController
     /**
      * Update the specified resource in storage.
      */
-    public function update(Team $team, Transaction $transaction, UpdateRequest $request, UpdateTransaction $updateTransaction): RedirectResponse
+    public function update(Team $team, Transaction $transaction, UpdateRequest $request, UpdateTransaction $updateTransaction, EvaluateBudgetAlerts $evaluateBudgetAlerts): RedirectResponse
     {
         // A row the plan hides reports not found, as on show.
         $this->assertTransactionIsVisible($team, $transaction);
@@ -231,6 +237,11 @@ class TransactionController
                 'quote',
                 'type',
             ]), $request->tagIds());
+
+        // Alert about the budgets the changed movement pushed
+        // past a threshold.
+        $evaluateBudgetAlerts->for($team)
+            ->using([$transaction->occurred_at]);
 
         // Flash a success message to the session.
         Toast::make(trans('Saved'))

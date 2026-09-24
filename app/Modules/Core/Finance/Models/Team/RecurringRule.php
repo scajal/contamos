@@ -4,6 +4,7 @@ namespace App\Modules\Core\Finance\Models\Team;
 
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\RecurringRule\FailureReason;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
 use App\Modules\Core\Finance\Enums\RecurringRule\Status;
 use App\Modules\Core\Finance\Enums\Transaction\Category;
@@ -286,12 +287,21 @@ class RecurringRule extends Model
      * The due date is left where it was, so the occurrence is retried
      * on the next run once the cause is fixed.
      */
-    public function markFailed(string $reason): void
+    public function markFailed(FailureReason $reason): void
     {
         $this->forceFill([
             'failed_at' => CarbonImmutable::now(),
-            'failure_reason' => $reason,
+            'failure_reason' => $reason->getLabel(),
         ])->save();
+    }
+
+    /**
+     * Determine whether the rule's last run failed and nothing
+     * has cleared that failure since.
+     */
+    public function hasFailed(): bool
+    {
+        return $this->failure_reason !== null;
     }
 
     /**
@@ -332,7 +342,7 @@ class RecurringRule extends Model
             return Status::Paused;
         }
 
-        return $this->failure_reason !== null ? Status::Failed : Status::Active;
+        return $this->hasFailed() ? Status::Failed : Status::Active;
     }
 
     /**

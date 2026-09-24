@@ -96,6 +96,7 @@ enum Role: string implements HasLabel
             self::Admin => [
                 Permission::CancelInvitation,
                 Permission::CreateInvitation,
+                Permission::ManageNotifications,
                 Permission::RemoveMember,
                 Permission::UpdateMember,
                 Permission::UpdateTeam,

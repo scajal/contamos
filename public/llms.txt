@@ -4,7 +4,7 @@
 
 A ledger logs income and expense transactions with tags, and every transaction stores the exchange rate of the day it happened. The free plan needs no card; Pro removes the free plan's account, member and transaction limits.
 
-On every plan, AI assistants such as Claude and ChatGPT can connect to a ledger through a remote MCP server at https://contamos.xyz/mcp, signing in as the user, within the limits of each team's plan. They can read balances and reports, record and edit movements, and import a bank statement the user hands them after a dry run the user reviews.
+On every plan, AI assistants such as Claude and ChatGPT can connect to a ledger through a remote MCP server at https://contamos.xyz/mcp, signing in as the user, within the limits of each team's plan. They can read balances and reports, record and edit movements, and import a bank statement the user hands them after a dry run the user reviews. Assistants cannot change notification preferences: those are managed per person and per team in the app, under team settings, Notifications, so an assistant should send the user there.
 
 ## Pages
 
@@ -27,6 +27,7 @@ Every page is also available in Spanish at the same path under /es.
 - [Members and roles](https://contamos.xyz/en/docs/members-and-roles.md): invitations, the owner, admin and member roles, and leaving a team.
 - [Activity log](https://contamos.xyz/en/docs/activity-log.md): every change made inside a team (Pro).
 - [Plans and limits](https://contamos.xyz/en/docs/plans-and-limits.md): what the Free plan allows and what Pro removes and adds.
+- [Notifications](https://contamos.xyz/en/docs/notifications.md): the emails a team's Owner and Admins receive (member changes, budget alerts, recurring failures, the monthly summary), and how to turn each off or unsubscribe.
 - [AI assistants](https://contamos.xyz/en/docs/ai-assistants.md): connecting Claude or ChatGPT, with example prompts.
 
 ## Legal

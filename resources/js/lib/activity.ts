@@ -39,6 +39,7 @@ export const ACTIVITY_FIELD_LABELS: Record<string, string> = {
     tags: "Tags",
     trial_ends_at: "Trial ends",
     type: "Type",
+    warning_threshold: "Warning threshold",
 };
 
 /**

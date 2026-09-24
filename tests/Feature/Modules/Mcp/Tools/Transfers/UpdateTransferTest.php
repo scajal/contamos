@@ -5,11 +5,17 @@ declare(strict_types=1);
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Core\Finance\Actions\Team\CreateTransfer as CreateTransferAction;
+use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetAlertKind;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Transfer;
+use App\Modules\Core\Finance\Notifications\Team\BudgetAlertNotification;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Mcp\Servers\ContamosServer;
 use App\Modules\Mcp\Tools\Transfers\UpdateTransfer;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Testing\Fluent\AssertableJson;
 
 /**
@@ -177,4 +183,24 @@ it('refuses a transfer of another team as not found', function (): void {
 
 it('is a destructive tool', function (): void {
     expect(new UpdateTransfer()->annotations())->toMatchArray(['destructiveHint' => true]);
+});
+
+it('alerts when the edit adds a fee that pushes a budget over', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+    [$user, $team, $origin, $destination, $currency, $transfer] = updateTransferToolSides(['occurred_at' => '2026-09-15 10:00:00']);
+    BudgetPeriod::factory()->forCategory(Category::Other)->running()->for($team)->create([
+        'amount' => '1',
+        $currency->getForeignKey() => $currency->getKey(),
+    ]);
+    Notification::fake();
+
+    ContamosServer::actingAs($user)
+        ->tool(UpdateTransfer::class, [
+            'team' => $team->slug,
+            'transfer' => $transfer->getKey(),
+            'origin_fee' => '2.00',
+        ])
+        ->assertOk();
+
+    Notification::assertSentTo($user, BudgetAlertNotification::class, fn (BudgetAlertNotification $notification): bool => $notification->kind === BudgetAlertKind::Over);
 });

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Providers;
 
+use App\Modules\Core\Identity\Events\Team\NotifiesTeam;
+use App\Modules\Core\Identity\Listeners\Team\SendTeamNotification;
 use App\Modules\Core\Identity\Models\Team\Activity;
 use App\Modules\Mcp\Helpers\McpContext;
 use App\Modules\Support\Helpers\TeamActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Spatie\Activitylog\Actions\LogActivityAction;
 use Spatie\Activitylog\Contracts\Activity as ActivityContract;
@@ -21,6 +24,17 @@ class IdentityServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureActivityLog();
+        $this->configureTeamNotifications();
+    }
+
+    /**
+     * Send the Owner and Admins of a team the email of every
+     * event that notifies the team. Listening on the contract
+     * wires every such event, present and future, at once.
+     */
+    protected function configureTeamNotifications(): void
+    {
+        Event::listen(NotifiesTeam::class, SendTeamNotification::class);
     }
 
     /**

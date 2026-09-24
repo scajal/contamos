@@ -18,6 +18,8 @@ A connected assistant can:
 
 It never invents an exchange rate: when there is no rate for a date, it asks you for one. Before anything that changes or deletes what you recorded, it is instructed to ask you first.
 
+It cannot change which emails you receive. [Notifications](/en/docs/notifications) are managed in the app, from the **Notifications** tab of the team's settings, so an assistant sends you there instead.
+
 ## As you, within your team's plan
 
 You sign in to Contamos once, from the assistant. From then on it acts as you, with your role on each of your teams, and it reaches exactly what you can reach in the app: on the Free plan it sees the same history, and the features that need Pro still need Pro. See [Plans and limits](/en/docs/plans-and-limits).

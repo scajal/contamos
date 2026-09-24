@@ -51,6 +51,20 @@ it('reports the current month progress of the running budget', function (): void
             ->etc());
 });
 
+it('returns the warning threshold of each budget', function (): void {
+    [$user, $team] = mcpMember();
+    $currency = Currency::factory()->active()->fiat()->create(['code' => 'USD', 'decimal_places' => 2]);
+    $tag = Tag::factory()->active()->for($team)->create(['name' => 'Vacation']);
+    BudgetPeriod::factory()->running()->withWarningThreshold(80)->forTag($tag)->for($currency)->create();
+
+    ContamosServer::actingAs($user)
+        ->tool(ListBudgets::class, ['team' => $team->slug])
+        ->assertOk()
+        ->assertStructuredContent(fn (AssertableJson $json): AssertableJson => $json
+            ->where('budgets.0.warning_threshold', 80)
+            ->etc());
+});
+
 it('stays readable on a plan without budgets', function (): void {
     [$user, $team] = mcpMember();
     Pennant::for($team)->deactivate(Feature::ManageBudgets);

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Core\Finance\Services\MonthlySummary\Commands\SendMonthlySummariesCommand;
 use App\Modules\Core\Finance\Services\RecurringRule\Commands\GenerateRecurringTransactionsCommand;
 use Illuminate\Support\Facades\Schedule;
 
@@ -20,3 +21,10 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command(GenerateRecurringTransactionsCommand::class)
     ->withoutOverlapping()
     ->hourly();
+
+// On the 1st, once the month before has closed everywhere
+// the team's members might be.
+Schedule::command(SendMonthlySummariesCommand::class)
+    ->withoutOverlapping()
+    ->monthlyOn(1, '09:00')
+    ->timezone('UTC');

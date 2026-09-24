@@ -27,22 +27,26 @@ export const WizardLayout = ({ children }: { children: React.ReactNode }) => {
                                 <BrandMark />
                                 <span className="font-heading text-base font-semibold tracking-tight">contamos</span>
                             </a>
-                            {/** User menu */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger className="rounded-full">
-                                    <Avatar>
-                                        <AvatarImage src={user?.avatar ?? undefined} />
-                                        <AvatarFallback>{initials(user?.name ?? "")}</AvatarFallback>
-                                    </Avatar>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="min-w-56" side="bottom" sideOffset={4}>
-                                    <div className="flex flex-col px-2 py-1.5">
-                                        <span className="truncate text-sm font-medium">{user?.name}</span>
-                                        <span className="text-muted-foreground truncate text-xs">{user?.email}</span>
-                                    </div>
-                                    <UserMenuItems />
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            {/** User menu, when somebody is signed in */}
+                            {user && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger className="rounded-full">
+                                        <Avatar>
+                                            <AvatarImage src={user?.avatar ?? undefined} />
+                                            <AvatarFallback>{initials(user?.name ?? "")}</AvatarFallback>
+                                        </Avatar>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="min-w-56" side="bottom" sideOffset={4}>
+                                        <div className="flex flex-col px-2 py-1.5">
+                                            <span className="truncate text-sm font-medium">{user?.name}</span>
+                                            <span className="text-muted-foreground truncate text-xs">
+                                                {user?.email}
+                                            </span>
+                                        </div>
+                                        <UserMenuItems />
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
                         </div>
                     </div>
                 </header>

@@ -102,11 +102,13 @@ trait CalculatesBudgetProgress
      * along that is. Income tagged into the budget enlarges
      * the pot, so a money injection shows up in what
      * remains. The percentage is not capped, so going
-     * over reads past a hundred.
+     * over reads past a hundred. The share the team wants
+     * to be warned at travels alongside, so a reader can
+     * tell whether the month has crossed it.
      *
      * @param  numeric-string  $income
      * @param  numeric-string  $expenses
-     * @return array{amount: numeric-string, income: numeric-string, spent: numeric-string, remaining: numeric-string, percentage: float|null}
+     * @return array{amount: numeric-string, income: numeric-string, spent: numeric-string, remaining: numeric-string, percentage: float|null, warning_threshold: int|null}
      */
     protected function budgetProgress(BudgetPeriod $period, string $income, string $expenses): array
     {
@@ -126,6 +128,7 @@ trait CalculatesBudgetProgress
             'spent' => $expenses,
             'remaining' => bcsub($pot, $expenses, self::BUDGET_SCALE),
             'percentage' => $percentage,
+            'warning_threshold' => $period->warning_threshold,
         ];
     }
 }

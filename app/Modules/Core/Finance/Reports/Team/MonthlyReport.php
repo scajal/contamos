@@ -409,20 +409,13 @@ class MonthlyReport
     }
 
     /**
-     * Read a raw or cast category column as a case, where a
-     * value this build does not know is read as Other, the
-     * bucket the aggregate already files the uncategorized
-     * money under.
+     * Read a cast category column as a case. The model casts
+     * the column, so anything else only reads as Other, the
+     * bucket the aggregate files uncategorized money under.
      */
     protected function category(mixed $value): Category
     {
-        // The model casts the column, so the aggregate hands
-        // back a case rather than its value.
-        if ($value instanceof Category) {
-            return $value;
-        }
-
-        return Category::tryFrom($this->text($value)) ?? Category::Other;
+        return $value instanceof Category ? $value : Category::Other;
     }
 
     /**

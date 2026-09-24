@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
+use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetAlertKind;
 use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
+use App\Modules\Core\Finance\Notifications\Team\BudgetAlertNotification;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Mcp\Servers\ContamosServer;
 use App\Modules\Mcp\Tools\Transactions\CreateTransaction;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Testing\Fluent\AssertableJson;
 
 /**
@@ -271,6 +275,30 @@ it('requires a timezone to repeat', function (): void {
         ->and(Transaction::query()->count())->toBe(0);
 });
 
+it('requires the account and the date it happened', function (string $missing, string $message): void {
+    [$user, $team] = mcpMember();
+    $account = createTransactionToolAccount($team);
+
+    $arguments = [
+        'team' => $team->slug,
+        'type' => 'expense',
+        'account' => $account->getKey(),
+        'amount' => '10',
+        'category' => Category::Food->value,
+        'occurred_at' => '2026-08-14',
+        'quote' => '1',
+    ];
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateTransaction::class, [...$arguments, $missing => ''])
+        ->assertHasErrors([$message]);
+
+    expect(Transaction::query()->count())->toBe(0);
+})->with([
+    'account' => ['account', "The account is required. Call `list_accounts` to see the team's accounts."],
+    'occurred_at' => ['occurred_at', 'The date it happened is required.'],
+]);
+
 it('refuses an account of another team', function (): void {
     [$user, $team] = mcpMember();
     $foreign = createTransactionToolAccount(Team::factory()->create());
@@ -308,4 +336,31 @@ it('refuses an inactive account', function (): void {
         ->assertHasErrors(['is inactive']);
 
     expect(Transaction::query()->count())->toBe(0);
+});
+
+it('alerts when the expense pushes a budget past its warning threshold', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+    [$user, $team] = mcpMember();
+    $account = createTransactionToolAccount($team);
+    $currency = $account->currencies()->sole();
+    $budget = BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($team)->withWarningThreshold(80)->create([
+        'amount' => '100',
+        $currency->getForeignKey() => $currency->getKey(),
+    ]);
+    Notification::fake();
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateTransaction::class, [
+            'team' => $team->slug,
+            'type' => 'expense',
+            'account' => $account->getKey(),
+            'amount' => '90',
+            'category' => Category::Food->value,
+            'occurred_at' => '2026-09-15',
+            'quote' => '1',
+        ])
+        ->assertOk();
+
+    Notification::assertSentTo($user, BudgetAlertNotification::class, fn (BudgetAlertNotification $notification): bool => $notification->budget->is($budget)
+        && $notification->kind === BudgetAlertKind::Warning);
 });

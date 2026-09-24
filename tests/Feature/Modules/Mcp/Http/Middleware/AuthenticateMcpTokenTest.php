@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Modules\Mcp\Models\RevokedGrant;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
 
 /**
@@ -102,4 +104,22 @@ it('ignores a token passed in the query string', function (): void {
         ->postJson('/mcp?access_token='.mcpToken($user), ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list']);
 
     assertRefusedToken($response);
+});
+
+it('fetches the signing keys again when AuthKit rotated them', function (): void {
+    [$user] = memberWithTeam();
+    Cache::put('mcp.authkit.jwks', ['keys' => [[
+        'kty' => 'RSA',
+        'kid' => 'retired-key',
+        'use' => 'sig',
+        'alg' => 'RS256',
+        'n' => authKitKeyPair()['n'],
+        'e' => authKitKeyPair()['e'],
+    ]]]);
+
+    mcpCall(mcpToken($user))->assertOk();
+
+    Http::assertSentCount(1);
+
+    expect(Cache::get('mcp.authkit.jwks'))->toHaveKey('keys.0.kid', 'test-key');
 });

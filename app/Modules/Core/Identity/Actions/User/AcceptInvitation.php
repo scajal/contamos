@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Actions\User;
 
+use App\Modules\Core\Identity\Events\Team\MemberJoined;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
@@ -58,6 +59,9 @@ class AcceptInvitation
             // is already a member.
             if (! $user->belongsToTeam($invitation->team)) {
                 $user->teams()->attach($invitation->team, ['role' => $invitation->role]);
+
+                // Tell the Owner and Admins, once the join commits.
+                MemberJoined::dispatch($invitation->team, $user, $invitation->role);
             }
 
             // Mark the invitation as accepted.

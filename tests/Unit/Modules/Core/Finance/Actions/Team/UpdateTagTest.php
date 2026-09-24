@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Actions\Team\UpdateTag;
+use App\Modules\Core\Finance\Models\Team\BudgetAlert;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Identity\Models\Team;
@@ -59,4 +60,23 @@ it('leaves a running budget untouched when the amount has not moved', function (
 
     expect($period->fresh()?->amount)->toBe('100.000000000000000000')
         ->and($tag->budgetPeriods()->count())->toBe(1);
+});
+
+it('re-arms this month\'s alerts when the quick amount is raised past the spending', function (): void {
+    $team = Team::factory()->create();
+    $currency = Currency::factory()->fiat()->create();
+    $tag = Tag::factory()->for($team)->create();
+    $period = BudgetPeriod::factory()->forTag($tag)->create([
+        'amount' => '100.00',
+        'currency_id' => $currency->getKey(),
+        'from_month' => now()->startOfMonth(),
+        'until_month' => null,
+    ]);
+    BudgetAlert::factory()->over()->for($period)->create();
+
+    (new UpdateTag)->for($team)->using($tag, ['name' => $tag->name], [
+        $currency->getKey() => '500.00',
+    ]);
+
+    expect($period->alerts()->count())->toBe(0);
 });

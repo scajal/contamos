@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Actions\Team;
 
+use App\Modules\Core\Identity\Events\Team\MemberLeft;
+use App\Modules\Core\Identity\Events\Team\MemberRemoved;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Helpers\TeamActivity;
@@ -16,6 +18,22 @@ class RemoveMember
      * The team from which the member will be removed.
      */
     public ?Team $team = null;
+
+    /**
+     * The user removing the member, who is the member
+     * themself when they leave.
+     */
+    public ?User $user = null;
+
+    /**
+     * Set the user removing the member.
+     */
+    public function by(User $user): self
+    {
+        $this->user = $user;
+
+        return $this;
+    }
 
     /**
      * Set the team from which the member will be removed.
@@ -38,9 +56,16 @@ class RemoveMember
             throw new Exception('A member cannot be removed without a team.');
         }
 
-        $team = $this->team;
+        // If the user removing the member is not set, throw an
+        // exception.
+        if (! $this->user instanceof User) {
+            throw new Exception('A member cannot be removed without the user removing them.');
+        }
 
-        return DB::transaction(function () use ($member, $team): ?Team {
+        $team = $this->team;
+        $user = $this->user;
+
+        return DB::transaction(function () use ($member, $team, $user): ?Team {
             // Remember the stored role the member carried, since
             // the membership row is about to go.
             $role = $member->teams()
@@ -55,6 +80,14 @@ class RemoveMember
             TeamActivity::record($member, 'member_removed', [
                 'old' => ['role' => $role?->value],
             ], $team);
+
+            // Tell the Owner and Admins, once the removal commits,
+            // whether the member left or somebody removed them.
+            if ($user->is($member)) {
+                MemberLeft::dispatch($team, $member->name);
+            } else {
+                MemberRemoved::dispatch($team, $member->name, $user);
+            }
 
             // Keep the current team of the member untouched when it
             // is not the team it was removed from.

@@ -16,6 +16,8 @@ use Carbon\CarbonImmutable;
  */
 trait ReplacesRunningBudgetPeriod
 {
+    use RearmsBudgetAlerts;
+
     /**
      * Set the tag's running amount for the currency from the
      * current month on. A blank amount stops the budget at
@@ -58,17 +60,24 @@ trait ReplacesRunningBudgetPeriod
         // on, so there is no history to keep and the amount
         // is changed in place.
         if ($running->from_month->greaterThanOrEqualTo($month)) {
+            $previousAmount = (string) $running->amount;
+
             $running->update(['amount' => $amount]);
+
+            // A raised amount re-arms the month's alerts whose
+            // threshold is no longer met.
+            $this->rearmBudgetAlerts($running, $previousAmount);
 
             return $running;
         }
 
         // Past months keep the amount that was in force, so the
         // running stretch is closed at the end of last month
-        // and a new one opens with the new amount.
+        // and a new one opens with the new amount, keeping
+        // the warning the team asked for.
         $running->update(['until_month' => $month->subMonth()]);
 
-        return $this->openRunningPeriod($tag, $currencyId, $amount, $month);
+        return $this->openRunningPeriod($tag, $currencyId, $amount, $month, $running->warning_threshold);
     }
 
     /**
@@ -87,10 +96,10 @@ trait ReplacesRunningBudgetPeriod
     }
 
     /**
-     * Open an unbounded stretch on the tag from the
-     * given month.
+     * Open an unbounded stretch on the tag from the given
+     * month, warning at the given share of it if any.
      */
-    protected function openRunningPeriod(Tag $tag, string $currencyId, string $amount, CarbonImmutable $month): BudgetPeriod
+    protected function openRunningPeriod(Tag $tag, string $currencyId, string $amount, CarbonImmutable $month, ?int $warningThreshold = null): BudgetPeriod
     {
         $period = new BudgetPeriod;
 
@@ -104,6 +113,7 @@ trait ReplacesRunningBudgetPeriod
             // and the period carries the tag's own team.
             $period->team()->getForeignKeyName() => $tag->getAttribute($tag->team()->getForeignKeyName()),
             'until_month' => null,
+            'warning_threshold' => $warningThreshold,
         ]);
 
         return $created;

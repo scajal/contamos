@@ -23,7 +23,7 @@ Contamos does not connect to your bank, move money or work out who owes whom. It
 - **Ledger.** How [accounts and currencies](/en/docs/accounts-and-currencies), [transactions and transfers](/en/docs/transactions-and-transfers), [tags](/en/docs/tags) and [exchange rates](/en/docs/exchange-rates) record money.
 - **Planning.** [Budgets](/en/docs/budgets) and [recurring transactions](/en/docs/recurring-transactions).
 - **Team.** [Members and roles](/en/docs/members-and-roles) and the [activity log](/en/docs/activity-log).
-- **More.** [Plans and limits](/en/docs/plans-and-limits) and [AI assistants](/en/docs/ai-assistants).
+- **More.** [Plans and limits](/en/docs/plans-and-limits), [notifications](/en/docs/notifications) and [AI assistants](/en/docs/ai-assistants).
 
 ## Free and Pro
 

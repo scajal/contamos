@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Mcp\Servers\ContamosServer;
 use App\Modules\Mcp\Tools\Transactions\GetTransaction;
+use Carbon\CarbonImmutable;
 use Illuminate\Testing\Fluent\AssertableJson;
+use Laravel\Pennant\Feature as Pennant;
 
 /**
  * Feature tests for \App\Modules\Mcp\Tools\Transactions\GetTransaction.
@@ -53,6 +56,17 @@ it('reports a transaction of another team as not found', function (): void {
 
     ContamosServer::actingAs($user)
         ->tool(GetTransaction::class, ['team' => $team->slug, 'transaction' => $foreign->getKey()])
+        ->assertHasErrors(['Transaction not found.']);
+});
+
+it('reports a transaction past the plan\'s history window as not found', function (): void {
+    [$user, $team] = memberWithTeam();
+    Pennant::for($team)->activate(Feature::UseMcp);
+    $transaction = getTransactionToolExpense($team);
+    $transaction->forceFill(['occurred_at' => CarbonImmutable::now()->subYears(5)])->save();
+
+    ContamosServer::actingAs($user)
+        ->tool(GetTransaction::class, ['team' => $team->slug, 'transaction' => $transaction->getKey()])
         ->assertHasErrors(['Transaction not found.']);
 });
 

@@ -1,7 +1,7 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { format, parse, startOfMonth } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CalendarIcon, CoinsIcon } from "lucide-react";
+import { BellIcon, CalendarIcon, CoinsIcon } from "lucide-react";
 import { useState } from "react";
 
 import { CategoryIcon } from "@/components/category-icon";
@@ -37,6 +37,7 @@ type FormProps = Partial<{
     tag_id: string | null;
     target_kind: BudgetTargetKind;
     until_month: string | null;
+    warning_threshold: string;
 }>;
 
 type Props = FormComponentSlotProps<FormProps> & {
@@ -280,6 +281,29 @@ export const Fields = ({ categories, currencies, defaultValues, errors, invalid,
                     {t("Leave it empty to keep the budget running. Set it to the first month for a one-off goal.")}
                 </FieldDescription>
                 {invalid("until_month") && <FieldError>{errors.until_month}</FieldError>}
+            </Field>
+
+            {/** Warning threshold */}
+            <Field data-invalid={invalid("warning_threshold") || undefined}>
+                <FieldLabel htmlFor="budget-warning-threshold">{t("Warn me at")}</FieldLabel>
+                <InputGroup>
+                    <InputGroupAddon>
+                        <BellIcon />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                        aria-invalid={invalid("warning_threshold")}
+                        className="text-right tabular-nums"
+                        defaultValue={defaultValues?.warning_threshold}
+                        id="budget-warning-threshold"
+                        inputMode="numeric"
+                        name="warning_threshold"
+                    />
+                    <InputGroupAddon align="inline-end">
+                        <InputGroupText>%</InputGroupText>
+                    </InputGroupAddon>
+                </InputGroup>
+                <FieldDescription>{t("Leave it empty for no warning.")}</FieldDescription>
+                {invalid("warning_threshold") && <FieldError>{errors.warning_threshold}</FieldError>}
             </Field>
         </FieldGroup>
     );

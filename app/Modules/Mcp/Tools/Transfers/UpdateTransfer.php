@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Mcp\Tools\Transfers;
 
+use App\Modules\Core\Finance\Actions\Team\EvaluateBudgetAlerts;
 use App\Modules\Core\Finance\Actions\Team\UpdateTransfer as UpdateTransferAction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Mcp\Tools\Concerns\InteractsWithTeams;
@@ -54,9 +55,9 @@ class UpdateTransfer extends Tool
     /**
      * Handle the tool call.
      */
-    public function handle(Request $request, UpdateTransferAction $updateTransfer): Response|ResponseFactory
+    public function handle(Request $request, UpdateTransferAction $updateTransfer, EvaluateBudgetAlerts $evaluateBudgetAlerts): Response|ResponseFactory
     {
-        return $this->forTeam($request, function (Team $team) use ($request, $updateTransfer): ResponseFactory {
+        return $this->forTeam($request, function (Team $team) use ($request, $updateTransfer, $evaluateBudgetAlerts): ResponseFactory {
             $timezone = $this->timezone($request->get('timezone'));
 
             // Only the team's own transfers are found.
@@ -71,6 +72,11 @@ class UpdateTransfer extends Tool
             $transfer = $updateTransfer
                 ->for($team)
                 ->using($transfer, $attributes, $tagIds);
+
+            // A fee is an expense, so alert about the budgets it
+            // pushed past a threshold.
+            $evaluateBudgetAlerts->for($team)
+                ->using([$transfer->occurred_at]);
 
             return Response::structured(['transfer' => $this->presentTransfer($transfer->load('tags', 'user', 'transactions.account', 'transactions.currency'), $timezone)]);
         });

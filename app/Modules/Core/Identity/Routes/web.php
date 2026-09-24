@@ -7,6 +7,7 @@ use App\Modules\Core\Identity\Enums\Team\Permission;
 use App\Modules\Core\Identity\Http\Middleware\EnsureTeamMembership;
 use App\Modules\Core\Identity\Http\Middleware\EnsureTeamPermission;
 use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Routing\Middleware\ValidateSignature;
 use Illuminate\Support\Facades\Route;
 use Laravel\Pennant\Middleware\EnsureFeaturesAreActive;
 use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
@@ -62,6 +63,20 @@ Route::as('identity.')
 
         /*
         |--------------------------------------------------------------------------
+        | Preference routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes store the language and colour scheme the user picks
+        | from the menus, so the choice follows them to every device.
+        | Signed-out visitors keep theirs in cookies alone.
+        |
+        */
+
+        Route::patch('preferences', [\App\Modules\Core\Identity\Http\Controllers\User\PreferenceController::class, 'update'])
+            ->name('users.preferences.update');
+
+        /*
+        |--------------------------------------------------------------------------
         | Assistant routes
         |--------------------------------------------------------------------------
         |
@@ -94,6 +109,27 @@ Route::as('identity.')
         Route::post('invitations/{invitation}/accept', [\App\Modules\Core\Identity\Http\Controllers\InvitationController::class, 'accept'])
             ->middleware(EnsureFeaturesAreActive::using(Feature::AddMembers))
             ->name('invitations.accept');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Unsubscribe routes
+|--------------------------------------------------------------------------
+|
+| These routes let the recipient of a team email turn that kind of email
+| off from the link in it, without signing in. The signature is the only
+| credential, and it never expires, so an old email keeps working. The
+| team goes by its key, so renaming it does not break the link, and it
+| is not scoped to the user, so a user who left still gets a page.
+|
+*/
+
+Route::as('identity.')
+    ->middleware(ValidateSignature::class)
+    ->group(function (): void {
+        Route::get('notifications/{user}/{team:id}/{type}/unsubscribe', [\App\Modules\Core\Identity\Http\Controllers\NotificationController::class, 'unsubscribe'])
+            ->name('notifications.unsubscribe')
+            ->withoutScopedBindings();
     });
 
 Route::as('identity.teams.')
@@ -207,6 +243,17 @@ Route::as('identity.teams.')
 
             Route::patch('settings', [\App\Modules\Core\Identity\Http\Controllers\TeamController::class, 'update'])
                 ->name('settings.update');
+        });
+
+        // Every Owner and Admin chooses the team emails they
+        // receive. A Member receives none, so has nothing to
+        // choose.
+        Route::middleware(EnsureTeamPermission::using(Permission::ManageNotifications))->group(function (): void {
+            Route::get('settings/notifications', [\App\Modules\Core\Identity\Http\Controllers\Team\NotificationController::class, 'edit'])
+                ->name('settings.notifications.edit');
+
+            Route::patch('settings/notifications', [\App\Modules\Core\Identity\Http\Controllers\Team\NotificationController::class, 'update'])
+                ->name('settings.notifications.update');
         });
 
         Route::middleware(EnsureTeamPermission::using(Permission::DeleteTeam))->group(function (): void {

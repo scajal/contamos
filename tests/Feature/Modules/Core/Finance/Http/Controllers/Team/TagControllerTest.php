@@ -534,6 +534,26 @@ describe('budgets on the tag form', function (): void {
             ->and($opened->from_month->format('Y-m'))->toBe(CarbonImmutable::now()->format('Y-m'));
     });
 
+    it('carries the warning threshold onto the new stretch', function () use ($budgetingTeam): void {
+        [$team, $currency] = $budgetingTeam();
+        $tag = Tag::factory()->for($team)->create(['name' => 'Food']);
+        $running = BudgetPeriod::factory()->withWarningThreshold(85)->for($tag)->for($currency)->create([
+            'amount' => '400',
+            'from_month' => CarbonImmutable::now()->subMonths(3),
+            'until_month' => null,
+        ]);
+
+        $this->patch(route('finance.teams.tags.update', [
+            'team' => $team->getRouteKey(),
+            'tag' => $tag->getKey(),
+        ]), tagPayload([
+            'name' => 'Food',
+            'budgets' => [$currency->getKey() => '600'],
+        ]))->assertRedirect();
+
+        expect(BudgetPeriod::query()->whereKeyNot($running)->sole()->warning_threshold)->toBe(85);
+    });
+
     it('changes the amount in place when the stretch started this month', function () use ($budgetingTeam): void {
         [$team, $currency] = $budgetingTeam();
         $tag = Tag::factory()->for($team)->create(['name' => 'Food']);

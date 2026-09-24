@@ -17,11 +17,19 @@ it('throws when no team was provided', function (): void {
         ->toThrow(Exception::class, 'A member cannot be removed without a team.');
 });
 
+it('throws when no user removing the member was provided', function (): void {
+    [$user, $team] = memberWithTeam();
+
+    expect(fn (): ?Team => (new RemoveMember)->for($team)->using($user))
+        ->toThrow(Exception::class, 'A member cannot be removed without the user removing them.');
+});
+
 it('detaches the member from the team', function (): void {
     [$user, $team] = memberWithTeam();
 
     (new RemoveMember)
         ->for($team)
+        ->by($user)
         ->using($user);
 
     expect($user->fresh()?->belongsToTeam($team))->toBeFalse();
@@ -34,6 +42,7 @@ it('moves the member to another of its teams', function (): void {
 
     $next = (new RemoveMember)
         ->for($team)
+        ->by($user)
         ->using($user);
 
     expect($next?->getKey())->toBe($other->getKey())
@@ -45,6 +54,7 @@ it('clears the current team when the member has no team left', function (): void
 
     $next = (new RemoveMember)
         ->for($team)
+        ->by($user)
         ->using($user);
 
     expect($next)->toBeNull()
@@ -58,6 +68,7 @@ it('keeps the current team of a member removed from another team', function (): 
 
     $next = (new RemoveMember)
         ->for($other)
+        ->by($user)
         ->using($user);
 
     expect($next?->getKey())->toBe($team->getKey())

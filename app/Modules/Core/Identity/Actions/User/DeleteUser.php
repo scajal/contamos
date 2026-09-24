@@ -7,6 +7,7 @@ namespace App\Modules\Core\Identity\Actions\User;
 use App\Modules\Authentication\Support\AuthKitUserDeletion;
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Identity\Actions\Team\DeleteTeam;
+use App\Modules\Core\Identity\Events\Team\MemberLeft;
 use App\Modules\Core\Identity\Models\User;
 use Illuminate\Support\Facades\DB;
 use Laravel\Pennant\Feature as Pennant;
@@ -40,6 +41,13 @@ class DeleteUser
                 $this->deleteTeam
                     ->by($user)
                     ->using($team);
+            }
+
+            // Every team the user shares reads the deletion as the
+            // user leaving, which its Owner and Admins hear about
+            // once the deletion commits.
+            foreach ($user->teams()->get() as $team) {
+                MemberLeft::dispatch($team, $user->name);
             }
 
             // The identity at WorkOS goes next, so a sign-in with

@@ -97,6 +97,7 @@ const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "identity/teams/invitations", title: "Invitations" },
     { prefix: "identity/teams/members", title: "Members" },
     { prefix: "identity/teams/index", title: "Configuration" },
+    { prefix: "identity/teams/notifications", title: "Notifications" },
     { prefix: "identity/users/account", title: "Account" },
     { prefix: "identity/users/assistants", title: "AI assistants" },
 ];
@@ -591,7 +592,11 @@ const Sidebar = () => {
                         )}
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                isActive={isSection("identity/teams/index", "identity/teams/edit")}
+                                isActive={isSection(
+                                    "identity/teams/index",
+                                    "identity/teams/edit",
+                                    "identity/teams/notifications",
+                                )}
                                 render={<Link href={settings.index.url({ team })} />}
                                 tooltip={t("Configuration")}
                             >

@@ -7,6 +7,7 @@ namespace App\Modules\Core\Identity\Http\Controllers\Team;
 use App\Modules\Core\Identity\Actions\Team\RemoveMember;
 use App\Modules\Core\Identity\Enums\Team\Permission;
 use App\Modules\Core\Identity\Enums\Team\Role;
+use App\Modules\Core\Identity\Events\Team\MemberRoleUpdated;
 use App\Modules\Core\Identity\Http\Requests\Team\Member\IndexRequest;
 use App\Modules\Core\Identity\Http\Requests\Team\Member\UpdateRequest;
 use App\Modules\Core\Identity\Models\Team;
@@ -64,13 +65,18 @@ class MemberController
 
         // Remember the stored role, so the entry says what the
         // change replaced.
-        $role = $user->teams()
-            ->whereKey($team->getKey())
-            ->first()?->membership?->role;
+        $role = $user->membershipOn($team)?->role;
 
         // Store the role the request asked for. The effective role
         // follows the team's plan, the stored one does not.
         $team->users()->updateExistingPivot($user->getKey(), $request->validated());
+
+        // Tell the Owner and Admins when the role really changed.
+        $updated = $user->membershipOn($team)?->role;
+
+        if ($role instanceof Role && $updated instanceof Role && $role !== $updated) {
+            MemberRoleUpdated::dispatch($team, $user, $currentUser, $role, $updated);
+        }
 
         // Record the new role, which no model change of its own
         // would show.
@@ -132,6 +138,7 @@ class MemberController
         // Remove the member from the team.
         $next = $removeMember
             ->for($team)
+            ->by($currentUser)
             ->using($user);
 
         // Show a success message.

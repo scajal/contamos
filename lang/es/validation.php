@@ -316,6 +316,7 @@ return [
         'user' => 'usuario',
         'username' => 'usuario',
         'value' => 'valor',
+        'warning_threshold' => 'umbral de aviso',
         'winner' => 'ganador',
         'work' => 'trabajo',
         'year' => 'año',

@@ -79,6 +79,34 @@ it('rejects an unknown currency code', function (): void {
     expect(Account::query()->count())->toBe(0);
 });
 
+it('rejects currencies that are not a list', function (): void {
+    [$user, $team] = mcpMember();
+    Currency::factory()->active()->fiat()->create(['code' => 'ZZA']);
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateAccount::class, ['team' => $team->slug, 'name' => 'Checking', 'type' => 'bank', 'currencies' => 'ZZA'])
+        ->assertHasErrors(['The currencies must be a list of ISO codes.']);
+
+    expect(Account::query()->count())->toBe(0);
+});
+
+it('rejects opening balances that are not a list', function (): void {
+    [$user, $team] = mcpMember();
+    Currency::factory()->active()->fiat()->create(['code' => 'ZZA']);
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateAccount::class, [
+            'team' => $team->slug,
+            'name' => 'Checking',
+            'type' => 'bank',
+            'currencies' => ['ZZA'],
+            'opening_balances' => '10',
+        ])
+        ->assertHasErrors(['The opening balances must be a list of {currency, amount, quote} objects.']);
+
+    expect(Account::query()->count())->toBe(0);
+});
+
 it('rejects a cryptocurrency on a bank account', function (): void {
     [$user, $team] = mcpMember();
     Currency::factory()->active()->crypto()->create(['code' => 'ZZC']);

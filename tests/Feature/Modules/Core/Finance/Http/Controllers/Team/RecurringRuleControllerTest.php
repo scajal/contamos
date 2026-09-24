@@ -343,6 +343,24 @@ describe('store', function (): void {
 
         expect(RecurringRule::query()->count())->toBe(0);
     });
+
+    it('rejects a category on a rule missing its type, account and currency', function (): void {
+        [, $team] = actingMember();
+        subscribeToPro($team);
+
+        $payload = rulePayload(['category' => Category::Food->value]);
+        unset($payload['type']);
+
+        $this->post(route('finance.teams.recurring-rules.store', ['team' => $team->getRouteKey()]), $payload)
+            ->assertSessionHasErrors([
+                'account_id',
+                'category' => trans('validation.prohibited', ['attribute' => 'category']),
+                'currency_id',
+                'type',
+            ]);
+
+        expect(RecurringRule::query()->count())->toBe(0);
+    });
 });
 
 describe('show', function (): void {

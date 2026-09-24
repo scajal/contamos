@@ -851,6 +851,23 @@ describe('budgets', function (): void {
                     ->where('figures.0.tags.0.budget.percentage', fn (mixed $value): bool => (float) $value === 24.0)));
     });
 
+    it('carries the warning threshold of a budgeted tag', function () use ($budgetingTeam): void {
+        [$team, $currency, $account, $tag] = $budgetingTeam();
+        BudgetPeriod::factory()->running()->withWarningThreshold(80)->forTag($tag)->for($currency)->create(['amount' => '500']);
+
+        $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '120',
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
+        ]);
+        $spent->attachTags([$tag->getKey()]);
+
+        $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('figures.0.tags.0.budget.warning_threshold', 80)));
+    });
+
     it('enlarges the pot with income tagged into the budget', function () use ($budgetingTeam): void {
         [$team, $currency, $account, $tag] = $budgetingTeam();
         BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create(['amount' => '500']);

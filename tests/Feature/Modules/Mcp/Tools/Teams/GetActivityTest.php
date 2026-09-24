@@ -101,6 +101,15 @@ it('refuses an entry of another team', function (): void {
         ->assertHasErrors(['Activity entry not found.']);
 });
 
+it('refuses an id that is not an activity id', function (): void {
+    [$user, $team] = mcpMember();
+    recordGetActivityEntry($team);
+
+    ContamosServer::actingAs($user)
+        ->tool(GetActivity::class, ['team' => $team->slug, 'activity' => 'latest'])
+        ->assertHasErrors(['Activity entry not found.']);
+});
+
 it('refuses a role without the permission to view activity', function (): void {
     [$user, $team] = mcpMember(Role::Member);
     $activity = recordGetActivityEntry($team);

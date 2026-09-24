@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Mcp\Tools\Transactions;
 
 use App\Modules\Core\Finance\Actions\Team\CreateTransactionEntry;
+use App\Modules\Core\Finance\Actions\Team\EvaluateBudgetAlerts;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
@@ -53,9 +54,9 @@ class CreateTransaction extends Tool
     /**
      * Handle the tool call.
      */
-    public function handle(Request $request, CreateTransactionEntry $createTransactionEntry): Response|ResponseFactory
+    public function handle(Request $request, CreateTransactionEntry $createTransactionEntry, EvaluateBudgetAlerts $evaluateBudgetAlerts): Response|ResponseFactory
     {
-        return $this->forTeam($request, function (Team $team, User $user) use ($request, $createTransactionEntry): ResponseFactory {
+        return $this->forTeam($request, function (Team $team, User $user) use ($request, $createTransactionEntry, $evaluateBudgetAlerts): ResponseFactory {
             $timezone = $this->timezone($request->get('timezone'));
 
             // Resolve and validate the arguments like the web form.
@@ -67,6 +68,11 @@ class CreateTransaction extends Tool
                 ->for($team)
                 ->by($user)
                 ->using($attributes, $tagIds);
+
+            // Alert about the budgets the new movement pushed past
+            // a threshold.
+            $evaluateBudgetAlerts->for($team)
+                ->using([$transaction?->occurred_at]);
 
             return Response::structured([
                 'transaction' => $transaction instanceof Transaction

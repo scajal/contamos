@@ -68,6 +68,7 @@ export default function Edit({ budget, currencies }: PageProps) {
                                                 currency_id: budget.currency.id,
                                                 from_month: budget.from_month,
                                                 until_month: budget.until_month,
+                                                warning_threshold: budget.warning_threshold?.toString() ?? "",
                                             }}
                                             {...formProps}
                                         />

@@ -33,6 +33,59 @@ it('changes the amount and last month, keeping the rest', function (): void {
         ->and($budget->until_month?->format('Y-m'))->toBe($until);
 });
 
+it('changes the warning threshold', function (): void {
+    [$user, $team] = mcpMember();
+    $currency = Currency::factory()->active()->fiat()->create(['code' => 'USD', 'decimal_places' => 2]);
+    Account::factory()->active()->for($team)->create()->currencies()->attach($currency, ['balance' => '0']);
+    $budget = BudgetPeriod::factory()->running()->withWarningThreshold(80)->forCategory(Category::Food)->for($team)->for($currency)->create();
+
+    ContamosServer::actingAs($user)
+        ->tool(UpdateBudget::class, ['team' => $team->slug, 'budget' => $budget->getKey(), 'warning_threshold' => 90])
+        ->assertOk()
+        ->assertSee('"warning_threshold":90');
+
+    expect($budget->refresh()->warning_threshold)->toBe(90);
+});
+
+it('drops the warning threshold when it is null', function (): void {
+    [$user, $team] = mcpMember();
+    $currency = Currency::factory()->active()->fiat()->create(['code' => 'USD', 'decimal_places' => 2]);
+    Account::factory()->active()->for($team)->create()->currencies()->attach($currency, ['balance' => '0']);
+    $budget = BudgetPeriod::factory()->running()->withWarningThreshold(80)->forCategory(Category::Food)->for($team)->for($currency)->create();
+
+    ContamosServer::actingAs($user)
+        ->tool(UpdateBudget::class, ['team' => $team->slug, 'budget' => $budget->getKey(), 'warning_threshold' => null])
+        ->assertOk();
+
+    expect($budget->refresh()->warning_threshold)->toBeNull();
+});
+
+it('keeps the warning threshold when it is left out', function (): void {
+    [$user, $team] = mcpMember();
+    $currency = Currency::factory()->active()->fiat()->create(['code' => 'USD', 'decimal_places' => 2]);
+    Account::factory()->active()->for($team)->create()->currencies()->attach($currency, ['balance' => '0']);
+    $budget = BudgetPeriod::factory()->running()->withWarningThreshold(80)->forCategory(Category::Food)->for($team)->for($currency)->create();
+
+    ContamosServer::actingAs($user)
+        ->tool(UpdateBudget::class, ['team' => $team->slug, 'budget' => $budget->getKey(), 'amount' => '420'])
+        ->assertOk();
+
+    expect($budget->refresh()->warning_threshold)->toBe(80);
+});
+
+it('refuses a warning threshold of a hundred', function (): void {
+    [$user, $team] = mcpMember();
+    $currency = Currency::factory()->active()->fiat()->create(['code' => 'USD', 'decimal_places' => 2]);
+    Account::factory()->active()->for($team)->create()->currencies()->attach($currency, ['balance' => '0']);
+    $budget = BudgetPeriod::factory()->running()->withWarningThreshold(80)->forCategory(Category::Food)->for($team)->for($currency)->create();
+
+    ContamosServer::actingAs($user)
+        ->tool(UpdateBudget::class, ['team' => $team->slug, 'budget' => $budget->getKey(), 'warning_threshold' => 100])
+        ->assertHasErrors(['warning threshold']);
+
+    expect($budget->refresh()->warning_threshold)->toBe(80);
+});
+
 it('does not find a budget of another team', function (): void {
     [$user, $team] = mcpMember();
     $foreign = BudgetPeriod::factory()->running()->forCategory(Category::Food)->for(Team::factory())->create(['amount' => '300']);

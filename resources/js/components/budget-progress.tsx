@@ -24,7 +24,8 @@ type Props = {
  * How far a month has gone into a tag's budget: a bar that fills
  * to the share spent, plus the numbers behind it. The bar stops
  * at full and turns to the destructive colour once the budget
- * is past, so overspending cannot be missed.
+ * is past, so overspending cannot be missed. A warning
+ * threshold shows as a faint tick on the bar.
  */
 export const BudgetProgress = ({ className, currency, progress }: Props) => {
     /**
@@ -64,13 +65,21 @@ export const BudgetProgress = ({ className, currency, progress }: Props) => {
                 aria-valuemax={100}
                 aria-valuemin={0}
                 aria-valuenow={Math.round(filled)}
-                className="bg-muted h-1.5 w-full overflow-hidden rounded-full"
+                className="bg-muted relative h-1.5 w-full overflow-hidden rounded-full"
                 role="progressbar"
             >
                 <div
                     className={cn("h-full rounded-full transition-all", isOver ? "bg-destructive" : "bg-primary")}
                     style={{ width: `${filled}%` }}
                 />
+                {/** A faint tick marks where the team asked to be warned. */}
+                {progress.warning_threshold !== null && (
+                    <div
+                        aria-hidden
+                        className="bg-foreground/30 absolute inset-y-0 w-px"
+                        style={{ left: `${progress.warning_threshold}%` }}
+                    />
+                )}
             </div>
             <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs tabular-nums">
                 <span>
@@ -97,6 +106,13 @@ export const BudgetProgress = ({ className, currency, progress }: Props) => {
                           })}
                 </span>
                 {progress.percentage !== null && <span>{formatPercentage(progress.percentage, currentLocale())}</span>}
+                {progress.warning_threshold !== null && (
+                    <span>
+                        {t("Warning at :percentage", {
+                            percentage: formatPercentage(progress.warning_threshold, currentLocale()),
+                        })}
+                    </span>
+                )}
             </div>
         </div>
     );

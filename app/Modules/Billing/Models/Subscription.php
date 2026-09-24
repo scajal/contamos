@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Attributes\Table;
  * @property string $billable_type
  * @property string $billable_id
  * @property \Carbon\CarbonImmutable|null $ends_at
+ * @property \Carbon\CarbonImmutable|null $end_handled_at
  * @property string $paddle_id
  * @property \Carbon\CarbonImmutable|null $paused_at
  * @property string $status
@@ -41,6 +42,18 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 class Subscription extends \Laravel\Paddle\Subscription
 {
     use LogsTeamActivity;
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'end_handled_at' => 'datetime',
+        ];
+    }
 
     /**
      * Write the team the entry belongs to and leave it with no

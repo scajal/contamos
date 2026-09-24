@@ -8,12 +8,15 @@ namespace App\Modules\Core\Identity\Models;
 
 use App\Modules\Core\Identity\Enums\Team\Permission;
 use App\Modules\Core\Identity\Enums\Team\Role;
+use App\Modules\Core\Identity\Enums\User\PreferenceKey;
+use App\Modules\Core\Identity\Models\User\Preference;
 use App\Modules\Support\Concerns\DefinesKeyType;
 use App\Modules\Support\Concerns\HasActivation;
 use Filament\Facades\Filament;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -21,6 +24,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
@@ -41,6 +45,7 @@ use Illuminate\Support\Facades\URL;
  * @property-read \App\Modules\Core\Identity\Models\Team|null $currentTeam
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
  * @property-read \App\Modules\Core\Identity\Models\Membership|null $membership
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\User\Preference> $preferences
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Identity\Models\Team> $teams
  *
  * @method static \Database\Factories\Modules\Core\Identity\Models\UserFactory factory($count = null, $state = [])
@@ -53,7 +58,7 @@ use Illuminate\Support\Facades\URL;
  */
 #[Fillable(['avatar', 'email', 'external_id', 'is_active', 'name'])]
 #[Hidden(['external_id', 'remember_token'])]
-class User extends Authenticatable implements FilamentUser, HasTenants
+class User extends Authenticatable implements FilamentUser, HasLocalePreference, HasTenants
 {
     /** @use \App\Modules\Support\Concerns\DefinesKeyType<string> */
     use DefinesKeyType;
@@ -149,15 +154,68 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     }
 
     /**
+     * Get the value the user stored for the given preference,
+     * or null when they never chose one.
+     */
+    public function preference(PreferenceKey $key): ?string
+    {
+        $value = $this->preferences()
+            ->where('key', $key)
+            ->value('value');
+
+        return is_string($value) ? $value : null;
+    }
+
+    /**
+     * Get the preferences the user stored.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Identity\Models\User\Preference, $this>
+     */
+    public function preferences(): HasMany
+    {
+        return $this->hasMany(Preference::class);
+    }
+
+    /**
+     * Get the locale mail and notifications to the user are
+     * rendered in: the one they stored, or English.
+     */
+    public function preferredLocale(): string
+    {
+        return $this->preference(PreferenceKey::Locale) ?? 'en';
+    }
+
+    /**
+     * Store the given value for the preference, replacing the
+     * one the user chose before.
+     */
+    public function rememberPreference(PreferenceKey $key, string $value): Preference
+    {
+        return $this->preferences()->updateOrCreate(
+            ['key' => $key],
+            ['value' => $value],
+        );
+    }
+
+    /**
      * Get the role the user effectively holds on the team, or
      * null when they do not belong to it. The team owns the rule
      * that turns a stored role into the role it acts as.
      */
     public function roleOn(Team $team): ?Role
     {
-        return $team->effectiveRole($this->teams()
+        return $team->effectiveRole($this->membershipOn($team)?->role);
+    }
+
+    /**
+     * Get the membership that ties the user to the team, or
+     * null when they do not belong to it.
+     */
+    public function membershipOn(Team $team): ?Membership
+    {
+        return $this->teams()
             ->whereKey($team->getKey())
-            ->first()?->membership?->role);
+            ->first()?->membership;
     }
 
     /**
@@ -189,7 +247,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     {
         return $this->belongsToMany(Team::class, new Membership()->getTable(), $this->getForeignKey(), new Team()->getForeignKey())
             ->using(Membership::class)
-            ->withPivot('role')
+            ->withPivot('role', 'notification_preferences')
             ->withTimestamps()
             ->as('membership');
     }

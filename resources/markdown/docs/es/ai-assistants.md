@@ -18,6 +18,8 @@ Un asistente conectado puede:
 
 Nunca inventa un tipo de cambio: cuando no hay cotización para una fecha, te pide una. Antes de cualquier cosa que cambie o elimine lo que registraste, tiene la instrucción de preguntarte.
 
+No puede cambiar qué correos recibes. Las [notificaciones](/es/docs/notifications) se gestionan en la app, desde la pestaña **Notificaciones** de la configuración del equipo, así que un asistente te envía ahí.
+
 ## Como tú, dentro del plan de tu equipo
 
 Inicias sesión en Contamos una vez, desde el asistente. A partir de ahí actúa como tú, con tu rol en cada uno de tus equipos, y llega exactamente a lo mismo que tú en la app: en el plan gratis ve el mismo historial, y las funciones que necesitan Pro siguen necesitando Pro. Consulta [Planes y límites](/es/docs/plans-and-limits).

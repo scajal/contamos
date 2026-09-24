@@ -22,11 +22,12 @@ use Laravel\Mcp\Server\Tool;
 use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
 /**
- * Changes the amount, currency or months of one of the team's
- * budget periods. What it follows never changes.
+ * Changes the amount, currency, months or warning threshold
+ * of one of the team's budget periods. What it follows never
+ * changes.
  */
 #[Name('update_budget')]
-#[Description('Change a budget period\'s amount, currency or months ("YYYY-MM"). Leave out what should not change; pass `until_month` as null to make it open-ended. Its category or tag cannot change: create a new budget instead. Needs a plan with budgets.')]
+#[Description('Change a budget period\'s amount, currency, months ("YYYY-MM") or `warning_threshold` (1 to 99). Leave out what should not change; pass `until_month` as null to make it open-ended and `warning_threshold` as null to drop the warning. Its category or tag cannot change: create a new budget instead. Needs a plan with budgets.')]
 #[IsDestructive]
 class UpdateBudget extends Tool
 {
@@ -54,6 +55,11 @@ class UpdateBudget extends Tool
             'until_month' => $schema->string()
                 ->nullable()
                 ->description('The new last month, "YYYY-MM", or null for no last month.'),
+            'warning_threshold' => $schema->integer()
+                ->min(1)
+                ->max(99)
+                ->nullable()
+                ->description("The new percentage of the month's budget, from 1 to 99, at which the team wants a warning, or null for no warning."),
         ];
     }
 
@@ -82,6 +88,9 @@ class UpdateBudget extends Tool
                 'until_month' => array_key_exists('until_month', $arguments)
                     ? $arguments['until_month']
                     : $budget->until_month?->format(self::MONTH_FORMAT),
+                'warning_threshold' => array_key_exists('warning_threshold', $arguments)
+                    ? $arguments['warning_threshold']
+                    : $budget->warning_threshold,
             ];
 
             $validated = $request->merge($input)->validate(
@@ -90,10 +99,11 @@ class UpdateBudget extends Tool
                 [$currencyKey => 'currency'],
             );
 
-            // Change the period's amount, currency or months.
+            // Change the period's amount, currency, months or
+            // warning threshold.
             $updateBudgetPeriod->for($team)
                 ->by($user)
-                ->using($budget, $this->validatedOnly($validated, ['amount', $currencyKey, 'from_month', 'until_month']));
+                ->using($budget, $this->validatedOnly($validated, ['amount', $currencyKey, 'from_month', 'until_month', 'warning_threshold']));
 
             return Response::structured(['budget' => $this->presentOneBudget($team, $budget->refresh())]);
         });

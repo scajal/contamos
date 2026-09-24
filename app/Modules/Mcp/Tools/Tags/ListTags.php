@@ -10,6 +10,7 @@ use App\Modules\Mcp\Tools\Concerns\InteractsWithTeams;
 use App\Modules\Mcp\Tools\Concerns\PresentsRecords;
 use App\Modules\Mcp\Tools\Concerns\ResolvesTagReferences;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -66,8 +67,8 @@ class ListTags extends Tool
 
             // Filter, then page the tags by name.
             $query = $team->tags()
-                ->when($search !== '', fn ($query) => $query->whereRaw('LOWER(name) LIKE ?', ['%'.Str::lower($search).'%']))
-                ->when($isActive !== null, fn ($query) => $query->isActive((bool) $isActive))
+                ->when($search !== '', fn (Builder $query): Builder => $query->whereRaw('LOWER(name) LIKE ?', ['%'.Str::lower($search).'%']))
+                ->when($isActive !== null, fn (Builder $query): Builder => $query->isActive((bool) $isActive))
                 ->orderBy('name')
                 ->orderBy(new Tag()->getKeyName());
 

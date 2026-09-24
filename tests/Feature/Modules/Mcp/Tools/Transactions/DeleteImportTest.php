@@ -93,6 +93,17 @@ it('does not find an import of another team', function (): void {
     expect(Transaction::query()->count())->toBe(2);
 });
 
+it('does not find an import without an id', function (): void {
+    [$user, $team] = mcpMember();
+    importTwoExpenses($user, $team);
+
+    ContamosServer::actingAs($user)
+        ->tool(DeleteImport::class, ['team' => $team->slug, 'import_id' => ''])
+        ->assertHasErrors(['Import not found.']);
+
+    expect(Transaction::query()->count())->toBe(2);
+});
+
 it('is a destructive tool', function (): void {
     expect(new DeleteImport()->annotations())->toMatchArray(['destructiveHint' => true]);
 });

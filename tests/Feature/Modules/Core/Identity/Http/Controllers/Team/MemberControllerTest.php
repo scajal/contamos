@@ -7,7 +7,11 @@ use App\Modules\Core\Identity\Enums\Team\Permission;
 use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Core\Identity\Notifications\Team\MemberLeftNotification;
+use App\Modules\Core\Identity\Notifications\Team\MemberRemovedNotification;
+use App\Modules\Core\Identity\Notifications\Team\MemberRoleUpdatedNotification;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Pennant\Feature as Pennant;
 
@@ -464,5 +468,86 @@ describe('downgrade', function (): void {
         Pennant::flushCache();
 
         expect($member->roleOn($team))->toBe(Role::Member);
+    });
+});
+
+describe('destroy notifications', function (): void {
+    it('tells the owner and admins who removed whom, sparing the remover', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $admin = memberOf($team, Role::Admin);
+        $member = memberOf($team, Role::Member);
+        $removed = memberOf($team, Role::Admin);
+        Notification::fake();
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $removed->getKey()]))
+            ->assertRedirect();
+
+        Notification::assertSentTo(
+            $admin,
+            MemberRemovedNotification::class,
+            fn (MemberRemovedNotification $notification): bool => $notification->team->is($team)
+                && $notification->memberName === $removed->name
+                && $notification->causerName === $user->name,
+        );
+        Notification::assertNotSentTo([$user, $member, $removed], MemberRemovedNotification::class);
+    });
+
+    it('tells the owner and admins that a member left, sparing the one who left', function (): void {
+        [$user, $team] = actingMember(Role::Admin);
+        $owner = $team->owner;
+        $admin = memberOf($team, Role::Admin);
+        Notification::fake();
+
+        $this->delete(route('identity.teams.members.destroy', ['team' => $team->getRouteKey(), 'user' => $user->getKey()]))
+            ->assertRedirect();
+
+        Notification::assertSentTo(
+            [$owner, $admin],
+            MemberLeftNotification::class,
+            fn (MemberLeftNotification $notification): bool => $notification->team->is($team)
+                && $notification->memberName === $user->name,
+        );
+        Notification::assertNotSentTo($user, MemberLeftNotification::class);
+        Notification::assertNotSentTo([$owner, $admin], MemberRemovedNotification::class);
+    });
+});
+
+describe('update notifications', function (): void {
+    it('tells the owner and admins the old and new role, sparing the one who changed it', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        $admin = memberOf($team, Role::Admin);
+        $changed = memberOf($team, Role::Admin);
+        Notification::fake();
+
+        $this->patch(route('identity.teams.members.role.update', ['team' => $team->getRouteKey(), 'user' => $changed->getKey()]), [
+            'role' => Role::Member->value,
+        ])->assertRedirect();
+
+        Notification::assertSentTo(
+            $admin,
+            MemberRoleUpdatedNotification::class,
+            fn (MemberRoleUpdatedNotification $notification): bool => $notification->team->is($team)
+                && $notification->memberName === $changed->name
+                && $notification->causerName === $user->name
+                && $notification->from === Role::Admin
+                && $notification->to === Role::Member,
+        );
+        Notification::assertNotSentTo([$user, $changed], MemberRoleUpdatedNotification::class);
+    });
+
+    it('notifies nobody when the role stays the same', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        memberOf($team, Role::Admin);
+        $changed = memberOf($team, Role::Member);
+        Notification::fake();
+
+        $this->patch(route('identity.teams.members.role.update', ['team' => $team->getRouteKey(), 'user' => $changed->getKey()]), [
+            'role' => Role::Member->value,
+        ])->assertRedirect();
+
+        Notification::assertNothingSent();
     });
 });

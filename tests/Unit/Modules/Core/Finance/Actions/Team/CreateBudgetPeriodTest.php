@@ -61,6 +61,17 @@ it('throws when a month is not a date', function (): void {
     ]);
 })->throws(Exception::class, 'A budget period month must be a date.');
 
+it('throws when the warning threshold is not a whole number', function (): void {
+    $tag = Tag::factory()->for(Team::factory())->create();
+
+    new CreateBudgetPeriod()->for($tag->team)->targeting($tag)->using([
+        'amount' => '100',
+        'currency_id' => Currency::factory()->create()->getKey(),
+        'from_month' => '2026-01-01',
+        'warning_threshold' => '12.5',
+    ]);
+})->throws(Exception::class, 'A budget period warning threshold must be a whole number.');
+
 it('throws when the currency is not named', function (): void {
     $tag = Tag::factory()->for(Team::factory())->create();
 

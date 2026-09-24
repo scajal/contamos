@@ -81,6 +81,85 @@ it('budgets a tag found by name', function (): void {
         ->and($period->until_month?->format('Y-m'))->toBe($from->addMonths(2)->format('Y-m'));
 });
 
+it('refuses a budget on both a category and a tag, or on neither', function (array $target): void {
+    [$user, $team] = createBudgetTeam();
+    Tag::factory()->active()->for($team)->create(['name' => 'Vacation']);
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateBudget::class, [
+            'team' => $team->slug,
+            'amount' => '800',
+            'currency' => 'USD',
+            'from_month' => CarbonImmutable::now()->format('Y-m'),
+            ...$target,
+        ])
+        ->assertHasErrors(['Pass either `category` or `tag`, not both and not neither.']);
+
+    expect($team->budgets()->count())->toBe(0);
+})->with([
+    'both' => [['category' => Category::Food->value, 'tag' => 'Vacation']],
+    'neither' => [[]],
+]);
+
+it('refuses a currency code that names no currency', function (mixed $code, string $message): void {
+    [$user, $team] = createBudgetTeam();
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateBudget::class, [
+            'team' => $team->slug,
+            'category' => Category::Food->value,
+            'amount' => '800',
+            'currency' => $code,
+            'from_month' => CarbonImmutable::now()->format('Y-m'),
+        ])
+        ->assertHasErrors([$message]);
+
+    expect($team->budgets()->count())->toBe(0);
+})->with([
+    'an unknown code' => ['ZZZ', 'Unknown currency "ZZZ". Pass an ISO code the team holds, such as "USD".'],
+    'a blank code' => ['  ', 'Unknown currency "  ".'],
+    'a list' => [['USD'], 'Unknown currency "?".'],
+]);
+
+it('stores the warning threshold', function (): void {
+    [$user, $team] = createBudgetTeam();
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateBudget::class, [
+            'team' => $team->slug,
+            'category' => Category::Food->value,
+            'amount' => '800',
+            'currency' => 'USD',
+            'from_month' => CarbonImmutable::now()->format('Y-m'),
+            'warning_threshold' => 80,
+        ])
+        ->assertOk()
+        ->assertSee('"warning_threshold":80');
+
+    expect($team->budgets()->sole()->warning_threshold)->toBe(80);
+});
+
+it('refuses a warning threshold outside 1 to 99', function (mixed $threshold): void {
+    [$user, $team] = createBudgetTeam();
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateBudget::class, [
+            'team' => $team->slug,
+            'category' => Category::Food->value,
+            'amount' => '800',
+            'currency' => 'USD',
+            'from_month' => CarbonImmutable::now()->format('Y-m'),
+            'warning_threshold' => $threshold,
+        ])
+        ->assertHasErrors(['warning threshold']);
+
+    expect($team->budgets()->count())->toBe(0);
+})->with([
+    'zero' => 0,
+    'a hundred' => 100,
+    'a fraction' => 12.5,
+]);
+
 it('refuses months another budget on the target already covers', function (): void {
     [$user, $team, $currency] = createBudgetTeam();
     BudgetPeriod::factory()->running()->forCategory(Category::Food)->for($team)->for($currency)->create();

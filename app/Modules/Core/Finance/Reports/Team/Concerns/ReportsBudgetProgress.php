@@ -28,7 +28,7 @@ trait ReportsBudgetProgress
      * period is not the one in force that month.
      *
      * @param  \Illuminate\Support\Collection<string, array{expenses: numeric-string, income: numeric-string}>  $totals
-     * @return array{amount: numeric-string, income: numeric-string, spent: numeric-string, remaining: numeric-string, percentage: float|null}|null
+     * @return array{amount: numeric-string, income: numeric-string, spent: numeric-string, remaining: numeric-string, percentage: float|null, warning_threshold: int|null}|null
      */
     protected function monthProgress(BudgetPeriod $budget, CarbonImmutable $month, Collection $totals): ?array
     {

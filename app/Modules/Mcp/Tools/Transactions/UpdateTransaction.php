@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Mcp\Tools\Transactions;
 
+use App\Modules\Core\Finance\Actions\Team\EvaluateBudgetAlerts;
 use App\Modules\Core\Finance\Actions\Team\UpdateTransaction as UpdateTransactionAction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Mcp\Tools\Concerns\InteractsWithTeams;
@@ -54,9 +55,9 @@ class UpdateTransaction extends Tool
     /**
      * Handle the tool call.
      */
-    public function handle(Request $request, UpdateTransactionAction $updateTransaction): Response|ResponseFactory
+    public function handle(Request $request, UpdateTransactionAction $updateTransaction, EvaluateBudgetAlerts $evaluateBudgetAlerts): Response|ResponseFactory
     {
-        return $this->forTeam($request, function (Team $team) use ($request, $updateTransaction): ResponseFactory {
+        return $this->forTeam($request, function (Team $team) use ($request, $updateTransaction, $evaluateBudgetAlerts): ResponseFactory {
             $timezone = $this->timezone($request->get('timezone'));
 
             // A row the plan hides reads as not found, and a
@@ -71,6 +72,11 @@ class UpdateTransaction extends Tool
             $transaction = $updateTransaction
                 ->for($team)
                 ->using($transaction, $attributes, $tagIds);
+
+            // Alert about the budgets the changed movement pushed
+            // past a threshold.
+            $evaluateBudgetAlerts->for($team)
+                ->using([$transaction->occurred_at]);
 
             return Response::structured(['transaction' => $this->presentTransaction($transaction->load('account', 'currency', 'tags', 'user'), $timezone)]);
         });

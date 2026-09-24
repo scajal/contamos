@@ -6,6 +6,7 @@ namespace App\Modules\Core\Finance\Http\Controllers\Team;
 
 use App\Modules\Core\Finance\Actions\Team\CreateTransfer;
 use App\Modules\Core\Finance\Actions\Team\DeleteTransfer;
+use App\Modules\Core\Finance\Actions\Team\EvaluateBudgetAlerts;
 use App\Modules\Core\Finance\Actions\Team\UpdateTransfer;
 use App\Modules\Core\Finance\Http\Requests\Team\Transfer\StoreRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Transfer\UpdateRequest;
@@ -61,13 +62,18 @@ class TransferController
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateTransfer $createTransfer): RedirectResponse
+    public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateTransfer $createTransfer, EvaluateBudgetAlerts $evaluateBudgetAlerts): RedirectResponse
     {
         // Create the transfer along with the transactions it owns.
         $transfer = $createTransfer
             ->for($team)
             ->by($user)
             ->using($request->safe(self::ATTRIBUTES), $request->tagIds());
+
+        // A fee is an expense, so alert about the budgets it
+        // pushed past a threshold.
+        $evaluateBudgetAlerts->for($team)
+            ->using([$transfer->occurred_at]);
 
         // Flash a success message to the session, offering to take the
         // transfer back with both of its legs.
@@ -118,12 +124,17 @@ class TransferController
     /**
      * Update the specified resource in storage.
      */
-    public function update(Team $team, Transfer $transfer, UpdateRequest $request, UpdateTransfer $updateTransfer): RedirectResponse
+    public function update(Team $team, Transfer $transfer, UpdateRequest $request, UpdateTransfer $updateTransfer, EvaluateBudgetAlerts $evaluateBudgetAlerts): RedirectResponse
     {
         // Update the transfer along with the transactions it owns.
-        $updateTransfer
+        $transfer = $updateTransfer
             ->for($team)
             ->using($transfer, $request->safe(self::ATTRIBUTES), $request->tagIds());
+
+        // A fee is an expense, so alert about the budgets it
+        // pushed past a threshold.
+        $evaluateBudgetAlerts->for($team)
+            ->using([$transfer->occurred_at]);
 
         // Flash a success message to the session.
         Toast::make(trans('Saved'))

@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Catalog\Models\Currency\Quote;
+use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetAlertKind;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
+use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
+use App\Modules\Core\Finance\Notifications\Team\BudgetAlertNotification;
 use App\Modules\Core\Identity\Models\Team;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
@@ -71,6 +77,20 @@ function storeTransfer(Team $team, Account $origin, Account $destination, Curren
     )->assertRedirect();
 
     return Transfer::query()->sole()->load('transactions');
+}
+
+/**
+ * Put the team on Pro with a running budget of 10 on Other,
+ * the category a transfer fee is read under.
+ */
+function budgetTransferFees(Team $team, Currency $currency): BudgetPeriod
+{
+    subscribeToPro($team);
+
+    return BudgetPeriod::factory()->forCategory(Category::Other)->running()->for($team)->create([
+        'amount' => '10',
+        $currency->getForeignKey() => $currency->getKey(),
+    ]);
 }
 
 describe('create', function (): void {
@@ -428,6 +448,21 @@ describe('store', function (): void {
             ->and($activities->first()?->subject?->is($transfer))->toBeTrue()
             ->and($activities->first()?->attribute_changes['attributes']['description'])->toBe('Rent savings');
     });
+
+    it('alerts when its fee pushes a budget over', function (): void {
+        $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+        [$team, $origin, $destination, $currency, $user] = actingTransferMember();
+        $budget = budgetTransferFees($team, $currency);
+        Notification::fake();
+
+        storeTransfer($team, $origin, $destination, $currency, $currency, [
+            'occurred_at' => '2026-09-15 10:00:00',
+            'origin_fee' => '15.00',
+        ]);
+
+        Notification::assertSentTo($user, BudgetAlertNotification::class, fn (BudgetAlertNotification $notification): bool => $notification->budget->is($budget)
+            && $notification->kind === BudgetAlertKind::Over);
+    });
 });
 
 describe('show', function (): void {
@@ -705,6 +740,21 @@ describe('update', function (): void {
 
         $this->patch(route('finance.teams.transfers.update', ['team' => $team->getRouteKey(), 'transfer' => $transfer->getKey()]), transferPayload($origin, $destination, $currency, $currency))
             ->assertNotFound();
+    });
+
+    it('alerts when an edit adds a fee that pushes a budget over', function (): void {
+        $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
+        [$team, $origin, $destination, $currency, $user] = actingTransferMember();
+        budgetTransferFees($team, $currency);
+        $transfer = storeTransfer($team, $origin, $destination, $currency, $currency, ['occurred_at' => '2026-09-15 10:00:00']);
+        Notification::fake();
+
+        $this->patch(route('finance.teams.transfers.update', ['team' => $team->getRouteKey(), 'transfer' => $transfer->getKey()]), transferPayload($origin, $destination, $currency, $currency, [
+            'occurred_at' => '2026-09-15 10:00:00',
+            'origin_fee' => '15.00',
+        ]))->assertRedirect();
+
+        Notification::assertSentTo($user, BudgetAlertNotification::class, fn (BudgetAlertNotification $notification): bool => $notification->kind === BudgetAlertKind::Over);
     });
 });
 

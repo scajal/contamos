@@ -73,6 +73,11 @@ enum Page: string implements HasLabel
     case PlansAndLimits = 'plans-and-limits';
 
     /**
+     * The emails a team sends and how to choose them.
+     */
+    case Notifications = 'notifications';
+
+    /**
      * Connecting Claude or ChatGPT to a ledger.
      */
     case AiAssistants = 'ai-assistants';
@@ -87,7 +92,7 @@ enum Page: string implements HasLabel
             self::AccountsAndCurrencies, self::TransactionsAndTransfers, self::Tags, self::ExchangeRates => Group::Ledger,
             self::Budgets, self::RecurringTransactions => Group::Planning,
             self::MembersAndRoles, self::ActivityLog => Group::Team,
-            self::PlansAndLimits, self::AiAssistants => Group::More,
+            self::PlansAndLimits, self::Notifications, self::AiAssistants => Group::More,
         };
     }
 
@@ -152,6 +157,7 @@ enum Page: string implements HasLabel
             self::MembersAndRoles => trans('Members & roles'),
             self::ActivityLog => trans('Activity log'),
             self::PlansAndLimits => trans('Plans & limits'),
+            self::Notifications => trans('Notifications'),
             self::AiAssistants => trans('AI assistants'),
         };
     }

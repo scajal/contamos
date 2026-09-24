@@ -37,6 +37,12 @@ enum Permission: string implements HasLabel
     case ManageBilling = 'billing:manage';
 
     /**
+     * Represents choosing which of the team's emails the
+     * member receives.
+     */
+    case ManageNotifications = 'notification:manage';
+
+    /**
      * Represents removing another member from the team.
      */
     case RemoveMember = 'member:remove';
@@ -67,6 +73,7 @@ enum Permission: string implements HasLabel
             self::CreateInvitation => trans('Invite people'),
             self::DeleteTeam => trans('Delete the team'),
             self::ManageBilling => trans('Manage billing'),
+            self::ManageNotifications => trans('Manage notifications'),
             self::RemoveMember => trans('Remove members'),
             self::UpdateMember => trans('Change member roles'),
             self::UpdateTeam => trans('Rename the team'),

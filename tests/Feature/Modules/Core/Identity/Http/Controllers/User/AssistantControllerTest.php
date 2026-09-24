@@ -144,6 +144,20 @@ describe('index', function (): void {
         Exceptions::assertReported(RequestException::class);
     });
 
+    it('lists no assistants for a user WorkOS does not know', function (): void {
+        [$user] = actingMember();
+        $user->forceFill(['external_id' => null])->save();
+
+        $this->get(route('identity.users.assistants.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $reload): Assert => $reload
+                    ->where('connected_apps.failed', false)
+                    ->where('connected_apps.items', [])));
+
+        Http::assertNothingSent();
+    });
+
     it('offers the upgrade when the plan leaves assistants out', function (): void {
         [$user, $team] = actingMember();
         Pennant::for($team)->deactivate(Feature::UseMcp);
@@ -206,6 +220,21 @@ describe('destroy', function (): void {
 
         Http::assertNotSent(fn (Request $request): bool => $request->method() === 'DELETE');
         expect(RevokedGrant::query()->count())->toBe(0);
+    });
+
+    it('changes nothing when WorkOS cannot list the assistants', function (): void {
+        [$user] = actingMember();
+        Http::fake(['api.workos.com/*' => Http::response(['message' => 'Unavailable'], 503)]);
+
+        $this->from(route('identity.users.assistants.index'))
+            ->delete(route('identity.users.assistants.destroy', ['application' => 'conn_app_claude']))
+            ->assertRedirectToRoute('identity.users.assistants.index');
+
+        assertFlashedToast(trans('The assistant could not be disconnected. Try again.'));
+
+        Http::assertNotSent(fn (Request $request): bool => $request->method() === 'DELETE');
+        expect(RevokedGrant::query()->count())->toBe(0);
+        Exceptions::assertReported(RequestException::class);
     });
 
     it('refuses the assistant here even when WorkOS refuses the revocation', function (): void {

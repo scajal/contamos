@@ -2,6 +2,7 @@ import { usePage } from "@inertiajs/react";
 import { CheckIcon } from "lucide-react";
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { usePreference } from "@/hooks/use-preference";
 
 /**
  * The languages the app is translated into, each named in itself so
@@ -14,9 +15,9 @@ const LANGUAGES = [
 
 /**
  * The language options for the user menu. The choice is written to the
- * unencrypted locale cookie the server resolves the locale from, then the
- * page reloads so `<html lang>`, the server render and the translations
- * all switch in one request.
+ * unencrypted locale cookie the server resolves the locale from, and stored
+ * on a signed-in member's account, then the page reloads so `<html lang>`,
+ * the server render and the translations all switch in one request.
  */
 export const LanguageMenu = () => {
     /**
@@ -25,14 +26,19 @@ export const LanguageMenu = () => {
     const { locale: current } = usePage().props;
 
     /**
+     * Remember the language in the cookie and on the account.
+     */
+    const remember = usePreference("locale");
+
+    /**
      * Remember the choice and reload the page in it.
      */
-    const choose = (locale: string) => {
+    const choose = async (locale: string) => {
         if (locale === current) {
             return;
         }
 
-        document.cookie = `filament_language_switch_locale=${locale}; path=/; max-age=31536000; samesite=lax`;
+        await remember(locale);
 
         window.location.reload();
     };

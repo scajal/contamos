@@ -17,6 +17,7 @@ it('translates the permission label', function (Permission $permission, string $
     'create invitation' => [Permission::CreateInvitation, 'Invite people'],
     'delete team' => [Permission::DeleteTeam, 'Delete the team'],
     'manage billing' => [Permission::ManageBilling, 'Manage billing'],
+    'manage notifications' => [Permission::ManageNotifications, 'Manage notifications'],
     'remove member' => [Permission::RemoveMember, 'Remove members'],
     'update member' => [Permission::UpdateMember, 'Change member roles'],
     'update team' => [Permission::UpdateTeam, 'Rename the team'],

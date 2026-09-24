@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Support\Http\Middleware;
 
+use App\Modules\Core\Identity\Enums\User\PreferenceKey;
+use App\Modules\Core\Identity\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -29,10 +31,9 @@ class SetLocale
         if (in_array($locale, $this->locales(), true)) {
             App::setLocale($locale);
 
-            // Set the locale cookie. The in-app language menu
-            // writes it from the browser, so it is not HttpOnly:
-            // a browser refuses to overwrite one that is.
-            Cookie::queue(Cookie::make('filament_language_switch_locale', $locale, 60 * 24 * 365, httpOnly: false));
+            // Set the locale cookie, which also rewrites a stale
+            // one on a device the member did not choose it on.
+            Cookie::queue(PreferenceKey::Locale->cookie($locale));
 
             // If there's a session instance, set the
             // locale as the session's preferred locale.
@@ -46,8 +47,9 @@ class SetLocale
 
     /**
      * Resolve the locale for the given request: route segment,
-     * then the locale cookie, then the browser's preferred
-     * language, then the application's default locale.
+     * then the signed-in member's stored locale, then the locale
+     * cookie, then the browser's preferred language, then the
+     * application's default locale.
      */
     public function resolve(Request $request): string
     {
@@ -57,15 +59,51 @@ class SetLocale
             return $locale;
         }
 
+        // Then, check if the signed-in member stored one.
+        if (is_string($stored = $this->stored($request))) {
+            return $stored;
+        }
+
         // Then, check if the locale is coming from
         // the cookie.
-        if (is_string($cookie = $request->cookie('filament_language_switch_locale'))) {
+        if (is_string($cookie = $request->cookie(PreferenceKey::Locale->cookieName()))) {
             return $cookie;
         }
 
         // Finally, get the locale from the browser's preferred
         // language, or the application's default locale.
         return $request->getPreferredLanguage($this->locales()) ?? config()->string('app.locale');
+    }
+
+    /**
+     * Get the locale the signed-in member stored. A member who
+     * never stored one adopts the locale cookie, so the choice
+     * they made before signing in follows them from now on.
+     */
+    protected function stored(Request $request): ?string
+    {
+        // A visitor who is not signed in has nothing stored.
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            return null;
+        }
+
+        // A stored locale wins over whatever the cookie says.
+        $stored = $user->preference(PreferenceKey::Locale);
+
+        if ($stored !== null) {
+            return $stored;
+        }
+
+        // Otherwise, a valid cookie becomes the stored locale.
+        $cookie = $request->cookie(PreferenceKey::Locale->cookieName());
+
+        if (! PreferenceKey::Locale->accepts($cookie)) {
+            return null;
+        }
+
+        return $user->rememberPreference(PreferenceKey::Locale, $cookie)->value;
     }
 
     /**

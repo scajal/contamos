@@ -7,6 +7,7 @@ use App\Modules\Core\Finance\Actions\Team\CreateTransfer as CreateTransferAction
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Mcp\Servers\ContamosServer;
 use App\Modules\Mcp\Tools\Transfers\GetTransfer;
+use Illuminate\Testing\Fluent\AssertableJson;
 
 /**
  * Feature tests for \App\Modules\Mcp\Tools\Transfers\GetTransfer.
@@ -53,6 +54,26 @@ it('shows the transfer with both legs and its fee', function (): void {
                 'recorded_by' => $user->name,
             ],
         ]);
+});
+
+it('shows a missing leg as empty instead of failing', function (): void {
+    [$user, $team] = mcpMember();
+    $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+    $origin = Account::factory()->bank()->active()->for($team)->create(['name' => 'Checking']);
+    $destination = Account::factory()->cash()->active()->for($team)->create(['name' => 'Wallet']);
+    $origin->currencies()->attach($currency, ['balance' => '100.00']);
+    $destination->currencies()->attach($currency, ['balance' => '0.00']);
+    $transfer = (new CreateTransferAction)->for($team)->by($user)->using(transferAttributes($origin, $destination, $currency, $currency));
+    $transfer->load('transactions');
+    $transfer->destinationLeg()?->delete();
+
+    ContamosServer::actingAs($user)
+        ->tool(GetTransfer::class, ['team' => $team->slug, 'transfer' => $transfer->getKey()])
+        ->assertOk()
+        ->assertStructuredContent(fn (AssertableJson $json): AssertableJson => $json
+            ->where('transfer.origin.transaction_id', $transfer->originLeg()?->getKey())
+            ->where('transfer.destination', null)
+            ->etc());
 });
 
 it('refuses a transfer of another team as not found', function (): void {

@@ -85,7 +85,7 @@ class BudgetController
         $createBudgetPeriod->for($team)
             ->targeting($this->submittedTarget($team, $request))
             ->by($user)
-            ->using($request->safe(['amount', new BudgetPeriod()->currency()->getForeignKeyName(), 'from_month', 'until_month']));
+            ->using($request->safe(['amount', new BudgetPeriod()->currency()->getForeignKeyName(), 'from_month', 'until_month', 'warning_threshold']));
 
         // Show a success message.
         Toast::make(trans('Saved'))
@@ -110,10 +110,11 @@ class BudgetController
      */
     public function update(Team $team, BudgetPeriod $budget, UpdateRequest $request, UpdateBudgetPeriod $updateBudgetPeriod, #[CurrentUser] User $user): RedirectResponse
     {
-        // Change the period's amount, currency or months.
+        // Change the period's amount, currency, months or
+        // warning threshold.
         $updateBudgetPeriod->for($team)
             ->by($user)
-            ->using($budget, $request->safe(['amount', $budget->currency()->getForeignKeyName(), 'from_month', 'until_month']));
+            ->using($budget, $request->safe(['amount', $budget->currency()->getForeignKeyName(), 'from_month', 'until_month', 'warning_threshold']));
 
         // Show a success message.
         Toast::make(trans('Saved'))
@@ -239,6 +240,7 @@ class BudgetController
             'status' => $budget->status($month, $isSuperseded),
             'target' => $this->target($budget),
             'until_month' => $budget->until_month?->format(self::MONTH_FORMAT),
+            'warning_threshold' => $budget->warning_threshold,
         ];
     }
 

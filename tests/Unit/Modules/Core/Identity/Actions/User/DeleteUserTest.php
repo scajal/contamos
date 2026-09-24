@@ -12,8 +12,11 @@ use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Core\Identity\Models\User\Preference;
+use App\Modules\Core\Identity\Notifications\Team\MemberLeftNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Paddle\Exceptions\PaddleException;
 use Laravel\Pennant\Feature as Pennant;
 use WorkOS\Exception\ServerException;
@@ -170,4 +173,31 @@ it('keeps everything when paddle refuses the cancellation', function (): void {
     expect(User::query()->whereKey($user->getKey())->exists())->toBeTrue()
         ->and(Team::query()->whereKey($team->getKey())->exists())->toBeTrue()
         ->and($authKit->deleted)->toBe([]);
+});
+
+it('deletes the preferences the user stored', function (): void {
+    [$user] = memberWithTeam();
+    $preference = Preference::factory()->for($user)->create();
+
+    new DeleteUser(fakeAuthKitUserDeletion(), new DeleteTeam)->using($user);
+
+    expect(Preference::query()->whereKey($preference->getKey())->exists())->toBeFalse();
+});
+
+it('tells the owner and admins of every shared team that the user left', function (): void {
+    [$user, $team] = memberWithTeam(Role::Admin);
+    $owner = $team->owner;
+    $solo = Team::factory()->create();
+    $user->teams()->attach($solo, ['role' => Role::Owner]);
+    Notification::fake();
+
+    new DeleteUser(fakeAuthKitUserDeletion(), new DeleteTeam)->using($user);
+
+    Notification::assertSentTo(
+        $owner,
+        MemberLeftNotification::class,
+        fn (MemberLeftNotification $notification): bool => $notification->team->is($team)
+            && $notification->memberName === $user->name,
+    );
+    Notification::assertSentTimes(MemberLeftNotification::class, 1);
 });

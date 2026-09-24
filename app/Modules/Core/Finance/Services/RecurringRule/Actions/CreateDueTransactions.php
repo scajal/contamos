@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Services\RecurringRule\Actions;
 
 use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
+use App\Modules\Core\Finance\Enums\RecurringRule\FailureReason;
+use App\Modules\Core\Finance\Events\Team\RecurringRuleFailed;
 use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\User;
@@ -39,8 +41,8 @@ class CreateDueTransactions
                 break;
             }
 
-            if (($reason = $this->reasonItCannotGenerate($rule, $dueInstant)) !== null) {
-                $rule->markFailed($reason);
+            if (($reason = $this->reasonItCannotGenerate($rule, $dueInstant)) instanceof FailureReason) {
+                $this->fail($rule, $reason);
 
                 return $created;
             }
@@ -89,21 +91,39 @@ class CreateDueTransactions
     }
 
     /**
+     * Record the rule's failure. The Owner and Admins hear about
+     * it only when the rule was not already failing, so a rule
+     * that stays failed emails once, and one whose failure was
+     * cleared emails again when it next fails.
+     */
+    protected function fail(RecurringRule $rule, FailureReason $reason): void
+    {
+        $wasFailing = $rule->hasFailed();
+
+        $rule->markFailed($reason);
+
+        // Only the transition into failure is announced.
+        if (! $wasFailing) {
+            RecurringRuleFailed::dispatch($rule, $reason);
+        }
+    }
+
+    /**
      * Why the rule cannot generate its occurrence at the given instant,
      * or null when it can.
      */
-    protected function reasonItCannotGenerate(RecurringRule $rule, CarbonImmutable $dueInstant): ?string
+    protected function reasonItCannotGenerate(RecurringRule $rule, CarbonImmutable $dueInstant): ?FailureReason
     {
         if (! $rule->account->is_active) {
-            return trans('The account is inactive.');
+            return FailureReason::InactiveAccount;
         }
 
         if (! $rule->account->currencies()->whereKey($rule->getAttribute($rule->currency()->getForeignKeyName()))->exists()) {
-            return trans('The currency is no longer on the account.');
+            return FailureReason::MissingCurrency;
         }
 
         if (! Instant::resolveQuote($rule->currency, $dueInstant->toIso8601String()) instanceof \App\Modules\Core\Catalog\Models\Currency\Quote) {
-            return trans('There is no rate for the due date.');
+            return FailureReason::MissingRate;
         }
 
         return null;
