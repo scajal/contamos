@@ -30,7 +30,8 @@ describe('unsubscribe', function (): void {
 
         $this->assertGuest();
 
-        expect($user->membershipOn($team)?->notification_preferences)->toBe([
+        // A JSON column keeps no key order on MySQL.
+        expect($user->membershipOn($team)?->notification_preferences)->toEqual([
             'budget_alerts' => false,
             'monthly_summary' => true,
             'member_changes' => false,

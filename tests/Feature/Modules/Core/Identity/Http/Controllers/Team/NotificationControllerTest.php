@@ -113,7 +113,8 @@ describe('update', function (): void {
 
         assertFlashedToast(trans('Saved'));
 
-        expect($user->membershipOn($team)?->notification_preferences)->toBe([
+        // A JSON column keeps no key order on MySQL.
+        expect($user->membershipOn($team)?->notification_preferences)->toEqual([
             'budget_alerts' => true,
             'member_changes' => false,
             'monthly_summary' => false,
