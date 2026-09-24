@@ -71,7 +71,7 @@ class Document implements Arrayable
         // called, and its body is what gets rendered.
         $rendered = self::converter()->convert($markdown);
 
-        /** @var array{title?: string, description?: string, pro?: bool, updated?: string|int} $matter */
+        /** @var array{title?: string, description?: string, pro?: bool, updated?: string} $matter */
         $matter = $rendered instanceof RenderedContentWithFrontMatter
             ? (array) $rendered->getFrontMatter()
             : [];
@@ -96,15 +96,11 @@ class Document implements Arrayable
             ];
         }
 
-        // An unquoted date in YAML reads as a timestamp,
-        // so either spelling ends up as a plain date.
-        $updated = $matter['updated'] ?? null;
-
         return new self(
             title: (string) ($matter['title'] ?? ''),
             description: (string) ($matter['description'] ?? ''),
             pro: (bool) ($matter['pro'] ?? false),
-            updated: is_int($updated) ? date('Y-m-d', $updated) : $updated,
+            updated: $matter['updated'] ?? null,
             body: Str::trim(preg_replace('/\A---\R.*?\R---\R/s', '', $markdown) ?? $markdown),
             html: $rendered->getContent(),
             headings: $headings,
@@ -165,7 +161,7 @@ class Document implements Arrayable
 
         $environment->addExtension(new CommonMarkCoreExtension);
         $environment->addExtension(new GithubFlavoredMarkdownExtension);
-        $environment->addExtension(new FrontMatterExtension);
+        $environment->addExtension(new FrontMatterExtension(new FrontMatterParser));
         $environment->addExtension(new HeadingPermalinkExtension);
 
         return new MarkdownConverter($environment);
