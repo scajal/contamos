@@ -69,3 +69,45 @@ it('returns null when no user matches the WorkOS identifier', function (): void 
 
     expect((new AuthKitAuthentication)->findUsing($workosUser))->toBeNull();
 });
+
+it('finds a user whose WorkOS identifier changed by email', function (): void {
+    $existing = User::factory()->create(['email' => 'ada@example.com', 'external_id' => 'user_old']);
+    $workosUser = new WorkOSUser(
+        id: 'user_new',
+        organizationId: null,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: 'ada@example.com',
+    );
+
+    expect((new AuthKitAuthentication)->findUsing($workosUser)?->is($existing))->toBeTrue();
+});
+
+it('prefers the user matching the WorkOS identifier over one matching the email', function (): void {
+    User::factory()->create(['email' => 'ada@example.com', 'external_id' => 'user_other']);
+    $matching = User::factory()->create(['email' => 'ada.lovelace@example.com', 'external_id' => 'user_123']);
+    $workosUser = new WorkOSUser(
+        id: 'user_123',
+        organizationId: null,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: 'ada@example.com',
+    );
+
+    expect((new AuthKitAuthentication)->findUsing($workosUser)?->is($matching))->toBeTrue();
+});
+
+it('records the WorkOS identifier the user signed in as', function (): void {
+    $user = User::factory()->create(['email' => 'ada@example.com', 'external_id' => 'user_old']);
+    $workosUser = new WorkOSUser(
+        id: 'user_new',
+        organizationId: null,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        email: 'ada@example.com',
+    );
+
+    (new AuthKitAuthentication)->updateUsing($user, $workosUser);
+
+    expect($user->refresh()->external_id)->toBe('user_new');
+});

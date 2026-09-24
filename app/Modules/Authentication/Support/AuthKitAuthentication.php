@@ -26,24 +26,27 @@ class AuthKitAuthentication
     }
 
     /**
-     * Find a user using the provided WorkOS information.
+     * Find a user using the provided WorkOS information: by the
+     * WorkOS identifier first, then by email for a user whose
+     * identifier changed or was never recorded.
      */
     public function findUsing(WorkOSUser $user): ?User
     {
-        return User::query()
-            ->where('external_id', $user->id)
-            ->orWhere('email', $user->email)
-            ->first();
+        return User::query()->where('external_id', $user->id)->first()
+            ?? User::query()->where('email', $user->email)->first();
     }
 
     /**
-     * Update a user using the provided WorkOS information.
+     * Update a user using the provided WorkOS information. The
+     * WorkOS identifier always follows the one WorkOS signed the
+     * user in as, since everything else that asks WorkOS about
+     * the user, such as AI assistant tokens, goes by it.
      */
     public function updateUsing(User $user, WorkOSUser $userFromWorkOS): User
     {
         return tap($user)->update(array_filter([
             'avatar' => $userFromWorkOS->avatar ?? '',
-            'external_id' => $user->external_id ?? $userFromWorkOS->id,
+            'external_id' => $userFromWorkOS->id,
         ]));
     }
 }
