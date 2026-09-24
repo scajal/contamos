@@ -7,6 +7,7 @@ import { BillingCycle } from "@/types/app/modules/billing/enums/billing-cycle";
 import { PlanPrice } from "@/types/app/modules/billing/plan-price";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 
+import { Assistants } from "./_components/assistants";
 import { Balances } from "./_components/balances";
 import { Faq } from "./_components/faq";
 import { Features } from "./_components/features";
@@ -40,6 +41,7 @@ const Home = ({ dashboardUrl, alternates, features, prices }: HomeProps) => {
                 <Hero dashboardUrl={dashboardUrl} />
                 <Balances />
             </div>
+            <Assistants dashboardUrl={dashboardUrl} />
             <Features />
             <HowItWorks />
             <Pricing dashboardUrl={dashboardUrl} features={features} prices={prices} />

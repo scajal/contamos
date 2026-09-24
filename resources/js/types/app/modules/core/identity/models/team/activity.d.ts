@@ -27,8 +27,17 @@ export interface ActivityChange {
  * A timeline row. The values it changed only travel with the
  * detail dialog, which sends `ActivityEntry & { changes }`.
  */
+/**
+ * The AI assistant an entry was written through, when the user
+ * acted through the MCP server instead of the app.
+ */
+export interface ActivityAssistant {
+    name: string | null;
+}
+
 export interface ActivityEntry {
     id: number;
+    assistant: ActivityAssistant | null;
     batch_uuid: string | null;
     causer: ActivityCauser;
     created_at: string | null;

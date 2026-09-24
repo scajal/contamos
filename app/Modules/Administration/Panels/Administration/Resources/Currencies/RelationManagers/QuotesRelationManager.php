@@ -46,7 +46,7 @@ class QuotesRelationManager extends RelationManager
     /**
      * Get the columns for the relation manager's table.
      *
-     * @return array<\Filament\Tables\Columns\Layout\Stack>
+     * @return array<int, \Filament\Tables\Columns\TextColumn>
      */
     protected function getColumns(): array
     {

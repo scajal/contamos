@@ -10,6 +10,7 @@ use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Helpers\TeamActivity;
+use Carbon\CarbonImmutable;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -93,5 +94,18 @@ class UpdateBudgetPeriod
 
             return $period;
         }));
+    }
+
+    /**
+     * Stop the period at the end of the current month, so
+     * this month keeps its budget and the next one has
+     * none.
+     */
+    public function pause(BudgetPeriod $period): BudgetPeriod
+    {
+        // Close the stretch on the current month.
+        return $this->using($period, [
+            'until_month' => CarbonImmutable::now()->startOfMonth(),
+        ]);
     }
 }

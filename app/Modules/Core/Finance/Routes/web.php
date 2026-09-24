@@ -255,17 +255,13 @@ Route::as('finance.teams.')
             ->name('recurring-rules.edit')
             ->scopeBindings();
 
-        Route::delete('/recurring-rules/{recurringRule}', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'destroy'])
-            ->name('recurring-rules.destroy')
-            ->scopeBindings();
-
         Route::delete('/recurring-rules/{recurringRule}/undo', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'undo'])
             ->name('recurring-rules.undo')
             ->scopeBindings();
 
         // A team whose plan does not include recurring transactions
-        // keeps its rules listed and may delete them, but cannot add
-        // to or restart what would never generate.
+        // keeps its rules listed, but cannot add to, change, restart
+        // or delete them until it upgrades.
         Route::middleware(EnsureFeaturesAreActive::using(Feature::RecurTransactions))->group(function (): void {
             Route::get('/recurring-rules/create', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'create'])
                 ->name('recurring-rules.create');
@@ -283,6 +279,10 @@ Route::as('finance.teams.')
 
             Route::patch('/recurring-rules/{recurringRule}/resume', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'resume'])
                 ->name('recurring-rules.resume')
+                ->scopeBindings();
+
+            Route::delete('/recurring-rules/{recurringRule}', [\App\Modules\Core\Finance\Http\Controllers\Team\RecurringRuleController::class, 'destroy'])
+                ->name('recurring-rules.destroy')
                 ->scopeBindings();
         });
     });

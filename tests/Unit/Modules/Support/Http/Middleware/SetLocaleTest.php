@@ -44,5 +44,6 @@ it('prefers the route locale segment over the cookie and queues the cookie', fun
     /** @var \Symfony\Component\HttpFoundation\Cookie $cookie */
     $cookie = Cookie::queued('filament_language_switch_locale');
 
-    expect($cookie->getValue())->toBe('es');
+    expect($cookie->getValue())->toBe('es')
+        ->and($cookie->isHttpOnly())->toBeFalse();
 });

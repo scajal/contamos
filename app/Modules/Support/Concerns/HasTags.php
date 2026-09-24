@@ -131,15 +131,20 @@ trait HasTags
 
     /**
      * Scope the query to models that have any of the given tags.
+     * The query builder filter hands each tag over as its own
+     * argument, and other callers pass a list or a
+     * comma-separated string, so every form is gathered.
      *
      * @param  \Illuminate\Database\Eloquent\Builder<covariant \Illuminate\Database\Eloquent\Model>  $query
-     * @param  string|array<int, string>  $ids
+     * @param  string|array<int, string>  ...$ids
      */
     #[Scope]
-    protected function withAnyTags(Builder $query, string|array $ids): void
+    protected function withAnyTags(Builder $query, string|array ...$ids): void
     {
-        // Validate that the IDs are an array.
-        $tagIds = is_array($ids) ? $ids : explode(',', $ids);
+        // Gather every tag, however it was passed.
+        $tagIds = collect($ids)
+            ->flatMap(fn (string|array $id): array => is_array($id) ? $id : explode(',', $id))
+            ->all();
 
         // Add the where clause to the query.
         $query->whereHas('tags', fn (Builder $tags): Builder => $tags->whereKey($tagIds));

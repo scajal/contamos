@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Finance\Http\Controllers\Team\Concerns;
+namespace App\Modules\Core\Finance\Reports\Team\Concerns;
 
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
@@ -27,6 +27,22 @@ trait SumsMonthlyActivity
      */
     protected function monthly(Team $team, CarbonImmutable $month): Builder
     {
+        return $this->activityBetween(
+            $team,
+            $month->startOfMonth()->toDateString(),
+            $month->endOfMonth()->toDateString(),
+        );
+    }
+
+    /**
+     * The income and expenses of the team's active accounts
+     * between two dates, both included, so any range is
+     * summed the way a month is.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder<\App\Modules\Core\Finance\Models\Team\Transaction>
+     */
+    protected function activityBetween(Team $team, string $from, string $to): Builder
+    {
         $transaction = new Transaction;
 
         return $team->transactions()
@@ -36,8 +52,8 @@ trait SumsMonthlyActivity
                 TransactionType::Income->value,
             ])
             ->whereRelation('account', new Account()->qualifyColumn('is_active'), true)
-            ->occurredFrom($month->startOfMonth()->toDateString())
-            ->occurredUntil($month->endOfMonth()->toDateString());
+            ->occurredFrom($from)
+            ->occurredUntil($to);
     }
 
     /**

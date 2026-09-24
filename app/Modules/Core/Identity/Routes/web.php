@@ -62,6 +62,24 @@ Route::as('identity.')
 
         /*
         |--------------------------------------------------------------------------
+        | Assistant routes
+        |--------------------------------------------------------------------------
+        |
+        | These routes correspond to the AI assistants connected to the
+        | user's account. They are not team-scoped because an assistant
+        | acts as the user on every team, and they are open on every
+        | plan so a user can always see and cut off what is connected.
+        |
+        */
+
+        Route::get('assistants', [\App\Modules\Core\Identity\Http\Controllers\User\AssistantController::class, 'index'])
+            ->name('users.assistants.index');
+
+        Route::delete('assistants/{application}', [\App\Modules\Core\Identity\Http\Controllers\User\AssistantController::class, 'destroy'])
+            ->name('users.assistants.destroy');
+
+        /*
+        |--------------------------------------------------------------------------
         | Invitation routes
         |--------------------------------------------------------------------------
         |
@@ -89,15 +107,13 @@ Route::as('identity.teams.')
         |
         | These routes correspond to the team activity log. The permission runs
         | first, so a member is refused outright instead of being offered an
-        | upgrade they may not ask for.
+        | upgrade they may not ask for. The listing is not gated on the plan:
+        | a team without the feature lands on the page and sees it locked.
         |
         */
 
         Route::get('activity', [\App\Modules\Core\Identity\Http\Controllers\Team\ActivityController::class, 'index'])
-            ->middleware([
-                EnsureTeamPermission::using(Permission::ViewActivity),
-                EnsureFeaturesAreActive::using(Feature::ViewActivity),
-            ])
+            ->middleware(EnsureTeamPermission::using(Permission::ViewActivity))
             ->name('activity.index');
 
         Route::get('activity/{activity}', [\App\Modules\Core\Identity\Http\Controllers\Team\ActivityController::class, 'show'])

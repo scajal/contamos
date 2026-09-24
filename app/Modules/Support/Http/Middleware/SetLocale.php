@@ -29,8 +29,10 @@ class SetLocale
         if (in_array($locale, $this->locales(), true)) {
             App::setLocale($locale);
 
-            // Set the locale cookie.
-            Cookie::queue(Cookie::make('filament_language_switch_locale', $locale, 60 * 24 * 365));
+            // Set the locale cookie. The in-app language menu
+            // writes it from the browser, so it is not HttpOnly:
+            // a browser refuses to overwrite one that is.
+            Cookie::queue(Cookie::make('filament_language_switch_locale', $locale, 60 * 24 * 365, httpOnly: false));
 
             // If there's a session instance, set the
             // locale as the session's preferred locale.

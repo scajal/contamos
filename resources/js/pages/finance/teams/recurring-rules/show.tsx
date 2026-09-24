@@ -200,32 +200,33 @@ export default function Show({ canRecur, rule }: PageProps) {
                                 ) : null}
                             </FieldGroup>
                         </div>
-                        <DialogFooter className="flex-row justify-between sm:justify-between">
-                            <ConfirmAction
-                                title={t("Delete this rule?")}
-                                description={t(
-                                    "The transactions it already created stay in your ledger. It will not create any more.",
-                                )}
-                                confirmLabel={t("Delete")}
-                                action={
-                                    <Link
-                                        href={recurringRules.destroy.url({ recurringRule: rule.id, team })}
-                                        method="delete"
-                                        onSuccess={() => {
-                                            rootProps.onOpenChange?.(false);
-                                            refresh();
-                                        }}
-                                    />
-                                }
-                            >
-                                <Button
-                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                    variant="ghost"
+                        {/** A plan without recurring transactions can only look at the rule. */}
+                        {canRecur ? (
+                            <DialogFooter className="flex-row justify-between sm:justify-between">
+                                <ConfirmAction
+                                    title={t("Delete this rule?")}
+                                    description={t(
+                                        "The transactions it already created stay in your ledger. It will not create any more.",
+                                    )}
+                                    confirmLabel={t("Delete")}
+                                    action={
+                                        <Link
+                                            href={recurringRules.destroy.url({ recurringRule: rule.id, team })}
+                                            method="delete"
+                                            onSuccess={() => {
+                                                rootProps.onOpenChange?.(false);
+                                                refresh();
+                                            }}
+                                        />
+                                    }
                                 >
-                                    {t("Delete")}
-                                </Button>
-                            </ConfirmAction>
-                            {canRecur ? (
+                                    <Button
+                                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                        variant="ghost"
+                                    >
+                                        {t("Delete")}
+                                    </Button>
+                                </ConfirmAction>
                                 <div className="flex gap-2">
                                     <Button
                                         nativeButton={false}
@@ -264,8 +265,8 @@ export default function Show({ canRecur, rule }: PageProps) {
                                         variant="outline"
                                     />
                                 </div>
-                            ) : null}
-                        </DialogFooter>
+                            </DialogFooter>
+                        ) : null}
                     </DialogContent>
                 </Dialog>
             )}

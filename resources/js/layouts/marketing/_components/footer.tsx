@@ -13,6 +13,7 @@ import { ThemeSwitcher, type Appearance } from "./theme-switcher";
 /** The homepage's own sections, linked by anchor off the canonical URL. */
 const SECTIONS = [
     { hash: "product", label: "Balances" },
+    { hash: "assistants", label: "AI assistants" },
     { hash: "features", label: "Features" },
     { hash: "how-it-works", label: "How it works" },
     { hash: "pricing", label: "Pricing" },

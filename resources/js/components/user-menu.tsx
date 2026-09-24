@@ -4,6 +4,7 @@ import { LifeBuoyIcon, LogOutIcon, ShieldCheckIcon, UserIcon } from "lucide-reac
 import { Fragment } from "react/jsx-runtime";
 
 import { AppearanceMenu } from "@/components/appearance-menu";
+import { LanguageMenu } from "@/components/language-menu";
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -16,8 +17,8 @@ import account from "@/routes/identity/users/account";
 
 /**
  * The items of the signed-in user's menu: administration for those
- * who may enter it, the account, support, the colour scheme and the
- * way out. Layouts wrap them in their own trigger and content, so the
+ * who may enter it, the account, support, the colour scheme, the
+ * language and the way out. Layouts wrap them in their own trigger and content, so the
  * same menu opens from the sidebar footer and from the wizard header.
  */
 export const UserMenuItems = () => {
@@ -59,6 +60,11 @@ export const UserMenuItems = () => {
             <DropdownMenuGroup>
                 <DropdownMenuLabel>{t("Theme")}</DropdownMenuLabel>
                 <AppearanceMenu />
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+                <DropdownMenuLabel>{t("Language")}</DropdownMenuLabel>
+                <LanguageMenu />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>

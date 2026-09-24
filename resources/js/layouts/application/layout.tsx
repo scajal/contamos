@@ -6,6 +6,7 @@ import {
     ArrowLeftRightIcon,
     ArrowUpIcon,
     BanknoteIcon,
+    BotIcon,
     CalendarRangeIcon,
     CheckIcon,
     ChevronRightIcon,
@@ -81,6 +82,7 @@ import activity from "@/routes/identity/teams/activity";
 import invitations from "@/routes/identity/teams/invitations";
 import members from "@/routes/identity/teams/members";
 import settings from "@/routes/identity/teams/settings";
+import assistants from "@/routes/identity/users/assistants";
 
 const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "finance/teams/accounts", title: "Accounts" },
@@ -95,6 +97,7 @@ const PAGE_TITLES: Array<{ prefix: string; title: string }> = [
     { prefix: "identity/teams/members", title: "Members" },
     { prefix: "identity/teams/index", title: "Configuration" },
     { prefix: "identity/users/account", title: "Account" },
+    { prefix: "identity/users/assistants", title: "AI assistants" },
 ];
 
 export const ApplicationLayout = ({
@@ -573,6 +576,19 @@ const Sidebar = () => {
                             >
                                 <SettingsIcon />
                                 <span>{t("Configuration")}</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroup>
+                <SidebarGroup>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                isActive={isSection("identity/users/assistants")}
+                                render={<Link href={assistants.index.url()} />}
+                            >
+                                <BotIcon />
+                                <span>{t("AI assistants")}</span>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>

@@ -87,13 +87,17 @@ describe('index', function (): void {
         visitActivity($team)->assertForbidden();
     });
 
-    it('redirects the owner and an admin of a free team to the upgrade modal', function (Role $role): void {
+    it('locks the page for the owner and an admin of a free team without sending the log', function (Role $role): void {
         [$user, $team] = actingMember($role);
+        recordActivity($team, ['event' => 'created']);
 
-        visitActivity($team)->assertRedirectToRoute('billing.teams.subscriptions.upgrade', [
-            'team' => $team->getRouteKey(),
-            'feature' => Feature::ViewActivity->value,
-        ]);
+        visitActivity($team)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->component('identity/teams/activity/index')
+                ->where('is_locked', true)
+                ->missing('activities')
+                ->missing('members'));
     })->with([
         'owner' => [Role::Owner],
         'admin' => [Role::Admin],
@@ -111,6 +115,7 @@ describe('index', function (): void {
             ->assertInertia(fn (Assert $page): Assert => $page
                 ->component('identity/teams/activity/index')
                 ->where('filters', [])
+                ->where('is_locked', false)
                 ->has('members')
                 ->where('subjects', ActivitySubject::options())
                 ->loadDeferredProps(fn (Assert $page): Assert => $page
@@ -375,6 +380,20 @@ describe('index', function (): void {
                 ->loadDeferredProps(fn (Assert $page): Assert => $page
                     ->where('activities.data.0.subject_label', trans('Subscription'))));
     });
+
+    it('marks an entry written through an AI assistant', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        clearActivities();
+        recordActivity($team, ['event' => 'app', 'created_at' => CarbonImmutable::now()->subDay()]);
+        recordActivity($team, ['event' => 'assistant', 'properties' => ['via' => 'mcp', 'client_id' => 'https://claude.ai/oauth/mcp-oauth-client-metadata', 'client_name' => 'claude.ai']]);
+
+        visitActivity($team)
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->loadDeferredProps(fn (Assert $page): Assert => $page
+                    ->where('activities.data.0.assistant', ['name' => 'claude.ai'])
+                    ->where('activities.data.1.assistant', null)));
+    });
 });
 
 describe('show', function (): void {
@@ -529,5 +548,17 @@ describe('show', function (): void {
                 ->where('entries.0.changes.0.field', 'name')
                 ->where('entries.0.changes.0.old', 'Old')
                 ->where('entries.0.changes.0.new', 'New'));
+    });
+
+    it('marks an entry written through an AI assistant', function (): void {
+        [$user, $team] = actingMember();
+        subscribeToPro($team);
+        clearActivities();
+        $activity = recordActivity($team, ['properties' => ['via' => 'mcp', 'client_name' => 'claude.ai']]);
+
+        openActivity($team, $activity)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('entries.0.assistant', ['name' => 'claude.ai']));
     });
 });

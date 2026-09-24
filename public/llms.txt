@@ -4,6 +4,8 @@
 
 A ledger logs income and expense transactions with tags, and every transaction stores the exchange rate of the day it happened. The free plan needs no card; Pro removes the free plan's account, member and transaction limits.
 
+On every plan, AI assistants such as Claude and ChatGPT can connect to a ledger through a remote MCP server at https://contamos.xyz/mcp, signing in as the user, within the limits of each team's plan. They can read balances and reports, record and edit movements, and import a bank statement the user hands them after a dry run the user reviews.
+
 ## Pages
 
 - [Homepage (English)](https://contamos.xyz/en): what Contamos does, how it works, pricing and frequently asked questions.

@@ -1,5 +1,5 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { CoinsIcon, RefreshCwIcon, SearchIcon, TagsIcon, Undo2Icon, UsersIcon } from "lucide-react";
+import { CoinsIcon, RefreshCwIcon, SearchIcon, TagsIcon, TargetIcon, Undo2Icon, UsersIcon } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 
@@ -11,7 +11,7 @@ interface Feature {
     body: string;
     /**
      * The card's share of the six-column bento: a full-width opener,
-     * then a row of thirds and a row of halves, so nothing is left over.
+     * then two rows of thirds, so nothing is left over.
      */
     span: string;
     /** Full-width cards read better with the copy beside the heading. */
@@ -48,13 +48,19 @@ const FEATURES: Array<Feature> = [
         icon: SearchIcon,
         title: "Find anything in seconds.",
         body: "Filter by account, currency, tag or date — or just search. The list keeps loading as you scroll.",
-        span: "lg:col-span-3",
+        span: "lg:col-span-2",
     },
     {
         icon: Undo2Icon,
         title: "Delete without breaking anything.",
         body: "Remove a transaction and the balance goes back exactly where it was. No manual fixing afterwards.",
-        span: "lg:col-span-3",
+        span: "lg:col-span-2",
+    },
+    {
+        icon: TargetIcon,
+        title: "Budgets that follow the month. On Pro.",
+        body: "Set a monthly amount per category or tag, in each currency, and watch what is left as the month goes.",
+        span: "lg:col-span-2",
     },
 ];
 

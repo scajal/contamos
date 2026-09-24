@@ -6,11 +6,12 @@ import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import subscriptions from "@/routes/billing/teams/subscriptions";
+import { Feature } from "@/types/app/modules/billing/enums/feature";
 
 type Props = {
     children?: ReactNode;
     description: string;
-    feature: string;
+    feature: Feature;
     team: string;
     title: string;
 };

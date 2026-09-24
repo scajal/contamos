@@ -134,3 +134,18 @@ it('offers the pro price for both billing cycles', function (): void {
             ->has('prices.yearly', fn (Assert $price): \Inertia\Testing\AssertableInertia => $price
                 ->hasAll('amount', 'currency', 'formatted')));
 });
+
+it('offers ai assistant access on every plan', function (string $locale, string $label): void {
+    get(route('home', ['locale' => $locale]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->where('features', fn (\Illuminate\Support\Collection $features): bool => $features->contains([
+                'feature' => Feature::UseMcp->value,
+                'label' => $label,
+                'free' => true,
+                'pro' => true,
+            ])));
+})->with([
+    'english' => ['en', 'AI assistant access (MCP)'],
+    'spanish' => ['es', 'Acceso para asistentes de IA (MCP)'],
+]);

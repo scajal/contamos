@@ -6,8 +6,7 @@ namespace App\Modules\Core\Finance\Http\Controllers\Team;
 
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
-use App\Modules\Core\Finance\Actions\Team\CreateRecurringRule;
-use App\Modules\Core\Finance\Actions\Team\CreateTransaction;
+use App\Modules\Core\Finance\Actions\Team\CreateTransactionEntry;
 use App\Modules\Core\Finance\Actions\Team\DeleteTransaction;
 use App\Modules\Core\Finance\Actions\Team\UpdateTransaction;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
@@ -135,53 +134,14 @@ class TransactionController
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateTransaction $createTransaction, CreateRecurringRule $createRecurringRule): RedirectResponse
+    public function store(Team $team, StoreRequest $request, #[CurrentUser] User $user, CreateTransactionEntry $createTransactionEntry): RedirectResponse
     {
-        // Repeating an entry is a Pro feature. The form hides it on a
-        // Free team, so a request that still asks for it is refused
-        // rather than silently recorded as a one-off.
-        abort_if($request->boolean('repeat') && ! Feature::RecurTransactions->enabled($team), HttpResponse::HTTP_FORBIDDEN);
-
-        // When the request asks the transaction to repeat, create the
-        // rule that will generate its future occurrences.
-        $rule = ($repeat = $request->repeatAttributes()) !== null
-            ? $createRecurringRule->for($team)->by($user)->using($repeat)
-            : null;
-
-        // A rule due today or earlier generates its first occurrence right
-        // away, linked to that due date. A rule starting later waits for
-        // its due date, so no transaction is created here.
-        $transaction = ! $rule instanceof \App\Modules\Core\Finance\Models\Team\RecurringRule || $rule->isDueByToday()
-            ? $createTransaction
-                ->for($team)
-                ->by($user)
-                ->using([
-                    ...$request->safe([
-                        (new Transaction)->account()->getForeignKeyName(),
-                        'amount',
-                        'category',
-                        (new Transaction)->currency()->getForeignKeyName(),
-                        'description',
-                        'occurred_at',
-                        'quote',
-                        'type',
-                    ]),
-                    ...($rule instanceof RecurringRule
-                        ? [$rule->getForeignKey() => $rule->getKey(), 'due_date' => $rule->starts_on]
-                        : []),
-                ], $request->tagIds())
-            : null;
-
-        // The rule carries the same tags its occurrences will, and
-        // once its first occurrence exists the schedule picks up from
-        // the one after it.
-        if ($rule instanceof RecurringRule) {
-            $rule->attachTags($request->tagIds());
-
-            if ($transaction instanceof Transaction) {
-                $rule->forceFill(['last_generated_due_date' => $rule->starts_on])->save();
-            }
-        }
+        // Record the entry, creating its recurring rule when it
+        // repeats and its first occurrence once it is due.
+        ['transaction' => $transaction, 'recurringRule' => $rule] = $createTransactionEntry
+            ->for($team)
+            ->by($user)
+            ->using($request->validated(), $request->tagIds());
 
         // Flash a success message to the session, offering to take the
         // entry back so a wrong tap costs one tap rather than a trip
@@ -225,6 +185,9 @@ class TransactionController
      */
     public function edit(Team $team, Transaction $transaction): Modal
     {
+        // A row the plan hides reports not found, as on show.
+        $this->assertTransactionIsVisible($team, $transaction);
+
         $this->assertTransactionIsNotOwnedByATransfer($transaction);
 
         $transaction->load('account', 'currency', 'user', 'tags');
@@ -250,6 +213,9 @@ class TransactionController
      */
     public function update(Team $team, Transaction $transaction, UpdateRequest $request, UpdateTransaction $updateTransaction): RedirectResponse
     {
+        // A row the plan hides reports not found, as on show.
+        $this->assertTransactionIsVisible($team, $transaction);
+
         $this->assertTransactionIsNotOwnedByATransfer($transaction);
 
         // Update the transaction.
@@ -389,15 +355,9 @@ class TransactionController
      */
     protected function visible(Team $team, ?CarbonImmutable $since): HasMany
     {
-        $transactions = $team->transactions();
-
         // The cutoff is applied before any allowed filter, so no
         // filter the user sends can widen it.
-        if ($since instanceof CarbonImmutable) {
-            $transactions->occurredFrom($since->toDateString());
-        }
-
-        return $transactions;
+        return $team->transactions()->withinHistoryWindow($since);
     }
 
     /**
@@ -446,9 +406,7 @@ class TransactionController
      */
     protected function isVisible(Team $team, Transaction $transaction): bool
     {
-        $since = $this->historyWindowStart($team);
-
-        return ! ($since instanceof CarbonImmutable) || ! $transaction->occurred_at->startOfDay()->lessThan($since);
+        return $transaction->isWithinHistoryWindow($this->historyWindowStart($team));
     }
 
     /**
@@ -458,7 +416,7 @@ class TransactionController
     protected function assertTransactionIsNotOwnedByATransfer(Transaction $transaction): void
     {
         abort_if(
-            filled($transaction->getAttribute($transaction->transfer()->getForeignKeyName())),
+            $transaction->belongsToTransfer(),
             HttpResponse::HTTP_FORBIDDEN,
             trans('This movement belongs to a transfer. Edit or delete the transfer instead.'),
         );

@@ -336,6 +336,22 @@ describe('store', function (): void {
             ->and($period->until_month)->toBeNull();
     });
 
+    it('checks a shorter month for overlaps when today is past its last day', function (): void {
+        $this->travelTo(CarbonImmutable::parse('2026-01-31 12:00:00'));
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        BudgetPeriod::factory()->forTag($tag)->for($currency)->create([
+            'from_month' => '2026-02-01',
+            'until_month' => '2026-02-01',
+        ]);
+
+        $this->post(route('finance.teams.budgets.store', ['team' => $team->getRouteKey()]), budgetPayload($tag, $currency, [
+            'from_month' => '2026-02',
+            'until_month' => '2026-02',
+        ]))->assertInvalid(['from_month']);
+
+        expect(BudgetPeriod::query()->count())->toBe(1);
+    });
+
     it('opens a single month objective', function (): void {
         [$user, $team, $currency, $tag] = budgetingTeam();
         $month = CarbonImmutable::now()->format('Y-m');
@@ -740,6 +756,22 @@ describe('pause', function (): void {
 
         expect($period->fresh()?->until_month?->format('Y-m'))->toBe(CarbonImmutable::now()->format('Y-m'));
     });
+
+    it('refuses a budget that already has a last month', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        $until = CarbonImmutable::now()->addMonths(2)->startOfMonth();
+        $period = BudgetPeriod::factory()->forTag($tag)->for($currency)->create([
+            'from_month' => CarbonImmutable::now()->subMonth(),
+            'until_month' => $until,
+        ]);
+
+        $this->patch(route('finance.teams.budgets.pause', [
+            'team' => $team->getRouteKey(),
+            'budget' => $period->getKey(),
+        ]))->assertConflict();
+
+        expect($period->fresh()?->until_month?->format('Y-m'))->toBe($until->format('Y-m'));
+    });
 });
 
 describe('resume', function (): void {
@@ -777,6 +809,18 @@ describe('resume', function (): void {
         expect((float) $resumed->amount)->toBe(400.0)
             ->and($resumed->from_month->format('Y-m'))->toBe(CarbonImmutable::now()->format('Y-m'))
             ->and($resumed->until_month)->toBeNull();
+    });
+
+    it('refuses a budget that is still running', function (): void {
+        [$user, $team, $currency, $tag] = budgetingTeam();
+        $period = BudgetPeriod::factory()->running()->forTag($tag)->for($currency)->create();
+
+        $this->patch(route('finance.teams.budgets.resume', [
+            'team' => $team->getRouteKey(),
+            'budget' => $period->getKey(),
+        ]))->assertConflict();
+
+        expect(BudgetPeriod::query()->count())->toBe(1);
     });
 });
 

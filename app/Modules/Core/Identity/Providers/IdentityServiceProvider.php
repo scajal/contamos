@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Identity\Providers;
 
+use App\Modules\Core\Identity\Models\Team\Activity;
+use App\Modules\Mcp\Helpers\McpContext;
 use App\Modules\Support\Helpers\TeamActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
@@ -36,6 +38,13 @@ class IdentityServiceProvider extends ServiceProvider
         PendingActivityLog::beforeLogging(function (ActivityContract $activity): void {
             if ($activity instanceof Model) {
                 $activity->setAttribute('batch_uuid', TeamActivity::uuid());
+            }
+
+            // An entry written while an AI assistant works through
+            // the MCP server says so, and names the assistant. The
+            // causer stays the user it acted as.
+            if ($activity instanceof Activity && ($properties = McpContext::activityProperties()) !== []) {
+                $activity->properties = collect($activity->properties ?? [])->merge($properties);
             }
         });
     }

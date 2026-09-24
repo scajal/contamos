@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Finance\Http\Controllers\Team\Concerns;
+namespace App\Modules\Core\Finance\Reports\Team\Concerns;
 
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Query\JoinClause;
 
@@ -32,12 +33,25 @@ trait SumsTaggedActivity
      */
     protected function taggedTotals(Team $team, CarbonImmutable $month): EloquentCollection
     {
+        return $this->taggedSums($this->monthly($team, $month));
+    }
+
+    /**
+     * Sum the given movements' income and expenses per tag and
+     * currency, counting a movement in full under every tag
+     * it carries.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<\App\Modules\Core\Finance\Models\Team\Transaction>  $movements
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction>
+     */
+    protected function taggedSums(Builder $movements): EloquentCollection
+    {
         $transaction = new Transaction;
         $tag = new Tag;
         $tags = $transaction->tags();
         $currencyKey = $transaction->currency()->getForeignKeyName();
 
-        return $this->monthly($team, $month)
+        return $movements
             ->select([
                 $transaction->qualifyColumn($currencyKey),
                 $tag->qualifyColumn($tag->getKeyName()).' as tag_id',

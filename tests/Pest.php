@@ -361,3 +361,111 @@ function transferSides(string $originBalance = '100.00', string $destinationBala
 
     return [$team, $origin, $destination, $currency];
 }
+
+/**
+ * Get the RSA key pair the fake AuthKit signs MCP access tokens
+ * with, generated once per process since it is slow to make.
+ *
+ * @return array{private: string, n: string, e: string}
+ */
+function authKitKeyPair(): array
+{
+    /** @var array{private: string, n: string, e: string}|null $keyPair */
+    static $keyPair = null;
+
+    if ($keyPair === null) {
+        $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+
+        if ($key === false || ! openssl_pkey_export($key, $private) || ! is_array($details = openssl_pkey_get_details($key))) {
+            throw new RuntimeException('Could not generate an RSA key pair.');
+        }
+
+        /** @var string $private */
+        $keyPair = [
+            'private' => $private,
+            'n' => Firebase\JWT\JWT::urlsafeB64Encode($details['rsa']['n']),
+            'e' => Firebase\JWT\JWT::urlsafeB64Encode($details['rsa']['e']),
+        ];
+    }
+
+    return $keyPair;
+}
+
+/**
+ * Serve the fake AuthKit's signing keys, so the MCP middleware can
+ * verify the tokens \mcpToken() signs.
+ */
+function fakeAuthKitJwks(): void
+{
+    $keyPair = authKitKeyPair();
+
+    Http::fake([
+        \App\Modules\Mcp\Http\Middleware\AuthenticateMcpToken::issuer().'/oauth2/jwks' => Http::response([
+            'keys' => [[
+                'kty' => 'RSA',
+                'kid' => 'test-key',
+                'use' => 'sig',
+                'alg' => 'RS256',
+                'n' => $keyPair['n'],
+                'e' => $keyPair['e'],
+            ]],
+        ]),
+    ]);
+}
+
+/**
+ * Sign an AuthKit access token for the MCP server on behalf of the
+ * given \App\Modules\Core\Identity\Models\User, with any claim
+ * overridden. A null override drops that claim.
+ *
+ * @param  array<string, mixed>  $claims
+ */
+function mcpToken(User $user, array $claims = []): string
+{
+    $payload = array_filter([
+        'iss' => \App\Modules\Mcp\Http\Middleware\AuthenticateMcpToken::issuer(),
+        'aud' => \App\Modules\Mcp\Http\Middleware\AuthenticateMcpToken::resource(),
+        'sub' => $user->external_id,
+        'sid' => 'session_test',
+        'client_id' => 'https://claude.ai/oauth/mcp-oauth-client-metadata',
+        'iat' => now()->getTimestamp(),
+        'exp' => now()->addMinutes(5)->getTimestamp(),
+        ...$claims,
+    ], fn (mixed $value): bool => $value !== null);
+
+    return Firebase\JWT\JWT::encode($payload, authKitKeyPair()['private'], 'RS256', 'test-key');
+}
+
+/**
+ * Send a JSON-RPC call to the MCP server over HTTP with the given
+ * bearer token, the way an assistant does.
+ *
+ * @param  array<string, mixed>  $params
+ */
+function mcpCall(?string $token, string $method = 'tools/list', array $params = []): \Illuminate\Testing\TestResponse
+{
+    return test()->withHeaders(array_filter([
+        'Accept' => 'application/json, text/event-stream',
+        'Authorization' => $token !== null ? 'Bearer '.$token : null,
+    ]))->postJson('/mcp', [
+        'jsonrpc' => '2.0',
+        'id' => 1,
+        'method' => $method,
+        'params' => (object) $params,
+    ]);
+}
+
+/**
+ * Create a \App\Modules\Core\Identity\Models\User that belongs to a
+ * \App\Modules\Core\Identity\Models\Team on the pro plan, which is
+ * what MCP access needs, with the given role.
+ *
+ * @return array{0: \App\Modules\Core\Identity\Models\User, 1: \App\Modules\Core\Identity\Models\Team}
+ */
+function mcpMember(Role $role = Role::Owner): array
+{
+    [$user, $team] = memberWithTeam($role);
+    subscribeToPro($team);
+
+    return [$user, $team];
+}

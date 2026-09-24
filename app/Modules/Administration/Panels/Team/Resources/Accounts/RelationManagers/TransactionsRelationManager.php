@@ -42,7 +42,7 @@ class TransactionsRelationManager extends RelationManager
     /**
      * Get the columns for the relation manager's table.
      *
-     * @return array<\Filament\Tables\Columns\Layout\Split>
+     * @return array<int, \Filament\Tables\Columns\TextColumn>
      */
     protected function getColumns(): array
     {

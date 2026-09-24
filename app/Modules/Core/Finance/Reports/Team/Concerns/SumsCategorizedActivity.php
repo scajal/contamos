@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Finance\Http\Controllers\Team\Concerns;
+namespace App\Modules\Core\Finance\Reports\Team\Concerns;
 
 use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 /**
@@ -33,10 +34,23 @@ trait SumsCategorizedActivity
      */
     protected function categorizedTotals(Team $team, CarbonImmutable $month): EloquentCollection
     {
+        return $this->categorizedSums($this->monthly($team, $month));
+    }
+
+    /**
+     * Sum the given movements' income and expenses per category
+     * and currency, reading a movement with no category as
+     * Other.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<\App\Modules\Core\Finance\Models\Team\Transaction>  $movements
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction>
+     */
+    protected function categorizedSums(Builder $movements): EloquentCollection
+    {
         $transaction = new Transaction;
         $currencyKey = $transaction->currency()->getForeignKeyName();
 
-        return $this->monthly($team, $month)
+        return $movements
             ->select($transaction->qualifyColumn($currencyKey))
             ->selectRaw(...$this->categoryOrOther())
             ->selectRaw(...$this->sumOfType(TransactionType::Expense, 'expenses'))

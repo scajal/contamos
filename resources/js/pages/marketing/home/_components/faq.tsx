@@ -20,7 +20,7 @@ import { login } from "@/routes";
 export const QUESTIONS: Array<{ question: string; answer: string }> = [
     {
         question: "Does it connect to my bank?",
-        answer: "No, and that is on purpose. Writing a movement down takes seconds, and in exchange the ledger says exactly what you put in it, instead of waiting on a bank to report it and then arguing with what it filed wrong.",
+        answer: "Not directly, and that is on purpose. Writing a movement down takes seconds, and the ledger says exactly what you put in it instead of what a bank decided to report. You can also hand a statement to an AI assistant, and it writes the movements down for you once you have reviewed them.",
     },
     {
         question: "What happens to my history on the Free plan?",

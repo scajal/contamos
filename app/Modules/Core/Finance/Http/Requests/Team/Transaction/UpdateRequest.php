@@ -4,24 +4,20 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Http\Requests\Team\Transaction;
 
-use App\Modules\Core\Catalog\Models\Currency;
-use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Http\Requests\Team\Transaction\Concerns\ResolvesTransactionInputs;
-use App\Modules\Core\Finance\Models\Team\Account;
-use App\Modules\Core\Finance\Models\Team\Tag;
+use App\Modules\Core\Finance\Http\Requests\Team\Transaction\Concerns\ValidatesTransactionInputs;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Support\Helpers\Amount;
 use App\Modules\Support\Helpers\Instant;
 use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateRequest extends FormRequest
 {
     use ResolvesTransactionInputs;
+    use ValidatesTransactionInputs;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -55,60 +51,6 @@ class UpdateRequest extends FormRequest
      */
     public function rules(#[RouteParameter('team')] Team $team, #[RouteParameter('transaction')] Transaction $transaction): array
     {
-        // Ids of tags already attached to the transaction, which
-        // stay valid even if they have since been deactivated.
-        $attachedTagIds = $transaction->tags->pluck(new Tag()->getKeyName())->all();
-
-        return [
-            new Transaction()->account()->getForeignKeyName() => [
-                'required',
-                'string',
-                Rule::exists(Account::class, new Account()->getKeyName())
-                    ->where(new Account()->team()->getForeignKeyName(), $team->getKey()),
-            ],
-            'amount' => [
-                'required',
-                (($currency = $this->currency()) instanceof \App\Modules\Core\Catalog\Models\Currency) ? "decimal:0,{$currency->decimal_places}" : 'decimal:0,18',
-                'gt:0',
-            ],
-            'category' => $this->categoryRules(),
-            new Transaction()->currency()->getForeignKeyName() => [
-                'required',
-                'string',
-                Rule::exists(Currency::class, new Currency()->getKeyName()),
-                Rule::in($this->account($team)?->currencies->pluck(new Currency()->getKeyName()) ?? []),
-            ],
-            'description' => [
-                'sometimes',
-                'nullable',
-                'string',
-            ],
-            'occurred_at' => [
-                'required',
-                'date',
-            ],
-            'quote' => [
-                'required',
-                'decimal:0,18',
-            ],
-            'tag_ids' => [
-                'sometimes',
-                'array',
-            ],
-            'tag_ids.*' => [
-                'required',
-                'string',
-                'distinct',
-                Rule::exists(Tag::class, new Tag()->getKeyName())
-                    ->where(new Tag()->team()->getForeignKeyName(), $team->getKey())
-                    ->where(fn (Builder $query): Builder => $query->where('is_active', true)->orWhereIn(new Tag()->getKeyName(), $attachedTagIds)),
-            ],
-            'type' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::in([...array_column(TransactionType::recordableCases(), 'value'), $transaction->type->value]),
-            ],
-        ];
+        return $this->transactionRules($team, $this->all(), $transaction);
     }
 }

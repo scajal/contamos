@@ -19,6 +19,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="APP_LOCALE" value="en"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
@@ -32,6 +33,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="WORKOS_AUTHKIT_DOMAIN" value="authkit.test"/>
         <env name="WORKOS_CLIENT_ID" value="client_test"/>
         <env name="WORKOS_CLIENT_SECRET" value="sk_test"/>
         <env name="WORKOS_API_KEY" value="sk_test"/>

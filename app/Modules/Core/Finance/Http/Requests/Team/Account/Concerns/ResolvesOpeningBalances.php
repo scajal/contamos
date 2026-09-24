@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Http\Requests\Team\Account\Concerns;
 
-use App\Modules\Core\Catalog\Models\Currency;
-use App\Modules\Core\Catalog\Models\Currency\Quote;
 use App\Modules\Core\Finance\Enums\Account\AccountType;
-use App\Modules\Core\Finance\Objects\OpeningBalance;
 use App\Modules\Support\Helpers\Instant;
 use Carbon\CarbonImmutable;
-use Closure;
 
 /**
  * Shared opening-balance validation and resolution for the account
- * Store and Update requests.
+ * Store and Update requests, reading the submitted input into the
+ * plain-value rules of
+ * \App\Modules\Core\Finance\Http\Requests\Team\Account\Concerns\DefinesAccountRules.
  *
  * @mixin \Illuminate\Foundation\Http\FormRequest
  */
 trait ResolvesOpeningBalances
 {
+    use DefinesAccountRules;
+
     /**
      * The selected account type.
      */
@@ -29,39 +29,25 @@ trait ResolvesOpeningBalances
     }
 
     /**
-     * Get the rate the user typed for the currency, overriding
-     * the catalog quote, if any was submitted.
+     * Get the submitted rates, keyed by currency id.
+     *
+     * @return array<array-key, mixed>
      */
-    protected function explicitQuote(string $currencyId): ?string
+    protected function submittedQuotes(): array
     {
-        $quote = $this->input("quotes.{$currencyId}");
-
-        return is_numeric($quote) && (float) $quote > 0 ? (string) $quote : null;
+        return is_array($quotes = $this->input('quotes', [])) ? $quotes : [];
     }
 
     /**
-     * Reject an opening balance amount for a currency with no
-     * quote observed at or before the resolved occurred at instant,
-     * unless the user typed one.
+     * Get the rules for the submitted account, accepting opening
+     * balances for the given currencies.
+     *
+     * @param  array<int, string>  $balanceCurrencyIds
+     * @return array<string, array<mixed>>
      */
-    protected function hasQuoteAsOf(Currency $currency): Closure
+    protected function rulesAcceptingBalancesFor(array $balanceCurrencyIds): array
     {
-        return function (string $attribute, mixed $value, Closure $fail) use ($currency): void {
-            // Skip empty or non-positive amounts; they create nothing.
-            if (! is_numeric($value) || (float) $value <= 0) {
-                return;
-            }
-
-            // Skip when the user typed a rate for this currency.
-            if ($this->explicitQuote((string) $currency->getKey()) !== null) {
-                return;
-            }
-
-            // Fail when no quote can be resolved as of the occurred at instant.
-            if (! Instant::resolveQuote($currency, $this->input('occurred_at')) instanceof Quote) {
-                $fail(trans('No exchange rate exists for :currency as of the selected date.', ['currency' => $currency->code]));
-            }
-        };
+        return $this->accountRules($this->accountType(), $balanceCurrencyIds, $this->submittedQuotes(), $this->input('occurred_at'));
     }
 
     /**
@@ -73,43 +59,10 @@ trait ResolvesOpeningBalances
      */
     public function openingBalances(): array
     {
-        /** @var array<string, mixed> $balances */
+        /** @var array<array-key, mixed> $balances */
         $balances = $this->safe(['opening_balances'])['opening_balances'] ?? [];
 
-        /** @var string|null $occurredAt */
-        $occurredAt = $this->safe(['occurred_at'])['occurred_at'] ?? null;
-
-        if (! is_string($occurredAt)) {
-            return [];
-        }
-
-        $resolved = [];
-
-        foreach ($balances as $currencyId => $amount) {
-            // Skip empty or non-positive amounts; they create nothing.
-            if (! is_numeric($amount) || (float) $amount <= 0) {
-                continue;
-            }
-
-            // If the currency is not found, skip it.
-            if (! ($currency = Currency::query()->find($currencyId)) instanceof Currency) {
-                continue;
-            }
-
-            // Resolve the quote, catalog or user-typed.
-            if (($quote = $this->explicitQuote((string) $currencyId) ?? Instant::resolveQuote($currency, $occurredAt)?->rate) === null) {
-                continue;
-            }
-
-            // Add the opening balance to the resolved array.
-            $resolved[$currencyId] = new OpeningBalance(
-                amount: (string) $amount,
-                quote: (string) $quote,
-                occurredAt: $occurredAt,
-            );
-        }
-
-        return $resolved;
+        return $this->resolveOpeningBalances($balances, $this->submittedQuotes(), $this->safe(['occurred_at'])['occurred_at'] ?? null);
     }
 
     /**

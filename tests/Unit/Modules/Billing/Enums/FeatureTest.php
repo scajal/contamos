@@ -52,6 +52,7 @@ it('lists every feature with its limit or inclusion on the plan', function (): v
         'budgets:manage' => false,
         'transactions:recur' => false,
         'activity:view' => false,
+        'mcp:use' => true,
     ])->and(Plan::Pro->features())->toBe([
         'accounts:create' => null,
         'members:create' => null,
@@ -61,6 +62,7 @@ it('lists every feature with its limit or inclusion on the plan', function (): v
         'budgets:manage' => true,
         'transactions:recur' => true,
         'activity:view' => true,
+        'mcp:use' => true,
     ]);
 });
 

@@ -238,6 +238,15 @@ class RecurringRule extends Model
     }
 
     /**
+     * The key the rules are listed by: the rule's next due date,
+     * with a rule that has no occurrence left sorting last.
+     */
+    public function nextDueSortKey(): string
+    {
+        return $this->next_due_date?->toDateString() ?? '9999-12-31';
+    }
+
+    /**
      * The rule's last due date strictly before today, used to skip a
      * stretch the rule was not eligible for — while it was paused, or
      * while its team was on a plan without recurring transactions —

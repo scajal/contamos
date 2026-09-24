@@ -4,7 +4,10 @@
 export type Feature =
     | "accounts:create"
     | "activity:view"
+    | "budgets:manage"
     | "history:view"
     | "members:create"
+    | "mcp:use"
     | "members:roles"
-    | "teams:create";
+    | "teams:create"
+    | "transactions:recur";

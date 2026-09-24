@@ -42,6 +42,7 @@ return [
     ],
 
     'workos' => [
+        'authkit_domain' => env('WORKOS_AUTHKIT_DOMAIN'),
         'client_id' => env('WORKOS_CLIENT_ID'),
         'redirect_url' => env('WORKOS_REDIRECT_URL'),
         'secret' => env('WORKOS_API_KEY'),

@@ -94,6 +94,16 @@ describe('index', function (): void {
                 ->where('is_locked', false));
     });
 
+    it('opens a shorter month when today is past its last day', function (): void {
+        $this->travelTo(CarbonImmutable::parse('2026-03-31 12:00:00'));
+        [$user, $team] = actingMember();
+
+        $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey(), 'month' => '2026-02']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->where('month', '2026-02'));
+    });
+
     it('redirects a malformed month to the current month', function (string $month): void {
         [$user, $team] = actingMember();
 

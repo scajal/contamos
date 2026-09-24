@@ -23,13 +23,15 @@ class ActivitiesTable
     /**
      * Get the table columns.
      *
-     * @return array<int, \Filament\Tables\Columns\Layout\Split>
+     * @return array<int, \Filament\Tables\Columns\TextColumn>
      */
     protected static function getColumns(): array
     {
         return [
             Tables\Columns\TextColumn::make('description')
-                ->formatStateUsing(fn (Activity $record): string => class_basename($record->subject::class).' '.$record->description),
+                // The subject may be gone, so it is named by the type
+                // the entry recorded rather than the loaded model.
+                ->formatStateUsing(fn (Activity $record): string => ($record->subject_type !== null ? class_basename($record->subject_type).' ' : '').$record->description),
             Tables\Columns\TextColumn::make('created_at')
                 ->dateTime(),
             Tables\Columns\TextColumn::make('causer.email')

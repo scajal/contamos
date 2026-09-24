@@ -39,7 +39,7 @@ import { RecurringRule } from "@/types/app/modules/core/finance/models/team/recu
 import { LengthAwarePaginator } from "@/types/illuminate/pagination/length-aware-paginator";
 
 type PageProps = {
-    canRecur: boolean;
+    is_locked: boolean;
     rules: LengthAwarePaginator<RecurringRule>;
 };
 
@@ -47,12 +47,12 @@ const Index = () => {
     /**
      * The page's props.
      */
-    const { canRecur } = usePage<PageProps>().props;
+    const { is_locked } = usePage<PageProps>().props;
 
     return (
         <div className="flex flex-col gap-8">
             <Header />
-            {canRecur ? <Listing /> : <LockedRules />}
+            {is_locked ? <LockedRules /> : <Listing />}
         </div>
     );
 };
@@ -67,7 +67,7 @@ const Header = () => {
     /**
      * The page's props.
      */
-    const { canRecur, user } = usePage<PageProps>().props;
+    const { is_locked, user } = usePage<PageProps>().props;
 
     return (
         <header className="flex flex-wrap items-start justify-between gap-4">
@@ -79,7 +79,7 @@ const Header = () => {
                     {t("Rules that generate a transaction on their own schedule.")}
                 </p>
             </div>
-            {canRecur && (
+            {!is_locked && (
                 <Button
                     nativeButton={false}
                     render={
@@ -193,7 +193,7 @@ const Rows = () => {
     /**
      * The page's props.
      */
-    const { canRecur, rules, user } = usePage<PageProps>().props;
+    const { is_locked, rules, user } = usePage<PageProps>().props;
 
     /**
      * Mask the amounts while balances are hidden.
@@ -247,7 +247,7 @@ const Rows = () => {
                                 `${TRANSACTION_AMOUNT_SIGN[rule.type]} ${formatAmount(rule.amount, currentLocale(), rule.currency)}`,
                             )}
                         </span>
-                        <RuleActions canRecur={canRecur} rule={rule} team={team} />
+                        <RuleActions canRecur={!is_locked} rule={rule} team={team} />
                     </ItemActions>
                 </Item>
             ))}
@@ -257,7 +257,7 @@ const Rows = () => {
 
 /**
  * The View, Edit, Pause or Resume, and Delete actions of a rule. A
- * team whose plan cannot recur only gets to look and to delete.
+ * team whose plan cannot recur only gets to look.
  */
 const RuleActions = ({ canRecur, rule, team }: { canRecur: boolean; rule: RecurringRule; team: string }) => {
     /**
@@ -324,13 +324,17 @@ const RuleActions = ({ canRecur, rule, team }: { canRecur: boolean; rule: Recurr
                             </DropdownMenuGroup>
                         </Fragment>
                     )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuGroup>
-                        <DropdownMenuItem onClick={() => setDeleteOpen(true)} variant="destructive">
-                            <TrashIcon />
-                            <span>{t("Delete")}</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuGroup>
+                    {canRecur && (
+                        <Fragment>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem onClick={() => setDeleteOpen(true)} variant="destructive">
+                                    <TrashIcon />
+                                    <span>{t("Delete")}</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                        </Fragment>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
             <ConfirmAction

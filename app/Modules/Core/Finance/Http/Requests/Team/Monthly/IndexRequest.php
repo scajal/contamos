@@ -50,7 +50,7 @@ class IndexRequest extends FormRequest
             return null;
         }
 
-        $parsed = CarbonImmutable::createFromFormat('Y-m', $month);
+        $parsed = CarbonImmutable::createFromFormat('!Y-m', $month);
 
         return $parsed?->startOfMonth();
     }

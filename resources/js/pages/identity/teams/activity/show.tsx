@@ -1,5 +1,6 @@
 import { useLaravelReactI18n } from "laravel-react-i18n";
 
+import { AssistantBadge } from "@/components/assistant-badge";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -50,6 +51,7 @@ export default function Show({ entries }: PageProps) {
                                     <Field key={entry.id}>
                                         <FieldLabel className="flex flex-wrap items-center gap-2">
                                             <Badge variant="secondary">{entry.event}</Badge>
+                                            <AssistantBadge assistant={entry.assistant} />
                                             <span className="text-muted-foreground min-w-0 truncate">
                                                 {entry.subject_label ?? t("Record")}
                                             </span>

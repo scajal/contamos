@@ -1,15 +1,16 @@
-import { usePage } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { AtSignIcon, TrashIcon, TypeIcon } from "lucide-react";
+import { AtSignIcon, BotIcon, ChevronRightIcon, TrashIcon, TypeIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import { initials } from "@/lib/utils";
 import account from "@/routes/identity/users/account";
+import assistants from "@/routes/identity/users/assistants";
 
 const Index = () => {
     return (
@@ -21,6 +22,8 @@ const Index = () => {
             <div className="flex flex-col gap-8">
                 {/** Details */}
                 <Details />
+                {/** Assistants */}
+                <Assistants />
                 {/** Danger */}
                 <Danger />
             </div>
@@ -95,6 +98,44 @@ const Details = () => {
                         </ItemContent>
                     </Item>
                 </ItemGroup>
+            </div>
+        </Fragment>
+    );
+};
+
+const Assistants = () => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    return (
+        <Fragment>
+            <header className="flex flex-col gap-1">
+                <h2 className="font-heading font-medium">{t("AI assistants")}</h2>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">
+                    {t("Assistants you connected act as you on every team.")}
+                </p>
+            </header>
+            <div className="overflow-hidden rounded-xl border">
+                <Item
+                    className="rounded-none border-0"
+                    render={<Link href={assistants.index.url()} />}
+                    size="sm"
+                    variant="outline"
+                >
+                    <ItemMedia variant="icon">
+                        <BotIcon />
+                    </ItemMedia>
+                    <ItemContent>
+                        <ItemTitle>{t("Manage AI assistants")}</ItemTitle>
+                        <ItemDescription>{t("Connect Claude or ChatGPT, or disconnect one.")}</ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                        <ChevronRightIcon className="text-muted-foreground size-4" />
+                    </ItemActions>
+                </Item>
             </div>
         </Fragment>
     );

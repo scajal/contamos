@@ -5,31 +5,19 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Http\Requests\Team\Transfer\Concerns;
 
 use App\Modules\Core\Catalog\Models\Currency;
-use App\Modules\Core\Finance\Models\Team\Account;
-use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Support\Helpers\Amount;
 use App\Modules\Support\Helpers\Instant;
 
 /**
- * Shared per-side account, currency, and tag id resolution for the
- * transfer Store and Update requests.
+ * Shared input preparation, per-side currency resolution, and
+ * tag id reading for the transfer Store and Update requests,
+ * on top of the transfer rules they share with the MCP tools.
  *
  * @mixin \Illuminate\Foundation\Http\FormRequest
  */
 trait ResolvesTransferInputs
 {
-    /**
-     * Get the account of one of the sides of the
-     * transfer, if any.
-     */
-    protected function accountFor(Team $team, string $key): ?Account
-    {
-        /** @var \App\Modules\Core\Finance\Models\Team\Account|null $account */
-        $account = $team->accounts()
-            ->find($this->input($key));
-
-        return $account;
-    }
+    use DefinesTransferRules;
 
     /**
      * Get the currency of one of the sides of the
@@ -37,30 +25,7 @@ trait ResolvesTransferInputs
      */
     protected function currencyFor(string $key): ?Currency
     {
-        /** @var \App\Modules\Core\Catalog\Models\Currency|null $currency */
-        $currency = Currency::query()
-            ->find($this->input($key));
-
-        return $currency;
-    }
-
-    /**
-     * Get the decimal rule of one of the sides of
-     * the transfer.
-     */
-    protected function decimalRuleFor(string $key): string
-    {
-        $currency = $this->currencyFor($key);
-
-        return $currency instanceof Currency ? "decimal:0,{$currency->decimal_places}" : 'decimal:0,18';
-    }
-
-    /**
-     * Get the account the transfer leaves from, if any.
-     */
-    protected function destinationAccount(Team $team): ?Account
-    {
-        return $this->accountFor($team, 'destination_account_id');
+        return $this->transferCurrency($this->input($key));
     }
 
     /**
@@ -69,14 +34,6 @@ trait ResolvesTransferInputs
     protected function destinationCurrency(): ?Currency
     {
         return $this->currencyFor('destination_currency_id');
-    }
-
-    /**
-     * Get the account the transfer leaves from, if any.
-     */
-    protected function originAccount(Team $team): ?Account
-    {
-        return $this->accountFor($team, 'origin_account_id');
     }
 
     /**

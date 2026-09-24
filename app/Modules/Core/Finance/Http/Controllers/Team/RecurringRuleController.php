@@ -7,6 +7,8 @@ namespace App\Modules\Core\Finance\Http\Controllers\Team;
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Finance\Actions\Team\CreateRecurringRule;
 use App\Modules\Core\Finance\Actions\Team\DeleteRecurringRule;
+use App\Modules\Core\Finance\Actions\Team\PauseRecurringRule;
+use App\Modules\Core\Finance\Actions\Team\ResumeRecurringRule;
 use App\Modules\Core\Finance\Actions\Team\UpdateRecurringRule;
 use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\OffersMovementCategories;
 use App\Modules\Core\Finance\Http\Requests\Team\RecurringRule\StoreRequest;
@@ -15,7 +17,6 @@ use App\Modules\Core\Finance\Models\Team\RecurringRule;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Objects\Toast;
-use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
@@ -41,9 +42,11 @@ class RecurringRuleController
     public function index(Team $team, Request $request): Response
     {
         return Inertia::render('finance/teams/recurring-rules/index', [
-            // The rules a Free team keeps are listed read-only, so
-            // nothing is lost while the plan cannot generate them.
-            'canRecur' => Feature::RecurTransactions->enabled($team),
+            // A plan without recurring transactions keeps the rules
+            // it created, so the page is locked rather than emptied:
+            // the listing still travels and the page blurs it behind
+            // the upgrade panel.
+            'is_locked' => ! Feature::RecurTransactions->enabled($team),
             'rules' => Inertia::defer(fn (): LengthAwarePaginator => $this->paginateByNextDueDate($team, $request)),
         ]);
     }
@@ -111,9 +114,9 @@ class RecurringRuleController
     /**
      * Suspend the rule, so it generates nothing until it is resumed.
      */
-    public function pause(Team $team, RecurringRule $recurringRule): RedirectResponse
+    public function pause(Team $team, RecurringRule $recurringRule, PauseRecurringRule $pauseRecurringRule): RedirectResponse
     {
-        $recurringRule->deactivate();
+        $pauseRecurringRule->for($team)->using($recurringRule);
 
         Toast::make(trans('Paused'))->flash();
 
@@ -125,13 +128,9 @@ class RecurringRuleController
      * paused stretch are skipped rather than backfilled, so resuming
      * never floods the ledger.
      */
-    public function resume(Team $team, RecurringRule $recurringRule): RedirectResponse
+    public function resume(Team $team, RecurringRule $recurringRule, ResumeRecurringRule $resumeRecurringRule): RedirectResponse
     {
-        if (($skipped = $recurringRule->skipped_due_date) instanceof CarbonImmutable) {
-            $recurringRule->forceFill(['last_generated_due_date' => $skipped])->save();
-        }
-
-        $recurringRule->activate();
+        $resumeRecurringRule->for($team)->using($recurringRule);
 
         Toast::make(trans('Resumed'))->flash();
 
@@ -196,7 +195,7 @@ class RecurringRuleController
         $rules = $team->recurringRules()
             ->with(['account', 'currency', 'tags'])
             ->get()
-            ->sortBy(fn (RecurringRule $rule): string => $rule->next_due_date?->toDateString() ?? '9999-12-31')
+            ->sortBy(fn (RecurringRule $rule): string => $rule->nextDueSortKey())
             ->values();
 
         $page = LengthAwarePaginator::resolveCurrentPage();

@@ -15,7 +15,7 @@ it('does not compare budget months when the start month is missing', function ()
     $freeMonths = new ReflectionMethod(StoreRequest::class, 'freeMonths');
     $failed = false;
 
-    $freeMonths->invoke($request, $team)('from_month', null, function () use (&$failed): void {
+    $freeMonths->invoke($request, $team, ['from_month' => null])('from_month', null, function () use (&$failed): void {
         $failed = true;
     });
 

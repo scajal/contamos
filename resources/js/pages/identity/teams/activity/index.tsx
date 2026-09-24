@@ -5,6 +5,8 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ChevronRightIcon, CircleDashedIcon, ListFilterPlusIcon, SearchXIcon, XIcon } from "lucide-react";
 import { type DateRange } from "react-day-picker";
 
+import { AssistantBadge } from "@/components/assistant-badge";
+import { FeatureLock } from "@/components/feature-lock";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -34,6 +36,7 @@ type PageFilters = {
 type PageProps = {
     activities: LengthAwarePaginator<ActivityEntry>;
     filters: Partial<PageFilters>;
+    is_locked: boolean;
     members: Pick<User, "id" | "name">[];
     subjects: ActivitySubjectOption[];
 };
@@ -68,19 +71,28 @@ const toBatches = (entries: ActivityEntry[]): ActivityEntry[][] =>
     }, []);
 
 const Index = () => {
+    /**
+     * The page's props.
+     */
+    const { is_locked } = usePage<PageProps>().props;
+
     return (
         <div className="flex flex-col gap-8">
             {/** Header */}
             <Header />
 
             {/** Content */}
-            <div className="flex flex-col gap-4">
-                {/** Filters */}
-                <Filters />
+            {is_locked ? (
+                <LockedActivity />
+            ) : (
+                <div className="flex flex-col gap-4">
+                    {/** Filters */}
+                    <Filters />
 
-                {/** Timeline */}
-                <Listing />
-            </div>
+                    {/** Timeline */}
+                    <Listing />
+                </div>
+            )}
         </div>
     );
 };
@@ -263,6 +275,7 @@ const Entry = ({ batch }: { batch: ActivityEntry[] }) => {
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                     <span className="font-medium">{causerName(head.causer, t)}</span>
                     <Badge variant="secondary">{head.event}</Badge>
+                    <AssistantBadge assistant={head.assistant} />
                     <span className="text-muted-foreground truncate">
                         {[subject, head.subject_label].filter(Boolean).join(" · ")}
                     </span>
@@ -341,6 +354,32 @@ const Listing = () => {
                 </InfiniteScroll>
             </div>
         </Deferred>
+    );
+};
+
+/**
+ * What a team on a plan without the activity log sees. The log
+ * does not travel to a locked page, so the panel stands on its own.
+ */
+const LockedActivity = () => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { user } = usePage<PageProps>().props;
+
+    return (
+        <FeatureLock
+            description={t("See every change made inside this team, who made it, and when.")}
+            feature="activity:view"
+            team={user?.current_team?.slug ?? ""}
+            title={t("Activity is part of Pro")}
+        />
     );
 };
 

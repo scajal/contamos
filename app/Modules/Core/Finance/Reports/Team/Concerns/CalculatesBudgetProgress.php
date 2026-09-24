@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Core\Finance\Http\Controllers\Team\Concerns;
+namespace App\Modules\Core\Finance\Reports\Team\Concerns;
 
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetTargetKind;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Core\Finance\Http\Requests\Team\Budget;
 
-use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Http\Requests\Team\Budget\Concerns\ResolvesBudgetInputs;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Identity\Models\Team;
@@ -12,7 +11,6 @@ use App\Modules\Support\Helpers\Amount;
 use Illuminate\Container\Attributes\RouteParameter;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateRequest extends FormRequest
 {
@@ -49,30 +47,6 @@ class UpdateRequest extends FormRequest
      */
     public function rules(#[RouteParameter('team')] Team $team, #[RouteParameter('budget')] BudgetPeriod $budget): array
     {
-        return [
-            'amount' => [
-                'required',
-                'decimal:0,18',
-                'gt:0',
-            ],
-            $budget->currency()->getForeignKeyName() => [
-                'required',
-                'string',
-                Rule::exists(Currency::class, new Currency()->getKeyName()),
-                $this->heldCurrency($team),
-            ],
-            'from_month' => [
-                'required',
-                'string',
-                'date_format:'.self::MONTH_FORMAT,
-                $this->freeMonths($team, $budget),
-            ],
-            'until_month' => [
-                'sometimes',
-                'nullable',
-                'string',
-                'date_format:'.self::MONTH_FORMAT,
-            ],
-        ];
+        return $this->budgetUpdateRules($team, $budget, $this->all());
     }
 }

@@ -54,3 +54,14 @@ require __DIR__.'/../app/Modules/Core/Finance/Routes/web.php';
 */
 
 require __DIR__.'/../app/Modules/Billing/Routes/web.php';
+
+/*
+|--------------------------------------------------------------------------
+| MCP routes
+|--------------------------------------------------------------------------
+|
+| This file contains the routes for the MCP server.
+|
+*/
+
+require __DIR__.'/../app/Modules/Mcp/Routes/web.php';

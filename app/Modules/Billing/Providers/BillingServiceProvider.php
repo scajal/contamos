@@ -12,6 +12,7 @@ use App\Modules\Billing\Models\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Mcp\Helpers\McpContext;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -65,13 +66,14 @@ class BillingServiceProvider extends ServiceProvider
         Pennant::discover('App\\Modules\\Billing\\Features', app_path('Modules/Billing/Features'));
 
         // Team routes check features against the route team,
-        // invitation routes against the invited team, and
-        // anything else against the authenticated user.
+        // invitation routes against the invited team, an MCP tool
+        // call against the team it names, and anything else
+        // against the authenticated user.
         Pennant::resolveScopeUsing(function (): Team|User|null {
             /** @var \App\Modules\Core\Identity\Models\User|null $user */
             $user = request()->user();
 
-            return $this->routeTeam(request()) ?? $user;
+            return McpContext::team() ?? $this->routeTeam(request()) ?? $user;
         });
 
         // When a gated route is hit past its limit, open the

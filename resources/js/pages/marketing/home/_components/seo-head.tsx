@@ -53,7 +53,7 @@ export const SeoHead = ({
      * The description for the page.
      */
     const description = t(
-        "Contamos keeps your accounts, cards and currencies in one shared ledger, whoever you share money with, so you always know what you actually have. Free to start, no card required.",
+        "Contamos keeps your accounts, cards and currencies in one shared ledger, whoever you share money with, and lets your AI assistant answer from it and keep it up to date. Free to start, no card required.",
     );
 
     /**
@@ -113,6 +113,12 @@ export const SeoHead = ({
                 applicationCategory: "FinanceApplication",
                 operatingSystem: "Web",
                 url: canonical,
+                featureList: [
+                    t("A shared ledger for any group that shares money"),
+                    t("Balances per currency, fiat and crypto, never blended"),
+                    t("The exchange rate of the day saved with every movement"),
+                    t("AI assistants such as Claude and ChatGPT through MCP, on every plan"),
+                ],
                 offers: offers,
             },
             {

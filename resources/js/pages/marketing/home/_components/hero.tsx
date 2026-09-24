@@ -1,6 +1,6 @@
 import BorderBeam from "border-beam";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,22 @@ export const Hero = ({ dashboardUrl }: HeroProps) => {
             <HeroScene />
 
             <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center gap-8 px-4 pt-20 pb-28 text-center sm:px-6 sm:pt-28">
+                {/** The assistants lead the pitch alongside the ledger, one tap from their act. */}
+                <a
+                    href="#assistants"
+                    className={cn(
+                        ENTRANCE,
+                        "bg-background/80 hover:border-foreground/30 -mb-2 flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-sm shadow-sm backdrop-blur transition-colors",
+                    )}
+                >
+                    <span className="bg-primary text-primary-foreground flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold">
+                        <SparklesIcon aria-hidden="true" className="size-3" />
+                        {t("New")}
+                    </span>
+                    <span>{t("Talk to your ledger from Claude or ChatGPT")}</span>
+                    <ArrowRightIcon aria-hidden="true" className="text-muted-foreground size-3.5" />
+                </a>
+
                 <h1
                     className={cn(
                         ENTRANCE,
@@ -55,7 +71,7 @@ export const Hero = ({ dashboardUrl }: HeroProps) => {
 
                 <p className={cn(ENTRANCE, "text-muted-foreground max-w-[46ch] text-lg delay-120")}>
                     {t(
-                        "No more guessing, no spreadsheets, no arguing about who paid what. Every currency you share, fiat or crypto, lands in one clear picture — so you always know exactly where you stand, together.",
+                        "No more guessing, no spreadsheets, no arguing about who paid what. Every currency you share, fiat or crypto, lands in one clear picture — and your AI assistant can read it, answer from it and keep it up to date for you.",
                     )}
                 </p>
 

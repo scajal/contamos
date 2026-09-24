@@ -27,7 +27,7 @@ class TeamsTable
     /**
      * Get the table columns.
      *
-     * @return array<int, \Filament\Tables\Columns\Layout\Split>
+     * @return array<int, \Filament\Tables\Columns\TextColumn>
      */
     protected static function getColumns(): array
     {

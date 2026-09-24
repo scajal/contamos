@@ -53,6 +53,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction occurredUntil(string $date)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction withAnyTags(array<int, string>|string $ids)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|\App\Modules\Core\Finance\Models\Team\Transaction withinHistoryWindow(?\Carbon\CarbonImmutable $since)
  *
  * @mixin \Eloquent
  */
@@ -183,6 +184,42 @@ class Transaction extends Model
         return $months === null
             ? null
             : CarbonImmutable::now()->startOfMonth()->subMonths($months - 1);
+    }
+
+    /**
+     * Whether the transaction is a leg or a fee of a transfer,
+     * which is only ever edited or deleted through the transfer.
+     */
+    public function belongsToTransfer(): bool
+    {
+        return filled($this->getAttribute($this->transfer()->getForeignKeyName()));
+    }
+
+    /**
+     * Whether the transaction falls inside the history window
+     * that starts on the given day. A null start means the plan
+     * keeps everything, so every transaction is inside it.
+     */
+    public function isWithinHistoryWindow(?CarbonImmutable $since): bool
+    {
+        return ! $since instanceof CarbonImmutable || ! $this->occurred_at->startOfDay()->lessThan($since);
+    }
+
+    /**
+     * Scope the query to transactions inside the history window
+     * that starts on the given day, with the same date-only
+     * comparison the date filters use. A null start leaves the
+     * query untouched.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<\App\Modules\Core\Finance\Models\Team\Transaction>  $query
+     */
+    #[Scope]
+    protected function withinHistoryWindow(Builder $query, ?CarbonImmutable $since): void
+    {
+        $query->when(
+            $since instanceof CarbonImmutable,
+            fn (Builder $query): Builder => $query->whereDate('occurred_at', '>=', $since?->toDateString()),
+        );
     }
 
     /**

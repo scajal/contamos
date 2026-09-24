@@ -9,15 +9,12 @@ use App\Modules\Core\Finance\Actions\Team\CreateBudgetPeriod;
 use App\Modules\Core\Finance\Actions\Team\DeleteBudgetPeriod;
 use App\Modules\Core\Finance\Actions\Team\UpdateBudgetPeriod;
 use App\Modules\Core\Finance\Enums\Transaction\Category;
-use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\CalculatesBudgetProgress;
 use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\OffersMovementCategories;
-use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\SumsCategorizedActivity;
-use App\Modules\Core\Finance\Http\Controllers\Team\Concerns\SumsTaggedActivity;
 use App\Modules\Core\Finance\Http\Requests\Team\Budget\StoreRequest;
 use App\Modules\Core\Finance\Http\Requests\Team\Budget\UpdateRequest;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
-use App\Modules\Core\Finance\Models\Team\Transaction;
+use App\Modules\Core\Finance\Reports\Team\Concerns\ReportsBudgetProgress;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Objects\Toast;
@@ -29,13 +26,12 @@ use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 use InertiaUI\Modal\Modal;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class BudgetController
 {
-    use CalculatesBudgetProgress;
     use OffersMovementCategories;
-    use SumsCategorizedActivity;
-    use SumsTaggedActivity;
+    use ReportsBudgetProgress;
 
     /**
      * The month format a budget's bounds travel in.
@@ -133,12 +129,13 @@ class BudgetController
      */
     public function pause(Team $team, BudgetPeriod $budget, UpdateBudgetPeriod $updateBudgetPeriod, #[CurrentUser] User $user): RedirectResponse
     {
-        $month = CarbonImmutable::now()->startOfMonth();
+        // Only a running budget with no last month can stop.
+        abort_unless($this->canPauseBudget($team, $budget), HttpResponse::HTTP_CONFLICT);
 
         // Close the stretch on the current month.
         $updateBudgetPeriod->for($team)
             ->by($user)
-            ->using($budget, ['until_month' => $month->format(self::MONTH_FORMAT)]);
+            ->pause($budget);
 
         // Show a success message.
         Toast::make(trans('Saved'))
@@ -153,19 +150,14 @@ class BudgetController
      */
     public function resume(Team $team, BudgetPeriod $budget, CreateBudgetPeriod $createBudgetPeriod, #[CurrentUser] User $user): RedirectResponse
     {
-        $month = CarbonImmutable::now()->startOfMonth();
+        // Only a paused budget can be picked back up.
+        abort_unless($this->canResumeBudget($team, $budget), HttpResponse::HTTP_CONFLICT);
 
         // Open a fresh unbounded stretch from this month, on
         // whatever the stopped one followed.
         $createBudgetPeriod->for($team)
-            ->targeting($budget->target())
             ->by($user)
-            ->using([
-                'amount' => (string) $budget->amount,
-                $budget->currency()->getForeignKeyName() => $budget->getAttribute($budget->currency()->getForeignKeyName()),
-                'from_month' => $month->format(self::MONTH_FORMAT),
-                'until_month' => null,
-            ]);
+            ->resume($budget);
 
         // Show a success message.
         Toast::make(trans('Saved'))
@@ -228,24 +220,6 @@ class BudgetController
     }
 
     /**
-     * Whether a later stretch took the target's budget over in
-     * the same currency, which is what tells a replaced
-     * period from one somebody stopped.
-     *
-     * @param  array<string, \Carbon\CarbonImmutable>  $successors
-     */
-    protected function isSuperseded(BudgetPeriod $budget, array $successors): bool
-    {
-        if (! $budget->until_month instanceof CarbonImmutable) {
-            return false;
-        }
-
-        $latest = $successors[$this->budgetKeyFor($budget)] ?? null;
-
-        return $latest instanceof CarbonImmutable && $latest->greaterThan($budget->from_month);
-    }
-
-    /**
      * One budget row for the page: the stretch itself, what it
      * follows, where it sits relative to the current month,
      * and how the month is going against it when it is
@@ -256,18 +230,12 @@ class BudgetController
      */
     protected function row(BudgetPeriod $budget, CarbonImmutable $month, Collection $totals, bool $isSuperseded): array
     {
-        $activity = $totals->get($this->budgetKeyFor($budget), ['expenses' => '0', 'income' => '0']);
-
         return [
             'amount' => $budget->amount,
             'currency' => $budget->currency->only([$budget->currency->getKeyName(), 'code', 'decimal_places', 'symbol']),
             'from_month' => $budget->from_month->format(self::MONTH_FORMAT),
             'id' => $budget->getKey(),
-            // Only the stretch in force has a month to report
-            // against, so the others carry no progress.
-            'progress' => $budget->covers($month)
-                ? $this->budgetProgress($budget, $activity['income'], $activity['expenses'])
-                : null,
+            'progress' => $this->monthProgress($budget, $month, $totals),
             'status' => $budget->status($month, $isSuperseded),
             'target' => $this->target($budget),
             'until_month' => $budget->until_month?->format(self::MONTH_FORMAT),
@@ -321,81 +289,5 @@ class BudgetController
         $tag = $team->tags()->findOrFail($request->validated(new BudgetPeriod()->tag()->getForeignKeyName()));
 
         return $tag;
-    }
-
-    /**
-     * The current month's income and expenses per target and
-     * currency, keyed the way a budget looks them up.
-     *
-     * @return \Illuminate\Support\Collection<string, array{expenses: numeric-string, income: numeric-string}>
-     */
-    protected function budgetedTotalsByKey(Team $team, CarbonImmutable $month): Collection
-    {
-        // A movement counts under every tag it carries and once
-        // more under the one category it was filed under, so
-        // both breakdowns are read side by side.
-        $tagged = $this->taggedTotals($team, $month)
-            ->mapWithKeys(fn (Transaction $row): array => [$this->budgetKeyOf($row) => $this->totalsOf($row)]);
-
-        $categorized = $this->categorizedTotals($team, $month)
-            ->mapWithKeys(fn (Transaction $row): array => [$this->budgetKeyOf($row) => $this->totalsOf($row)]);
-
-        return $tagged->union($categorized);
-    }
-
-    /**
-     * The income and expenses one aggregated row reports.
-     *
-     * @return array{expenses: numeric-string, income: numeric-string}
-     */
-    protected function totalsOf(Transaction $row): array
-    {
-        return [
-            'expenses' => $this->decimal($row->getAttribute('expenses')),
-            'income' => $this->decimal($row->getAttribute('income')),
-        ];
-    }
-
-    /**
-     * The budget an aggregated row reports against, read from
-     * the breakdown the row came out of.
-     */
-    protected function budgetKeyOf(Transaction $row): string
-    {
-        // An aggregate row only carries the columns its own
-        // breakdown selected, so the raw attributes are what
-        // says which one it came out of.
-        $attributes = $row->getAttributes();
-        $currency = $this->text($attributes[new Transaction()->currency()->getForeignKeyName()] ?? null);
-
-        if (array_key_exists('tag_id', $attributes)) {
-            return $this->tagBudgetKey($this->text($attributes['tag_id']), $currency);
-        }
-
-        return $this->categoryBudgetKey($this->text($attributes['category'] ?? null), $currency);
-    }
-
-    /**
-     * The latest month any of the team's budgets starts in, per
-     * target and currency. A stretch that closed before one of
-     * them was replaced rather than stopped.
-     *
-     * @return array<string, \Carbon\CarbonImmutable>
-     */
-    protected function successorMonths(Team $team): array
-    {
-        $latest = [];
-
-        $periods = $team->budgets()->get();
-
-        foreach ($periods as $one) {
-            $key = $this->budgetKeyFor($one);
-
-            if (! isset($latest[$key]) || $one->from_month->greaterThan($latest[$key])) {
-                $latest[$key] = $one->from_month;
-            }
-        }
-
-        return $latest;
     }
 }

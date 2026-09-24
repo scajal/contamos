@@ -132,7 +132,7 @@ export const Pricing = ({ dashboardUrl, features, prices }: PricingProps) => {
                 <div className="mt-8 grid gap-4 lg:grid-cols-2">
                     <PlanCard
                         cta={t("Start free")}
-                        description={t("A complete ledger for you and one other person.")}
+                        description={t("A complete ledger for you and one other person, AI assistant included.")}
                         href={start}
                         note={t("No card, now or later.")}
                         price={free}

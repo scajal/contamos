@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
 use App\Modules\Core\Finance\Enums\RecurringRule\Frequency;
 use App\Modules\Core\Finance\Enums\RecurringRule\Status;
@@ -78,7 +79,7 @@ describe('index', function (): void {
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->component('finance/teams/recurring-rules/index')
-                ->where('canRecur', true)
+                ->where('is_locked', false)
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('rules.data', 1)
                     ->where('rules.data.0.id', $rule->getKey())
@@ -124,7 +125,7 @@ describe('index', function (): void {
         $this->get(route('finance.teams.recurring-rules.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-                ->where('canRecur', false)
+                ->where('is_locked', true)
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('rules.data', 1)));
     });
@@ -800,8 +801,24 @@ describe('destroy', function (): void {
             ->and((float) $account->currencies()->first()?->pivot->balance)->toBe(125.0);
     });
 
+    it('sends a free team to the upgrade modal and keeps the rule', function (): void {
+        [$user, $team] = actingMember();
+        $rule = RecurringRule::factory()->expense()->create(['team_id' => $team->getKey()]);
+
+        $this->delete(route('finance.teams.recurring-rules.destroy', [
+            'team' => $team->getRouteKey(),
+            'recurringRule' => $rule->getRouteKey(),
+        ]))->assertRedirectToRoute('billing.teams.subscriptions.upgrade', [
+            'team' => $team->getRouteKey(),
+            'feature' => Feature::RecurTransactions->value,
+        ]);
+
+        expect(RecurringRule::query()->count())->toBe(1);
+    });
+
     it('rejects a rule belonging to another team', function (): void {
         [$user, $team] = actingMember();
+        subscribeToPro($team);
         $rule = RecurringRule::factory()->expense()->create();
 
         $this->delete(route('finance.teams.recurring-rules.destroy', [

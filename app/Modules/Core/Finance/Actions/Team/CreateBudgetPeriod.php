@@ -113,4 +113,23 @@ class CreateBudgetPeriod
             return $period;
         }));
     }
+
+    /**
+     * Pick a stopped period's budget back up from the current
+     * month, on the target, amount and currency it was
+     * stopped at, with no last month.
+     */
+    public function resume(BudgetPeriod $stopped): BudgetPeriod
+    {
+        $currencyKey = $stopped->currency()->getForeignKeyName();
+
+        // Open a fresh unbounded stretch from this month, on
+        // whatever the stopped one followed.
+        return $this->targeting($stopped->target())->using([
+            'amount' => (string) $stopped->amount,
+            $currencyKey => $stopped->getAttribute($currencyKey),
+            'from_month' => CarbonImmutable::now()->startOfMonth(),
+            'until_month' => null,
+        ]);
+    }
 }

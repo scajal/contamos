@@ -14,6 +14,7 @@ use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Finance\Models\Team\Transfer;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -251,6 +252,34 @@ describe('index', function (): void {
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('transactions.data', 1)
                     ->where('transactions.data.0.id', $matching->getKey())));
+    });
+
+    it('filters by any of several tags', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency);
+        $comida = Tag::factory()->active()->for($team)->create(['name' => 'Comida']);
+        $salidas = Tag::factory()->active()->for($team)->create(['name' => 'Salidas']);
+        $tagged = collect([$comida, $salidas])->map(function (Tag $tag) use ($account, $currency, $team): Transaction {
+            $transaction = Transaction::factory()->expense()->for($account)->for($team)->create(['currency_id' => $currency->getKey()]);
+            $transaction->tags()->attach($tag->getKey());
+
+            return $transaction;
+        });
+        Transaction::factory()->expense()->for($account)->for($team)->create(['currency_id' => $currency->getKey()]);
+
+        $this->get(route('finance.teams.transactions.index', [
+            'team' => $team->getRouteKey(),
+            'filter' => [
+                'tags' => $comida->getKey().','.$salidas->getKey(),
+            ],
+        ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->has('transactions.data', 2)
+                    ->where('transactions.data', fn (Collection $rows): bool => $rows->pluck('id')->sort()->values()->all() === $tagged->map->getKey()->sort()->values()->all())));
     });
 
     it('filters both transfer legs with the transfer type', function (): void {
@@ -1677,6 +1706,21 @@ describe('show', function (): void {
 });
 
 describe('edit', function (): void {
+    it('reports a transaction older than the free window as not found', function (): void {
+        [$user, $team] = actingMember();
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $older = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->subMonths(5)->subDay(),
+        ]);
+
+        $this->withHeaders(inertiaModalHeaders())
+            ->get(route('finance.teams.transactions.edit', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $older->getKey(),
+            ]))
+            ->assertNotFound();
+    });
+
     it('renders the edit transaction modal with its accounts and tags', function (): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create();
@@ -1770,6 +1814,32 @@ describe('edit', function (): void {
 });
 
 describe('update', function (): void {
+    it('refuses to update a transaction older than the free window', function (): void {
+        [$user, $team] = actingMember();
+        $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
+        $account = Account::factory()->bank()->active()->for($team)->create();
+        $account->currencies()->attach($currency, ['balance' => '89.50']);
+        $older = Transaction::factory()->expense()->for($account)->for($team)->create([
+            'amount' => '10.50',
+            'currency_id' => $currency->getKey(),
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->subMonths(5)->subDay(),
+        ]);
+
+        $this->from(route('finance.teams.transactions.index', ['team' => $team->getRouteKey()]))
+            ->patch(route('finance.teams.transactions.update', [
+                'team' => $team->getRouteKey(),
+                'transaction' => $older->getKey(),
+            ]), transactionPayload([
+                $account->getForeignKey() => $account->getKey(),
+                $currency->getForeignKey() => $currency->getKey(),
+                'amount' => '20.50',
+                'occurred_at' => $older->occurred_at->toIso8601String(),
+            ]))
+            ->assertNotFound();
+
+        expect($older->fresh()?->amount)->toBe('10.500000000000000000');
+    });
+
     it('updates each editable field and flashes Saved', function (): void {
         [$user, $team] = actingMember();
         $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
@@ -2155,6 +2225,7 @@ describe('update', function (): void {
 
     it('defaults a blank quote from the rate as of a new date', function (): void {
         [$user, $team] = actingMember();
+        subscribeToPro($team);
         $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
         Quote::factory()->for($currency)->create([
             'observed_at' => '2024-07-01 00:00:00',
@@ -2405,6 +2476,7 @@ describe('update', function (): void {
 
     it('records only the changed fields and the new tags in the activity log', function (): void {
         [$user, $team] = actingMember();
+        subscribeToPro($team);
         $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
         $account = Account::factory()->bank()->active()->for($team)->create();
         $account->currencies()->attach($currency, ['balance' => '100.00']);
@@ -2443,6 +2515,7 @@ describe('update', function (): void {
 
     it('records no entry when nothing about the transaction changed', function (): void {
         [$user, $team] = actingMember();
+        subscribeToPro($team);
         $currency = Currency::factory()->active()->fiat()->create(['decimal_places' => 2]);
         $account = Account::factory()->bank()->active()->for($team)->create();
         $account->currencies()->attach($currency, ['balance' => '100.00']);
