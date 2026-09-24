@@ -4,6 +4,7 @@ import { ArrowRightIcon } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { login } from "@/routes";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 import type { DocsNavigationGroup } from "@/types/app/modules/marketing/docs";
@@ -74,8 +75,10 @@ export const Header = ({
                     <LanguageSwitcher alternates={alternates} />
                     <ThemeSwitcher appearance={appearance} onChange={onAppearanceChange} />
                     <Separator orientation="vertical" />
+                    {/** Below the drawer breakpoint the call to action moves
+                     * into the drawer, where the pill has no room for it */}
                     <Button
-                        className="rounded-full max-sm:px-3 max-sm:text-xs"
+                        className={cn("rounded-full", docsPage ? "max-lg:hidden" : "max-md:hidden")}
                         nativeButton={false}
                         render={<a href={dashboardUrl ?? login.url()} />}
                         size="sm"
@@ -84,6 +87,7 @@ export const Header = ({
                         <ArrowRightIcon />
                     </Button>
                     <HeaderMenu
+                        dashboardUrl={dashboardUrl}
                         docsPage={docsPage}
                         homeUrl={homeUrl}
                         isHome={isHome}

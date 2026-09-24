@@ -1,11 +1,12 @@
 import { Link } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { MenuIcon } from "lucide-react";
+import { ArrowRightIcon, MenuIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { login } from "@/routes";
 import docs from "@/routes/docs";
 import type { DocsNavigationGroup } from "@/types/app/modules/marketing/docs";
 
@@ -21,6 +22,7 @@ const SECTIONS = [
 
 interface Props {
     variant: "inline" | "drawer";
+    dashboardUrl?: string | null;
     docsPage: string | null;
     homeUrl: string;
     isHome: boolean;
@@ -32,9 +34,10 @@ interface Props {
  * From `md` up they sit inline in the pill. Below that a menu
  * button opens them in a drawer from the right, which on a docs
  * page also lists every page of the docs, standing in for the docs
- * sidebar the page hides on small screens.
+ * sidebar the page hides on small screens. The drawer also carries
+ * the call to action the pill has no room for on those screens.
  */
-export const HeaderMenu = ({ variant, docsPage, homeUrl, isHome, navigation }: Props) => {
+export const HeaderMenu = ({ variant, dashboardUrl, docsPage, homeUrl, isHome, navigation }: Props) => {
     /**
      * Translate the provided string to the current locale.
      */
@@ -122,6 +125,18 @@ export const HeaderMenu = ({ variant, docsPage, homeUrl, isHome, navigation }: P
                             navigation={navigation}
                             onNavigate={() => setOpen(false)}
                         />
+                    )}
+                    {dashboardUrl !== undefined && (
+                        <div className="mt-auto border-t p-4">
+                            <Button
+                                className="w-full rounded-full"
+                                nativeButton={false}
+                                render={<a href={dashboardUrl ?? login.url()} />}
+                            >
+                                {dashboardUrl ? t("Go to dashboard") : t("Log in")}
+                                <ArrowRightIcon />
+                            </Button>
+                        </div>
                     )}
                 </SheetContent>
             </Sheet>
