@@ -1,6 +1,6 @@
 import { Link, usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { LifeBuoyIcon, LogOutIcon, ShieldCheckIcon, UserIcon } from "lucide-react";
+import { BookOpenIcon, LifeBuoyIcon, LogOutIcon, ShieldCheckIcon, UserIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { AppearanceMenu } from "@/components/appearance-menu";
@@ -12,12 +12,13 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/routes";
+import docs from "@/routes/docs";
 import administration from "@/routes/filament/administration";
 import account from "@/routes/identity/users/account";
 
 /**
  * The items of the signed-in user's menu: administration for those
- * who may enter it, the account, support, the colour scheme, the
+ * who may enter it, the account, the docs, support, the colour scheme, the
  * language and the way out. Layouts wrap them in their own trigger and content, so the
  * same menu opens from the sidebar footer and from the wizard header.
  */
@@ -31,7 +32,7 @@ export const UserMenuItems = () => {
     /**
      * The page's props.
      */
-    const { auth } = usePage().props;
+    const { auth, locale } = usePage().props;
 
     return (
         <Fragment>
@@ -50,6 +51,10 @@ export const UserMenuItems = () => {
                 <DropdownMenuItem render={<Link href={account.index.url()} />}>
                     <UserIcon />
                     <span>{t("Account")}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem render={<a href={docs.index.url({ locale })} rel="noopener" target="_blank" />}>
+                    <BookOpenIcon />
+                    <span>{t("Help")}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem render={<a href={"mailto:hello@contamos.xyz"} />}>
                     <LifeBuoyIcon />

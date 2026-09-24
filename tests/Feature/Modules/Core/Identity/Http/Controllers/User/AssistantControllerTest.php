@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Marketing\Enums\Docs\Page;
+use App\Modules\Mcp\Helpers\AssistantGuide;
 use App\Modules\Mcp\Http\Middleware\AuthenticateMcpToken;
 use App\Modules\Mcp\Models\RevokedGrant;
 use Illuminate\Http\Client\Request;
@@ -84,6 +86,31 @@ describe('index', function (): void {
                     ->where('connected_apps.items.0.name', 'Claude')));
 
         Http::assertSent(fn (Request $request): bool => $request->hasHeader('Authorization'));
+    });
+
+    it('shows the connection steps and example prompts the docs share', function (): void {
+        [$user] = actingMember();
+        fakeAuthorizedApplications($user, []);
+
+        $this->get(route('identity.users.assistants.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('guides', AssistantGuide::guides())
+                ->where('prompts', AssistantGuide::prompts())
+                ->where('prompts', fn (\Illuminate\Support\Collection $prompts): bool => $prompts->where('pro', true)->count() === 1)
+                ->where('guideUrl', route('docs.show', ['locale' => 'en', 'page' => Page::AiAssistants->value])));
+    });
+
+    it('links the guide in the locale of the user', function (): void {
+        [$user] = actingMember();
+        fakeAuthorizedApplications($user, []);
+
+        $this->withUnencryptedCookie('filament_language_switch_locale', 'es')
+            ->get(route('identity.users.assistants.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('guideUrl', route('docs.show', ['locale' => 'es', 'page' => Page::AiAssistants->value]))
+                ->where('prompts.0.prompt', '¿Cuáles son los saldos de mi equipo, en cada moneda?'));
     });
 
     it('reads every page of connected assistants', function (): void {

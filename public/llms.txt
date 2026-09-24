@@ -12,6 +12,23 @@ On every plan, AI assistants such as Claude and ChatGPT can connect to a ledger 
 - [Homepage (Spanish)](https://contamos.xyz/es): the same page in Spanish.
 - [Log in or sign up](https://contamos.xyz/login): create a free ledger or open an existing one.
 
+## Docs
+
+Every page is also available in Spanish at the same path under /es.
+
+- [Introduction](https://contamos.xyz/en/docs/introduction.md): what Contamos is and how the docs are organised.
+- [Quickstart](https://contamos.xyz/en/docs/quickstart.md): from signing up to a first transaction.
+- [Accounts and currencies](https://contamos.xyz/en/docs/accounts-and-currencies.md): accounts, the currencies they hold, and balances per currency.
+- [Transactions and transfers](https://contamos.xyz/en/docs/transactions-and-transfers.md): income, expenses, transfers between accounts, and CSV export.
+- [Tags](https://contamos.xyz/en/docs/tags.md): labels that follow money across categories.
+- [Exchange rates](https://contamos.xyz/en/docs/exchange-rates.md): the exchange rate every transaction stores, and typing your own.
+- [Budgets](https://contamos.xyz/en/docs/budgets.md): monthly budgets per category or tag (Pro).
+- [Recurring transactions](https://contamos.xyz/en/docs/recurring-transactions.md): rules that record a transaction on a schedule (Pro).
+- [Members and roles](https://contamos.xyz/en/docs/members-and-roles.md): invitations, the owner, admin and member roles, and leaving a team.
+- [Activity log](https://contamos.xyz/en/docs/activity-log.md): every change made inside a team (Pro).
+- [Plans and limits](https://contamos.xyz/en/docs/plans-and-limits.md): what the Free plan allows and what Pro removes and adds.
+- [AI assistants](https://contamos.xyz/en/docs/ai-assistants.md): connecting Claude or ChatGPT, with example prompts.
+
 ## Legal
 
 - [Terms of service](https://contamos.xyz/en/terms)
@@ -20,4 +37,5 @@ On every plan, AI assistants such as Claude and ChatGPT can connect to a ledger 
 
 ## Optional
 
+- [Full docs](https://contamos.xyz/llms-full.txt): every English docs page in one file.
 - [Sitemap](https://contamos.xyz/sitemap.xml): every indexable page.

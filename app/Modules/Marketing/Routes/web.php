@@ -41,6 +41,34 @@ Route::whereIn('locale', Locales::installed()->pluck('code')->toArray())->group(
 
     Route::get('{locale}/refunds', [\App\Modules\Marketing\Http\Controllers\LegalController::class, 'refunds'])
         ->name('legal.refunds');
+
+    Route::get('{locale}/{document}.md', [\App\Modules\Marketing\Http\Controllers\LegalController::class, 'markdown'])
+        ->whereIn('document', ['privacy', 'terms', 'refunds'])
+        ->name('legal.markdown');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Docs routes
+|--------------------------------------------------------------------------
+|
+| These routes correspond to the public docs, one page per topic under
+| the locale segment, each also served as Markdown at its URL plus .md
+| for AI assistants and other readers that are not browsers.
+|
+*/
+
+Route::whereIn('locale', Locales::installed()->pluck('code')->toArray())->group(function (): void {
+    Route::get('{locale}/docs', [\App\Modules\Marketing\Http\Controllers\DocsController::class, 'index'])
+        ->name('docs.index');
+
+    Route::get('{locale}/docs/{page}.md', [\App\Modules\Marketing\Http\Controllers\DocsController::class, 'markdown'])
+        ->whereIn('page', array_column(\App\Modules\Marketing\Enums\Docs\Page::cases(), 'value'))
+        ->name('docs.markdown');
+
+    Route::get('{locale}/docs/{page}', [\App\Modules\Marketing\Http\Controllers\DocsController::class, 'show'])
+        ->whereIn('page', array_column(\App\Modules\Marketing\Enums\Docs\Page::cases(), 'value'))
+        ->name('docs.show');
 });
 
 /*
@@ -48,14 +76,17 @@ Route::whereIn('locale', Locales::installed()->pluck('code')->toArray())->group(
 | Crawler routes
 |--------------------------------------------------------------------------
 |
-| The sitemap and robots.txt are served from the route table rather than
-| written into public/, so a new public page reaches a crawler without
-| anybody remembering to edit XML by hand.
+| The sitemap, robots.txt and llms-full.txt are served from the route
+| table rather than written into public/, so a new public page reaches a
+| crawler without anybody remembering to edit a file by hand.
 |
 */
 
 Route::get('sitemap.xml', [\App\Modules\Marketing\Http\Controllers\SitemapController::class, 'index'])
     ->name('sitemap');
+
+Route::get('llms-full.txt', [\App\Modules\Marketing\Http\Controllers\DocsController::class, 'full'])
+    ->name('docs.full');
 
 Route::get('robots.txt', [\App\Modules\Marketing\Http\Controllers\SitemapController::class, 'robots'])
     ->name('robots');

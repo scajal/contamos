@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Modules\Marketing\Enums\Docs\Page;
+
 use function Pest\Laravel\get;
 
 /**
@@ -22,6 +24,18 @@ describe('index', function (): void {
         }
     })->with(['home', 'legal.privacy', 'legal.terms', 'legal.refunds']);
 
+    it('lists every docs page in both locales with its alternates', function (Page $page): void {
+        $response = get(route('sitemap'))->assertOk();
+
+        foreach (['en', 'es'] as $locale) {
+            $response
+                ->assertSee('<loc>'.$page->url($locale).'</loc>', false)
+                ->assertSee('hreflang="'.$locale.'" href="'.$page->url($locale).'"', false);
+        }
+
+        $response->assertSee('hreflang="x-default" href="'.$page->url('en').'"', false);
+    })->with(Page::cases());
+
     it('carries both locales of a page as its alternates', function (): void {
         get(route('sitemap'))
             ->assertOk()
@@ -39,7 +53,7 @@ describe('index', function (): void {
         $document = new DOMDocument;
         $document->loadXML(get(route('sitemap'))->assertOk()->getContent() ?: '');
 
-        expect($document->getElementsByTagName('url'))->toHaveCount(8);
+        expect($document->getElementsByTagName('url'))->toHaveCount(2 * (4 + count(Page::cases())));
     });
 
     it('needs no file in public to serve it', function (): void {

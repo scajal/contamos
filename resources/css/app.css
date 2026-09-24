@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import "./typeset.css";
 
 /* Switzer, the heading face, self-hosted from Fontshare (ITF Free Font License, see resources/fonts/switzer/LICENSE.txt). */
 @font-face {
@@ -167,5 +168,35 @@
         html {
             scroll-behavior: smooth;
         }
+    }
+}
+
+/* The reading rhythm of the docs and the legal pages, the typeset
+   preset every rendered Markdown document is wrapped in. */
+@layer components {
+    .typeset-docs {
+        --typeset-size: 15px;
+        --typeset-leading: 1.75;
+    }
+
+    /* Anchors land below the sticky header rather than under it. */
+    .typeset-docs :where([id]) {
+        scroll-margin-block-start: 6rem;
+    }
+
+    /* Every heading carries a link to itself, shown in the gutter on hover. */
+    .typeset :where(.heading-permalink) {
+        float: left;
+        width: 1em;
+        margin-inline-start: -1em;
+        color: var(--typeset-muted);
+        font-weight: 400;
+        text-decoration-line: none;
+        opacity: 0;
+        transition: opacity 150ms;
+    }
+    .typeset :where(h2, h3, h4):hover :where(.heading-permalink),
+    .typeset :where(.heading-permalink:focus-visible) {
+        opacity: 1;
     }
 }

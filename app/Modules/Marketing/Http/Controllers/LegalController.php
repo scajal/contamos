@@ -6,7 +6,9 @@ namespace App\Modules\Marketing\Http\Controllers;
 
 use App\Modules\Authentication\Actions\ResolveAuthenticationRedirect;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Marketing\Objects\Document;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\App;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -38,6 +40,20 @@ class LegalController
     }
 
     /**
+     * Serve one of the legal documents as Markdown, for a
+     * reader such as an AI assistant that has no use for the
+     * page around it.
+     */
+    public function markdown(string $locale, string $document): HttpResponse
+    {
+        return response(
+            Document::find('legal', $document, $locale)->markdown(),
+            HttpResponse::HTTP_OK,
+            ['Content-Type' => 'text/markdown; charset=UTF-8'],
+        );
+    }
+
+    /**
      * Render one of the legal documents, which differ only in
      * their copy: the shell and the locale alternates are the
      * same on all three.
@@ -54,6 +70,9 @@ class LegalController
                 'es' => route("legal.{$name}", ['locale' => 'es']),
                 'default' => route("legal.{$name}", ['locale' => 'en']),
             ],
+            // The copy itself, written in Markdown per locale
+            // and rendered here, with the date it last changed.
+            'document' => Document::find('legal', $name, App::currentLocale()),
         ]);
     }
 }

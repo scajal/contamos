@@ -4,6 +4,7 @@ import { useLaravelReactI18n } from "laravel-react-i18n";
 import { BrandMark } from "@/components/brand-mark";
 import { cn } from "@/lib/utils";
 import { login } from "@/routes";
+import docs from "@/routes/docs";
 import legal from "@/routes/legal";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
 
@@ -139,6 +140,14 @@ export const Footer = ({ alternates, homeUrl, dashboardUrl, appearance, onAppear
                         </FooterColumn>
 
                         <FooterColumn title={t("Support")}>
+                            <li>
+                                <Link
+                                    className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                                    href={docs.index.url({ locale })}
+                                >
+                                    {t("Docs")}
+                                </Link>
+                            </li>
                             <FooterLink href={isHome ? "#faq" : `${homeUrl}#faq`}>{t("Questions")}</FooterLink>
                             <FooterLink href={"mailto:hello@contamos.xyz"}>{t("Contact")}</FooterLink>
                         </FooterColumn>

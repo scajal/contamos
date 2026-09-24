@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { login } from "@/routes";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
+import type { DocsNavigationGroup } from "@/types/app/modules/marketing/docs";
 
+import { HeaderMenu } from "./header-menu";
 import { LanguageSwitcher } from "./language-switcher";
 import { ThemeSwitcher, type Appearance } from "./theme-switcher";
 
@@ -16,6 +18,8 @@ interface HeaderProps {
     dashboardUrl: string | null;
     appearance: Appearance;
     onAppearanceChange: (appearance: Appearance) => void;
+    docsPage: string | null;
+    navigation: Array<DocsNavigationGroup> | null;
 }
 
 /**
@@ -27,21 +31,44 @@ interface HeaderProps {
  * turns the pill grey and muddies the wordmark. The outer band stays
  * click-through so only the pill itself catches the pointer.
  */
-export const Header = ({ alternates, homeUrl, dashboardUrl, appearance, onAppearanceChange }: HeaderProps) => {
+export const Header = ({
+    alternates,
+    homeUrl,
+    dashboardUrl,
+    appearance,
+    onAppearanceChange,
+    docsPage,
+    navigation,
+}: HeaderProps) => {
     /**
      * Translate the provided string to the current locale.
      */
-    const t = useLaravelReactI18n().t;
+    const { t, currentLocale } = useLaravelReactI18n();
+
+    /**
+     * Whether the reader is on the homepage, where the section
+     * links stay bare fragments.
+     */
+    const isHome = (alternates[currentLocale() as "en" | "es"] ?? alternates.en) === homeUrl;
 
     return (
         <header className="pointer-events-none sticky top-0 z-40 px-4 pt-4 sm:px-6">
-            <div className="bg-background/95 supports-backdrop-filter:bg-background/85 pointer-events-auto mx-auto flex h-14 max-w-3xl items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-4 shadow-lg backdrop-blur-xl sm:pl-5">
-                <a href={homeUrl} className="flex shrink-0 items-center gap-2">
-                    <BrandMark />
-                    <span className="font-heading text-base font-semibold tracking-tight">
-                        {import.meta.env.VITE_APP_NAME}
-                    </span>
-                </a>
+            <div className="bg-background/95 supports-backdrop-filter:bg-background/85 pointer-events-auto mx-auto flex h-14 max-w-4xl items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-4 shadow-lg backdrop-blur-xl sm:pl-5">
+                <div className="flex items-center gap-4">
+                    <a href={homeUrl} className="flex shrink-0 items-center gap-2">
+                        <BrandMark />
+                        <span className="font-heading text-base font-semibold tracking-tight">
+                            {import.meta.env.VITE_APP_NAME}
+                        </span>
+                    </a>
+                    <HeaderMenu
+                        docsPage={docsPage}
+                        homeUrl={homeUrl}
+                        isHome={isHome}
+                        navigation={navigation}
+                        variant="inline"
+                    />
+                </div>
 
                 <div className="flex items-center gap-1.5 sm:gap-2">
                     <LanguageSwitcher alternates={alternates} />
@@ -56,6 +83,13 @@ export const Header = ({ alternates, homeUrl, dashboardUrl, appearance, onAppear
                         {dashboardUrl ? t("Go to dashboard") : t("Log in")}
                         <ArrowRightIcon />
                     </Button>
+                    <HeaderMenu
+                        docsPage={docsPage}
+                        homeUrl={homeUrl}
+                        isHome={isHome}
+                        navigation={navigation}
+                        variant="drawer"
+                    />
                 </div>
             </div>
         </header>

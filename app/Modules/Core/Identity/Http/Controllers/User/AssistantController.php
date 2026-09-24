@@ -9,12 +9,15 @@ use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Identity\Actions\User\RevokeAssistant;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Marketing\Enums\Docs\Page;
+use App\Modules\Mcp\Helpers\AssistantGuide;
 use App\Modules\Mcp\Http\Middleware\AuthenticateMcpToken;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\App;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -39,6 +42,11 @@ class AssistantController
             'connected_apps' => Inertia::defer(fn (): array => $this->connectedApps($user, $authorizedApplications)),
             'is_locked' => $isLocked,
             'server_url' => AuthenticateMcpToken::resource(),
+            // The steps and the example prompts the docs show
+            // too, read from the one place both pages share.
+            'guides' => AssistantGuide::guides(),
+            'prompts' => AssistantGuide::prompts(),
+            'guideUrl' => route('docs.show', ['locale' => App::currentLocale(), 'page' => Page::AiAssistants->value]),
         ]);
     }
 

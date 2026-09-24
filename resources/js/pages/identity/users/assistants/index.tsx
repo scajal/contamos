@@ -1,24 +1,28 @@
 import { Deferred, Link, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { BotIcon, CheckIcon, CircleAlertIcon, CopyIcon, PlugZapIcon, SparklesIcon, UnplugIcon } from "lucide-react";
+import { ArrowUpRightIcon, BotIcon, CircleAlertIcon, PlugZapIcon, SparklesIcon, UnplugIcon } from "lucide-react";
 import { useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
+import { ConnectionSteps, ExamplePrompts, ServerAddress } from "@/components/assistant-guide";
 import { ConfirmAction } from "@/components/confirm-action";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApplicationLayout } from "@/layouts/application/layout";
 import subscriptions from "@/routes/billing/teams/subscriptions";
 import assistants from "@/routes/identity/users/assistants";
 import { ConnectedApp, ConnectedApps } from "@/types/app/modules/core/identity/connected-app";
+import type { AssistantConnectionGuide, AssistantExamplePrompt } from "@/types/app/modules/mcp/assistant-guide";
 
 type PageProps = {
     connected_apps?: ConnectedApps;
+    guideUrl: string;
+    guides: Array<AssistantConnectionGuide>;
     is_locked: boolean;
+    prompts: Array<AssistantExamplePrompt>;
     server_url: string;
 };
 
@@ -36,6 +40,8 @@ const Index = () => {
                 <Server />
                 {/** Setup */}
                 <Setup />
+                {/** Prompts */}
+                <Prompts />
                 {/** Connected */}
                 <Connected />
             </div>
@@ -50,13 +56,27 @@ const Header = () => {
      */
     const t = useLaravelReactI18n().t;
 
+    /**
+     * The page's props.
+     */
+    const { guideUrl } = usePage<PageProps>().props;
+
     return (
         <header className="flex flex-col gap-1">
             <h1 className="font-heading text-[1.75rem] leading-tight font-semibold tracking-tight">
                 {t("AI assistants")}
             </h1>
             <p className="text-muted-foreground text-[15px] leading-relaxed">
-                {t("Let Claude or ChatGPT read and record your finances, acting as you on your teams.")}
+                {t("Let Claude or ChatGPT read and record your finances, acting as you on your teams.")}{" "}
+                <a
+                    className="text-foreground inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline"
+                    href={guideUrl}
+                    rel="noopener"
+                    target="_blank"
+                >
+                    {t("Read the guide")}
+                    <ArrowUpRightIcon className="size-3.5" />
+                </a>
             </p>
         </header>
     );
@@ -131,11 +151,6 @@ const Server = () => {
      */
     const { server_url } = usePage<PageProps>().props;
 
-    /**
-     * Whether the address was just copied.
-     */
-    const [copied, setCopied] = useState(false);
-
     return (
         <Fragment>
             <header className="flex flex-col gap-1">
@@ -144,26 +159,7 @@ const Server = () => {
                     {t("Paste this address into your assistant to connect it.")}
                 </p>
             </header>
-            <InputGroup>
-                <InputGroupInput aria-label={t("Server address")} className="font-mono" readOnly value={server_url} />
-                <InputGroupAddon align="inline-end">
-                    <InputGroupButton
-                        aria-label={copied ? t("Copied") : t("Click to copy")}
-                        onClick={() => {
-                            void navigator.clipboard.writeText(server_url).then(
-                                () => {
-                                    setCopied(true);
-                                    window.setTimeout(() => setCopied(false), 1500);
-                                },
-                                () => undefined,
-                            );
-                        }}
-                        size="icon-xs"
-                    >
-                        {copied ? <CheckIcon /> : <CopyIcon />}
-                    </InputGroupButton>
-                </InputGroupAddon>
-            </InputGroup>
+            <ServerAddress url={server_url} />
         </Fragment>
     );
 };
@@ -176,26 +172,9 @@ const Setup = () => {
     const t = useLaravelReactI18n().t;
 
     /**
-     * The steps per assistant, in the order its settings show them.
+     * The page's props.
      */
-    const guides = [
-        {
-            name: "Claude",
-            steps: [
-                t("Open Settings, then Connectors."),
-                t("Choose Add custom connector."),
-                t("Paste the server address and sign in to Contamos when asked."),
-            ],
-        },
-        {
-            name: "ChatGPT",
-            steps: [
-                t("Open Settings, then Connectors, and turn on developer mode if asked."),
-                t("Add a new connector with the server address as its MCP server URL."),
-                t("Sign in to Contamos when asked."),
-            ],
-        },
-    ];
+    const { guides } = usePage<PageProps>().props;
 
     return (
         <Fragment>
@@ -205,18 +184,36 @@ const Setup = () => {
                     {t("You sign in once; the assistant then acts as you, with your role on each team.")}
                 </p>
             </header>
-            <div className="grid gap-4 sm:grid-cols-2">
-                {guides.map((guide) => (
-                    <div className="flex flex-col gap-3 rounded-xl border p-4" key={guide.name}>
-                        <p className="font-medium">{guide.name}</p>
-                        <ol className="text-muted-foreground flex list-decimal flex-col gap-1.5 pl-5 text-[15px] leading-relaxed">
-                            {guide.steps.map((step) => (
-                                <li key={step}>{step}</li>
-                            ))}
-                        </ol>
-                    </div>
-                ))}
-            </div>
+            <ConnectionSteps guides={guides} />
+        </Fragment>
+    );
+};
+
+/**
+ * What to ask a connected assistant first, the same examples
+ * the docs show.
+ */
+const Prompts = () => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const t = useLaravelReactI18n().t;
+
+    /**
+     * The page's props.
+     */
+    const { prompts } = usePage<PageProps>().props;
+
+    return (
+        <Fragment>
+            <header className="flex flex-col gap-1">
+                <h2 className="font-heading font-medium">{t("Example prompts")}</h2>
+                <p className="text-muted-foreground text-[15px] leading-relaxed">
+                    {t("Copy one into your assistant once it is connected.")}
+                </p>
+            </header>
+            <ExamplePrompts prompts={prompts} />
         </Fragment>
     );
 };

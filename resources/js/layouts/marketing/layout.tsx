@@ -1,10 +1,11 @@
 import { usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { domAnimation, LazyMotion } from "motion/react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
+import type { DocsNavigationGroup } from "@/types/app/modules/marketing/docs";
 
 import { Footer } from "./_components/footer";
 import { Header } from "./_components/header";
@@ -15,6 +16,8 @@ interface MarketingPageProps {
     homeUrl: string;
     dashboardUrl: string | null;
     appearance: Appearance | "system";
+    navigation?: Array<DocsNavigationGroup>;
+    page?: string;
     [key: string]: unknown;
 }
 
@@ -34,7 +37,14 @@ export const MarketingLayout = ({ children }: { children: ReactNode }) => {
     /**
      * The page's props.
      */
-    const { alternates, homeUrl, dashboardUrl, appearance: initialAppearance } = usePage<MarketingPageProps>().props;
+    const {
+        alternates,
+        homeUrl,
+        dashboardUrl,
+        appearance: initialAppearance,
+        navigation,
+        page,
+    } = usePage<MarketingPageProps>().props;
 
     /**
      * The colour scheme, seeded from the server-read cookie. The site owns
@@ -42,6 +52,19 @@ export const MarketingLayout = ({ children }: { children: ReactNode }) => {
      * unset preference resolves to dark rather than to the device's.
      */
     const [appearance, setAppearance] = useState<Appearance>(initialAppearance === "light" ? "light" : "dark");
+
+    // Menus and drawers render in a portal outside this shell, so the
+    // document root carries the scheme too for them to follow it.
+    useEffect(() => {
+        const root = document.documentElement;
+        const wasDark = root.classList.contains("dark");
+
+        root.classList.toggle("dark", appearance === "dark");
+
+        return () => {
+            root.classList.toggle("dark", wasDark);
+        };
+    }, [appearance]);
 
     return (
         <LazyMotion features={domAnimation}>
@@ -58,6 +81,8 @@ export const MarketingLayout = ({ children }: { children: ReactNode }) => {
                     dashboardUrl={dashboardUrl}
                     appearance={appearance}
                     onAppearanceChange={setAppearance}
+                    docsPage={navigation ? (page ?? null) : null}
+                    navigation={navigation ?? null}
                 />
                 <main id="main">{children}</main>
                 <Footer
