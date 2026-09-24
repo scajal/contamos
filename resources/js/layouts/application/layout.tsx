@@ -1,4 +1,4 @@
-import { Link, usePage } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
@@ -22,7 +22,7 @@ import {
     UsersIcon,
     WalletIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
 import { BalancesToggle } from "@/components/balances-toggle";
@@ -62,6 +62,7 @@ import {
     SidebarProvider,
     SidebarRail,
     SidebarTrigger,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import { UserMenuItems } from "@/components/user-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -439,6 +440,15 @@ const Sidebar = () => {
      * What the user may do on the current team.
      */
     const { can } = usePermissions();
+
+    /**
+     * Close the mobile sidebar drawer.
+     */
+    const { setOpenMobile } = useSidebar();
+
+    // The layout persists across visits, so the mobile drawer
+    // would stay open over the page it just led to.
+    useEffect(() => router.on("navigate", () => setOpenMobile(false)), [setOpenMobile]);
 
     /**
      * The team the sidebar's links act on.
