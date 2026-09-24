@@ -1,5 +1,6 @@
 import { Link, router, usePage } from "@inertiajs/react";
 import { ModalLink } from "@inertiaui/modal-react";
+import BorderBeam from "border-beam";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
     ArrowDownIcon,
@@ -606,9 +607,11 @@ const Sidebar = () => {
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>
-                <SidebarGroup>
-                    <SidebarMenu>
-                        <SidebarMenuItem>
+            </SidebarContent>
+            <SidebarFooter>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <BorderBeam>
                             <SidebarMenuButton
                                 isActive={isSection("identity/users/assistants")}
                                 render={<Link href={assistants.index.url()} />}
@@ -617,12 +620,8 @@ const Sidebar = () => {
                                 <BotIcon />
                                 <span>{t("AI assistants")}</span>
                             </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                </SidebarGroup>
-            </SidebarContent>
-            <SidebarFooter>
-                <SidebarMenu>
+                        </BorderBeam>
+                    </SidebarMenuItem>
                     <SidebarMenuItem>
                         <DropdownMenu>
                             <DropdownMenuTrigger
