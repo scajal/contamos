@@ -15,7 +15,10 @@ export interface Transaction {
     paddle_subscription_id: string | null;
     status: "billed" | "canceled" | "completed" | "draft" | "paid" | "past_due" | "ready";
     tax: string;
+    /** Minor units, e.g. "499". */
     total: string;
+    /** Formatted by Cashier, e.g. "$4.99". */
+    formatted_total: string;
     created_at: string | null;
     updated_at: string | null;
     billable?: Team;

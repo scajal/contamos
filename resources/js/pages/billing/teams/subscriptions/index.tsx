@@ -368,7 +368,7 @@ const Transactions = () => {
                                         </ItemMedia>
                                         <ItemContent>
                                             <ItemTitle>{formatDate(transaction.billed_at, currentLocale())}</ItemTitle>
-                                            <ItemDescription>{`${transaction.currency} ${transaction.total}`}</ItemDescription>
+                                            <ItemDescription>{transaction.formatted_total}</ItemDescription>
                                         </ItemContent>
                                         <ItemActions className="flex-wrap justify-end">
                                             <Badge variant={transactionStatusVariant(transaction.status)}>

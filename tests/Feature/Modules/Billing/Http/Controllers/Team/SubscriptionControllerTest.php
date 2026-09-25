@@ -33,8 +33,8 @@ function billingTransaction(Team $team, array $overrides = []): \App\Modules\Bil
         'invoice_number' => 'INV-1',
         'paddle_id' => 'txn_'.fake()->unique()->lexify('??????'),
         'status' => 'completed',
-        'tax' => '0.00',
-        'total' => '4.99',
+        'tax' => '0',
+        'total' => '499',
         ...$overrides,
     ]);
 
@@ -163,7 +163,8 @@ describe('index', function (): void {
                     ->where('renewal.date', '2026-10-08T10:00:00+00:00')
                     ->has('renewal.amount')
                     ->has('transactions.data', 1)
-                    ->where('transactions.data.0.total', '4.99')));
+                    ->where('transactions.data.0.total', '499')
+                    ->where('transactions.data.0.formatted_total', '$4.99')));
     });
 
     it('renders a cancelled pro team on its grace period', function (): void {
