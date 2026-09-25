@@ -6,6 +6,7 @@ use App\Modules\Administration\Panels\Administration\Widgets\StatsOverviewWidget
 use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\App;
 use Laravel\Paddle\Subscription;
 use Livewire\Livewire;
 
@@ -57,14 +58,17 @@ it('sums what was collected this month against last month', function (): void {
         'total' => $total,
     ]);
 
-    $collected($now->startOfMonth()->addDay(), '4.99');
-    $collected($now->startOfMonth()->addDays(2), '4.99', 'paid');
-    $collected($now->startOfMonth()->addDays(3), '4.99', 'canceled');
-    $collected($now->subMonth()->startOfMonth()->addDay(), '29.99');
+    // Totals are stored in minor units, the way Paddle writes them.
+    $collected($now->startOfMonth()->addDay(), '499');
+    $collected($now->startOfMonth()->addDays(2), '499', 'paid');
+    $collected($now->startOfMonth()->addDays(3), '499', 'canceled');
+    $collected($now->subMonth()->startOfMonth()->addDay(), '2999');
+
+    App::setLocale('es');
 
     Livewire::test(StatsOverviewWidget::class)
-        ->assertSee('USD 9.98')
-        ->assertSee(trans(':amount last month', ['amount' => 'USD 29.99']));
+        ->assertSee('USD 9,98')
+        ->assertSee(trans(':amount last month', ['amount' => 'USD 29,99']));
 });
 
 it('counts the subscriptions that need attention', function (): void {

@@ -18,8 +18,13 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Number;
 use Laravel\Paddle\Subscription as PaddleSubscription;
+use Money\Currencies\ISOCurrencies;
+use Money\Currency;
+use Money\Formatter\DecimalMoneyFormatter;
+use Money\Money;
 
 class StatsOverviewWidget extends \Filament\Widgets\StatsOverviewWidget
 {
@@ -129,7 +134,7 @@ class StatsOverviewWidget extends \Filament\Widgets\StatsOverviewWidget
 
         foreach (range(5, 0) as $monthsAgo) {
             $start = $now->subMonths($monthsAgo)->startOfMonth();
-            $chart[] = (float) ($this->collected($start, $start->addMonth())['totals'][$current['currency']] ?? 0);
+            $chart[] = (float) $this->majorUnits($current['currency'], $this->collected($start, $start->addMonth())['totals'][$current['currency']] ?? '0');
         }
 
         return Stat::make(trans('Revenue this month'), $this->money($current['currency'], $current['total']))
@@ -272,11 +277,52 @@ class StatsOverviewWidget extends \Filament\Widgets\StatsOverviewWidget
     }
 
     /**
-     * Format a major-unit amount with its currency code, the
-     * way the billing page shows transactions.
+     * Format a Paddle total with its currency code. The column
+     * is minor units, so the figure shown is the major-unit
+     * price in the current locale.
      */
     protected function money(string $currency, string $amount): string
     {
-        return $currency.' '.Number::format((float) $amount, 2);
+        // 499 USD is four dollars and ninety-nine cents, written
+        // with the locale's own decimal mark.
+        $major = $this->majorUnits($currency, $amount);
+        $decimals = str_contains($major, '.') ? strlen(substr($major, strpos($major, '.') + 1)) : 0;
+        $formatted = Number::format((float) $major, $decimals, locale: App::getLocale());
+
+        return $currency.' '.(is_string($formatted) ? $formatted : $major);
+    }
+
+    /**
+     * Turn a minor-unit total into a major-unit decimal
+     * string, such as "499" USD into "4.99".
+     */
+    protected function majorUnits(string $currency, string $amount): string
+    {
+        return (new DecimalMoneyFormatter(new ISOCurrencies))->format(new Money($this->wholeMinorUnits($amount), new Currency(strtoupper($currency))));
+    }
+
+    /**
+     * The minor-unit total as a whole number. A summed column
+     * can come back with a trailing fraction of zeros.
+     */
+    protected function wholeMinorUnits(string $amount): string
+    {
+        if (! is_numeric($amount)) {
+            return '0';
+        }
+
+        if (! str_contains($amount, '.')) {
+            return $amount;
+        }
+
+        [$whole, $fraction] = explode('.', $amount, 2);
+
+        // Only a fraction of zeros is safe to drop. Anything else
+        // is not a minor-unit total.
+        if (rtrim($fraction, '0') !== '') {
+            return '0';
+        }
+
+        return $whole === '' || $whole === '-' ? '0' : $whole;
     }
 }
