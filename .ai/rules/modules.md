@@ -15,7 +15,7 @@ Place parent-owned Models, Controllers, Actions, and Requests under a parent seg
 
 ## Eloquent without extra layers
 
-Query and persist with Eloquent in controllers and Actions. Do not add Repositories, Queries, Data/DTO classes, or domain Events/Listeners.
+Query and persist with Eloquent in controllers and Actions. Do not add Repositories, Queries, or spatie/laravel-data classes. The only events are `NotifiesTeam` team-email events (see the Events rule) and the only DTOs are plain value objects under a module `Objects/` folder.
 
 ## No Gates or Policies
 

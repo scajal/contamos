@@ -40,3 +40,6 @@ Gate and check plan limits through the Feature enum (`EnsureFeaturesAreActive::u
 
 ## Gate team routes with EnsureTeamPermission::using
 Gate team routes on a permission with `Route::middleware(EnsureTeamPermission::using(Permission::X))`, the way Pennant's feature middleware is applied. It runs after `EnsureTeamMembership`. Do not pass raw middleware strings, and do not use `can:` middleware.
+
+## Middleware lives on routes
+Attach middleware in the module Routes file with ->middleware() on routes and groups, referencing it by ::class or ::using(...). Controllers never implement HasMiddleware or carry a #[Middleware] attribute.

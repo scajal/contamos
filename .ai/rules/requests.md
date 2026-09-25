@@ -39,3 +39,6 @@ Laravel distinct compares sibling values on wildcard attributes (tag_ids.*), not
 
 ## Share sibling logic via a local Concerns trait
 Share logic between sibling Form Requests with a trait in a `Concerns/` folder next to them, named as a verb phrase (`ResolvesTransactionInputs`, `ResolvesOpeningBalances`). Keep the trait methods `protected`. Do not extract a base class or a service for this, and do not put module-specific traits in `Support/Concerns`.
+
+## Inject the user with #[CurrentUser]
+When a Form Request method needs the signed-in user, receive it as `#[CurrentUser] User $user`; never auth()->user() or Auth::user().

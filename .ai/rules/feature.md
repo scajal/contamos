@@ -1,7 +1,8 @@
 ---
 paths:
-    - "tests/Feature/**"
-    - tests/Pest.php
+  - 'tests/Feature/**'
+  - tests/Pest.php
+  - 'tests/**'
 ---
 
 # Feature
@@ -49,3 +50,18 @@ Strict models throw "attribute [current_team_id] either does not exist or was no
 ## Test files open with an FQDN header docblock
 
 Start every test file with a file-level docblock naming the class under test by leading-backslash FQDN, after the imports: `/** Feature tests for \App\Modules\... */`.
+
+## Fixtures come from factories, never seeders
+Create every record, reference currencies included, with model factories and their states; do not call seeders or insert raw rows. Use a fake ISO code (ZZA, ZZB) when the currency code is not what the test is about.
+
+## Double collaborators with fakes, not Mockery
+Isolate the outside world with Laravel fakes (Http::fake against the provider's URL constant with a fixture body, Notification::fake) or an anonymous class bound with app()->instance; never mock(), spy() or partialMock(). Wrap each fake in a file-local fakeX() helper.
+
+## it() sentences, keyed datasets, expect()
+Write it('<third-person verb> ...'), never test(); chain expect()->and() instead of $this->assert*; give every dataset row a descriptive string key inline in ->with([...]). Keep type coverage at 100%.
+
+## Plans via subscribeToPro, flags via Pennant deactivate
+Put a team on Pro with subscribeToPro($team) (cancelPro to drop it) and call Pennant::flushCache() if the team was already resolved; force a refusal with Pennant::for($team)->deactivate(Feature::X) rather than faking the resolver. Alias the facade as Pennant so Feature stays the billing enum.
+
+## Freeze time with travelTo(CarbonImmutable)
+Fix the clock with $this->travelTo(CarbonImmutable::parse('YYYY-MM-DD HH:MM:SS')). Do not use Date::setTestNow, freezeTime or string arguments.

@@ -24,3 +24,6 @@ TeamInvitation status (pending/accepted/expired) is derived from accepted_at and
 
 ## Team authorization is Role and Permission enums
 Authorize team actions through the `Permission` and `Role` enums in `Enums/Team/`. Permission cases are backed `resource:verb` strings; `Role::permissions()` is the match table of what each role grants, and `Role::grants()` checks one. Check at call sites with `$user->hasTeamPermission($team, Permission::X)`.
+
+## Money is bcmath on strings
+Carry amounts as decimal strings and compute or compare them with bcadd/bcsub/bcmul/bcdiv/bccomp at an explicit class SCALE constant of 18. Never use floats, round() or number_format for money; cast to float only for display percentages.

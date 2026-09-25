@@ -1,7 +1,8 @@
 ---
 paths:
-    - "resources/js/pages/**/index.tsx"
-    - "resources/js/pages/**/*.tsx"
+  - 'resources/js/pages/**/index.tsx'
+  - 'resources/js/pages/**/*.tsx'
+  - 'resources/js/pages/**'
 ---
 
 # Pages
@@ -27,3 +28,9 @@ Open Inertia modal routes with `ModalLink` and a Wayfinder `.url()`. Use `Link` 
 
 ## Page props type is PageProps
 Inertia page components declare their props as a local `type PageProps = { … }` and destructure it in the component signature. Reserve `type Props` for colocated `_components/` files.
+
+## Forms use Form with Wayfinder form props
+Build forms with Inertia's <Form {...action.form()} disableWhileProcessing> and its render props, not useForm. Show each error as invalid(name) && <FieldError> inside a Field, and disable the submit on processing || !isDirty with a <Spinner /> while processing.
+
+## Compose empty states from Empty primitives
+Build an empty state inline with Empty > EmptyHeader (EmptyMedia, EmptyTitle, EmptyDescription) rather than a bespoke wrapper; promote a widget to components/ only when it carries domain meaning across pages.

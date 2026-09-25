@@ -13,35 +13,47 @@ Before planning or editing, find the row whose globs match the file's path and r
 | bootstrap/app.php | .ai/rules/bootstrap.md |
 | app/Modules/Core/Catalog/Services/** | .ai/rules/catalog-quote-services.md |
 | app/Modules/Core/Catalog/** | .ai/rules/catalog.md |
+| app/Modules/**/Commands/** | .ai/rules/commands.md |
 | resources/js/pages/finance/**/_components/fields.tsx | .ai/rules/components.md |
+| app/Modules/**/Http/Requests/**/Concerns/** | .ai/rules/concerns.md |
 | app/Modules/**/Http/Controllers/** | .ai/rules/controllers.md |
 | app/Modules/Core/**/*.php | .ai/rules/core.md |
 | app/Modules/**/Enums/** | .ai/rules/enums.md |
+| app/Modules/**/Events/** | .ai/rules/events.md |
 | database/factories/** | .ai/rules/factories.md |
-| tests/Feature/**, tests/Pest.php | .ai/rules/feature.md |
+| tests/Feature/**, tests/Pest.php, tests/** | .ai/rules/feature.md |
 | app/Modules/Billing/Features/** | .ai/rules/features.md |
 | resources/js/pages/finance/teams/** | .ai/rules/finance-teams.md |
 | resources/js/pages/finance/** | .ai/rules/finance.md |
+| app/Modules/**/Helpers/** | .ai/rules/helpers.md |
 | app/Modules/**/Http/** | .ai/rules/http.md |
 | app/Modules/Core/Identity/Models/Team.php | .ai/rules/identity-models.md |
 | resources/js/layouts/marketing/**, resources/js/components/brand-mark.tsx, public/favicon.svg, public/images/** | .ai/rules/images.md |
 | resources/js/**, resources/js/**/*.tsx | .ai/rules/js.md |
 | lang/*.json, lang/*/validation.php | .ai/rules/lang.md |
 | resources/js/pages/home/**, resources/js/layouts/marketing/**, lang/*.json | .ai/rules/marketing.md |
+| app/Modules/Mcp/** | .ai/rules/mcp.md |
 | app/Modules/Support/Http/Middleware/**, app/Modules/Support/Http/Middleware/HandleInertiaRequests.php | .ai/rules/middleware.md |
 | database/migrations/** | .ai/rules/migrations.md |
 | app/Modules/**/Models/** | .ai/rules/models.md |
 | tests/Feature/Modules/Administration/** | .ai/rules/modules-administration.md |
+| tests/Feature/Modules/Mcp/** | .ai/rules/modules-mcp.md |
+| app/Modules/**/Providers/** | .ai/rules/modules-providers.md |
 | app/Modules/** | .ai/rules/modules.md |
-| resources/js/pages/**/index.tsx, resources/js/pages/**/*.tsx | .ai/rules/pages.md |
+| app/Modules/**/Notifications/** | .ai/rules/notifications.md |
+| resources/js/pages/**/index.tsx, resources/js/pages/**/*.tsx, resources/js/pages/** | .ai/rules/pages.md |
 | app/**, tests/**, database/factories/** | .ai/rules/phpdoc.md |
+| app/Modules/Mcp/Prompts/** | .ai/rules/prompts.md |
 | app/Modules/Billing/Providers/** | .ai/rules/providers.md |
 | app/Modules/**/Http/Requests/** | .ai/rules/requests.md |
 | app/Modules/*/Routes/**, app/Modules/**/Routes/**, routes/console.php | .ai/rules/routes.md |
+| app/Modules/**/Services/** | .ai/rules/services.md |
 | app/Modules/Support/** | .ai/rules/support.md |
 | app/Modules/Core/Finance/**, app/Modules/Core/Identity/** | .ai/rules/teams.md |
+| app/Modules/Mcp/Tools/** | .ai/rules/tools.md |
 | app/Modules/Core/Finance/Http/Requests/Team/Transaction/** | .ai/rules/transaction.md |
 | resources/js/pages/finance/teams/transactions/** | .ai/rules/transactions.md |
+| resources/js/types/** | .ai/rules/types.md |
 | resources/js/components/ui/button.tsx, resources/js/components/ui/table.tsx | .ai/rules/ui.md |
 | tests/Unit/** | .ai/rules/unit.md |
 | .github/workflows/** | .ai/rules/workflows.md |

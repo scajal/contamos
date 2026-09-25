@@ -45,3 +45,15 @@ Share the authenticated user as top-level `user` with `Inertia::always` (eager-l
 ## Layout reads shared user.teams
 
 The shared Inertia user includes teams (memberships) and current_team. The sidebar team switcher reads user.teams and user.current_team; do not refetch teams in the layout.
+
+## Kebab-case files, named arrow components, default-export pages
+Name files kebab-case; export components, layouts and hooks by name (arrow const for components), one per file. Pages are the only default exports: const Page + Page.layout when they render inside a layout, export default function for modal pages. Keep page sections as local non-exported consts.
+
+## Format through lib/utils with an explicit locale
+Format money with formatAmount(amount, locale, currency) and dates with the formatX(value, locale) helpers in lib/utils; never call Intl or date-fns from a page, never parse amounts to floats. Take the locale from useLaravelReactI18n().currentLocale.
+
+## Translate with t() and :placeholder interpolation
+Read t (and currentLocale) from useLaravelReactI18n(); interpolate with Laravel-style :name placeholders and an object argument, never template literals around t().
+
+## cn from lib/utils, lucide icons, Base UI toast
+Import cn from @/lib/utils in app code (only components/ui keeps the generated 'cn' package import); use lucide-react icons; raise notifications with toast from components/ui/toast, not sonner. No CSS modules.

@@ -38,3 +38,6 @@ Declare non-default table names with `#[Table('...')]`. Do not set `protected $t
 
 ## Accessors via Attribute::get
 Write read-only accessors as `protected function name(): Attribute` returning `Attribute::get(fn (): ?string => ...)`. Do not use `Attribute::make(get: ...)` or legacy `getNameAttribute()` magic methods.
+
+## Built-in casts only
+Declare casts with built-in strings or enum classes. Cast money columns as 'decimal:18' and date-only columns as 'immutable_date:Y-m-d'. Do not create CastsAttributes classes; put derived values in Attribute accessors.

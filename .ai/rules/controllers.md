@@ -61,3 +61,9 @@ When a route's permission middleware cannot express the check, guard in the cont
 
 ## Redirect with to_route
 Redirect to an application route with `to_route('name', [...])`. Reserve `redirect()` for URLs that are not named routes, such as `redirect()->away($url)` and `redirect()->to($url)`. Do not use `redirect()->route(...)`.
+
+## Pagination per surface
+Inertia index pages use ->paginate(10) with page numbers. Page computed collections with forPage(). Never simplePaginate.
+
+## Inject the user with #[CurrentUser]
+Receive the signed-in user in controller actions as `#[CurrentUser] User $user` and pass it to Actions via ->by($user). Use $request->user() only in middleware and providers; never auth()->user() or Auth::user().
