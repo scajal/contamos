@@ -1108,5 +1108,11 @@
     "Use code :code at checkout": "Use code :code at checkout",
     "Upcoming": "Upcoming",
     "Live": "Live",
-    "Offer": "Offer"
+    "Offer": "Offer",
+    "Updated": "Updated",
+    "Tags changed": "Tags changed",
+    "Currency added": "Currency added",
+    "Currency removed": "Currency removed",
+    "Member added": "Member added",
+    "Role changed": "Role changed"
 }

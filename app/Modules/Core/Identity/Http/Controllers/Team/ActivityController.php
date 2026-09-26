@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Identity\Http\Controllers\Team;
 
 use App\Modules\Billing\Enums\Feature;
+use App\Modules\Core\Identity\Enums\Team\Activity\ActivityEvent;
 use App\Modules\Core\Identity\Enums\Team\Activity\ActivitySubject;
 use App\Modules\Core\Identity\Http\Requests\Team\Activity\IndexRequest;
 use App\Modules\Core\Identity\Models\Team;
@@ -110,6 +111,7 @@ class ActivityController
             'causer' => $this->causer($members, $activity),
             'created_at' => $activity->created_at?->toIso8601String(),
             'event' => $activity->event,
+            'event_label' => ActivityEvent::labelFor($activity->event),
             'subject_id' => $activity->subject_id,
             'subject_label' => $this->subjectLabel($activity, $names),
             'subject_type' => ActivitySubject::forType($activity->subject_type)?->value,

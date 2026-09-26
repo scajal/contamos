@@ -457,8 +457,10 @@ describe('show', function (): void {
                 ->component('identity/teams/activity/show')
                 ->has('entries', 2)
                 ->where('entries.0.event', 'created')
+                ->where('entries.0.event_label', 'Created')
                 ->where('entries.0.causer.name', $user->name)
-                ->where('entries.1.event', 'tags_synced'));
+                ->where('entries.1.event', 'tags_synced')
+                ->where('entries.1.event_label', 'Tags changed'));
     });
 
     it('opens an entry written outside a batch on its own', function (): void {

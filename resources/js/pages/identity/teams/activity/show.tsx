@@ -50,7 +50,7 @@ export default function Show({ entries }: PageProps) {
                                 {entries.map((entry) => (
                                     <Field key={entry.id}>
                                         <FieldLabel className="flex flex-wrap items-center gap-2">
-                                            <Badge variant="secondary">{entry.event}</Badge>
+                                            <Badge variant="secondary">{entry.event_label}</Badge>
                                             <AssistantBadge assistant={entry.assistant} />
                                             <span className="text-muted-foreground min-w-0 truncate">
                                                 {entry.subject_label ?? t("Record")}

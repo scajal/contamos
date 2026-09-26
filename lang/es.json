@@ -1108,5 +1108,11 @@
     "Use code :code at checkout": "Usa el código :code al pagar",
     "Upcoming": "Próximo",
     "Live": "En vivo",
-    "Offer": "Oferta"
+    "Offer": "Oferta",
+    "Updated": "Actualizado",
+    "Tags changed": "Etiquetas cambiadas",
+    "Currency added": "Moneda agregada",
+    "Currency removed": "Moneda quitada",
+    "Member added": "Miembro agregado",
+    "Role changed": "Rol cambiado"
 }

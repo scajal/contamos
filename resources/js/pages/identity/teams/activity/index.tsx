@@ -252,9 +252,12 @@ const Entry = ({ batch }: { batch: ActivityEntry[] }) => {
 
     /**
      * The entry the batch reads as, which is the first row
-     * the action wrote.
+     * the action wrote. The timeline arrives newest first, so
+     * that row is the batch's last: a transaction created with
+     * tags reads as created, not as its tags changing.
      */
-    const [head, ...rest] = batch;
+    const head = batch.at(-1);
+    const rest = batch.slice(0, -1);
 
     if (!head) {
         return null;
@@ -274,7 +277,7 @@ const Entry = ({ batch }: { batch: ActivityEntry[] }) => {
             <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                     <span className="font-medium">{causerName(head.causer, t)}</span>
-                    <Badge variant="secondary">{head.event}</Badge>
+                    <Badge variant="secondary">{head.event_label}</Badge>
                     <AssistantBadge assistant={head.assistant} />
                     <span className="text-muted-foreground truncate">
                         {[subject, head.subject_label].filter(Boolean).join(" · ")}

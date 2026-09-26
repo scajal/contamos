@@ -42,6 +42,8 @@ export interface ActivityEntry {
     causer: ActivityCauser;
     created_at: string | null;
     event: string | null;
+    /** The event as the timeline names it, in the page's language. */
+    event_label: string;
     subject_id: string | null;
     subject_label: string | null;
     subject_type: ActivitySubject | null;
