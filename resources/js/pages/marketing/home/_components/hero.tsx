@@ -5,12 +5,14 @@ import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { login } from "@/routes";
+import type { Launch } from "@/types/app/modules/marketing/objects/launch";
 
 import { HeroScene } from "./hero-scene";
 import { LiveLedger } from "./live-ledger";
 
 interface HeroProps {
     dashboardUrl: string | null;
+    launch: Launch | null;
 }
 
 /**
@@ -33,7 +35,7 @@ const ENTRANCE =
  * ledger inside the section is what stops the floor and the props from
  * being clipped mid-scene.
  */
-export const Hero = ({ dashboardUrl }: HeroProps) => {
+export const Hero = ({ dashboardUrl, launch }: HeroProps) => {
     /**
      * Translate the provided string to the current locale.
      */
@@ -44,21 +46,43 @@ export const Hero = ({ dashboardUrl }: HeroProps) => {
             <HeroScene />
 
             <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center gap-8 px-4 pt-20 pb-28 text-center sm:px-6 sm:pt-28">
-                {/** The assistants lead the pitch alongside the ledger, one tap from their act. */}
-                <a
-                    href="#assistants"
-                    className={cn(
-                        ENTRANCE,
-                        "bg-background/80 hover:border-foreground/30 -mb-2 flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-sm shadow-sm backdrop-blur transition-colors",
-                    )}
-                >
-                    <span className="bg-primary text-primary-foreground flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold">
-                        <SparklesIcon aria-hidden="true" className="size-3" />
-                        {t("New")}
-                    </span>
-                    <span>{t("Talk to your ledger from Claude or ChatGPT")}</span>
-                    <ArrowRightIcon aria-hidden="true" className="text-muted-foreground size-3.5" />
-                </a>
+                {launch ? (
+                    /** While the Product Hunt launch runs, it takes the announcement's place. */
+                    <a
+                        href={launch.phase === "offer" ? "#pricing" : launch.url}
+                        {...(launch.phase === "offer" ? {} : { target: "_blank", rel: "noopener" })}
+                        className={cn(
+                            ENTRANCE,
+                            "bg-background/80 hover:border-foreground/30 -mb-2 flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-sm shadow-sm backdrop-blur transition-colors",
+                        )}
+                    >
+                        <span className="flex shrink-0 items-center gap-1 rounded-full bg-[#ff6154] px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-white">
+                            {launch.phase === "offer" ? t("Launch offer") : "Product Hunt"}
+                        </span>
+                        <span>
+                            {launch.phase === "upcoming" && t("Launching October 24. Get notified")}
+                            {launch.phase === "live" && t("We're live today. Come say hi")}
+                            {launch.phase === "offer" && t("Use code :code at checkout", { code: launch.code ?? "" })}
+                        </span>
+                        <ArrowRightIcon aria-hidden="true" className="text-muted-foreground size-3.5" />
+                    </a>
+                ) : (
+                    /** The assistants lead the pitch alongside the ledger, one tap from their act. */
+                    <a
+                        href="#assistants"
+                        className={cn(
+                            ENTRANCE,
+                            "bg-background/80 hover:border-foreground/30 -mb-2 flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-sm shadow-sm backdrop-blur transition-colors",
+                        )}
+                    >
+                        <span className="bg-primary text-primary-foreground flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold">
+                            <SparklesIcon aria-hidden="true" className="size-3" />
+                            {t("New")}
+                        </span>
+                        <span>{t("Talk to your ledger from Claude or ChatGPT")}</span>
+                        <ArrowRightIcon aria-hidden="true" className="text-muted-foreground size-3.5" />
+                    </a>
+                )}
 
                 <h1
                     className={cn(

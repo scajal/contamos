@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Identity\Models\User;
+use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\get;
@@ -149,3 +150,25 @@ it('offers ai assistant access on every plan', function (string $locale, string 
     'english' => ['en', 'AI assistant access (MCP)'],
     'spanish' => ['es', 'Acceso para asistentes de IA (MCP)'],
 ]);
+
+it('announces the product hunt launch while it runs', function (string $moment, ?string $phase): void {
+    $this->travelTo(CarbonImmutable::parse($moment));
+
+    get(route('home', ['locale' => 'en']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->where('launch.phase', $phase));
+})->with([
+    'before the launch' => ['2026-10-01 12:00:00 UTC', 'upcoming'],
+    'on launch day' => ['2026-10-24 12:00:00 America/Los_Angeles', 'live'],
+    'while the code lasts' => ['2026-10-28 12:00:00 UTC', 'offer'],
+]);
+
+it('announces nothing about the launch once its code has expired', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-11-02 12:00:00 UTC'));
+
+    get(route('home', ['locale' => 'en']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+            ->where('launch', null));
+});

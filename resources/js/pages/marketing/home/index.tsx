@@ -6,6 +6,7 @@ import type { PlanTableRow } from "@/pages/billing/teams/subscriptions/_componen
 import { BillingCycle } from "@/types/app/modules/billing/enums/billing-cycle";
 import { PlanPrice } from "@/types/app/modules/billing/plan-price";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
+import type { Launch } from "@/types/app/modules/marketing/objects/launch";
 
 import { Assistants } from "./_components/assistants";
 import { Balances } from "./_components/balances";
@@ -21,10 +22,11 @@ interface HomeProps {
     dashboardUrl: string | null;
     alternates: Alternates;
     features: Array<PlanTableRow>;
+    launch: Launch | null;
     prices: Record<BillingCycle, PlanPrice>;
 }
 
-const Home = ({ dashboardUrl, alternates, features, prices }: HomeProps) => {
+const Home = ({ dashboardUrl, alternates, features, launch, prices }: HomeProps) => {
     return (
         <Fragment>
             <SeoHead alternates={alternates} prices={prices} />
@@ -38,7 +40,7 @@ const Home = ({ dashboardUrl, alternates, features, prices }: HomeProps) => {
              */}
             <div className="bg-background relative overflow-x-clip">
                 <StageFloor />
-                <Hero dashboardUrl={dashboardUrl} />
+                <Hero dashboardUrl={dashboardUrl} launch={launch} />
                 <Balances />
             </div>
             <Assistants dashboardUrl={dashboardUrl} />

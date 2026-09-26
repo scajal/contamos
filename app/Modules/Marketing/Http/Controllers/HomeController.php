@@ -9,6 +9,8 @@ use App\Modules\Billing\Enums\BillingCycle;
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Billing\Enums\Plan;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Marketing\Objects\Launch;
+use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\App;
@@ -57,6 +59,10 @@ class HomeController
             // page is the price at checkout. Every field is null when
             // Paddle cannot be reached, and the section then offers the
             // plan without a figure rather than an invented one.
+            // The Product Hunt launch the hero announces while it
+            // is upcoming, live or offering its code, and nothing
+            // once the code has expired.
+            'launch' => Launch::at(CarbonImmutable::now())?->toArray(),
             'prices' => [
                 BillingCycle::Monthly->value => Plan::Pro->price(BillingCycle::Monthly),
                 BillingCycle::Yearly->value => Plan::Pro->price(BillingCycle::Yearly),
