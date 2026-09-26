@@ -53,8 +53,8 @@ export const Header = ({
     const isHome = (alternates[currentLocale() as "en" | "es"] ?? alternates.en) === homeUrl;
 
     return (
-        <header className="pointer-events-none sticky top-0 z-40 px-4 pt-4 sm:px-6">
-            <div className="bg-background/95 supports-backdrop-filter:bg-background/85 pointer-events-auto mx-auto flex h-14 max-w-4xl items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-4 shadow-lg backdrop-blur-xl sm:pl-5">
+        <header className="pointer-events-none sticky top-0 z-40 mx-auto max-w-6xl px-4 pt-4 sm:px-6">
+            <div className="bg-background/95 supports-backdrop-filter:bg-background/85 pointer-events-auto flex h-14 items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-4 shadow-lg backdrop-blur-xl sm:pl-5">
                 <div className="flex items-center gap-4">
                     <a href={homeUrl} className="flex shrink-0 items-center gap-2">
                         <BrandMark />

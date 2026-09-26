@@ -91,10 +91,7 @@ export const Faq = ({ dashboardUrl }: FaqProps) => {
                  * open on arrival, so the section is never a stack of
                  * closed grey bars.
                  */}
-                <Accordion
-                    defaultValue={[QUESTIONS[0].question]}
-                    className="mx-auto mt-14 max-w-3xl rounded-none border-0 sm:mt-16"
-                >
+                <Accordion defaultValue={[QUESTIONS[0].question]} className="mt-14 rounded-none border-0 sm:mt-16">
                     {QUESTIONS.map(({ question, answer }) => (
                         <AccordionItem key={question} value={question} className="border-b data-open:bg-transparent">
                             <AccordionTrigger className="group items-center px-0 py-6 hover:no-underline **:data-[slot=accordion-trigger-icon]:hidden">
