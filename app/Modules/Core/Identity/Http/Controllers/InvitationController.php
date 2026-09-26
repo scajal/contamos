@@ -8,6 +8,7 @@ use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Identity\Actions\User\AcceptInvitation;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Support\Objects\AnalyticsEvent;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
@@ -46,6 +47,10 @@ class InvitationController
 
         // Show a message to the user.
         Toast::make(trans('Welcome to :team', ['team' => $team->name]))
+            ->flash();
+
+        // Report the join to Google Analytics.
+        AnalyticsEvent::make('join_group', ['role' => $invitation->role->value])
             ->flash();
 
         return to_route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]);

@@ -7,6 +7,7 @@ namespace App\Modules\Core\Identity\Http\Controllers\User;
 use App\Modules\Core\Identity\Actions\User\CreateTeam;
 use App\Modules\Core\Identity\Http\Requests\User\Team\StoreRequest;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Support\Objects\AnalyticsEvent;
 use App\Modules\Support\Objects\Toast;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
@@ -35,6 +36,10 @@ class TeamController
 
         // Show a message to the user.
         Toast::make(trans('Saved'))
+            ->flash();
+
+        // Report the new team to Google Analytics.
+        AnalyticsEvent::make('create_team')
             ->flash();
 
         return to_route('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]);

@@ -27,6 +27,7 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
 /**
  * Imports the income and expense lines of a bank statement in
@@ -36,6 +37,7 @@ use Laravel\Mcp\Server\Tool;
  */
 #[Name('import_transactions')]
 #[Description('Import up to 200 income and expense rows (for example the lines of a bank statement) in one call. Set `account`, `currency` and `timezone` once for the batch; any row may override them. Every row is validated like `create_transaction`; if any row fails, nothing is written and the errors are keyed by row index. A row matching an existing transaction (same account, currency, type and amount on the same local day), or another row of the batch, is a suspected duplicate and blocks the import unless `allow_duplicates` is true. Always call it first with `dry_run: true`, show the user the summary and any suspected duplicates, and import only after they confirm. Returns an `import_id` that `delete_import` can undo.')]
+#[IsDestructive(false)]
 class ImportTransactions extends Tool
 {
     use InteractsWithTeams;

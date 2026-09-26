@@ -22,6 +22,7 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
 /**
  * Records an income or an expense on one of the team's
@@ -29,6 +30,7 @@ use Laravel\Mcp\Server\Tool;
  */
 #[Name('create_transaction')]
 #[Description("Record an income or an expense on one of the team's accounts and move its balance. The currency is inferred when the account holds only one; the exchange rate defaults to the one recorded for the date. Set `repeat` with a `recurring_frequency` to make it repeat (Pro plan): a recurring rule is created and the first occurrence is recorded now only when it is due by today. For money moved between the team's own accounts use `create_transfer`.")]
+#[IsDestructive(false)]
 class CreateTransaction extends Tool
 {
     use InteractsWithTeams;

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Billing\Actions\ReportPurchase;
 use App\Modules\Billing\Enums\BillingCycle;
 use App\Modules\Billing\Enums\Plan;
 use App\Modules\Billing\Models\Customer;
@@ -14,6 +15,8 @@ use App\Modules\Core\Identity\Enums\Team\Role;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 
 use function Pest\Laravel\postJson;
@@ -256,3 +259,110 @@ describe('transaction.completed', function (): void {
         expect(BillingTransaction::query()->count())->toBe(1);
     });
 });
+
+describe('purchase reporting', function (): void {
+    beforeEach(function (): void {
+        config()->set('services.google.analytics.measurement_id', 'G-TEST');
+        config()->set('services.google.analytics.api_secret', 'secret');
+    });
+
+    it('reports a checkout to google analytics as a purchase of the visit that led to it', function (): void {
+        fakeMeasurementProtocol();
+        postJson(route('billing.webhook'), paidTransactionPayload(teamCustomerId()))->assertOk();
+
+        Http::assertSent(fn (Request $request): bool => str_starts_with($request->url(), ReportPurchase::URL.'?')
+            && $request['client_id'] === '123.456'
+            && $request['events'][0]['name'] === 'purchase'
+            && $request['events'][0]['params']['transaction_id'] === 'txn_ga'
+            && $request['events'][0]['params']['value'] === 4.09
+            && $request['events'][0]['params']['tax'] === 0.9
+            && $request['events'][0]['params']['currency'] === 'USD'
+            && $request['events'][0]['params']['session_id'] === '789'
+            && $request['events'][0]['params']['items'] === [['item_id' => 'pri_pro', 'item_name' => 'Pro', 'quantity' => 1]]);
+    });
+
+    it('reports a checkout from a browser that blocked analytics under the paddle customer', function (): void {
+        fakeMeasurementProtocol();
+        postJson(route('billing.webhook'), paidTransactionPayload(teamCustomerId(), customData: null))->assertOk();
+
+        Http::assertSent(fn (Request $request): bool => $request['client_id'] === 'paddle.ctm_ga'
+            && ! array_key_exists('session_id', $request['events'][0]['params']));
+    });
+
+    it('does not report a transaction that is not a checkout', function (string $origin): void {
+        fakeMeasurementProtocol();
+        postJson(route('billing.webhook'), paidTransactionPayload(teamCustomerId(), origin: $origin))->assertOk();
+
+        Http::assertNothingSent();
+        expect(BillingTransaction::query()->count())->toBe(1);
+    })->with([
+        'a renewal' => ['subscription_recurring'],
+        'a plan change' => ['subscription_update'],
+    ]);
+
+    it('does not report anything without the api secret', function (): void {
+        config()->set('services.google.analytics.api_secret', '');
+        fakeMeasurementProtocol();
+        postJson(route('billing.webhook'), paidTransactionPayload(teamCustomerId()))->assertOk();
+
+        Http::assertNothingSent();
+    });
+
+    it('still records the transaction when google analytics fails', function (): void {
+        Http::fake([ReportPurchase::URL.'*' => Http::failedConnection()]);
+        postJson(route('billing.webhook'), paidTransactionPayload(teamCustomerId()))->assertOk();
+
+        expect(BillingTransaction::query()->where('paddle_id', 'txn_ga')->exists())->toBeTrue();
+    });
+});
+
+/**
+ * Accept every Measurement Protocol call the way Google does,
+ * with an empty 204.
+ */
+function fakeMeasurementProtocol(): void
+{
+    Http::fake([ReportPurchase::URL.'*' => Http::response(status: 204)]);
+}
+
+/**
+ * Create a team with a Paddle customer and get the customer's
+ * Paddle ID.
+ */
+function teamCustomerId(): string
+{
+    [$user, $team] = memberWithTeam();
+
+    return $team->customer()->create([
+        'email' => $user->email,
+        'name' => $team->name,
+        'paddle_id' => 'ctm_ga',
+    ])->paddle_id;
+}
+
+/**
+ * Get the Paddle payload of a completed transaction for the
+ * Pro plan, bought from the given origin.
+ *
+ * @param  array<string, string>|null  $customData
+ * @return array<string, mixed>
+ */
+function paidTransactionPayload(string $customerId, string $origin = 'web', ?array $customData = ['ga_client_id' => '123.456', 'ga_session_id' => '789']): array
+{
+    return [
+        'event_type' => 'transaction.completed',
+        'data' => [
+            'id' => 'txn_ga',
+            'customer_id' => $customerId,
+            'subscription_id' => null,
+            'invoice_number' => null,
+            'origin' => $origin,
+            'status' => 'completed',
+            'currency_code' => 'USD',
+            'billed_at' => '2026-09-22T18:39:10Z',
+            'custom_data' => $customData,
+            'items' => [['price' => ['id' => 'pri_pro', 'description' => 'Pro'], 'quantity' => 1]],
+            'details' => ['totals' => ['total' => '499', 'tax' => '90']],
+        ],
+    ];
+}

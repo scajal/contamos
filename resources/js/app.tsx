@@ -7,12 +7,17 @@ import { createRoot, hydrateRoot } from "react-dom/client";
 
 import { toast, Toaster } from "./components/ui/toast";
 import { TooltipProvider } from "./components/ui/tooltip";
+import { trackEvent } from "./lib/analytics";
 
 /**
  * Executed whenever a flash message is provided from
  * the server.
  */
 router.on("flash", (event) => {
+    // Steps that happened on the server, such as signing up,
+    // reach Google Analytics from here.
+    event.detail.flash.analytics?.forEach(({ name, params }) => trackEvent(name, params));
+
     const flashed = event.detail.flash.toast;
 
     if (!flashed) {

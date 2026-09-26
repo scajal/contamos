@@ -169,6 +169,7 @@ describe('store', function (): void {
             ->and($invitation->expires_at?->toDateTimeString())->toBe('2026-09-13 12:00:00');
 
         assertFlashedToast(trans('Invitation sent'));
+        assertFlashedAnalyticsEvent('invite_member', ['role' => $invitation->role->value]);
         Notification::assertSentOnDemand(
             TeamInvitationNotification::class,
             fn (TeamInvitationNotification $notification, array $channels, AnonymousNotifiable $notifiable): bool => $notifiable->routes['mail'] === 'ada@example.com'

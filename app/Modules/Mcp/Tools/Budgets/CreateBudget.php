@@ -24,6 +24,7 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
 /**
  * Opens a budget period on a category or on one of the team's
@@ -31,6 +32,7 @@ use Laravel\Mcp\Server\Tool;
  */
 #[Name('create_budget')]
 #[Description('Set a monthly budget on a category or a tag (pass exactly one) in one currency the team holds, from `from_month` and optionally until `until_month` (both "YYYY-MM", inclusive). Months may not overlap another budget on the same target and currency. Optionally pass `warning_threshold` (1 to 99) to be warned once the month has used that percentage. Needs a plan with budgets.')]
+#[IsDestructive(false)]
 class CreateBudget extends Tool
 {
     use InteractsWithTeams;

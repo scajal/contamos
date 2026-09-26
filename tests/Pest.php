@@ -292,6 +292,23 @@ function assertFlashedToast(string $message): void
 }
 
 /**
+ * Assert the request flashed the given Google Analytics event
+ * with the given parameters.
+ *
+ * @param  array<string, scalar>  $params
+ */
+function assertFlashedAnalyticsEvent(string $name, array $params = []): void
+{
+    $flash = session()->get(\Inertia\Support\SessionKey::FLASH_DATA, []);
+
+    if (! is_array($flash) || ! isset($flash['analytics']) || ! is_array($flash['analytics'])) {
+        throw new InvalidArgumentException('Expected an Inertia analytics flash payload.');
+    }
+
+    expect($flash['analytics'])->toContain(['name' => $name, 'params' => $params]);
+}
+
+/**
  * Get the action the flashed Inertia toast offers, if any.
  *
  * @return array{label: string, method: string, url: string}|null

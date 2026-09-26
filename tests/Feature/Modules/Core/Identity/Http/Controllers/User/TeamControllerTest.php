@@ -56,6 +56,7 @@ describe('store', function (): void {
 
         expect($user->fresh()?->belongsToTeam($team))->toBeTrue();
         assertFlashedToast(trans('Saved'));
+        assertFlashedAnalyticsEvent('create_team');
         $this->assertDatabaseHas($team->getTable(), [
             'name' => 'Acme',
         ]);

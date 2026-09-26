@@ -1,7 +1,7 @@
 ---
 title: "Terms of service"
 description: "The terms you agree to when you use Contamos: what the service is and is not, what sharing a team commits you to, how the plans are billed, and how either side ends the agreement."
-updated: "2026-09-22"
+updated: "2026-09-26"
 ---
 
 ## 1. The agreement between us
@@ -40,17 +40,25 @@ Removing a member ends their access but does not erase what they recorded, becau
 
 Between the members of a team, we take no side. We do not arbitrate disputes about what a ledger says, who owes what, or who should keep access to a team.
 
-## 5. Acceptable use
+## 5. AI assistants you connect
+
+You can connect an AI assistant, such as Claude or ChatGPT, to your account through the MCP server Contamos provides. The assistant is a third-party service that you choose, governed by its provider's own terms. It is not part of Contamos, and we do not answer for how it works.
+
+A connected assistant acts as you. What it records, changes or deletes counts as done through your account, with your role on each team and within each team's plan, and the other members of the team see it as they would see your own changes. Assistants make mistakes, so check what one proposes before you confirm it, especially anything that changes or deletes what your team recorded. So far as the law allows, we are not liable for what an assistant does on your instructions or for what it tells you about your ledger.
+
+Disconnect an assistant at any time from **AI assistants** in the app, which ends its access on every team at once.
+
+## 6. Acceptable use
 
 Do not use Contamos to break the law, to launder money or to finance anything unlawful, to store or distribute material you have no right to, or to harass anybody.
 
-Do not try to reach data that is not yours, probe or bypass our security, disrupt or overload the service, scrape it, or use it through automated means beyond the interface we provide.
+Do not try to reach data that is not yours, probe or bypass our security, disrupt or overload the service, or scrape it. Reach it by automated means only through the interfaces we provide, including the MCP server for AI assistants, and only within their rate limits.
 
 Do not copy, resell, sublicense, rent or white-label Contamos, and do not reverse engineer or decompile it except to the extent the law says you may do so regardless of this clause.
 
 We may suspend or close an account that breaches this section, and where the breach is serious or repeated we may do so without notice.
 
-## 6. What you record stays yours
+## 7. What you record stays yours
 
 You keep every right you have in what you record. We claim no ownership of it.
 
@@ -58,11 +66,11 @@ You grant us only the licence we need to run the service: to store what you reco
 
 If you send us an idea or a suggestion, we may use it to improve Contamos without owing you anything for it.
 
-## 7. Our own rights
+## 8. Our own rights
 
 Contamos, its software, its design and its name belong to Qube SAS or to our licensors, and nothing in these terms transfers any of that to you. You get a personal, non-exclusive, non-transferable right to use the service while this agreement lasts, and nothing more.
 
-## 8. Plans, prices and payment
+## 9. Plans, prices and payment
 
 The Free plan costs nothing and caps how many teams, accounts and members you can have, how far back the history opens, and which extra features are available. Nothing you recorded is ever deleted because of those caps: over a cap the ledger stops growing, it does not shrink.
 
@@ -74,13 +82,13 @@ We may change the price of a plan. A change takes effect on your next renewal an
 
 If a payment fails, Paddle will retry it. A subscription that stays unpaid returns to the Free plan, with the caps that plan carries, and again without deleting anything.
 
-## 9. Cancelling, refunds and withdrawal
+## 10. Cancelling, refunds and withdrawal
 
 Cancel Pro at any time from the billing portal. The team keeps Pro until the end of the period already paid for and is not charged again.
 
 Our refund policy says when we return a payment, and it grants a full refund on request within fourteen days of any payment. Nothing in these terms limits a right of withdrawal or any other remedy that consumer law where you live gives you and does not allow us to exclude.
 
-## 10. Availability, support and the absence of a warranty
+## 11. Availability, support and the absence of a warranty
 
 We work to keep Contamos available and correct, and we keep backups, but we do not promise that the service will be uninterrupted, error-free, or available at any particular level. Maintenance, provider failures and faults happen.
 
@@ -88,7 +96,7 @@ To the fullest extent the law allows, Contamos is provided as it is and as it is
 
 Support is offered by email at [hello@contamos.xyz](mailto:hello@contamos.xyz). We answer as promptly as we reasonably can, and we do not commit to a response time.
 
-## 11. Who answers for what
+## 12. Who answers for what
 
 So far as the law allows, Qube SAS is not liable for indirect, incidental, special or consequential loss, for lost profit, revenue, goodwill or anticipated savings, for loss or corruption of data beyond our duty to keep reasonable backups, or for any decision taken on the basis of what the ledger shows.
 
@@ -98,7 +106,7 @@ Nothing in these terms excludes or limits liability for fraud, for death or pers
 
 You are responsible for what is done through your account, and you will cover our reasonable losses and legal costs if a third party brings a claim against us because of what you recorded or how you used the service in breach of these terms.
 
-## 12. Suspending and ending the agreement
+## 13. Suspending and ending the agreement
 
 You can end this agreement whenever you like: cancel Pro from the billing portal, or delete your account from the account screen. Our privacy policy explains exactly what deletion removes and what survives in the teams you shared.
 
@@ -108,15 +116,15 @@ Export what you want to keep before you go. Your transactions export to CSV from
 
 The sections on your content, our rights, liability, indemnity and governing law survive the end of this agreement.
 
-## 13. Changes to these terms
+## 14. Changes to these terms
 
 We may change these terms as the service and the law behind it change, and the date at the top of the page always says when we last did. If a change materially affects your rights or obligations, we will tell you by email or in the app before it takes effect. Continuing to use Contamos after that date means you accept the new terms; if you do not, cancel and delete your account.
 
-## 14. Personal data
+## 15. Personal data
 
 How we handle personal data is set out in our privacy policy, which explains what we collect, why we are allowed to, who else sees it, how long it stays and what you can ask us to do with it.
 
-## 15. The fine print
+## 16. The fine print
 
 These terms, with the privacy and refund policies, are the whole agreement between us about Contamos and replace anything said before.
 
@@ -128,7 +136,7 @@ Neither of us answers for a failure caused by something genuinely beyond our con
 
 These terms are published in English and in Spanish. If the two versions differ, the English one prevails.
 
-## 16. Governing law and disputes
+## 17. Governing law and disputes
 
 This agreement is governed by the law of Uruguay, and its courts have jurisdiction over any dispute arising from it.
 

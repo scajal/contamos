@@ -20,6 +20,7 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
 /**
  * Creates an account on the team, with its currencies and an
@@ -28,6 +29,7 @@ use Laravel\Mcp\Server\Tool;
  */
 #[Name('create_account')]
 #[Description('Create an account on the team: a name, a type (bank, cash or crypto), the ISO codes of the currencies it holds and, optionally, an opening balance per currency. Crypto accounts hold only cryptocurrencies; bank and cash accounts only fiat ones. An opening balance is recorded with the exchange rate of `occurred_at` (today by default) unless `quote` is given. Returns the account with its balances.')]
+#[IsDestructive(false)]
 class CreateAccount extends Tool
 {
     use DefinesAccountRules;

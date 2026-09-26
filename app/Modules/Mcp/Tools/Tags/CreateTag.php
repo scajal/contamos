@@ -19,6 +19,7 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
 /**
  * Creates a tag on the team, optionally with a monthly budget
@@ -26,6 +27,7 @@ use Laravel\Mcp\Server\Tool;
  */
 #[Name('create_tag')]
 #[Description('Create a tag on the team. The name must be unused on the team (case does not matter). On plans with budgets, `budgets` also sets its monthly budget per currency from this month on.')]
+#[IsDestructive(false)]
 class CreateTag extends Tool
 {
     use InteractsWithTeams;

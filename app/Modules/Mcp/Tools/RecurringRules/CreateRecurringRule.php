@@ -19,6 +19,7 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
 /**
  * Creates a recurring rule, the template and schedule of a
@@ -26,6 +27,7 @@ use Laravel\Mcp\Server\Tool;
  */
 #[Name('create_recurring_rule')]
 #[Description('Create a recurring rule: a transaction template (account, amount, type, category, description, tags) and a schedule (every `interval` `frequency` units from `starts_on`, until `ends_on` if given, at `time_of_day` in `timezone`). Occurrences are generated automatically as they fall due; the first one is not recorded now. Requires a plan with recurring transactions.')]
+#[IsDestructive(false)]
 class CreateRecurringRule extends Tool
 {
     use InteractsWithRecurringRules;

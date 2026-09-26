@@ -6,6 +6,7 @@ namespace App\Modules\Authentication\Http\Controllers;
 
 use App\Modules\Authentication\Actions\ResolveAuthenticationRedirect;
 use App\Modules\Authentication\Support\AuthKitAuthentication;
+use App\Modules\Support\Objects\AnalyticsEvent;
 use Laravel\WorkOS\Http\Requests\AuthKitAuthenticationRequest;
 use Laravel\WorkOS\Http\Requests\AuthKitLoginRequest;
 use Laravel\WorkOS\Http\Requests\AuthKitLogoutRequest;
@@ -39,6 +40,12 @@ class AuthenticationController
         // WorkOS and the app.
         if (! $user->is_active) {
             return to_route('logout');
+        }
+
+        // A user seen for the first time just signed up.
+        if ($user->wasRecentlyCreated) {
+            AnalyticsEvent::make('sign_up', ['method' => 'authkit'])
+                ->flash();
         }
 
         return redirect()->to($resolveAuthenticationRedirect->fromRequest($request));

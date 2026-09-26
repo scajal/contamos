@@ -1,7 +1,7 @@
 ---
 title: "Términos del servicio"
 description: "Los términos que aceptas al usar Contamos: qué es y qué no es el servicio, a qué te compromete compartir un equipo, cómo se facturan los planes y cómo cualquiera de las partes termina el acuerdo."
-updated: "2026-09-22"
+updated: "2026-09-26"
 ---
 
 ## 1. El acuerdo entre nosotros
@@ -40,17 +40,25 @@ Quitar a un integrante termina su acceso pero no borra lo que registró, porque 
 
 Entre los integrantes de un equipo no tomamos partido. No arbitramos disputas sobre lo que dice un libro, sobre quién le debe qué ni sobre quién debe conservar el acceso a un equipo.
 
-## 5. Uso aceptable
+## 5. Los asistentes de IA que conectas
+
+Puedes conectar un asistente de IA, como Claude o ChatGPT, a tu cuenta a través del servidor MCP que ofrece Contamos. El asistente es un servicio de terceros que eliges tú, sujeto a los términos de su propio proveedor. No forma parte de Contamos y no respondemos por cómo funciona.
+
+Un asistente conectado actúa como tú. Lo que registra, cambia o elimina cuenta como hecho desde tu cuenta, con tu rol en cada equipo y dentro del plan de cada equipo, y el resto del equipo lo ve igual que vería tus propios cambios. Los asistentes se equivocan, así que revisa lo que te propone antes de confirmarlo, sobre todo si cambia o elimina lo que registró tu equipo. En la medida en que la ley lo permita, no respondemos por lo que un asistente haga siguiendo tus instrucciones ni por lo que te diga sobre tu libro.
+
+Desconecta un asistente cuando quieras desde **Asistentes de IA** en la aplicación, lo que termina su acceso en todos los equipos al instante.
+
+## 6. Uso aceptable
 
 No uses Contamos para infringir la ley, para lavar dinero o financiar algo ilícito, para guardar o distribuir material sobre el que no tienes derechos, ni para acosar a nadie.
 
-No intentes acceder a datos que no son tuyos, sondear o saltear nuestra seguridad, interrumpir o sobrecargar el servicio, extraer su contenido de forma masiva, ni usarlo por medios automatizados fuera de la interfaz que ofrecemos.
+No intentes acceder a datos que no son tuyos, sondear o saltear nuestra seguridad, interrumpir o sobrecargar el servicio, ni extraer su contenido de forma masiva. Accede por medios automatizados solo a través de las interfaces que ofrecemos, incluido el servidor MCP para asistentes de IA, y solo dentro de sus límites de uso.
 
 No copies, revendas, sublicencies, alquiles ni rebautices Contamos como propio, y no hagas ingeniería inversa ni lo descompiles salvo en la medida en que la ley te lo permita a pesar de esta cláusula.
 
 Podemos suspender o cerrar una cuenta que incumpla esta sección, y si el incumplimiento es grave o reiterado podemos hacerlo sin aviso previo.
 
-## 6. Lo que registras sigue siendo tuyo
+## 7. Lo que registras sigue siendo tuyo
 
 Conservas todos los derechos que tengas sobre lo que registras. No reclamamos su titularidad.
 
@@ -58,11 +66,11 @@ Nos otorgas solo la licencia que necesitamos para operar el servicio: guardar lo
 
 Si nos envías una idea o una sugerencia, podemos usarla para mejorar Contamos sin deberte nada por ello.
 
-## 7. Nuestros propios derechos
+## 8. Nuestros propios derechos
 
 Contamos, su software, su diseño y su nombre pertenecen a Qube SAS o a quienes nos licencian, y nada en estos términos te transfiere ninguno de esos derechos. Recibes un derecho personal, no exclusivo e intransferible a usar el servicio mientras dure este acuerdo, y nada más.
 
-## 8. Planes, precios y pago
+## 9. Planes, precios y pago
 
 El plan Free no cuesta nada y limita cuántos equipos, cuentas e integrantes puedes tener, hasta dónde se abre el historial y qué funciones extra están disponibles. Nada de lo que registraste se elimina por esos límites: al pasarlos el libro deja de crecer, no se achica.
 
@@ -74,13 +82,13 @@ Podemos cambiar el precio de un plan. El cambio rige a partir de tu próxima ren
 
 Si un pago falla, Paddle lo reintenta. Una suscripción que quede impaga vuelve al plan Free, con los límites de ese plan, y otra vez sin que se elimine nada.
 
-## 9. Cancelación, reembolsos y desistimiento
+## 10. Cancelación, reembolsos y desistimiento
 
 Cancela Pro cuando quieras desde el portal de facturación. El equipo conserva Pro hasta el final del período ya pagado y no se le vuelve a cobrar.
 
 Nuestra política de reembolsos dice cuándo devolvemos un pago, y concede el reembolso total a pedido dentro de los catorce días siguientes a cualquier pago. Nada en estos términos limita un derecho de desistimiento ni ningún otro recurso que la ley de consumo de donde vives te dé y no nos permita excluir.
 
-## 10. Disponibilidad, soporte y ausencia de garantía
+## 11. Disponibilidad, soporte y ausencia de garantía
 
 Trabajamos para mantener Contamos disponible y correcto, y guardamos copias de seguridad, pero no prometemos que el servicio sea ininterrumpido, esté libre de errores ni esté disponible a un nivel determinado. Hay mantenimientos, fallos de proveedores y errores.
 
@@ -88,7 +96,7 @@ En la máxima medida que la ley permita, Contamos se ofrece tal como está y seg
 
 El soporte se brinda por correo en [hello@contamos.xyz](mailto:hello@contamos.xyz). Respondemos con la mayor prontitud razonable y no comprometemos un plazo de respuesta.
 
-## 11. Quién responde por qué
+## 12. Quién responde por qué
 
 En la medida en que la ley lo permita, Qube SAS no responde por daños indirectos, incidentales, especiales o consecuentes, por lucro cesante, pérdida de ingresos, de reputación o de ahorros previstos, por pérdida o corrupción de datos más allá de nuestro deber de mantener copias de seguridad razonables, ni por decisiones tomadas a partir de lo que muestra el libro.
 
@@ -98,7 +106,7 @@ Nada en estos términos excluye ni limita la responsabilidad por fraude, por mue
 
 Eres responsable de lo que se haga desde tu cuenta, y cubrirás nuestras pérdidas y costos legales razonables si un tercero nos reclama por lo que registraste o por un uso del servicio que incumpla estos términos.
 
-## 12. Suspensión y fin del acuerdo
+## 13. Suspensión y fin del acuerdo
 
 Puedes terminar este acuerdo cuando quieras: cancela Pro desde el portal de facturación o elimina tu cuenta desde la pantalla de cuenta. Nuestra política de privacidad explica con precisión qué borra esa eliminación y qué sobrevive en los equipos que compartiste.
 
@@ -108,15 +116,15 @@ Exporta lo que quieras conservar antes de irte. Tus movimientos se exportan a CS
 
 Las secciones sobre tu contenido, nuestros derechos, la responsabilidad, la indemnización y la ley aplicable siguen vigentes tras el fin de este acuerdo.
 
-## 13. Cambios en estos términos
+## 14. Cambios en estos términos
 
 Podemos cambiar estos términos a medida que cambian el servicio y la ley que lo respalda, y la fecha al comienzo de la página siempre dice cuándo lo hicimos por última vez. Si un cambio afecta de forma sustancial a tus derechos u obligaciones, te avisaremos por correo o en la aplicación antes de que entre en vigor. Seguir usando Contamos después de esa fecha significa que aceptas los nuevos términos; si no los aceptas, cancela y elimina tu cuenta.
 
-## 14. Datos personales
+## 15. Datos personales
 
 Cómo tratamos los datos personales está en nuestra política de privacidad, que explica qué recogemos, por qué podemos hacerlo, quién más lo ve, cuánto tiempo se conserva y qué puedes pedirnos que hagamos con ello.
 
-## 15. La letra chica
+## 16. La letra chica
 
 Estos términos, junto con las políticas de privacidad y de reembolsos, son el acuerdo completo entre nosotros sobre Contamos y reemplazan cualquier cosa dicha antes.
 
@@ -128,7 +136,7 @@ Ninguno de los dos responde por un incumplimiento causado por algo realmente fue
 
 Estos términos se publican en inglés y en español. Si las dos versiones difieren, prevalece la inglesa.
 
-## 16. Ley aplicable y controversias
+## 17. Ley aplicable y controversias
 
 Este acuerdo se rige por la ley de Uruguay, y sus tribunales son competentes para cualquier controversia que surja de él.
 

@@ -16,7 +16,8 @@ return [
 
     'google' => [
         'analytics' => [
-            'measurement_id' => env('GOOGLE_ANALYTICS_MEASUREMENT_ID'),
+            'measurement_id' => env('GOOGLE_ANALYTICS_MEASUREMENT_ID', ''),
+            'api_secret' => env('GOOGLE_ANALYTICS_API_SECRET', ''),
         ],
     ],
 

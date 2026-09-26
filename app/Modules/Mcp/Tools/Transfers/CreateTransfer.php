@@ -20,6 +20,7 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
 /**
  * Records a transfer between two of the team's accounts, with
@@ -28,6 +29,7 @@ use Laravel\Mcp\Server\Tool;
  */
 #[Name('create_transfer')]
 #[Description('Record a transfer of money between two different accounts of the team, updating both balances. Give the amount sent (and, across currencies, the amount received); currencies are inferred when an account holds one; exchange rates default to the ones recorded for the date. An optional fee on either side is recorded as an expense on that account.')]
+#[IsDestructive(false)]
 class CreateTransfer extends Tool
 {
     use InteractsWithTeams;

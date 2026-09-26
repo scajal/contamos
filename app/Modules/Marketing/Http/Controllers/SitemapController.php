@@ -8,6 +8,7 @@ use App\Modules\Marketing\Enums\Docs\Page;
 use App\Modules\Marketing\Objects\Post;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\File;
 use LaravelLang\Locales\Facades\Locales;
 
 class SitemapController
@@ -16,18 +17,33 @@ class SitemapController
      * The public pages outside the docs, named by the route
      * that serves each one. Adding a public page means adding
      * it here, and the sitemap follows without anybody
-     * editing XML. The docs pages are listed from their own
-     * navigation.
+     * editing XML. Each says how often it changes and how
+     * it ranks against the others. The docs pages are listed
+     * from their own navigation.
      *
-     * @var array<int, string>
+     * @var array<string, array{changefreq: string, priority: string}>
      */
     protected const array PAGES = [
-        'home',
-        'legal.privacy',
-        'legal.terms',
-        'legal.refunds',
-        'blog.index',
+        'home' => ['changefreq' => 'weekly', 'priority' => '1.0'],
+        'legal.privacy' => ['changefreq' => 'yearly', 'priority' => '0.3'],
+        'legal.terms' => ['changefreq' => 'yearly', 'priority' => '0.3'],
+        'legal.refunds' => ['changefreq' => 'yearly', 'priority' => '0.3'],
+        'blog.index' => ['changefreq' => 'weekly', 'priority' => '0.8'],
     ];
+
+    /**
+     * How often a docs page changes and how it ranks.
+     *
+     * @var array{changefreq: string, priority: string}
+     */
+    protected const array DOCS = ['changefreq' => 'monthly', 'priority' => '0.6'];
+
+    /**
+     * How often a blog post changes and how it ranks.
+     *
+     * @var array{changefreq: string, priority: string}
+     */
+    protected const array POSTS = ['changefreq' => 'monthly', 'priority' => '0.7'];
 
     /**
      * Serve the sitemap, listing every public page in every
@@ -43,23 +59,39 @@ class SitemapController
                 fn (array $page): string => $this->url($page, $locale),
                 $this->pages(),
             ))
-            ->implode('');
+            ->implode("\n");
 
         // Every post in the language it was written in, which
         // is not every language, so each carries only the
         // translations it actually has.
-        $urls .= $this->locales()
+        $posts = $this->locales()
             ->flatMap(fn (string $locale): Collection => Post::all($locale))
-            ->map(fn (Post $post): string => $this->post($post))
-            ->implode('');
+            ->map(fn (Post $post): string => $this->post($post));
 
+        // The stylesheet turns the sitemap into a readable table
+        // for a person who opens it; crawlers ignore it.
         return response(
             '<?xml version="1.0" encoding="UTF-8"?>'."\n".
-            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'.
-            $urls.
-            '</urlset>',
+            '<?xml-stylesheet type="text/xsl" href="'.e(route('sitemap.stylesheet', absolute: false)).'"?>'."\n".
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'."\n".
+            collect([$urls, ...$posts])->filter()->implode("\n")."\n".
+            '</urlset>'."\n",
             Response::HTTP_OK,
             ['Content-Type' => 'application/xml'],
+        );
+    }
+
+    /**
+     * Serve the stylesheet the sitemap points at. It is served
+     * from here rather than public/ so it always carries the
+     * XML content type a browser needs before applying it.
+     */
+    public function stylesheet(): Response
+    {
+        return response(
+            File::get(resource_path('xml/sitemap.xsl')),
+            Response::HTTP_OK,
+            ['Content-Type' => 'text/xsl; charset=UTF-8'],
         );
     }
 
@@ -100,23 +132,25 @@ class SitemapController
      * sent to: the named pages first, then the docs in the
      * order of their sidebar.
      *
-     * @return array<int, array{url: \Closure(string): string, default: string}>
+     * @return array<int, array{url: \Closure(string): string, default: string, changefreq: string, priority: string}>
      */
     protected function pages(): array
     {
         $first = (string) $this->locales()->first();
 
         return [
-            ...array_map(fn (string $name): array => [
+            ...array_map(fn (string $name, array $ranking): array => [
                 'url' => fn (string $locale): string => route($name, ['locale' => $locale]),
                 // The homepage has a route of its own that
                 // resolves the language; the documents fall
                 // back to the first one.
                 'default' => $name === 'home' ? route('home.redirect') : route($name, ['locale' => $first]),
-            ], self::PAGES),
+                ...$ranking,
+            ], array_keys(self::PAGES), self::PAGES),
             ...array_map(fn (Page $page): array => [
                 'url' => $page->url(...),
                 'default' => $page->url($first),
+                ...self::DOCS,
             ], Page::cases()),
         ];
     }
@@ -126,7 +160,7 @@ class SitemapController
      * page as an alternate so a crawler serves the right
      * language to the right reader.
      *
-     * @param  array{url: \Closure(string): string, default: string}  $page
+     * @param  array{url: \Closure(string): string, default: string, changefreq: string, priority: string}  $page
      */
     protected function url(array $page, string $locale): string
     {
@@ -138,6 +172,7 @@ class SitemapController
         return '<url><loc>'.e($page['url']($locale)).'</loc>'
             .$alternates
             .$this->alternate('x-default', $page['default'])
+            .$this->ranking($page)
             .'</url>';
     }
 
@@ -159,7 +194,20 @@ class SitemapController
             .'<lastmod>'.($post->updated ?? $post->published)->toDateString().'</lastmod>'
             .$alternates
             .$this->alternate('x-default', $post->alternates()['default'])
+            .$this->ranking(self::POSTS)
             .'</url>';
+    }
+
+    /**
+     * How often a page changes and how it ranks against the
+     * others, as a crawler reads them.
+     *
+     * @param  array{changefreq: string, priority: string}  $page
+     */
+    protected function ranking(array $page): string
+    {
+        return '<changefreq>'.$page['changefreq'].'</changefreq>'
+            .'<priority>'.$page['priority'].'</priority>';
     }
 
     /**

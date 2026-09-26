@@ -112,6 +112,9 @@ Route::whereIn('locale', Locales::installed()->pluck('code')->toArray())->group(
 Route::get('sitemap.xml', [\App\Modules\Marketing\Http\Controllers\SitemapController::class, 'index'])
     ->name('sitemap');
 
+Route::get('sitemap.xsl', [\App\Modules\Marketing\Http\Controllers\SitemapController::class, 'stylesheet'])
+    ->name('sitemap.stylesheet');
+
 Route::get('llms-full.txt', [\App\Modules\Marketing\Http\Controllers\DocsController::class, 'full'])
     ->name('docs.full');
 

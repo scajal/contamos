@@ -74,7 +74,8 @@ describe('index', function (): void {
             ->assertSee('<url><loc>'.$hello.'</loc><lastmod>2026-09-10</lastmod>'
                 .'<xhtml:link rel="alternate" hreflang="en" href="'.$hello.'"/>'
                 .'<xhtml:link rel="alternate" hreflang="es" href="'.$hola.'"/>'
-                .'<xhtml:link rel="alternate" hreflang="x-default" href="'.$hello.'"/></url>', false)
+                .'<xhtml:link rel="alternate" hreflang="x-default" href="'.$hello.'"/>'
+                .'<changefreq>monthly</changefreq><priority>0.7</priority></url>', false)
             ->assertSee('<url><loc>'.$hola.'</loc><lastmod>2026-09-01</lastmod>', false);
     });
 
@@ -89,7 +90,8 @@ describe('index', function (): void {
             ->assertOk()
             ->assertSee('<url><loc>'.$hola.'</loc><lastmod>2026-09-01</lastmod>'
                 .'<xhtml:link rel="alternate" hreflang="es" href="'.$hola.'"/>'
-                .'<xhtml:link rel="alternate" hreflang="x-default" href="'.$hola.'"/></url>', false);
+                .'<xhtml:link rel="alternate" hreflang="x-default" href="'.$hola.'"/>'
+                .'<changefreq>monthly</changefreq><priority>0.7</priority></url>', false);
     });
 
     it('leaves out a post that is not out yet', function (array $matter): void {
@@ -106,8 +108,43 @@ describe('index', function (): void {
         'a post dated in the future' => [['published' => '2026-10-01']],
     ]);
 
+    it('points browsers at the stylesheet that makes it readable', function (): void {
+        get(route('sitemap'))
+            ->assertOk()
+            ->assertSee('<?xml-stylesheet type="text/xsl" href="'.route('sitemap.stylesheet', absolute: false).'"?>', false);
+    });
+
+    it('says how often each kind of page changes and how it ranks', function (string $url, string $changefreq, string $priority): void {
+        $document = new DOMDocument;
+        $document->loadXML(get(route('sitemap'))->assertOk()->getContent() ?: '');
+
+        $page = collect($document->getElementsByTagName('url'))
+            ->first(fn (DOMElement $element): bool => $element->getElementsByTagName('loc')->item(0)?->textContent === $url);
+
+        expect($page)->toBeInstanceOf(DOMElement::class)
+            ->and($page?->getElementsByTagName('changefreq')->item(0)?->textContent)->toBe($changefreq)
+            ->and($page?->getElementsByTagName('priority')->item(0)?->textContent)->toBe($priority);
+    })->with([
+        'the homepage' => fn (): array => [route('home', ['locale' => 'en']), 'weekly', '1.0'],
+        'a legal page' => fn (): array => [route('legal.terms', ['locale' => 'es']), 'yearly', '0.3'],
+        'a docs page' => fn (): array => [Page::cases()[0]->url('en'), 'monthly', '0.6'],
+    ]);
+
     it('needs no file in public to serve it', function (): void {
         expect(file_exists(public_path('sitemap.xml')))->toBeFalse();
+    });
+});
+
+describe('stylesheet', function (): void {
+    it('serves the sitemap stylesheet as xsl', function (): void {
+        $response = get(route('sitemap.stylesheet'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/xsl; charset=UTF-8');
+
+        $document = new DOMDocument;
+
+        expect($document->loadXML($response->getContent() ?: ''))->toBeTrue()
+            ->and($document->documentElement?->localName)->toBe('stylesheet');
     });
 });
 

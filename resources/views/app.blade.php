@@ -28,7 +28,26 @@
             <script>
                 window.dataLayer = window.dataLayer || [];
                 function gtag() { dataLayer.push(arguments); }
+                {{-- Consent Mode, as the privacy policy describes it:
+                     where the law asks for consent to analytics
+                     cookies (EEA, UK, Switzerland) none are set and
+                     Google gets cookieless pings only; nowhere is the
+                     data used to personalise ads. --}}
+                gtag('consent', 'default', {
+                    ad_personalization: 'denied',
+                    ad_storage: 'denied',
+                    ad_user_data: 'denied',
+                    analytics_storage: 'denied',
+                    region: ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH'],
+                });
+                gtag('consent', 'default', {
+                    ad_personalization: 'denied',
+                    ad_storage: 'granted',
+                    ad_user_data: 'granted',
+                    analytics_storage: 'granted',
+                });
                 gtag('js', new Date());
+                window.gaMeasurementId = @json($measurementId);
                 gtag('config', @json($measurementId));
                 window.addEventListener('load', function () {
                     var script = document.createElement('script');

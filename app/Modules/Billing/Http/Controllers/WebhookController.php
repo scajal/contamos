@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Billing\Http\Controllers;
 
+use App\Modules\Billing\Actions\ReportPurchase;
 use App\Modules\Billing\Actions\Team\NotifyProEnded;
 use App\Modules\Billing\Models\Customer;
 use App\Modules\Billing\Models\Subscription;
@@ -20,7 +21,8 @@ use Symfony\Component\HttpFoundation\Response;
  * transactions() relation is its finance ledger, so Cashier's
  * default handler would write Paddle transactions into it.
  * The end of a subscription also tells the Owner their team
- * dropped to Free.
+ * dropped to Free. A checkout is reported to Google
+ * Analytics as a purchase.
  */
 class WebhookController extends CashierWebhookController
 {
@@ -29,6 +31,7 @@ class WebhookController extends CashierWebhookController
      */
     public function __construct(
         protected NotifyProEnded $notifyProEnded,
+        protected ReportPurchase $reportPurchase,
     ) {
         parent::__construct();
     }
@@ -78,7 +81,7 @@ class WebhookController extends CashierWebhookController
     /**
      * Handle transaction completed.
      *
-     * @param  array{data: array{id: string, customer_id: string, subscription_id: string|null, invoice_number: string|null, status: string, currency_code: string, billed_at: string, details: array{totals: array{total: string, tax: string}}}}  $payload
+     * @param  array{data: array{id: string, customer_id: string, subscription_id: string|null, invoice_number: string|null, origin?: string, status: string, currency_code: non-empty-string, billed_at: string, custom_data?: array{ga_client_id?: string, ga_session_id?: string}|null, items?: array<int, array{price: array{id: string, description?: string}, quantity?: int}>, details: array{totals: array{total: numeric-string, tax: numeric-string}}}}  $payload
      */
     protected function handleTransactionCompleted(array $payload): void
     {
@@ -108,5 +111,8 @@ class WebhookController extends CashierWebhookController
         ]);
 
         TransactionCompleted::dispatch($billable, $transaction, $payload);
+
+        // Count a checkout as a conversion in Google Analytics.
+        $this->reportPurchase->using($data);
     }
 }

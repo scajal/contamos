@@ -100,6 +100,7 @@ describe('authenticate', function (): void {
             'external_id' => 'user_123',
             'name' => 'Ada Lovelace',
         ]);
+        assertFlashedAnalyticsEvent('sign_up', ['method' => 'authkit']);
     });
 
     it('finds an existing user and redirects to the dashboard', function (): void {
@@ -117,6 +118,7 @@ describe('authenticate', function (): void {
             ->assertRedirectToRoute('finance.teams.dashboard.index', ['team' => $team->getRouteKey()]);
 
         assertAuthenticatedAs($user->refresh());
+        expect(session()->get(\Inertia\Support\SessionKey::FLASH_DATA, []))->not->toHaveKey('analytics');
     });
 
     it('redirects to the intended url when the user was sent to login from a protected page', function (): void {

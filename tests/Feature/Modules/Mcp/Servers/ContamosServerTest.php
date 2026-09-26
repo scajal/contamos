@@ -7,6 +7,7 @@ use App\Modules\Mcp\Prompts\MonthlyReview;
 use App\Modules\Mcp\Servers\ContamosServer;
 use App\Modules\Mcp\Tools\ListTeams;
 use App\Modules\Mcp\Tools\Transactions\ImportTransactions;
+use Illuminate\Support\Facades\File;
 use Laravel\Mcp\Server\Prompt;
 
 /**
@@ -49,4 +50,18 @@ it('serves nothing of a kind whose folder the module lacks', function (): void {
     ContamosServerWithoutPromptsFolder::actingAs($user)
         ->tools()
         ->assertRegistered([ListTeams::class]);
+});
+
+it('gives every tool a title and a read-only or destructive hint', function (): void {
+    $tools = collect(File::allFiles(app_path('Modules/Mcp/Tools')))
+        ->reject(fn (SplFileInfo $file): bool => str_contains($file->getPathname(), 'Concerns'))
+        ->map(fn (SplFileInfo $file): array => app()->make('App\\Modules\\Mcp\\Tools\\'.str_replace(
+            [app_path('Modules/Mcp/Tools').DIRECTORY_SEPARATOR, '.php', DIRECTORY_SEPARATOR],
+            ['', '', '\\'],
+            $file->getPathname(),
+        ))->toArray());
+
+    expect($tools)->not->toBeEmpty()
+        ->each(fn ($tool) => $tool->title->not->toBeEmpty()
+            ->and(array_intersect_key((array) $tool->value['annotations'], array_flip(['readOnlyHint', 'destructiveHint'])))->not->toBeEmpty());
 });

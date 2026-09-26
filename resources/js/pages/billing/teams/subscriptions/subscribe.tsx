@@ -3,10 +3,15 @@ import { useEffect, useRef } from "react";
 import { Fragment } from "react/jsx-runtime";
 
 import { Modal } from "@/components/ui/modal";
+import { analyticsIds, trackEvent } from "@/lib/analytics";
 import { loadPaddle, onPaddleEvent, type PaddleSettings } from "@/lib/paddle";
 
 type PageProps = {
-    checkout: { settings?: { successUrl?: string } } & Record<string, unknown>;
+    checkout: {
+        customData?: Record<string, unknown>;
+        items?: Array<{ priceId: string; quantity: number }>;
+        settings?: { successUrl?: string };
+    } & Record<string, unknown>;
     paddle: PaddleSettings;
 };
 
@@ -42,10 +47,18 @@ export default function Subscribe({ checkout, paddle }: PageProps) {
     }, [checkout]);
 
     useEffect(() => {
-        loadPaddle(paddle)
-            .then((instance) => {
+        trackEvent("begin_checkout", {
+            items: checkout.items?.map(({ priceId, quantity }) => ({ item_id: priceId, quantity })),
+        });
+
+        // The browser's analytics identifiers ride along with the
+        // checkout, so the purchase the webhook reports joins the
+        // visit that led to it.
+        Promise.all([loadPaddle(paddle), analyticsIds()])
+            .then(([instance, ids]) => {
                 instance.Checkout.open({
                     ...checkout,
+                    customData: { ...checkout.customData, ...ids },
                     settings: {
                         ...(checkout.settings as Record<string, unknown>),
                         displayMode: "overlay",

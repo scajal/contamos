@@ -102,6 +102,7 @@ describe('accept', function (): void {
             ->and($invitation->fresh()?->isAccepted())->toBeTrue();
 
         assertFlashedToast(trans('Welcome to :team', ['team' => $invitation->team->name]));
+        assertFlashedAnalyticsEvent('join_group', ['role' => $invitation->role->value]);
     });
 
     it('sends the user back to the invitation when the team is full', function (): void {

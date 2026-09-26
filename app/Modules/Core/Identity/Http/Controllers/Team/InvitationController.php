@@ -12,6 +12,7 @@ use App\Modules\Core\Identity\Http\Requests\Team\Invitation\StoreRequest;
 use App\Modules\Core\Identity\Models\Team;
 use App\Modules\Core\Identity\Models\Team\TeamInvitation;
 use App\Modules\Core\Identity\Models\User;
+use App\Modules\Support\Objects\AnalyticsEvent;
 use App\Modules\Support\Objects\Toast;
 use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -77,7 +78,7 @@ class InvitationController
         abort_if($this->hasUsedUpEmails($user), HttpResponse::HTTP_TOO_MANY_REQUESTS);
 
         // Create the invitation and email it to the invitee.
-        $createInvitation
+        $invitation = $createInvitation
             ->for($team)
             ->by($user)
             ->using($request->safe(['email', 'role']));
@@ -87,6 +88,10 @@ class InvitationController
 
         // Show a success message.
         Toast::make(trans('Invitation sent'))
+            ->flash();
+
+        // Report the invitation to Google Analytics.
+        AnalyticsEvent::make('invite_member', ['role' => $invitation->role->value])
             ->flash();
 
         return back();
