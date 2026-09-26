@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -468,4 +469,24 @@ function mcpMember(Role $role = Role::Owner): array
     subscribeToPro($team);
 
     return [$user, $team];
+}
+
+/**
+ * Write a post of the blog to the faked blog disk, with the
+ * given front matter over a published, dated default, so a
+ * test names only what it is about.
+ *
+ * @param  array<string, mixed>  $matter
+ */
+function writeBlogPost(string $locale, string $slug, array $matter = [], string $body = 'A paragraph of the post.'): void
+{
+    $matter = ['title' => "Post {$slug}", 'description' => "About {$slug}.", 'published' => '2026-09-01', ...$matter];
+
+    // Every value is written as JSON, which is how the front
+    // matter parser reads quoted strings, booleans and maps.
+    $lines = collect($matter)
+        ->map(fn (mixed $value, string $key): string => "{$key}: ".json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE))
+        ->implode("\n");
+
+    Storage::disk('blog')->put("{$locale}/{$slug}.md", "---\n{$lines}\n---\n\n{$body}\n");
 }

@@ -1,4 +1,4 @@
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import { ArrowRightIcon, MenuIcon } from "lucide-react";
 import { useState } from "react";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { login } from "@/routes";
+import blog from "@/routes/blog";
 import docs from "@/routes/docs";
 import type { DocsNavigationGroup } from "@/types/app/modules/marketing/docs";
 
@@ -30,7 +31,8 @@ interface Props {
 }
 
 /**
- * The links of the marketing header: Features, Pricing and Docs.
+ * The links of the marketing header: Features, Pricing, Docs and
+ * Blog.
  * From `md` up they sit inline in the pill. Below that a menu
  * button opens them in a drawer from the right, which on a docs
  * page also lists every page of the docs, standing in for the docs
@@ -52,6 +54,16 @@ export const HeaderMenu = ({ variant, dashboardUrl, docsPage, homeUrl, isHome, n
      * The URL of the docs in the locale being read.
      */
     const docsUrl = docs.index.url({ locale: currentLocale() });
+
+    /**
+     * The URL of the blog in the locale being read.
+     */
+    const blogUrl = blog.index.url({ locale: currentLocale() });
+
+    /**
+     * Whether the reader is on the blog or one of its posts.
+     */
+    const isBlog = usePage().url.startsWith(blogUrl);
 
     /**
      * The section links stay bare fragments on the homepage, so the
@@ -77,6 +89,14 @@ export const HeaderMenu = ({ variant, dashboardUrl, docsPage, homeUrl, isHome, n
                 onClick={onNavigate}
             >
                 {t("Docs")}
+            </Link>
+            <Link
+                aria-current={isBlog ? "page" : undefined}
+                className={cn(className, isBlog && "text-foreground")}
+                href={blogUrl}
+                onClick={onNavigate}
+            >
+                {t("Blog")}
             </Link>
         </>
     );

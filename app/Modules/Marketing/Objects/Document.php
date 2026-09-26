@@ -34,6 +34,7 @@ class Document implements Arrayable
      * Create a new instance of the class.
      *
      * @param  array<int, array{id: string, text: string, level: int}>  $headings
+     * @param  array<string, mixed>  $matter
      */
     public function __construct(
         public string $title,
@@ -43,6 +44,7 @@ class Document implements Arrayable
         public string $body,
         public string $html,
         public array $headings,
+        public array $matter = [],
     ) {}
 
     /**
@@ -104,6 +106,10 @@ class Document implements Arrayable
             body: Str::trim(preg_replace('/\A---\R.*?\R---\R/s', '', $markdown) ?? $markdown),
             html: $rendered->getContent(),
             headings: $headings,
+            // Every key of the front matter as it was written,
+            // for a page such as a blog post that reads more of
+            // it than the keys above.
+            matter: $matter,
         );
     }
 

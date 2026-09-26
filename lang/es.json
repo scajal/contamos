@@ -1090,5 +1090,14 @@
     "Your team is over the Free plan limits. Nothing was removed, but you cannot add more until you upgrade.": "Tu equipo supera los límites del plan gratis. No se eliminó nada, pero no podrás agregar más hasta que te pases a Pro.",
     "Your team was granted this plan until :date.": "A tu equipo se le otorgó este plan hasta el :date.",
     "Your team was granted this plan.": "A tu equipo se le otorgó este plan.",
-    "Your trial ends on :date.": "Tu prueba termina el :date."
+    "Your trial ends on :date.": "Tu prueba termina el :date.",
+    "Blog": "Blog",
+    "Contamos blog": "Blog de Contamos",
+    "Notes on keeping track of money with the people you share it with, in every currency it comes in.": "Notas sobre cómo llevar las cuentas del dinero que compartes con otras personas, en todas las monedas en que llega.",
+    "No posts yet": "Todavía no hay artículos",
+    "The first one is on its way.": "El primero está en camino.",
+    ":minutes min read": ":minutes min de lectura",
+    "Read “:title”": "Leer “:title”",
+    "Read the post": "Leer el artículo",
+    "Draft": "Borrador"
 }

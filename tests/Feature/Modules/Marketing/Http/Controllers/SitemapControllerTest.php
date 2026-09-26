@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Modules\Marketing\Enums\Docs\Page;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\get;
 
@@ -22,7 +24,7 @@ describe('index', function (): void {
         foreach (['en', 'es'] as $locale) {
             $response->assertSee('<loc>'.route($route, ['locale' => $locale]).'</loc>', false);
         }
-    })->with(['home', 'legal.privacy', 'legal.terms', 'legal.refunds']);
+    })->with(['home', 'legal.privacy', 'legal.terms', 'legal.refunds', 'blog.index']);
 
     it('lists every docs page in both locales with its alternates', function (Page $page): void {
         $response = get(route('sitemap'))->assertOk();
@@ -50,11 +52,59 @@ describe('index', function (): void {
     });
 
     it('parses as a sitemap', function (): void {
+        Storage::fake('blog');
+
         $document = new DOMDocument;
         $document->loadXML(get(route('sitemap'))->assertOk()->getContent() ?: '');
 
-        expect($document->getElementsByTagName('url'))->toHaveCount(2 * (4 + count(Page::cases())));
+        expect($document->getElementsByTagName('url'))->toHaveCount(2 * (5 + count(Page::cases())));
     });
+
+    it('lists a published post with the translations it has and when it last changed', function (): void {
+        Storage::fake('blog');
+
+        writeBlogPost('en', 'hello', ['updated' => '2026-09-10', 'translations' => ['es' => 'hola']]);
+        writeBlogPost('es', 'hola', ['translations' => ['en' => 'hello']]);
+
+        $hello = route('blog.show', ['locale' => 'en', 'slug' => 'hello']);
+        $hola = route('blog.show', ['locale' => 'es', 'slug' => 'hola']);
+
+        get(route('sitemap'))
+            ->assertOk()
+            ->assertSee('<url><loc>'.$hello.'</loc><lastmod>2026-09-10</lastmod>'
+                .'<xhtml:link rel="alternate" hreflang="en" href="'.$hello.'"/>'
+                .'<xhtml:link rel="alternate" hreflang="es" href="'.$hola.'"/>'
+                .'<xhtml:link rel="alternate" hreflang="x-default" href="'.$hello.'"/></url>', false)
+            ->assertSee('<url><loc>'.$hola.'</loc><lastmod>2026-09-01</lastmod>', false);
+    });
+
+    it('gives an untranslated post no alternate in another language', function (): void {
+        Storage::fake('blog');
+
+        writeBlogPost('es', 'hola');
+
+        $hola = route('blog.show', ['locale' => 'es', 'slug' => 'hola']);
+
+        get(route('sitemap'))
+            ->assertOk()
+            ->assertSee('<url><loc>'.$hola.'</loc><lastmod>2026-09-01</lastmod>'
+                .'<xhtml:link rel="alternate" hreflang="es" href="'.$hola.'"/>'
+                .'<xhtml:link rel="alternate" hreflang="x-default" href="'.$hola.'"/></url>', false);
+    });
+
+    it('leaves out a post that is not out yet', function (array $matter): void {
+        Storage::fake('blog');
+        $this->travelTo(CarbonImmutable::parse('2026-09-26 12:00:00'));
+
+        writeBlogPost('en', 'hidden', $matter);
+
+        get(route('sitemap'))
+            ->assertOk()
+            ->assertDontSee(route('blog.show', ['locale' => 'en', 'slug' => 'hidden']), false);
+    })->with([
+        'a draft' => [['draft' => true]],
+        'a post dated in the future' => [['published' => '2026-10-01']],
+    ]);
 
     it('needs no file in public to serve it', function (): void {
         expect(file_exists(public_path('sitemap.xml')))->toBeFalse();

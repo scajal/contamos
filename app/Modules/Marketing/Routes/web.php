@@ -73,6 +73,33 @@ Route::whereIn('locale', Locales::installed()->pluck('code')->toArray())->group(
 
 /*
 |--------------------------------------------------------------------------
+| Blog routes
+|--------------------------------------------------------------------------
+|
+| These routes correspond to the public blog. Each language keeps its own
+| posts under the locale segment, with an RSS feed per language, and each
+| post is also served as Markdown at its URL plus .md.
+|
+*/
+
+Route::whereIn('locale', Locales::installed()->pluck('code')->toArray())->group(function (): void {
+    Route::get('{locale}/blog', [\App\Modules\Marketing\Http\Controllers\BlogController::class, 'index'])
+        ->name('blog.index');
+
+    Route::get('{locale}/blog/feed.xml', [\App\Modules\Marketing\Http\Controllers\BlogController::class, 'feed'])
+        ->name('blog.feed');
+
+    Route::get('{locale}/blog/{slug}.md', [\App\Modules\Marketing\Http\Controllers\BlogController::class, 'markdown'])
+        ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
+        ->name('blog.markdown');
+
+    Route::get('{locale}/blog/{slug}', [\App\Modules\Marketing\Http\Controllers\BlogController::class, 'show'])
+        ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
+        ->name('blog.show');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Crawler routes
 |--------------------------------------------------------------------------
 |

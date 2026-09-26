@@ -1090,5 +1090,14 @@
     "Your team is over the Free plan limits. Nothing was removed, but you cannot add more until you upgrade.": "Your team is over the Free plan limits. Nothing was removed, but you cannot add more until you upgrade.",
     "Your team was granted this plan until :date.": "Your team was granted this plan until :date.",
     "Your team was granted this plan.": "Your team was granted this plan.",
-    "Your trial ends on :date.": "Your trial ends on :date."
+    "Your trial ends on :date.": "Your trial ends on :date.",
+    "Blog": "Blog",
+    "Contamos blog": "Contamos blog",
+    "Notes on keeping track of money with the people you share it with, in every currency it comes in.": "Notes on keeping track of money with the people you share it with, in every currency it comes in.",
+    "No posts yet": "No posts yet",
+    "The first one is on its way.": "The first one is on its way.",
+    ":minutes min read": ":minutes min read",
+    "Read “:title”": "Read “:title”",
+    "Read the post": "Read the post",
+    "Draft": "Draft"
 }

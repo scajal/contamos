@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Marketing\Http\Controllers;
 
 use App\Modules\Marketing\Enums\Docs\Page;
+use App\Modules\Marketing\Objects\Post;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use LaravelLang\Locales\Facades\Locales;
@@ -25,11 +26,13 @@ class SitemapController
         'legal.privacy',
         'legal.terms',
         'legal.refunds',
+        'blog.index',
     ];
 
     /**
      * Serve the sitemap, listing every public page in every
-     * installed locale with the others as its alternates.
+     * installed locale with the others as its alternates,
+     * followed by every published post of the blog.
      */
     public function index(): Response
     {
@@ -40,6 +43,14 @@ class SitemapController
                 fn (array $page): string => $this->url($page, $locale),
                 $this->pages(),
             ))
+            ->implode('');
+
+        // Every post in the language it was written in, which
+        // is not every language, so each carries only the
+        // translations it actually has.
+        $urls .= $this->locales()
+            ->flatMap(fn (string $locale): Collection => Post::all($locale))
+            ->map(fn (Post $post): string => $this->post($post))
             ->implode('');
 
         return response(
@@ -127,6 +138,27 @@ class SitemapController
         return '<url><loc>'.e($page['url']($locale)).'</loc>'
             .$alternates
             .$this->alternate('x-default', $page['default'])
+            .'</url>';
+    }
+
+    /**
+     * One post of the blog, carrying the languages it can be
+     * read in as its alternates, and when it last changed.
+     */
+    protected function post(Post $post): string
+    {
+        $versions = $post->versions();
+
+        // The same post in each language it was translated
+        // into, itself included.
+        $alternates = collect($versions)
+            ->map(fn (string $url, string $locale): string => $this->alternate($locale, $url))
+            ->implode('');
+
+        return '<url><loc>'.e($post->url()).'</loc>'
+            .'<lastmod>'.($post->updated ?? $post->published)->toDateString().'</lastmod>'
+            .$alternates
+            .$this->alternate('x-default', $post->alternates()['default'])
             .'</url>';
     }
 
