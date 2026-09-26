@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { MarketingLayout } from "@/layouts/marketing/layout";
 import { formatDate } from "@/lib/utils";
 import { TableOfContents } from "@/pages/marketing/docs/_components/table-of-contents";
-import type { Post } from "@/types/app/modules/marketing/post";
+import type { Post, PostSummary } from "@/types/app/modules/marketing/post";
 
 type PageProps = {
     blogUrl: string;
@@ -15,6 +15,7 @@ type PageProps = {
     logoUrl: string;
     markdownUrl: string;
     post: Post;
+    related: Array<PostSummary>;
     versions: Record<string, string>;
 };
 
@@ -22,7 +23,7 @@ type PageProps = {
  * A post of the blog: its title, date and reading time, the post
  * itself rendered from its Markdown, and the sections it holds.
  */
-const Show = ({ blogUrl, feedUrl, logoUrl, markdownUrl, post, versions }: PageProps) => {
+const Show = ({ blogUrl, feedUrl, logoUrl, markdownUrl, post, related, versions }: PageProps) => {
     /**
      * Translate the provided string to the current locale.
      */
@@ -42,7 +43,7 @@ const Show = ({ blogUrl, feedUrl, logoUrl, markdownUrl, post, versions }: PagePr
         inLanguage: currentLocale(),
         url: post.url,
         mainEntityOfPage: post.url,
-        author: { "@type": "Organization", name: "Contamos" },
+        author: post.author ? { "@type": "Person", name: post.author } : { "@type": "Organization", name: "Contamos" },
         publisher: { "@type": "Organization", name: "Contamos", logo: { "@type": "ImageObject", url: logoUrl } },
     };
 
@@ -75,7 +76,7 @@ const Show = ({ blogUrl, feedUrl, logoUrl, markdownUrl, post, versions }: PagePr
     };
 
     return (
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 pt-10 pb-24 sm:px-6 sm:pt-16 sm:pb-32 xl:grid-cols-[minmax(0,1fr)_12rem]">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 pt-10 pb-24 sm:px-6 sm:pt-16 sm:pb-32 lg:grid-cols-[minmax(0,1fr)_14rem]">
             <Head title={post.title}>
                 <meta name="description" content={post.description} />
                 {/** A draft is only ever opened to preview it, and must
@@ -95,12 +96,13 @@ const Show = ({ blogUrl, feedUrl, logoUrl, markdownUrl, post, versions }: PagePr
                 <meta property="og:image" content={post.image} />
                 <meta property="article:published_time" content={post.published} />
                 {post.updated && <meta property="article:modified_time" content={post.updated} />}
+                {post.author && <meta name="author" content={post.author} />}
                 <meta name="twitter:card" content="summary_large_image" />
                 <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
             </Head>
 
             {/** Post */}
-            <article className="mx-auto w-full max-w-3xl min-w-0">
+            <article className="w-full max-w-3xl min-w-0">
                 <header className="flex flex-col gap-4 border-b pb-8">
                     <Link
                         className="text-muted-foreground hover:text-foreground inline-flex w-fit items-center gap-1 text-sm font-medium transition-colors"
@@ -119,6 +121,12 @@ const Show = ({ blogUrl, feedUrl, logoUrl, markdownUrl, post, versions }: PagePr
                         </time>
                         <span aria-hidden="true">·</span>
                         <span>{t(":minutes min read", { minutes: post.minutes })}</span>
+                        {post.author && (
+                            <>
+                                <span aria-hidden="true">·</span>
+                                <span>{t("By :author", { author: post.author })}</span>
+                            </>
+                        )}
                         {post.draft && <Badge variant="outline">{t("Draft")}</Badge>}
                     </p>
                 </header>
@@ -128,10 +136,32 @@ const Show = ({ blogUrl, feedUrl, logoUrl, markdownUrl, post, versions }: PagePr
                     dangerouslySetInnerHTML={{ __html: post.html }}
                     onClick={onClick}
                 />
+
+                {/** Keep reading */}
+                {related.length > 0 && (
+                    <nav aria-labelledby="keep-reading" className="mt-16 border-t pt-10">
+                        <h2 id="keep-reading" className="font-heading text-xl font-semibold tracking-tight">
+                            {t("Keep reading")}
+                        </h2>
+                        <ul className="mt-6 grid gap-6 sm:grid-cols-2">
+                            {related.map((other) => (
+                                <li key={other.slug} className="flex flex-col gap-1.5">
+                                    <Link
+                                        className="font-heading hover:text-primary leading-snug font-semibold text-balance transition-colors"
+                                        href={other.url}
+                                    >
+                                        {other.title}
+                                    </Link>
+                                    <p className="text-muted-foreground text-sm text-pretty">{other.description}</p>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+                )}
             </article>
 
             {/** On this page */}
-            <aside className="hidden xl:block">
+            <aside className="hidden lg:block">
                 <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
                     <TableOfContents headings={post.headings} />
                 </div>

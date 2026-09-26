@@ -1099,5 +1099,7 @@
     ":minutes min read": ":minutes min read",
     "Read “:title”": "Read “:title”",
     "Read the post": "Read the post",
-    "Draft": "Draft"
+    "Draft": "Draft",
+    "Keep reading": "Keep reading",
+    "By :author": "By :author"
 }

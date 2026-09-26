@@ -20,6 +20,7 @@ export interface PostSummary {
 export interface Post extends PostSummary {
     updated: string | null;
     image: string;
+    author: string | null;
     draft: boolean;
     html: string;
     headings: Array<DocumentHeading>;

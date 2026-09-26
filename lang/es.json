@@ -1099,5 +1099,7 @@
     ":minutes min read": ":minutes min de lectura",
     "Read “:title”": "Leer “:title”",
     "Read the post": "Leer el artículo",
-    "Draft": "Borrador"
+    "Draft": "Borrador",
+    "Keep reading": "Sigue leyendo",
+    "By :author": "Por :author"
 }

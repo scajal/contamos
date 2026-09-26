@@ -94,6 +94,24 @@ describe('show', function (): void {
                 ->where('blogUrl', route('blog.index', ['locale' => 'en'])));
     });
 
+    it('suggests the newest other published posts in the same language', function (): void {
+        Storage::fake('blog');
+        $this->travelTo(CarbonImmutable::parse('2026-09-26 12:00:00'));
+
+        writeBlogPost('en', 'current', ['published' => '2026-09-10']);
+        writeBlogPost('en', 'oldest', ['published' => '2026-08-01']);
+        writeBlogPost('en', 'older', ['published' => '2026-08-15']);
+        writeBlogPost('en', 'old', ['published' => '2026-09-01']);
+        writeBlogPost('en', 'newest', ['published' => '2026-09-20']);
+        writeBlogPost('en', 'scheduled', ['published' => '2026-10-01']);
+        writeBlogPost('es', 'otro-idioma');
+
+        get(route('blog.show', ['locale' => 'en', 'slug' => 'current']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): Assert => $page
+                ->where('related', fn (\Illuminate\Support\Collection $related): bool => $related->pluck('slug')->all() === ['newest', 'old', 'older']));
+    });
+
     it('links the post to its translation', function (): void {
         Storage::fake('blog');
 

@@ -1,8 +1,9 @@
 ---
-title: "How couples can track shared money without a joint account"
-description: "You don't need a joint bank account to share money as a couple. A simple way to see what you both spend, from your own accounts, in one shared record."
+title: "Couples: track shared money without a joint account"
+description: "You don't need a joint account to share money as a couple. How to see what you both spend, from your own accounts, in one shared record."
 published: "2026-10-03"
-draft: true
+author: "Martina Olivera"
+image: "/images/blog/couples-shared-money-without-joint-account.png"
 translations: {"es": "finanzas-en-pareja-sin-cuenta-conjunta"}
 ---
 
@@ -44,6 +45,20 @@ Keep it short and factual. The point of writing things down is that neither of y
 ## When the money is in more than one currency
 
 Many couples earn or save in two currencies, or share expenses across a border. Keep each currency's balance separate instead of converting everything into one, and store the exchange rate of the day with each movement. We wrote more about this in [how to keep track of shared money in two currencies](/en/blog/shared-money-in-two-currencies).
+
+## Frequently asked questions
+
+### Should couples split everything 50/50?
+
+Not necessarily. Many couples split shared costs in proportion to income, so each person keeps a similar amount for themselves. Either works if you both agree on it.
+
+### Do we need a joint account at some point?
+
+No. A joint account is convenient for paying shared bills, but you can track shared money perfectly well from separate accounts.
+
+### How often should we look at the numbers?
+
+Once a month is enough for most couples. A short, regular look beats a long one when something has already gone wrong.
 
 ## Doing it in Contamos
 

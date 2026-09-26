@@ -62,6 +62,16 @@ class BlogController
             'markdownUrl' => $post->markdownUrl(),
             'logoUrl' => url('/images/iso-logo.png'),
             'post' => $post,
+            // The newest other posts in the same language, to keep
+            // the reader on the blog. Only published posts are
+            // listed, so a scheduled post is linked the day it
+            // comes out and never before.
+            'related' => Post::all($locale)
+                ->reject(fn (Post $other): bool => $other->slug === $post->slug)
+                ->take(3)
+                ->map(fn (Post $other): array => $other->summary())
+                ->values()
+                ->all(),
         ]);
     }
 

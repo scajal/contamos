@@ -1,8 +1,9 @@
 ---
-title: "How to keep track of shared money in two currencies"
-description: "Pesos and dollars, euros and crypto: a practical way to track money you share with others when it lives in more than one currency, without blending it into one misleading total."
+title: "How to track shared money in two currencies"
+description: "A practical way to track money you share when it lives in more than one currency, without blending it into one misleading total."
 published: "2026-09-26"
-draft: true
+author: "Martina Olivera"
+image: "/images/blog/shared-money-in-two-currencies.png"
 translations: {"es": "dinero-compartido-en-dos-monedas"}
 ---
 
@@ -42,6 +43,20 @@ Tracking shared money is mostly an agreement between people, and the tool comes 
 - **Record as you go.** A movement written down the same day is accurate. One reconstructed at the end of the month is a guess.
 - **Tag by what it was for.** Categories say what kind of expense something is; tags such as "the trip" or "the dog" say what it was for, and they cut across categories and currencies.
 - **Everyone can see who recorded what.** Shared money works better when nobody has to ask.
+
+## Frequently asked questions
+
+### Should we convert everything into dollars?
+
+Only when you ask a question that needs one number, such as the total cost of a year. Keep the balances in their own currencies and convert in the report, using the rate stored with each transaction.
+
+### Which exchange rate should we use?
+
+The one you actually got. A card, an exchange house and the official rate all differ; recording the real one is what keeps the record true.
+
+### What if we change money halfway through the month?
+
+Record it as a transfer between two balances: money leaves one currency and arrives in the other at the rate you got. It is not an expense, because the money is still yours.
 
 ## Doing it in Contamos
 

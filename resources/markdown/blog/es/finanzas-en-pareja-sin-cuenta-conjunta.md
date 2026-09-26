@@ -1,8 +1,9 @@
 ---
-title: "Finanzas en pareja: cómo llevar el dinero compartido sin una cuenta conjunta"
-description: "No necesitas una cuenta bancaria conjunta para compartir gastos en pareja. Una forma simple de ver lo que gastan los dos, desde sus propias cuentas, en un solo registro compartido."
+title: "Finanzas en pareja sin cuenta conjunta"
+description: "No necesitas una cuenta conjunta para compartir gastos en pareja. Cómo llevar lo que gastan los dos, desde sus propias cuentas, en un solo registro."
 published: "2026-10-03"
-draft: true
+author: "Martina Olivera"
+image: "/images/blog/finanzas-en-pareja-sin-cuenta-conjunta.png"
 translations: {"en": "couples-shared-money-without-joint-account"}
 ---
 
@@ -44,6 +45,20 @@ Que sea corto y concreto. La gracia de anotar las cosas es que nadie tenga que a
 ## Cuando el dinero está en más de una moneda
 
 Muchas parejas cobran o ahorran en dos monedas, o comparten gastos entre dos países. Mantén el saldo de cada moneda por separado en lugar de convertir todo a una, y guarda la cotización del día con cada movimiento. Escribimos más sobre esto en [cómo llevar las cuentas del dinero compartido en pesos y dólares](/es/blog/dinero-compartido-en-dos-monedas).
+
+## Preguntas frecuentes
+
+### ¿Hay que dividir todo en partes iguales?
+
+No necesariamente. Muchas parejas reparten los gastos comunes en proporción a lo que gana cada uno, para que a los dos les quede algo parecido. Cualquiera funciona si lo acuerdan.
+
+### ¿En algún momento necesitamos una cuenta conjunta?
+
+No. Una cuenta conjunta es cómoda para pagar gastos comunes, pero se puede llevar el dinero compartido perfectamente desde cuentas separadas.
+
+### ¿Cada cuánto conviene revisar los números?
+
+Una vez por mes alcanza para la mayoría de las parejas. Una revisión corta y regular sirve más que una larga cuando algo ya salió mal.
 
 ## Cómo hacerlo en Contamos
 

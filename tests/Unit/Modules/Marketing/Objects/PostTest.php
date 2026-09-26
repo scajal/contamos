@@ -11,13 +11,14 @@ it('refuses a post without a published date', function (): void {
     Post::parse('en', 'undated', "---\ntitle: \"Undated\"\n---\n\nBody.\n");
 })->throws(InvalidArgumentException::class, 'The blog post [en/undated] has no published date.');
 
-it('reads the date, image, draft flag and translations from the front matter', function (): void {
+it('reads the date, image, author, draft flag and translations from the front matter', function (): void {
     $post = Post::parse('en', 'hello', <<<'MARKDOWN'
         ---
         title: "Hello"
         published: "2026-09-01"
         updated: "2026-09-10"
         image: "/images/blog/hello.png"
+        author: "Martina Olivera"
         draft: true
         translations: {"es": "hola"}
         ---
@@ -28,6 +29,7 @@ it('reads the date, image, draft flag and translations from the front matter', f
     expect($post->published->toDateString())->toBe('2026-09-01')
         ->and($post->updated?->toDateString())->toBe('2026-09-10')
         ->and($post->image)->toBe('/images/blog/hello.png')
+        ->and($post->author)->toBe('Martina Olivera')
         ->and($post->draft)->toBeTrue()
         ->and($post->translations)->toBe(['es' => 'hola']);
 });

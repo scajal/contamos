@@ -1,8 +1,9 @@
 ---
-title: "Cómo llevar las cuentas del dinero compartido en pesos y dólares"
-description: "Pesos y dólares, euros y cripto: una forma práctica de llevar el dinero que compartes con otras personas cuando está en más de una moneda, sin mezclarlo en un total engañoso."
+title: "Dinero compartido en pesos y dólares: cómo llevarlo"
+description: "Una forma práctica de llevar el dinero que compartes cuando está en pesos y dólares, sin mezclarlo en un total engañoso."
 published: "2026-09-26"
-draft: true
+author: "Martina Olivera"
+image: "/images/blog/dinero-compartido-en-dos-monedas.png"
 translations: {"en": "shared-money-in-two-currencies"}
 ---
 
@@ -42,6 +43,20 @@ Llevar las cuentas del dinero compartido es sobre todo un acuerdo entre personas
 - **Registra en el momento.** Un movimiento anotado el mismo día es exacto. Uno reconstruido a fin de mes es una suposición.
 - **Etiqueta según para qué fue.** Las categorías dicen qué tipo de gasto es; etiquetas como "el viaje" o "el perro" dicen para qué fue, y atraviesan categorías y monedas.
 - **Que todos vean quién registró qué.** El dinero compartido funciona mejor cuando nadie tiene que preguntar.
+
+## Preguntas frecuentes
+
+### ¿Conviene pasar todo a dólares?
+
+Solo cuando haces una pregunta que necesita un único número, como el costo total de un año. Deja los saldos en su moneda y convierte en el reporte, con la cotización guardada en cada movimiento.
+
+### ¿Qué cotización uso?
+
+La que realmente te dieron. La tarjeta, la casa de cambio y la cotización oficial son distintas; anotar la real es lo que mantiene el registro fiel.
+
+### ¿Y si cambiamos plata a mitad de mes?
+
+Regístralo como una transferencia entre dos saldos: sale de una moneda y entra en la otra a la cotización que te dieron. No es un gasto, porque la plata sigue siendo de ustedes.
 
 ## Cómo hacerlo en Contamos
 

@@ -41,6 +41,7 @@ class Post implements Arrayable
         public CarbonImmutable $published,
         public ?CarbonImmutable $updated,
         public ?string $image,
+        public ?string $author,
         public bool $draft,
         public array $translations,
         public Document $document,
@@ -118,6 +119,7 @@ class Post implements Arrayable
             published: CarbonImmutable::parse($matter['published']),
             updated: is_string($matter['updated'] ?? null) ? CarbonImmutable::parse($matter['updated']) : null,
             image: is_string($matter['image'] ?? null) ? $matter['image'] : null,
+            author: is_string($matter['author'] ?? null) ? $matter['author'] : null,
             draft: (bool) ($matter['draft'] ?? false),
             translations: self::translations($matter['translations'] ?? null),
             document: $document,
@@ -259,7 +261,7 @@ class Post implements Arrayable
     /**
      * Get the instance as an array.
      *
-     * @return array{slug: string, title: string, description: string, published: string, updated: string|null, minutes: int, url: string, image: string, draft: bool, html: string, headings: array<int, array{id: string, text: string, level: int}>}
+     * @return array{slug: string, title: string, description: string, published: string, updated: string|null, minutes: int, url: string, image: string, author: string|null, draft: bool, html: string, headings: array<int, array{id: string, text: string, level: int}>}
      */
     public function toArray(): array
     {
@@ -267,6 +269,7 @@ class Post implements Arrayable
             ...$this->summary(),
             'updated' => $this->updated?->toDateString(),
             'image' => $this->imageUrl(),
+            'author' => $this->author,
             'draft' => ! $this->isPublished(),
             'html' => $this->document->html,
             'headings' => $this->document->headings,

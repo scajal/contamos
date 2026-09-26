@@ -59,7 +59,7 @@ const Index = ({ alternates, feedUrl, imageUrl, posts }: PageProps) => {
     };
 
     return (
-        <div className="mx-auto flex max-w-3xl flex-col gap-12 px-4 pt-10 pb-24 sm:px-6 sm:pt-16 sm:pb-32">
+        <div className="mx-auto flex max-w-6xl flex-col gap-12 px-4 pt-10 pb-24 sm:px-6 sm:pt-16 sm:pb-32">
             <Head title={t("Blog")}>
                 <meta name="description" content={description} />
                 <link rel="canonical" href={canonical} />
@@ -81,7 +81,7 @@ const Index = ({ alternates, feedUrl, imageUrl, posts }: PageProps) => {
                 <h1 className="font-heading text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
                     {t("Blog")}
                 </h1>
-                <p className="text-muted-foreground text-base text-pretty">{description}</p>
+                <p className="text-muted-foreground max-w-2xl text-base text-pretty">{description}</p>
             </header>
 
             {/** Posts */}
@@ -93,10 +93,10 @@ const Index = ({ alternates, feedUrl, imageUrl, posts }: PageProps) => {
                     </EmptyHeader>
                 </Empty>
             ) : (
-                <ol className="flex flex-col gap-10">
+                <ol className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
                     {posts.map((post) => (
                         <li key={post.slug}>
-                            <article className="group flex flex-col gap-2">
+                            <article className="group flex h-full flex-col gap-2">
                                 <p className="text-muted-foreground text-sm">
                                     <time dateTime={post.published}>
                                         {formatDate(new Date(`${post.published}T00:00:00`), currentLocale())}
@@ -104,12 +104,12 @@ const Index = ({ alternates, feedUrl, imageUrl, posts }: PageProps) => {
                                     {" · "}
                                     {t(":minutes min read", { minutes: post.minutes })}
                                 </p>
-                                <h2 className="font-heading text-xl leading-snug font-semibold tracking-tight text-balance sm:text-2xl">
+                                <h2 className="font-heading text-xl leading-snug font-semibold tracking-tight text-balance">
                                     <Link className="hover:text-primary transition-colors" href={post.url}>
                                         {post.title}
                                     </Link>
                                 </h2>
-                                <p className="text-muted-foreground text-pretty">{post.description}</p>
+                                <p className="text-muted-foreground flex-1 text-pretty">{post.description}</p>
                                 <Link
                                     className="text-foreground inline-flex w-fit items-center gap-1 text-sm font-medium"
                                     href={post.url}
