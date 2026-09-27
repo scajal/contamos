@@ -25,7 +25,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
  * the same figures the Budgets page shows.
  */
 #[Name('list_budgets')]
-#[Description("List the team's budget periods: each is a monthly amount in one currency on a category or a tag, from one month and optionally until another, with the `warning_threshold` percentage the team wants a warning at (null for none). Each carries its status (running, scheduled, paused, ended) and, for the one in force this month, its progress: amount, income tagged into it, spent, remaining and percentage used. `budgets_enabled` says whether the plan allows changing budgets.")]
+#[Description("List the team's budget periods: each is a monthly amount in one currency on a category or a tag, from one month and optionally until another, with the `warning_threshold` percentage the team wants a warning at (null for none). A tag budget with a `parent` is a sub-budget of that category budget and only counts the tag within that category. Each carries its status (running, scheduled, paused, ended) and, for the one in force this month, its progress: amount, income tagged into it, spent, remaining and percentage used. `budgets_enabled` says whether the plan allows changing budgets.")]
 #[IsReadOnly]
 class ListBudgets extends Tool
 {

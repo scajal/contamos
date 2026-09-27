@@ -348,7 +348,7 @@ describe('store', function (): void {
         [, $team] = actingMember();
         subscribeToPro($team);
 
-        $payload = rulePayload(['category' => Category::Food->value]);
+        $payload = rulePayload(['category' => Category::Groceries->value]);
         unset($payload['type']);
 
         $this->post(route('finance.teams.recurring-rules.store', ['team' => $team->getRouteKey()]), $payload)
@@ -610,7 +610,7 @@ describe('update', function (): void {
         [$account, $currency] = ledgerFor($team);
         $rule = RecurringRule::factory()->expense()->create([
             'account_id' => $account->getKey(),
-            'category' => Category::Food,
+            'category' => Category::Groceries,
             'currency_id' => $currency->getKey(),
             'team_id' => $team->getKey(),
         ]);
@@ -633,7 +633,7 @@ describe('update', function (): void {
         [$account, $currency] = ledgerFor($team);
         $rule = RecurringRule::factory()->expense()->create([
             'account_id' => $account->getKey(),
-            'category' => Category::Food,
+            'category' => Category::Groceries,
             'currency_id' => $currency->getKey(),
             'team_id' => $team->getKey(),
         ]);
@@ -644,11 +644,11 @@ describe('update', function (): void {
         ]), rulePayload([
             $account->getForeignKey() => $account->getKey(),
             $currency->getForeignKey() => $currency->getKey(),
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'type' => TransactionType::Income->value,
         ]))->assertSessionHasErrors('category');
 
-        expect($rule->refresh()->category)->toBe(Category::Food);
+        expect($rule->refresh()->category)->toBe(Category::Groceries);
     });
 });
 

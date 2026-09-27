@@ -31,7 +31,7 @@ function pausingBudgetTeam(): array
 
 it('pauses a running budget at the end of the current month', function (): void {
     [$user, $team, $currency] = pausingBudgetTeam();
-    $budget = BudgetPeriod::factory()->forCategory(Category::Food)->for($team)->for($currency)->create([
+    $budget = BudgetPeriod::factory()->forCategory(Category::Groceries)->for($team)->for($currency)->create([
         'from_month' => CarbonImmutable::now()->startOfMonth()->subMonths(2),
         'until_month' => null,
     ]);
@@ -46,7 +46,7 @@ it('pauses a running budget at the end of the current month', function (): void 
 
 it('resumes a paused budget from this month on the same amount', function (): void {
     [$user, $team, $currency] = pausingBudgetTeam();
-    $budget = BudgetPeriod::factory()->paused()->forCategory(Category::Food)->for($team)->for($currency)->create(['amount' => '750']);
+    $budget = BudgetPeriod::factory()->paused()->forCategory(Category::Groceries)->for($team)->for($currency)->create(['amount' => '750']);
 
     ContamosServer::actingAs($user)
         ->tool(SetBudgetPaused::class, ['team' => $team->slug, 'budget' => $budget->getKey(), 'paused' => false])
@@ -55,7 +55,7 @@ it('resumes a paused budget from this month on the same amount', function (): vo
 
     $resumed = $team->budgets()->whereKeyNot($budget)->sole();
 
-    expect($resumed->category)->toBe(Category::Food)
+    expect($resumed->category)->toBe(Category::Groceries)
         ->and((float) $resumed->amount)->toBe(750.0)
         ->and($resumed->currency_id)->toBe($currency->getKey())
         ->and($resumed->from_month->format('Y-m'))->toBe(CarbonImmutable::now()->format('Y-m'))
@@ -65,7 +65,7 @@ it('resumes a paused budget from this month on the same amount', function (): vo
 
 it('refuses to resume a budget that is running', function (): void {
     [$user, $team, $currency] = pausingBudgetTeam();
-    $budget = BudgetPeriod::factory()->running()->forCategory(Category::Food)->for($team)->for($currency)->create();
+    $budget = BudgetPeriod::factory()->running()->forCategory(Category::Groceries)->for($team)->for($currency)->create();
 
     ContamosServer::actingAs($user)
         ->tool(SetBudgetPaused::class, ['team' => $team->slug, 'budget' => $budget->getKey(), 'paused' => false])
@@ -76,7 +76,7 @@ it('refuses to resume a budget that is running', function (): void {
 
 it('refuses to pause a budget that is not running open-ended', function (): void {
     [$user, $team, $currency] = pausingBudgetTeam();
-    $budget = BudgetPeriod::factory()->paused()->forCategory(Category::Food)->for($team)->for($currency)->create();
+    $budget = BudgetPeriod::factory()->paused()->forCategory(Category::Groceries)->for($team)->for($currency)->create();
     $untilMonth = $budget->until_month?->format('Y-m');
 
     ContamosServer::actingAs($user)

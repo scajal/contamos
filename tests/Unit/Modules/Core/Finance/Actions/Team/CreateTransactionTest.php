@@ -17,7 +17,7 @@ use App\Modules\Core\Identity\Models\User;
 it('throws when a team was not provided', function (): void {
     (new CreateTransaction)->using([
         'amount' => '10',
-        'category' => Category::Food->value,
+        'category' => Category::Groceries->value,
         'occurred_at' => '2024-01-01 00:00:00',
         'quote' => '1',
         'type' => TransactionType::Expense->value,
@@ -36,7 +36,7 @@ it('creates a transaction without associating a user when none was provided', fu
         ->using([
             'account_id' => $account->getKey(),
             'amount' => '10.50',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'currency_id' => $currency->getKey(),
             'description' => 'Lunch',
             'occurred_at' => '2024-01-01 00:00:00',
@@ -81,7 +81,7 @@ it('attaches tags after creating the transaction', function (): void {
         ->using([
             'account_id' => $account->getKey(),
             'amount' => '10.50',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'currency_id' => $currency->getKey(),
             'occurred_at' => '2024-01-01 00:00:00',
             'quote' => '1',
@@ -102,7 +102,7 @@ it('throws when a tag belongs to another team', function (): void {
         ->using([
             'account_id' => $account->getKey(),
             'amount' => '10.50',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'currency_id' => $currency->getKey(),
             'occurred_at' => '2024-01-01 00:00:00',
             'quote' => '1',

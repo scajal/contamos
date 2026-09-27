@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Actions\Team;
 
 use App\Modules\Core\Finance\Actions\Team\Concerns\GuardsBudgetPeriodOverlap;
+use App\Modules\Core\Finance\Actions\Team\Concerns\NestsBudgetPeriods;
 use App\Modules\Core\Finance\Actions\Team\Concerns\ReadsBudgetMonths;
 use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 class CreateBudgetPeriod
 {
     use GuardsBudgetPeriodOverlap;
+    use NestsBudgetPeriods;
     use ReadsBudgetMonths;
 
     /**
@@ -70,7 +72,8 @@ class CreateBudgetPeriod
 
     /**
      * Open a budget period on the target with the provided
-     * months and amount, in the provided currency.
+     * months and amount, in the provided currency, nested
+     * under the provided category period if any.
      *
      * @param  array<string, mixed>  $attributes
      */
@@ -84,6 +87,7 @@ class CreateBudgetPeriod
         $team = $this->team;
         $target = $this->guardTarget($team, $this->target);
         $currencyKey = new BudgetPeriod()->currency()->getForeignKeyName();
+        $parentKey = new BudgetPeriod()->parent()->getForeignKeyName();
 
         $currencyId = $this->currencyId($attributes[$currencyKey] ?? null);
         $from = $this->month($attributes['from_month'] ?? null);
@@ -95,16 +99,21 @@ class CreateBudgetPeriod
             throw new Exception('A budget period cannot be created without a first month.');
         }
 
+        // A sub-budget sits under a category period of the same
+        // team and currency.
+        $parent = $this->guardParent($team, $target, $currencyId, $attributes[$parentKey] ?? null);
+
         // The months must be free of any other period on the
         // same target and currency.
         $this->guardAgainstOverlap($team, $target, $currencyId, $from, $until);
 
         // Everything the creation writes reads as one entry in
         // the team's activity log.
-        return TeamActivity::within(fn (): BudgetPeriod => DB::transaction(function () use ($team, $target, $attributes, $currencyKey, $currencyId, $from, $until, $threshold): BudgetPeriod {
+        return TeamActivity::within(fn (): BudgetPeriod => DB::transaction(function () use ($team, $target, $parent, $attributes, $currencyKey, $currencyId, $from, $until, $threshold): BudgetPeriod {
             /** @var \App\Modules\Core\Finance\Models\Team\BudgetPeriod $period */
             $period = $team->budgets()->create([
                 ...$this->targetAttributes($target),
+                ...$this->parentAttributes($parent),
                 'amount' => $attributes['amount'],
                 $currencyKey => $currencyId,
                 'from_month' => $from,
@@ -118,18 +127,21 @@ class CreateBudgetPeriod
 
     /**
      * Pick a stopped period's budget back up from the current
-     * month, on the target, amount, currency and warning
-     * threshold it was stopped at, with no last month.
+     * month, on the target, amount, currency, parent and
+     * warning threshold it was stopped at, with no last
+     * month.
      */
     public function resume(BudgetPeriod $stopped): BudgetPeriod
     {
         $currencyKey = $stopped->currency()->getForeignKeyName();
+        $parentKey = $stopped->parent()->getForeignKeyName();
 
         // Open a fresh unbounded stretch from this month, on
         // whatever the stopped one followed.
         return $this->targeting($stopped->target())->using([
             'amount' => (string) $stopped->amount,
             $currencyKey => $stopped->getAttribute($currencyKey),
+            $parentKey => $stopped->getAttribute($parentKey),
             'from_month' => CarbonImmutable::now()->startOfMonth(),
             'until_month' => null,
             'warning_threshold' => $stopped->warning_threshold,

@@ -58,7 +58,7 @@ function spendOnFood(Account $account, Currency $currency, string $amount, ?Carb
     return Transaction::factory()->expense()->create([
         $account->getForeignKey() => $account->getKey(),
         'amount' => $amount,
-        'category' => Category::Food,
+        'category' => Category::Groceries,
         $currency->getForeignKey() => $currency->getKey(),
         'occurred_at' => $at ?? CarbonImmutable::now(),
     ]);
@@ -70,7 +70,7 @@ function spendOnFood(Account $account, Currency $currency, string $amount, ?Carb
  */
 function foodBudget(Team $team, Currency $currency, ?int $threshold = 80): BudgetPeriod
 {
-    return BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($team)->create([
+    return BudgetPeriod::factory()->forCategory(Category::Groceries)->running()->for($team)->create([
         'amount' => '100',
         $currency->getForeignKey() => $currency->getKey(),
         'warning_threshold' => $threshold,
@@ -207,7 +207,7 @@ it('re-arms both thresholds when a new month starts', function (): void {
 
 it('never alerts about a budget that is not running', function (string $state): void {
     ['team' => $team, 'account' => $account, 'currency' => $currency] = alertingTeam();
-    BudgetPeriod::factory()->forCategory(Category::Food)->{$state}()->for($team)->create([
+    BudgetPeriod::factory()->forCategory(Category::Groceries)->{$state}()->for($team)->create([
         'amount' => '100',
         $currency->getForeignKey() => $currency->getKey(),
         'warning_threshold' => 50,

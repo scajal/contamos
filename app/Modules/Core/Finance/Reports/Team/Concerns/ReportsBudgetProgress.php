@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Reports\Team\Concerns;
 
 use App\Modules\Core\Finance\Enums\BudgetPeriod\BudgetPeriodStatus;
+use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
+use App\Modules\Core\Finance\Models\Team\Tag;
 use App\Modules\Core\Finance\Models\Team\Transaction;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Collection;
 
 /**
@@ -69,16 +73,56 @@ trait ReportsBudgetProgress
      */
     protected function budgetedTotalsByKey(Team $team, CarbonImmutable $month): Collection
     {
-        // A movement counts under every tag it carries and once
-        // more under the one category it was filed under, so
-        // both breakdowns are read side by side.
+        // A movement counts under every tag it carries, once
+        // more under the one category it was filed under, and
+        // once more under each tag within that category, so
+        // the three breakdowns are read side by side.
         $tagged = $this->taggedTotals($team, $month)
             ->mapWithKeys(fn (Transaction $row): array => [$this->budgetKeyOf($row) => $this->totalsOf($row)]);
 
         $categorized = $this->categorizedTotals($team, $month)
             ->mapWithKeys(fn (Transaction $row): array => [$this->budgetKeyOf($row) => $this->totalsOf($row)]);
 
-        return $tagged->union($categorized);
+        $nested = $this->nestedTotals($team, $month)
+            ->mapWithKeys(fn (Transaction $row): array => [$this->budgetKeyOf($row) => $this->totalsOf($row)]);
+
+        return $tagged->union($categorized)->union($nested);
+    }
+
+    /**
+     * Sum the month's income and expenses per tag, category and
+     * currency, which is what a sub-budget is measured
+     * against: only the tag's movements filed under the
+     * category it sits in.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\Transaction>
+     */
+    protected function nestedTotals(Team $team, CarbonImmutable $month): EloquentCollection
+    {
+        $transaction = new Transaction;
+        $tag = new Tag;
+        $tags = $transaction->tags();
+        $currencyKey = $transaction->currency()->getForeignKeyName();
+
+        return $this->monthly($team, $month)
+            ->select([
+                $transaction->qualifyColumn($currencyKey),
+                $tag->qualifyColumn($tag->getKeyName()).' as tag_id',
+            ])
+            ->selectRaw(...$this->categoryOrOther())
+            ->selectRaw(...$this->sumOfType(TransactionType::Expense, 'expenses'))
+            ->selectRaw(...$this->sumOfType(TransactionType::Income, 'income'))
+            ->join($tags->getTable(), function (JoinClause $join) use ($transaction, $tags): void {
+                $join->on($tags->getQualifiedForeignPivotKeyName(), '=', $transaction->getQualifiedKeyName())
+                    ->where($tags->getQualifiedMorphTypeName(), $transaction->getMorphClass());
+            })
+            ->join($tag->getTable(), $tag->getQualifiedKeyName(), '=', $tags->getQualifiedRelatedPivotKeyName())
+            ->groupBy(
+                $transaction->qualifyColumn($currencyKey),
+                $tag->qualifyColumn($tag->getKeyName()),
+            )
+            ->groupByRaw(...$this->categoryOrOther(false))
+            ->get();
     }
 
     /**
@@ -105,6 +149,12 @@ trait ReportsBudgetProgress
         // says which one it came out of.
         $attributes = $row->getAttributes();
         $currency = $this->text($attributes[new Transaction()->currency()->getForeignKeyName()] ?? null);
+
+        // A row carrying both a tag and a category came out of
+        // the nested breakdown.
+        if (array_key_exists('tag_id', $attributes) && array_key_exists('category', $attributes)) {
+            return $this->nestedBudgetKey($this->text($attributes['tag_id']), $this->text($attributes['category']), $currency);
+        }
 
         if (array_key_exists('tag_id', $attributes)) {
             return $this->tagBudgetKey($this->text($attributes['tag_id']), $currency);

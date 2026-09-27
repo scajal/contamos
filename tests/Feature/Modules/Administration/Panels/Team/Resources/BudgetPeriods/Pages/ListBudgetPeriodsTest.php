@@ -25,8 +25,8 @@ it('lists the category and tag budgets of the current tenant', function (): void
 
 it('hides the budgets of another team', function (): void {
     [, $team] = actingOperator();
-    $mine = BudgetPeriod::factory()->forCategory(Category::Food)->for($team)->create();
-    $theirs = BudgetPeriod::factory()->forCategory(Category::Food)->for(Team::factory())->create();
+    $mine = BudgetPeriod::factory()->forCategory(Category::Groceries)->for($team)->create();
+    $theirs = BudgetPeriod::factory()->forCategory(Category::Groceries)->for(Team::factory())->create();
 
     onTeamPanel($team);
 

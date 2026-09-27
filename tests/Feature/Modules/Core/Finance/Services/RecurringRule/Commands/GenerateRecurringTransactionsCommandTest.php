@@ -102,14 +102,14 @@ it('leaves the occurrences it already generated on the category they were record
 
     $this->artisan('finance:generate-recurring-transactions')->assertSuccessful();
 
-    $rule->update(['category' => Category::Food]);
+    $rule->update(['category' => Category::Groceries]);
 
     $this->travelTo(CarbonImmutable::parse('2026-06-20 10:00:00'));
 
     $this->artisan('finance:generate-recurring-transactions')->assertSuccessful();
 
     expect(Transaction::query()->orderBy('occurred_at')->pluck('category')->all())
-        ->toBe([Category::Transport, Category::Food]);
+        ->toBe([Category::Transport, Category::Groceries]);
 });
 
 it('carries the rule\'s tags onto the occurrence', function (): void {
@@ -317,14 +317,14 @@ it('emails again when a rule fails after its failure was cleared', function (): 
 
 it('alerts once per budget about what the run generated', function (): void {
     $this->travelTo(CarbonImmutable::parse('2026-09-15 10:00:00'));
-    [$rule, $account, $currency] = dueRule(['category' => Category::Food, 'starts_on' => '2026-09-15']);
+    [$rule, $account, $currency] = dueRule(['category' => Category::Groceries, 'starts_on' => '2026-09-15']);
     RecurringRule::factory()->expense()->create([
         ...$rule->only(['account_id', 'amount', 'currency_id', 'decimal_places', 'frequency', 'interval', 'team_id', 'time_of_day', 'timezone', 'user_id']),
-        'category' => Category::Food,
+        'category' => Category::Groceries,
         'starts_on' => '2026-09-14',
     ]);
     $owner = memberOf($rule->team, Role::Owner);
-    $budget = BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($rule->team)->create([
+    $budget = BudgetPeriod::factory()->forCategory(Category::Groceries)->running()->for($rule->team)->create([
         'amount' => '40',
         $currency->getForeignKey() => $currency->getKey(),
     ]);

@@ -37,7 +37,7 @@ function updateTransactionToolExpense(Team $team): array
 
     $transaction = Transaction::factory()->expense()->for($account)->create([
         'amount' => '40',
-        'category' => Category::Food,
+        'category' => Category::Groceries,
         'currency_id' => $currency->getKey(),
         'decimal_places' => 2,
         'occurred_at' => '2026-08-14 12:00:00',
@@ -62,7 +62,7 @@ it('changes only what is given and adjusts the balance', function (): void {
         ->assertOk()
         ->assertStructuredContent(fn (AssertableJson $json): AssertableJson => $json
             ->where('transaction.amount', '-55.25')
-            ->where('transaction.category', Category::Food->value)
+            ->where('transaction.category', Category::Groceries->value)
             ->where('transaction.tags', [['id' => $tag->getKey(), 'name' => 'Trip']])
             ->etc());
 
@@ -130,7 +130,7 @@ it('alerts when the edit pushes a budget over', function (): void {
     $this->travelTo(CarbonImmutable::parse('2026-09-15 12:00:00'));
     [$user, $team] = mcpMember();
     [$account, $currency, $transaction] = updateTransactionToolExpense($team);
-    BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($team)->create([
+    BudgetPeriod::factory()->forCategory(Category::Groceries)->running()->for($team)->create([
         'amount' => '100',
         $currency->getForeignKey() => $currency->getKey(),
     ]);

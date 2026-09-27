@@ -20,7 +20,7 @@ it('throws when a team was not provided', function (): void {
     (new UpdateRecurringRule)->using($rule, [
         'account_id' => $rule->account_id,
         'amount' => '25',
-        'category' => Category::Food->value,
+        'category' => Category::Groceries->value,
         'currency_id' => $rule->currency_id,
         'frequency' => Frequency::Monthly,
         'interval' => 1,
@@ -44,7 +44,7 @@ it('updates the rule amount', function (): void {
     $updated = (new UpdateRecurringRule)->for($team)->using($rule, [
         'account_id' => $account->getKey(),
         'amount' => '40',
-        'category' => Category::Food->value,
+        'category' => Category::Groceries->value,
         'currency_id' => $currency->getKey(),
         'frequency' => Frequency::Monthly,
         'interval' => 1,
@@ -63,7 +63,7 @@ it('recategorizes the rule', function (): void {
     $account = Account::factory()->for($team)->create();
     $rule = RecurringRule::factory()->expense()->create([
         'account_id' => $account->getKey(),
-        'category' => Category::Food->value,
+        'category' => Category::Groceries->value,
         'currency_id' => $currency->getKey(),
         'team_id' => $team->getKey(),
     ]);
@@ -90,7 +90,7 @@ it('refuses a rule category that does not belong to the type it is saved with', 
     $account = Account::factory()->for($team)->create();
     $rule = RecurringRule::factory()->expense()->create([
         'account_id' => $account->getKey(),
-        'category' => Category::Food->value,
+        'category' => Category::Groceries->value,
         'currency_id' => $currency->getKey(),
         'team_id' => $team->getKey(),
     ]);
@@ -98,7 +98,7 @@ it('refuses a rule category that does not belong to the type it is saved with', 
     (new UpdateRecurringRule)->for($team)->using($rule, [
         'account_id' => $account->getKey(),
         'amount' => '40',
-        'category' => Category::Food->value,
+        'category' => Category::Groceries->value,
         'currency_id' => $currency->getKey(),
         'frequency' => Frequency::Monthly,
         'interval' => 1,
@@ -107,4 +107,4 @@ it('refuses a rule category that does not belong to the type it is saved with', 
         'timezone' => 'UTC',
         'type' => TransactionType::Income,
     ]);
-})->throws(Exception::class, 'The category food does not belong to a movement of type income.');
+})->throws(Exception::class, 'The category groceries does not belong to a movement of type income.');

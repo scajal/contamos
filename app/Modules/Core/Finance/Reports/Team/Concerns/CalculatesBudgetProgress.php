@@ -46,7 +46,7 @@ trait CalculatesBudgetProgress
         /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\BudgetPeriod> $periods */
         $periods = $team->budgets()
             ->covering($month)
-            ->with('tag')
+            ->with(['parent', 'tag'])
             ->get();
 
         return new Collection($periods->mapWithKeys(fn (BudgetPeriod $period): array => [
@@ -66,16 +66,29 @@ trait CalculatesBudgetProgress
 
     /**
      * The key a period itself is filed under, read from the
-     * target it was written with.
+     * target it was written with. A sub-budget is filed
+     * under its tag within its parent's category, since
+     * that is all it counts.
      */
     protected function budgetKeyFor(BudgetPeriod $period): string
     {
         $target = $period->target();
+        $currencyId = $this->text($period->getAttribute($period->currency()->getForeignKeyName()));
+
+        // A nested tag budget reads only the movements of its
+        // tag filed under the category it sits in.
+        if ($target instanceof Tag && $period->isNested()) {
+            return $this->nestedBudgetKey(
+                $this->text($target->getKey()),
+                $period->scopedCategory()->value ?? Category::Other->value,
+                $currencyId,
+            );
+        }
 
         return $this->budgetKey(
             $period->targetKind(),
             $target instanceof Category ? $target->value : $this->text($target?->getKey()),
-            $this->text($period->getAttribute($period->currency()->getForeignKeyName())),
+            $currencyId,
         );
     }
 
@@ -85,6 +98,15 @@ trait CalculatesBudgetProgress
     protected function tagBudgetKey(string $tagId, string $currencyId): string
     {
         return $this->budgetKey(BudgetTargetKind::Tag, $tagId, $currencyId);
+    }
+
+    /**
+     * The key the month's figures for a tag within one category
+     * are filed under, which is what a sub-budget reads.
+     */
+    protected function nestedBudgetKey(string $tagId, string $category, string $currencyId): string
+    {
+        return $this->budgetKey(BudgetTargetKind::Tag, $tagId.'|'.$category, $currencyId);
     }
 
     /**

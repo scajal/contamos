@@ -190,7 +190,7 @@ export const Assistants = ({ dashboardUrl }: AssistantsProps) => {
                     from: "assistant",
                     action: t("Read the monthly report"),
                     text: t(
-                        "So far :income came in and :expenses went out. Food is at 92% of its budget with a week to go; Transport is well under.",
+                        "So far :income came in and :expenses went out. Groceries is at 92% of its budget with a week to go; Transport is well under.",
                         { expenses: money(1864.75), income: money(3200) },
                     ),
                 },

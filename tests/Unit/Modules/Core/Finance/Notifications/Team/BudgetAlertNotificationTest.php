@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\App;
 it('names the category, the amount, what went and the share, linking to the budgets', function (string $locale, BudgetAlertKind $kind, string $subject, string $sentence, string $action): void {
     $team = Team::factory()->create(['name' => 'Casa']);
     $currency = Currency::factory()->create(['decimal_places' => 2, 'symbol' => '$']);
-    $budget = BudgetPeriod::factory()->forCategory(Category::Food)->for($team)->create([$currency->getForeignKey() => $currency->getKey()]);
+    $budget = BudgetPeriod::factory()->forCategory(Category::Groceries)->for($team)->create([$currency->getForeignKey() => $currency->getKey()]);
     $notification = new BudgetAlertNotification($team, $budget, $kind, CarbonImmutable::parse('2026-09-01'), '1500.000000000000000000', '1282.500000000000000000', 85.5);
     App::setLocale($locale);
 
@@ -33,10 +33,10 @@ it('names the category, the amount, what went and the share, linking to the budg
         ->and($mail->actionUrl)->toBe(route('finance.teams.budgets.index', ['team' => $team]))
         ->and((string) $mail->render())->toContain($action.'</a>');
 })->with([
-    'English warning' => ['en', BudgetAlertKind::Warning, 'The Food budget reached 85.5% on Casa', 'Food has used 85.5% of its budget for September 2026 on Casa: $ 1,282.50 of $ 1,500.00.', 'View budgets'],
-    'English over' => ['en', BudgetAlertKind::Over, 'The Food budget went over on Casa', 'Food went over its budget for September 2026 on Casa: $ 1,282.50 of $ 1,500.00, 85.5%.', 'View budgets'],
-    'Spanish warning' => ['es', BudgetAlertKind::Warning, "El presupuesto de Comida llegó al 85,5\u{a0}% en Casa", "Comida ya usó el 85,5\u{a0}% de su presupuesto de septiembre 2026 en Casa: $ 1.282,50 de $ 1.500,00.", 'Ver presupuestos'],
-    'Spanish over' => ['es', BudgetAlertKind::Over, 'El presupuesto de Comida se pasó en Casa', "Comida se pasó de su presupuesto de septiembre 2026 en Casa: $ 1.282,50 de $ 1.500,00, 85,5\u{a0}%.", 'Ver presupuestos'],
+    'English warning' => ['en', BudgetAlertKind::Warning, 'The Groceries budget reached 85.5% on Casa', 'Groceries has used 85.5% of its budget for September 2026 on Casa: $ 1,282.50 of $ 1,500.00.', 'View budgets'],
+    'English over' => ['en', BudgetAlertKind::Over, 'The Groceries budget went over on Casa', 'Groceries went over its budget for September 2026 on Casa: $ 1,282.50 of $ 1,500.00, 85.5%.', 'View budgets'],
+    'Spanish warning' => ['es', BudgetAlertKind::Warning, "El presupuesto de Supermercado llegó al 85,5\u{a0}% en Casa", "Supermercado ya usó el 85,5\u{a0}% de su presupuesto de septiembre 2026 en Casa: $ 1.282,50 de $ 1.500,00.", 'Ver presupuestos'],
+    'Spanish over' => ['es', BudgetAlertKind::Over, 'El presupuesto de Supermercado se pasó en Casa', "Supermercado se pasó de su presupuesto de septiembre 2026 en Casa: $ 1.282,50 de $ 1.500,00, 85,5\u{a0}%.", 'Ver presupuestos'],
 ]);
 
 it('names a tag budget after the tag', function (): void {

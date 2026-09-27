@@ -96,7 +96,7 @@ function actingOnBudgetedTeam(): array
         'team' => $team,
         'account' => $account,
         'currency' => $currency,
-        'budget' => BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($team)->withWarningThreshold(80)->create([
+        'budget' => BudgetPeriod::factory()->forCategory(Category::Groceries)->running()->for($team)->withWarningThreshold(80)->create([
             'amount' => '100',
             $currency->getForeignKey() => $currency->getKey(),
         ]),
@@ -527,7 +527,7 @@ describe('index', function (): void {
 
         $matching = Transaction::factory()->expense()->create([
             'account_id' => $account->getKey(),
-            'category' => Category::Food,
+            'category' => Category::Groceries,
             'currency_id' => $currency->getKey(),
             'team_id' => $team->getKey(),
             'user_id' => $user->getKey(),
@@ -542,11 +542,11 @@ describe('index', function (): void {
 
         $this->get(route('finance.teams.transactions.index', [
             'team' => $team->getRouteKey(),
-            'filter' => ['category' => Category::Food->value],
+            'filter' => ['category' => Category::Groceries->value],
         ]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-                ->where('filters.category', Category::Food->value)
+                ->where('filters.category', Category::Groceries->value)
                 ->has('categories.expense', count(Category::casesFor(TransactionType::Expense)))
                 ->has('categories.income', count(Category::casesFor(TransactionType::Income)))
                 ->where('categories.expense.0.value', Category::Housing->value)
@@ -563,7 +563,7 @@ describe('index', function (): void {
 
         $this->get(route('finance.teams.transactions.index', [
             'team' => $team->getRouteKey(),
-            'filter' => ['category' => 'groceries'],
+            'filter' => ['category' => 'food'],
         ]))->assertSessionHasErrors('filter.category');
     });
 });
@@ -645,7 +645,7 @@ describe('export', function (): void {
             'account_id' => $account->getKey(),
             'amount' => '1234.5',
             'currency_id' => $currency->getKey(),
-            'category' => Category::Food,
+            'category' => Category::Groceries,
             'decimal_places' => 2,
             'description' => 'Almuerzo compartido',
             'occurred_at' => CarbonImmutable::now()->setTime(15, 45),
@@ -669,7 +669,7 @@ describe('export', function (): void {
             $transaction->occurred_at->format('Y-m-d'),
             '15:45',
             'Expense',
-            'Food',
+            'Groceries',
             '-1234.50',
             'UYU',
             'Almuerzo compartido',
@@ -1667,7 +1667,7 @@ describe('store', function (): void {
             $account->getForeignKey() => $account->getKey(),
             $currency->getForeignKey() => $currency->getKey(),
             'amount' => '85',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
         ]))->assertRedirect();
 
@@ -1685,7 +1685,7 @@ describe('store', function (): void {
             $account->getForeignKey() => $account->getKey(),
             $currency->getForeignKey() => $currency->getKey(),
             'amount' => '98.30',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
         ]))->assertRedirect();
 
@@ -1709,7 +1709,7 @@ describe('store', function (): void {
             $account->getForeignKey() => $account->getKey(),
             $currency->getForeignKey() => $currency->getKey(),
             'amount' => '500',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => '2026-10-01 12:00:00',
             'repeat' => true,
             'recurring_frequency' => Frequency::Monthly->value,
@@ -2666,7 +2666,7 @@ describe('update', function (): void {
         $transaction = Transaction::factory()->expense()->create([
             'account_id' => $account->getKey(),
             'amount' => '10.50',
-            'category' => Category::Food,
+            'category' => Category::Groceries,
             'currency_id' => $currency->getKey(),
             'team_id' => $team->getKey(),
             'user_id' => $user->getKey(),
@@ -2692,7 +2692,7 @@ describe('update', function (): void {
         $transaction = Transaction::factory()->expense()->create([
             'account_id' => $account->getKey(),
             'amount' => '10.50',
-            'category' => Category::Food,
+            'category' => Category::Groceries,
             'currency_id' => $currency->getKey(),
             'team_id' => $team->getKey(),
             'user_id' => $user->getKey(),
@@ -2704,11 +2704,11 @@ describe('update', function (): void {
         ]), transactionPayload([
             $account->getForeignKey() => $account->getKey(),
             $currency->getForeignKey() => $currency->getKey(),
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'type' => TransactionType::Income->value,
         ]))->assertSessionHasErrors('category');
 
-        expect($transaction->refresh()->category)->toBe(Category::Food);
+        expect($transaction->refresh()->category)->toBe(Category::Groceries);
     });
 
     it('alerts when an edit pushes a budget over its amount', function (): void {
@@ -2716,7 +2716,7 @@ describe('update', function (): void {
         ['owner' => $owner, 'team' => $team, 'account' => $account, 'currency' => $currency] = actingOnBudgetedTeam();
         $transaction = Transaction::factory()->expense()->for($account)->for($team)->create([
             'amount' => '10',
-            'category' => Category::Food,
+            'category' => Category::Groceries,
             'currency_id' => $currency->getKey(),
             'occurred_at' => CarbonImmutable::now(),
         ]);
@@ -2726,7 +2726,7 @@ describe('update', function (): void {
             $account->getForeignKey() => $account->getKey(),
             $currency->getForeignKey() => $currency->getKey(),
             'amount' => '150',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
         ]))->assertRedirect();
 
@@ -2741,7 +2741,7 @@ describe('update', function (): void {
             $account->getForeignKey() => $account->getKey(),
             $currency->getForeignKey() => $currency->getKey(),
             'amount' => $amount,
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
         ]);
 
@@ -2761,7 +2761,7 @@ describe('update', function (): void {
             $account->getForeignKey() => $account->getKey(),
             $currency->getForeignKey() => $currency->getKey(),
             'amount' => '85',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => CarbonImmutable::now()->toDateTimeString(),
         ]);
 

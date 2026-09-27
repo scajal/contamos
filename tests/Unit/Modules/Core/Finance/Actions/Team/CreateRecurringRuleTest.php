@@ -21,7 +21,7 @@ it('throws when a team was not provided', function (): void {
     (new CreateRecurringRule)->using([
         'account_id' => $account->getKey(),
         'amount' => '25',
-        'category' => Category::Food->value,
+        'category' => Category::Groceries->value,
         'currency_id' => $currency->getKey(),
         'frequency' => Frequency::Monthly,
         'interval' => 1,

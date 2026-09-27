@@ -29,7 +29,7 @@ function transactionEntryAttributes(Account $account, Currency $currency, bool $
     return [
         'account_id' => $account->getKey(),
         'amount' => '10.50',
-        'category' => Category::Food->value,
+        'category' => Category::Groceries->value,
         'currency_id' => $currency->getKey(),
         'description' => 'Lunch',
         'occurred_at' => '2026-01-15 12:00:00',

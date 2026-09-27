@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Billing\Enums\Feature;
 use App\Modules\Core\Catalog\Models\Currency;
+use App\Modules\Core\Finance\Enums\Transaction\Category;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Tag;
@@ -80,4 +81,32 @@ it('stays readable on a plan without budgets', function (): void {
 
 it('is a read-only tool', function (): void {
     expect(new ListBudgets()->annotations())->toMatchArray(['readOnlyHint' => true]);
+});
+
+it('names the category budget a sub-budget sits under and confines its figures to it', function (): void {
+    [$user, $team] = mcpMember();
+    $currency = Currency::factory()->active()->fiat()->create(['code' => 'USD', 'decimal_places' => 2]);
+    $account = Account::factory()->active()->for($team)->create();
+    $account->currencies()->attach($currency, ['balance' => '0']);
+    $tag = Tag::factory()->active()->for($team)->create(['name' => 'Electricity']);
+    $parent = BudgetPeriod::factory()->running()->forCategory(Category::Utilities)->for($team)->for($currency)->create(['amount' => '500']);
+    $child = BudgetPeriod::factory()->within($parent)->running()->create(['amount' => '200', 'tag_id' => $tag->getKey()]);
+
+    $day = CarbonImmutable::now()->startOfMonth()->addDay();
+    Transaction::factory()->expense()->for($account)->for($currency)->create(['amount' => '120', 'category' => Category::Utilities, 'occurred_at' => $day])->attachTags([$tag->getKey()]);
+    Transaction::factory()->expense()->for($account)->for($currency)->create(['amount' => '80', 'category' => Category::Housing, 'occurred_at' => $day])->attachTags([$tag->getKey()]);
+
+    ContamosServer::actingAs($user)
+        ->tool(ListBudgets::class, ['team' => $team->slug])
+        ->assertOk()
+        ->assertStructuredContent(fn (AssertableJson $json): AssertableJson => $json
+            ->has('budgets', 2)
+            ->where('budgets.0.id', $parent->getKey())
+            ->where('budgets.0.parent', null)
+            ->where('budgets.0.progress.spent', '120.00')
+            ->where('budgets.1.id', $child->getKey())
+            ->where('budgets.1.parent', $parent->getKey())
+            ->where('budgets.1.progress.spent', '120.00')
+            ->where('budgets.1.progress.remaining', '80.00')
+            ->etc());
 });

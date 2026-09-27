@@ -20,6 +20,8 @@ use App\Modules\Core\Identity\Models\User;
 use App\Modules\Support\Objects\Toast;
 use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -71,6 +73,7 @@ class BudgetController
             'categories' => $this->categoryChoices(),
             'currencies' => $team->heldCurrencies(),
             'month' => CarbonImmutable::now()->format(self::MONTH_FORMAT),
+            'parents' => $this->parentChoices($team),
             'tags' => $team->tags()->orderBy('name')->get(),
         ])->baseRoute('finance.teams.budgets.index', ['team' => $team->getRouteKey()]);
     }
@@ -85,7 +88,7 @@ class BudgetController
         $createBudgetPeriod->for($team)
             ->targeting($this->submittedTarget($team, $request))
             ->by($user)
-            ->using($request->safe(['amount', new BudgetPeriod()->currency()->getForeignKeyName(), 'from_month', 'until_month', 'warning_threshold']));
+            ->using($request->safe(['amount', new BudgetPeriod()->currency()->getForeignKeyName(), 'from_month', new BudgetPeriod()->parent()->getForeignKeyName(), 'until_month', 'warning_threshold']));
 
         // Show a success message.
         Toast::make(trans('Saved'))
@@ -102,6 +105,7 @@ class BudgetController
         return Inertia::modal('finance/teams/budgets/edit', [
             'budget' => $this->row($budget, CarbonImmutable::now(), new Collection, false),
             'currencies' => $team->heldCurrencies(),
+            'parents' => $this->parentChoices($team, $budget),
         ])->baseRoute('finance.teams.budgets.index', ['team' => $team->getRouteKey()]);
     }
 
@@ -114,7 +118,7 @@ class BudgetController
         // warning threshold.
         $updateBudgetPeriod->for($team)
             ->by($user)
-            ->using($budget, $request->safe(['amount', $budget->currency()->getForeignKeyName(), 'from_month', 'until_month', 'warning_threshold']));
+            ->using($budget, $request->safe(['amount', $budget->currency()->getForeignKeyName(), 'from_month', $budget->parent()->getForeignKeyName(), 'until_month', 'warning_threshold']));
 
         // Show a success message.
         Toast::make(trans('Saved'))
@@ -186,7 +190,9 @@ class BudgetController
     /**
      * The team's budget periods, categories first and newest
      * stretch first within each target, with what the
-     * current month has made of the one in force.
+     * current month has made of the one in force. A
+     * sub-budget travels inside the category period it
+     * sits under rather than as a row of its own.
      *
      * @return \Illuminate\Pagination\LengthAwarePaginator<int, array<string, mixed>>
      */
@@ -198,7 +204,8 @@ class BudgetController
 
         /** @var \Illuminate\Pagination\LengthAwarePaginator<int, \App\Modules\Core\Finance\Models\Team\BudgetPeriod> $paginator */
         $paginator = $team->budgets()
-            ->with(['currency', 'tag'])
+            ->whereNull($period->qualifyColumn($period->parent()->getForeignKeyName()))
+            ->with(['currency', 'tag', 'children.currency', 'children.tag'])
             ->orderBy($period->qualifyColumn('category'))
             // A tag budget reads under the tag's name, which the
             // period only knows the key of.
@@ -231,17 +238,99 @@ class BudgetController
      */
     protected function row(BudgetPeriod $budget, CarbonImmutable $month, Collection $totals, bool $isSuperseded): array
     {
+        // The sub-budgets of a category period read under it,
+        // each knowing the parent it sits in so its figures
+        // stay within the parent's category.
+        $children = $budget->relationLoaded('children') ? $budget->children : new EloquentCollection;
+        $successors = $children->isEmpty() ? [] : $this->successorMonths($budget->team);
+
         return [
+            'allocation' => $this->allocation($budget, $children, $month),
             'amount' => $budget->amount,
+            'children' => $children
+                ->sortBy([['tag.name', 'asc'], ['from_month', 'desc']])
+                ->map(fn (BudgetPeriod $child): array => $this->row(
+                    $child->setRelation('parent', $budget),
+                    $month,
+                    $totals,
+                    $this->isSuperseded($child, $successors),
+                ))
+                ->values()
+                ->all(),
             'currency' => $budget->currency->only([$budget->currency->getKeyName(), 'code', 'decimal_places', 'symbol']),
             'from_month' => $budget->from_month->format(self::MONTH_FORMAT),
             'id' => $budget->getKey(),
+            'parent_id' => $budget->getAttribute($budget->parent()->getForeignKeyName()),
             'progress' => $this->monthProgress($budget, $month, $totals),
             'status' => $budget->status($month, $isSuperseded),
             'target' => $this->target($budget),
             'until_month' => $budget->until_month?->format(self::MONTH_FORMAT),
             'warning_threshold' => $budget->warning_threshold,
         ];
+    }
+
+    /**
+     * How much of a category period in force its sub-budgets
+     * of the month claim, and what is left for the rest of
+     * the category. The nesting is informative, so the
+     * sub-budgets may claim more than the parent and the
+     * rest then reads below zero.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\BudgetPeriod>  $children
+     * @return array{allocated: numeric-string, unallocated: numeric-string}|null
+     */
+    protected function allocation(BudgetPeriod $budget, EloquentCollection $children, CarbonImmutable $month): ?array
+    {
+        // Only a category period in force with sub-budgets has
+        // a share of the month to account for.
+        if ($children->isEmpty() || ! $budget->covers($month)) {
+            return null;
+        }
+
+        $allocated = $children
+            ->filter(fn (BudgetPeriod $child): bool => $child->covers($month))
+            ->reduce(fn (string $sum, BudgetPeriod $child): string => bcadd($sum, (string) $child->amount, self::BUDGET_SCALE), '0');
+
+        return [
+            'allocated' => $allocated,
+            'unallocated' => bcsub((string) $budget->amount, $allocated, self::BUDGET_SCALE),
+        ];
+    }
+
+    /**
+     * The category periods a tag budget may be nested under:
+     * the ones still to run or in force, with what the form
+     * needs to name them and to match them to a currency.
+     * The parent an edited budget already sits under is
+     * offered even once it is over, so the edit can keep it.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function parentChoices(Team $team, ?BudgetPeriod $budget = null): array
+    {
+        $period = new BudgetPeriod;
+        $month = CarbonImmutable::now()->startOfMonth();
+        $currencyKey = $period->currency()->getForeignKeyName();
+        $current = $budget?->getAttribute($period->parent()->getForeignKeyName());
+
+        return $team->budgets()
+            ->whereNotNull('category')
+            ->where(fn (Builder $query): Builder => $query
+                ->whereNull('until_month')
+                ->orWhereDate('until_month', '>=', $month->toDateString())
+                ->when($current !== null, fn (Builder $query): Builder => $query->orWhereKey($current)))
+            ->orderBy('category')
+            ->orderByDesc('from_month')
+            ->get()
+            ->map(fn (BudgetPeriod $parent): array => [
+                'amount' => $parent->amount,
+                'category' => $this->target($parent)['category'],
+                $currencyKey => $parent->getAttribute($currencyKey),
+                'from_month' => $parent->from_month->format(self::MONTH_FORMAT),
+                'id' => $parent->getKey(),
+                'until_month' => $parent->until_month?->format(self::MONTH_FORMAT),
+            ])
+            ->all();
     }
 
     /**

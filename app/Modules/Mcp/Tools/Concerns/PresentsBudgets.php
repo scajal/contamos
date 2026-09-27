@@ -82,7 +82,7 @@ trait PresentsBudgets
         $successors = $this->successorMonths($team);
 
         return $team->budgets()
-            ->with(['currency', 'tag'])
+            ->with(['currency', 'parent', 'tag'])
             ->get()
             ->sortBy(fn (BudgetPeriod $budget): string => implode('|', [
                 $budget->category instanceof Category ? '0'.$budget->category->value : '1'.Str::lower($budget->tag->name ?? ''),
@@ -104,15 +104,16 @@ trait PresentsBudgets
     {
         $month = CarbonImmutable::now();
 
-        $budget->load(['currency', 'tag']);
+        $budget->load(['currency', 'parent', 'tag']);
 
         return $this->presentBudget($budget, $month, $this->budgetedTotalsByKey($team, $month), $this->successorMonths($team));
     }
 
     /**
-     * Present a budget period: what it follows, its amount,
-     * months and warning threshold, its status and, for the
-     * stretch in force, how the month is going against it.
+     * Present a budget period: what it follows, the category
+     * budget it sits under if any, its amount, months and
+     * warning threshold, its status and, for the stretch in
+     * force, how the month is going against it.
      *
      * @param  \Illuminate\Support\Collection<string, array{expenses: numeric-string, income: numeric-string}>  $totals
      * @param  array<string, \Carbon\CarbonImmutable>  $successors
@@ -129,6 +130,7 @@ trait PresentsBudgets
             'target' => $target instanceof Category
                 ? ['kind' => $budget->targetKind()->value, 'category' => $target->value, 'label' => $target->getLabel()]
                 : ['kind' => $budget->targetKind()->value, 'tag' => $target?->only([$target->getKeyName(), 'name', 'is_active'])],
+            'parent' => $budget->getAttribute($budget->parent()->getForeignKeyName()),
             'currency' => $budget->currency->code,
             'amount' => $this->amount($budget->amount, $decimals),
             'from_month' => $budget->from_month->format('Y-m'),

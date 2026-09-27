@@ -12,9 +12,7 @@ use App\Modules\Core\Finance\Enums\Transaction\TransactionType;
 use App\Modules\Core\Finance\Models\Team\Account;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
 use App\Modules\Core\Finance\Models\Team\Transaction;
-use App\Modules\Core\Finance\Reports\Team\Concerns\CalculatesBudgetProgress;
-use App\Modules\Core\Finance\Reports\Team\Concerns\SumsCategorizedActivity;
-use App\Modules\Core\Finance\Reports\Team\Concerns\SumsTaggedActivity;
+use App\Modules\Core\Finance\Reports\Team\Concerns\ReportsBudgetProgress;
 use App\Modules\Core\Identity\Models\Team;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -29,9 +27,7 @@ use Illuminate\Support\Collection;
  */
 class MonthlyReport
 {
-    use CalculatesBudgetProgress;
-    use SumsCategorizedActivity;
-    use SumsTaggedActivity;
+    use ReportsBudgetProgress;
 
     /**
      * The format a month travels in, both in the URL and
@@ -297,10 +293,22 @@ class MonthlyReport
      */
     protected function categoriesByCurrency(Team $team, CarbonImmutable $month): Collection
     {
+        $periods = $this->budgetPeriodsFor($team, $month);
+
         // The breakdown is by category, so the budgets following
-        // a tag are left out of it.
-        $budgets = $this->budgetPeriodsFor($team, $month)
+        // a tag are left out of it, except the sub-budgets that
+        // sit under a category budget, which read under it.
+        $budgets = $periods
             ->filter(fn (BudgetPeriod $period): bool => $period->targetKind() === BudgetTargetKind::Category);
+
+        $parts = $periods
+            ->filter(fn (BudgetPeriod $period): bool => $period->isNested())
+            ->groupBy(fn (BudgetPeriod $period): string => $this->text($period->getAttribute($period->parent()->getForeignKeyName())));
+
+        // A sub-budget only counts its tag within the category
+        // it sits in, so its figures come from their own sums.
+        $nested = $this->nestedTotals($team, $month)
+            ->mapWithKeys(fn (Transaction $row): array => [$this->budgetKeyOf($row) => $this->totalsOf($row)]);
 
         $currencyKey = new Transaction()->currency()->getForeignKeyName();
 
@@ -316,6 +324,8 @@ class MonthlyReport
                             $this->category($row->getAttribute('category'))->value,
                             $this->text($row->getAttribute($currencyKey)),
                         )),
+                        $parts,
+                        $nested,
                     ))
                     ->values()
                     ->all(),
@@ -325,7 +335,7 @@ class MonthlyReport
         // A budget the month has not been spent against yet is
         // still something to report, so its category joins the
         // breakdown with a row of zeroes.
-        $rows = $this->withQuietCategoryBudgets($rows, $budgets);
+        $rows = $this->withQuietCategoryBudgets($rows, $budgets, $parts, $nested);
 
         return new Collection(array_map($this->orderedCategories(...), $rows));
     }
@@ -338,9 +348,11 @@ class MonthlyReport
      *
      * @param  array<string, array<int, array<string, mixed>>>  $rows
      * @param  \Illuminate\Support\Collection<string, \App\Modules\Core\Finance\Models\Team\BudgetPeriod>  $budgets
+     * @param  \Illuminate\Support\Collection<array-key, \Illuminate\Support\Collection<int, \App\Modules\Core\Finance\Models\Team\BudgetPeriod>>  $parts
+     * @param  \Illuminate\Support\Collection<string, array{expenses: numeric-string, income: numeric-string}>  $nested
      * @return array<string, array<int, array<string, mixed>>>
      */
-    protected function withQuietCategoryBudgets(array $rows, Collection $budgets): array
+    protected function withQuietCategoryBudgets(array $rows, Collection $budgets, Collection $parts, Collection $nested): array
     {
         $currencyKey = new BudgetPeriod()->currency()->getForeignKeyName();
 
@@ -359,7 +371,7 @@ class MonthlyReport
 
             $rows[$currency] = [
                 ...$rows[$currency] ?? [],
-                $this->categoryRow($category, '0', '0', $period),
+                $this->categoryRow($category, '0', '0', $period, $parts, $nested),
             ];
         }
 
@@ -389,13 +401,17 @@ class MonthlyReport
 
     /**
      * One row of the category breakdown. A row with no budget
-     * behind it carries a null block.
+     * behind it carries a null block and no parts; a budgeted
+     * one lists the sub-budgets sitting under its budget,
+     * each with what the month made of it.
      *
      * @param  numeric-string  $income
      * @param  numeric-string  $expenses
+     * @param  \Illuminate\Support\Collection<array-key, \Illuminate\Support\Collection<int, \App\Modules\Core\Finance\Models\Team\BudgetPeriod>>|null  $parts
+     * @param  \Illuminate\Support\Collection<string, array{expenses: numeric-string, income: numeric-string}>|null  $nested
      * @return array<string, mixed>
      */
-    protected function categoryRow(Category $category, string $income, string $expenses, ?BudgetPeriod $budget = null): array
+    protected function categoryRow(Category $category, string $income, string $expenses, ?BudgetPeriod $budget = null, ?Collection $parts = null, ?Collection $nested = null): array
     {
         return [
             'budget' => $budget instanceof BudgetPeriod
@@ -405,7 +421,40 @@ class MonthlyReport
             'expenses' => $expenses,
             'income' => $income,
             'net' => bcsub($income, $expenses, self::SCALE),
+            'parts' => $budget instanceof BudgetPeriod
+                ? $this->budgetParts($budget, $parts?->get($this->text($budget->getKey())) ?? new Collection, $nested ?? new Collection)
+                : [],
         ];
+    }
+
+    /**
+     * The sub-budgets sitting under a category budget, by tag
+     * name, each with what the month made of it: only the
+     * tag's movements filed under the category count.
+     *
+     * @param  \Illuminate\Support\Collection<int, \App\Modules\Core\Finance\Models\Team\BudgetPeriod>  $children
+     * @param  \Illuminate\Support\Collection<string, array{expenses: numeric-string, income: numeric-string}>  $nested
+     * @return array<int, array<string, mixed>>
+     */
+    protected function budgetParts(BudgetPeriod $budget, Collection $children, Collection $nested): array
+    {
+        return $children
+            ->map(function (BudgetPeriod $child) use ($budget, $nested): array {
+                // The child reads its figures within the parent's
+                // category, which it only knows through it.
+                $child->setRelation('parent', $budget);
+
+                $activity = $nested->get($this->budgetKeyFor($child), ['expenses' => '0', 'income' => '0']);
+
+                return [
+                    'budget' => $this->budgetProgress($child, $activity['income'], $activity['expenses']),
+                    'id' => $this->text($child->tag?->getKey()),
+                    'name' => (string) $child->tag?->name,
+                ];
+            })
+            ->sortBy('name')
+            ->values()
+            ->all();
     }
 
     /**

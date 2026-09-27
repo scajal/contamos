@@ -4,6 +4,7 @@ import { parse } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
 import {
     CircleDashedIcon,
+    CornerDownRightIcon,
     MoreHorizontalIcon,
     PauseIcon,
     PencilIcon,
@@ -33,7 +34,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBalances } from "@/hooks/use-balances";
 import { ApplicationLayout } from "@/layouts/application/layout";
-import { formatAmount, formatMonth, formatPercentage } from "@/lib/utils";
+import { cn, formatAmount, formatMonth, formatPercentage } from "@/lib/utils";
 import routes from "@/routes/finance/teams/budgets";
 import { BudgetPeriodStatus } from "@/types/app/modules/core/finance/enums/budget-period/budget-period-status";
 import { BudgetRow } from "@/types/app/modules/core/finance/models/team/budget-period";
@@ -209,9 +210,35 @@ const Listing = () => {
 
 /**
  * The budgets themselves, shared by the listing and by what a team
- * without the feature sees behind the lock.
+ * without the feature sees behind the lock. A category budget's
+ * sub-budgets read right under it.
  */
 const Rows = () => {
+    /**
+     * The page's props.
+     */
+    const { budgets } = usePage<PageProps>().props;
+
+    return (
+        <ItemGroup className="gap-0">
+            {(budgets?.data ?? []).map((budget) => (
+                <Fragment key={budget.id}>
+                    <Row budget={budget} />
+                    {budget.children.map((child) => (
+                        <Row budget={child} key={child.id} nested />
+                    ))}
+                </Fragment>
+            ))}
+        </ItemGroup>
+    );
+};
+
+/**
+ * One budget: what it follows, its amount and months, and how the
+ * month is going against it when it is in force. A nested row is
+ * a sub-budget of the category budget above it.
+ */
+const Row = ({ budget, nested = false }: { budget: BudgetRow; nested?: boolean }) => {
     /**
      * Translate the provided string
      * to the current locale.
@@ -221,7 +248,7 @@ const Rows = () => {
     /**
      * The page's props.
      */
-    const { budgets, is_locked, user } = usePage<PageProps>().props;
+    const { is_locked, user } = usePage<PageProps>().props;
 
     /**
      * Mask the amounts while balances are hidden.
@@ -234,69 +261,100 @@ const Rows = () => {
     const team = user?.current_team?.slug ?? "";
 
     return (
-        <ItemGroup className="gap-0">
-            {(budgets?.data ?? []).map((budget) => (
-                <Item
-                    className="items-start rounded-none border-0 border-b last:border-b-0"
-                    key={budget.id}
-                    size="sm"
-                    variant="outline"
-                >
-                    <ItemMedia variant="icon">
-                        {budget.target.kind === "category" ? (
-                            <CategoryIcon category={budget.target.category.value} />
-                        ) : (
-                            <TagIcon />
-                        )}
-                    </ItemMedia>
-                    <ItemContent className="min-w-0 gap-2">
-                        <ItemTitle className="flex flex-wrap items-center gap-2">
-                            <span className="truncate">
-                                {budget.target.kind === "category"
-                                    ? budget.target.category.label
-                                    : budget.target.tag.name}
-                            </span>
-                            {/** Active is the normal state, so only the exception is labelled. */}
-                            {budget.target.kind === "tag" && !budget.target.tag.is_active ? (
-                                <Badge variant="secondary">{t("Inactive")}</Badge>
-                            ) : null}
-                            <StatusBadge status={budget.status} />
-                        </ItemTitle>
-                        <ItemDescription className="flex flex-wrap items-center gap-x-2 tabular-nums">
-                            <span className="font-medium">
-                                {mask(formatAmount(budget.amount, currentLocale(), budget.currency))}
-                            </span>
-                            <span>{budget.currency.code}</span>
+        <Item
+            className={cn("items-start rounded-none border-0 border-b last:border-b-0", nested && "bg-muted/30 pl-8")}
+            size="sm"
+            variant="outline"
+        >
+            <ItemMedia variant="icon">
+                {nested ? (
+                    <CornerDownRightIcon />
+                ) : budget.target.kind === "category" ? (
+                    <CategoryIcon category={budget.target.category.value} />
+                ) : (
+                    <TagIcon />
+                )}
+            </ItemMedia>
+            <ItemContent className="min-w-0 gap-2">
+                <ItemTitle className="flex flex-wrap items-center gap-2">
+                    <span className="truncate">
+                        {budget.target.kind === "category" ? budget.target.category.label : budget.target.tag.name}
+                    </span>
+                    {/** Active is the normal state, so only the exception is labelled. */}
+                    {budget.target.kind === "tag" && !budget.target.tag.is_active ? (
+                        <Badge variant="secondary">{t("Inactive")}</Badge>
+                    ) : null}
+                    <StatusBadge status={budget.status} />
+                </ItemTitle>
+                <ItemDescription className="flex flex-wrap items-center gap-x-2 tabular-nums">
+                    <span className="font-medium">
+                        {mask(formatAmount(budget.amount, currentLocale(), budget.currency))}
+                    </span>
+                    <span>{budget.currency.code}</span>
+                    <span aria-hidden>·</span>
+                    <Months budget={budget} />
+                    {/** A budget in force shows its warning under the bar instead. */}
+                    {budget.warning_threshold !== null && !budget.progress ? (
+                        <>
                             <span aria-hidden>·</span>
-                            <Months budget={budget} />
-                            {/** A budget in force shows its warning under the bar instead. */}
-                            {budget.warning_threshold !== null && !budget.progress ? (
-                                <>
-                                    <span aria-hidden>·</span>
-                                    <span>
-                                        {t("Warning at :percentage", {
-                                            percentage: formatPercentage(budget.warning_threshold, currentLocale()),
-                                        })}
-                                    </span>
-                                </>
-                            ) : null}
-                        </ItemDescription>
-                        {budget.progress ? (
-                            <BudgetProgress
-                                className="max-w-sm"
-                                currency={budget.currency}
-                                progress={budget.progress}
-                            />
-                        ) : null}
-                    </ItemContent>
-                    {is_locked ? null : (
-                        <ItemActions className="flex-wrap justify-end">
-                            <ActionsMenu budget={budget} team={team} />
-                        </ItemActions>
-                    )}
-                </Item>
-            ))}
-        </ItemGroup>
+                            <span>
+                                {t("Warning at :percentage", {
+                                    percentage: formatPercentage(budget.warning_threshold, currentLocale()),
+                                })}
+                            </span>
+                        </>
+                    ) : null}
+                </ItemDescription>
+                {budget.progress ? (
+                    <BudgetProgress className="max-w-sm" currency={budget.currency} progress={budget.progress} />
+                ) : null}
+                {budget.allocation ? <Allocation budget={budget} /> : null}
+            </ItemContent>
+            {is_locked ? null : (
+                <ItemActions className="flex-wrap justify-end">
+                    <ActionsMenu budget={budget} team={team} />
+                </ItemActions>
+            )}
+        </Item>
+    );
+};
+
+/**
+ * What a category budget's sub-budgets leave for the rest of the
+ * category this month. The parts may claim more than the budget,
+ * since nesting never caps them, and that reads as a warning.
+ */
+const Allocation = ({ budget }: { budget: BudgetRow }) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const { currentLocale, t } = useLaravelReactI18n();
+
+    /**
+     * Mask the amounts while balances are hidden.
+     */
+    const mask = useBalances().mask;
+
+    if (!budget.allocation) {
+        return null;
+    }
+
+    const isOver = Number(budget.allocation.unallocated) < 0;
+
+    // The excess is written as a positive figure.
+    const rest = isOver ? budget.allocation.unallocated.slice(1) : budget.allocation.unallocated;
+
+    return (
+        <p className={cn("text-xs tabular-nums", isOver ? "text-destructive font-medium" : "text-muted-foreground")}>
+            {isOver
+                ? t("parts claim :amount more than the budget", {
+                      amount: mask(formatAmount(rest, currentLocale(), budget.currency, { symbol: false })),
+                  })
+                : t(":amount unallocated", {
+                      amount: mask(formatAmount(rest, currentLocale(), budget.currency, { symbol: false })),
+                  })}
+        </p>
     );
 };
 

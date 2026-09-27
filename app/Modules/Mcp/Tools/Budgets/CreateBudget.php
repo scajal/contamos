@@ -31,7 +31,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
  * tags.
  */
 #[Name('create_budget')]
-#[Description('Set a monthly budget on a category or a tag (pass exactly one) in one currency the team holds, from `from_month` and optionally until `until_month` (both "YYYY-MM", inclusive). Months may not overlap another budget on the same target and currency. Optionally pass `warning_threshold` (1 to 99) to be warned once the month has used that percentage. Needs a plan with budgets.')]
+#[Description('Set a monthly budget on a category or a tag (pass exactly one) in one currency the team holds, from `from_month` and optionally until `until_month` (both "YYYY-MM", inclusive). Months may not overlap another budget on the same target and currency. A tag budget may pass `parent`, the id of a category budget in the same currency, to sit under it as a sub-budget: it then only counts the tag within that category, and the parent is not capped by its sub-budgets. Optionally pass `warning_threshold` (1 to 99) to be warned once the month has used that percentage. Needs a plan with budgets.')]
 #[IsDestructive(false)]
 class CreateBudget extends Tool
 {
@@ -55,6 +55,8 @@ class CreateBudget extends Tool
                 ->description('The category to budget. Pass this or `tag`.'),
             'tag' => $schema->string()
                 ->description('The id or exact name of the tag to budget, as listed by `list_tags`. Pass this or `category`.'),
+            'parent' => $schema->string()
+                ->description('The id of a category budget in the same currency to nest this tag budget under, as listed by `list_budgets`. Only with `tag`.'),
             'amount' => $schema->string()
                 ->description('The monthly amount, as a decimal string such as "500" or "1250.50".')
                 ->required(),
@@ -84,6 +86,7 @@ class CreateBudget extends Tool
 
             $period = new BudgetPeriod;
             $currencyKey = $period->currency()->getForeignKeyName();
+            $parentKey = $period->parent()->getForeignKeyName();
             $tagKey = $period->tag()->getForeignKeyName();
 
             // A budget follows exactly one target.
@@ -102,6 +105,7 @@ class CreateBudget extends Tool
                 'amount' => is_int($amount = $request->get('amount')) || is_float($amount) ? (string) $amount : $amount,
                 $currencyKey => $this->currencyByCode($request->get('currency'))->getKey(),
                 'from_month' => $request->get('from_month'),
+                $parentKey => $request->get('parent'),
                 'until_month' => $request->get('until_month'),
                 'warning_threshold' => $request->get('warning_threshold'),
                 'target_kind' => $tag instanceof \App\Modules\Core\Finance\Models\Team\Tag ? BudgetTargetKind::Tag->value : BudgetTargetKind::Category->value,
@@ -111,14 +115,14 @@ class CreateBudget extends Tool
             $validated = $request->merge($input)->validate(
                 $this->budgetStoreRules($team, $input),
                 [],
-                [$currencyKey => 'currency', $tagKey => 'tag'],
+                [$currencyKey => 'currency', $parentKey => 'parent', $tagKey => 'tag'],
             );
 
             // Open the period on the chosen target.
             $budget = $createBudgetPeriod->for($team)
                 ->targeting($tag ?? Category::from($this->text($validated['category'])))
                 ->by($user)
-                ->using($this->validatedOnly($validated, ['amount', $currencyKey, 'from_month', 'until_month', 'warning_threshold']));
+                ->using($this->validatedOnly($validated, ['amount', $currencyKey, 'from_month', $parentKey, 'until_month', 'warning_threshold']));
 
             return Response::structured(['budget' => $this->presentOneBudget($team, $budget)]);
         });

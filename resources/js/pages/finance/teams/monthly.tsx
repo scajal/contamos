@@ -11,6 +11,7 @@ import {
     CircleDashedIcon,
     LockIcon,
     PlusIcon,
+    TagIcon,
     WalletIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -103,6 +104,17 @@ type CategoryRow = {
     expenses: string;
     income: string;
     net: string;
+    parts: Array<CategoryPart>;
+};
+
+/**
+ * A sub-budget sitting under a budgeted category: a tag budget
+ * that only counts the tag within that category.
+ */
+type CategoryPart = {
+    budget: BudgetProgressFigures;
+    id: string;
+    name: string;
 };
 
 /**
@@ -658,6 +670,21 @@ const CategoryTable = ({ figure }: { figure: Figure }) => {
                                         currency={figure.currency}
                                         progress={row.budget}
                                     />
+                                ) : null}
+                                {/** The sub-budgets sitting under the category's
+                                 * budget read beneath it, each on its own bar. */}
+                                {row.parts.length > 0 ? (
+                                    <ul className="mt-2 flex max-w-xs flex-col gap-2 border-l pl-3">
+                                        {row.parts.map((part) => (
+                                            <li className="flex flex-col gap-1" key={part.id}>
+                                                <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                                                    <TagIcon className="size-3 shrink-0" />
+                                                    <span className="truncate">{part.name}</span>
+                                                </span>
+                                                <BudgetProgress currency={figure.currency} progress={part.budget} />
+                                            </li>
+                                        ))}
+                                    </ul>
                                 ) : null}
                             </TableCell>
                             <FigureAmount amount={row.income} className="text-success" currency={figure.currency} />

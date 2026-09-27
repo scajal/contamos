@@ -1,7 +1,7 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { format, parse, startOfMonth } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { BellIcon, CalendarIcon, CoinsIcon } from "lucide-react";
+import { BellIcon, CalendarIcon, CoinsIcon, FolderTreeIcon } from "lucide-react";
 import { useState } from "react";
 
 import { CategoryIcon } from "@/components/category-icon";
@@ -17,6 +17,7 @@ import { formatMonth, markFormDirty } from "@/lib/utils";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
 import { BudgetTargetKind } from "@/types/app/modules/core/finance/enums/budget-period/budget-target-kind";
 import { Category } from "@/types/app/modules/core/finance/enums/transaction/category";
+import { BudgetParentOption } from "@/types/app/modules/core/finance/models/team/budget-period";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 
 /**
@@ -34,6 +35,7 @@ type FormProps = Partial<{
     category: Category | null;
     currency_id: string;
     from_month: string;
+    parent_id: string | null;
     tag_id: string | null;
     target_kind: BudgetTargetKind;
     until_month: string | null;
@@ -45,11 +47,13 @@ type Props = FormComponentSlotProps<FormProps> & {
     categories?: Array<CategoryOption>;
     currencies: Array<Currency>;
     defaultValues?: FormProps;
+    /** The category budgets a tag budget may sit under. */
+    parents?: Array<BudgetParentOption>;
     /** A period keeps the target it was opened on, so an edit hides the picker. */
     tags?: Array<Tag>;
 };
 
-export const Fields = ({ categories, currencies, defaultValues, errors, invalid, tags }: Props) => {
+export const Fields = ({ categories, currencies, defaultValues, errors, invalid, parents, tags }: Props) => {
     /**
      * Translate the provided string
      * to the current locale.
@@ -75,11 +79,24 @@ export const Fields = ({ categories, currencies, defaultValues, errors, invalid,
     const [tagId, setTagId] = useState<string | null>(defaultValues?.tag_id ?? null);
 
     /**
+     * The category budget the tag budget sits under, kept in
+     * state so the hidden input submits it and the form reads
+     * as dirty.
+     */
+    const [parentId, setParentId] = useState<string | null>(defaultValues?.parent_id ?? null);
+
+    /**
      * The currency the budget is expressed in.
      */
     const [currencyId, setCurrencyId] = useState<string | null>(
         defaultValues?.currency_id ?? currencies[0]?.id ?? null,
     );
+
+    /**
+     * The category budgets the tag budget may sit under: only
+     * the ones in the currency picked count the same money.
+     */
+    const parentOptions = (parents ?? []).filter((one) => one.currency_id === currencyId);
 
     /**
      * The currency the amount is entered in, so the field can
@@ -203,6 +220,9 @@ export const Fields = ({ categories, currencies, defaultValues, errors, invalid,
                 <Select
                     onValueChange={(value: string | null) => {
                         setCurrencyId(value);
+                        // A parent in another currency counts other
+                        // money, so a currency switch drops it.
+                        setParentId(null);
                         markFormDirty();
                     }}
                     value={currencyId}
@@ -255,6 +275,47 @@ export const Fields = ({ categories, currencies, defaultValues, errors, invalid,
                 {invalid("amount") && <FieldError>{errors.amount}</FieldError>}
             </Field>
 
+            {/** Parent */}
+            {parents && targetKind === "tag" ? (
+                <Field data-invalid={invalid("parent_id") || undefined}>
+                    <FieldLabel htmlFor="budget-parent">{t("Part of")}</FieldLabel>
+                    <input name="parent_id" type="hidden" value={parentId ?? ""} />
+                    <Select
+                        onValueChange={(value: string | null) => {
+                            setParentId(value);
+                            markFormDirty();
+                        }}
+                        value={parentId}
+                    >
+                        <SelectTrigger className="w-full" id="budget-parent">
+                            <SelectValue>
+                                {(value: string | null) => {
+                                    const parent = parentOptions.find((one) => one.id === value);
+
+                                    return parent ? <ParentLabel parent={parent} /> : t("On its own");
+                                }}
+                            </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectItem value={null}>{t("On its own")}</SelectItem>
+                                {parentOptions.map((one) => (
+                                    <SelectItem key={one.id} value={one.id}>
+                                        <ParentLabel parent={one} />
+                                    </SelectItem>
+                                ))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                    <FieldDescription>
+                        {t(
+                            "Nest this tag budget under a category budget to read it as a share of it. It then only counts the tag within that category, and the category budget is not capped by its parts.",
+                        )}
+                    </FieldDescription>
+                    {invalid("parent_id") && <FieldError>{errors.parent_id}</FieldError>}
+                </Field>
+            ) : null}
+
             {/** First month */}
             <Field data-invalid={invalid("from_month") || undefined}>
                 <FieldLabel htmlFor="budget-from-month">{t("First month")}</FieldLabel>
@@ -306,6 +367,33 @@ export const Fields = ({ categories, currencies, defaultValues, errors, invalid,
                 {invalid("warning_threshold") && <FieldError>{errors.warning_threshold}</FieldError>}
             </Field>
         </FieldGroup>
+    );
+};
+
+/**
+ * A category budget named the way the parent picker lists it:
+ * its category and the month it runs from.
+ */
+const ParentLabel = ({ parent }: { parent: BudgetParentOption }) => {
+    /**
+     * Translate the provided string
+     * to the current locale.
+     */
+    const { currentLocale, t } = useLaravelReactI18n();
+
+    return (
+        <span className="flex min-w-0 items-center gap-2">
+            <CategoryIcon category={parent.category.value} className="size-4 shrink-0" />
+            <span className="truncate">{parent.category.label}</span>
+            <span className="text-muted-foreground truncate text-xs">
+                {t("From :month", {
+                    month: formatMonth(toMonth(parent.from_month), currentLocale(), {
+                        month: "short",
+                        year: "numeric",
+                    }),
+                })}
+            </span>
+        </span>
     );
 };
 

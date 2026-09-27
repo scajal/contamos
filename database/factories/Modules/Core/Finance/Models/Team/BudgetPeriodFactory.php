@@ -91,6 +91,24 @@ class BudgetPeriodFactory extends Factory
     }
 
     /**
+     * Indicate that the period is a sub-budget of the given
+     * category period: a tag budget of the parent's own team
+     * and currency, on a fresh tag of that team.
+     */
+    public function within(BudgetPeriod $parent): static
+    {
+        $period = new BudgetPeriod;
+
+        return $this->state([
+            'category' => null,
+            $period->currency()->getForeignKeyName() => $parent->getAttribute($period->currency()->getForeignKeyName()),
+            $period->parent()->getForeignKeyName() => $parent->getKey(),
+            $period->tag()->getForeignKeyName() => $this->tagOfTeam(),
+            $period->team()->getForeignKeyName() => $parent->getAttribute($period->team()->getForeignKeyName()),
+        ]);
+    }
+
+    /**
      * Indicate that the period ran its course before the
      * current month because another period took over.
      */

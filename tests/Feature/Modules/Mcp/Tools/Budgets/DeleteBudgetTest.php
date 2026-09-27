@@ -13,7 +13,7 @@ use App\Modules\Mcp\Tools\Budgets\DeleteBudget;
  */
 it('deletes a budget period of the team', function (): void {
     [$user, $team] = mcpMember();
-    $budget = BudgetPeriod::factory()->running()->forCategory(Category::Food)->for($team)->create();
+    $budget = BudgetPeriod::factory()->running()->forCategory(Category::Groceries)->for($team)->create();
 
     ContamosServer::actingAs($user)
         ->tool(DeleteBudget::class, ['team' => $team->slug, 'budget' => $budget->getKey()])
@@ -24,7 +24,7 @@ it('deletes a budget period of the team', function (): void {
 
 it('does not find a budget of another team', function (): void {
     [$user, $team] = mcpMember();
-    $foreign = BudgetPeriod::factory()->running()->forCategory(Category::Food)->for(Team::factory())->create();
+    $foreign = BudgetPeriod::factory()->running()->forCategory(Category::Groceries)->for(Team::factory())->create();
 
     ContamosServer::actingAs($user)
         ->tool(DeleteBudget::class, ['team' => $team->slug, 'budget' => $foreign->getKey()])

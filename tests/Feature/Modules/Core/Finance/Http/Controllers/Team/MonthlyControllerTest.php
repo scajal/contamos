@@ -593,8 +593,8 @@ describe('categories', function (): void {
         $month = CarbonImmutable::now()->startOfMonth()->addDays(3);
 
         Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '900', 'category' => Category::Housing, 'occurred_at' => $month]);
-        Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '40', 'category' => Category::Food, 'occurred_at' => $month]);
-        Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '60', 'category' => Category::Food, 'occurred_at' => $month]);
+        Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '40', 'category' => Category::Groceries, 'occurred_at' => $month]);
+        Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '60', 'category' => Category::Groceries, 'occurred_at' => $month]);
         Transaction::factory()->income()->for($account)->for($peso)->create(['amount' => '1200', 'category' => Category::Salary, 'occurred_at' => $month]);
 
         $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
@@ -608,7 +608,7 @@ describe('categories', function (): void {
                     ->where('figures.0.categories', fn (Collection $rows): bool => $rows
                         ->sum(fn (array $row): float => (float) $row['income']) === 1200.0)
                     ->where('figures.0.categories', fn (Collection $rows): bool => (float) ($rows
-                        ->firstWhere('category', Category::Food->value)['net'] ?? 0) === -100.0)));
+                        ->firstWhere('category', Category::Groceries->value)['net'] ?? 0) === -100.0)));
     });
 
     it('orders the rows the way the category list reads, with other last', function (): void {
@@ -620,7 +620,7 @@ describe('categories', function (): void {
         // Recorded biggest first, so an order by amount would
         // hand them back exactly the other way around.
         Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '900', 'category' => Category::Other, 'occurred_at' => $month]);
-        Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '400', 'category' => Category::Food, 'occurred_at' => $month]);
+        Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '400', 'category' => Category::Groceries, 'occurred_at' => $month]);
         Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '10', 'category' => Category::Housing, 'occurred_at' => $month]);
 
         $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
@@ -628,7 +628,7 @@ describe('categories', function (): void {
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->where('figures.0.categories.0.category', Category::Housing->value)
-                    ->where('figures.0.categories.1.category', Category::Food->value)
+                    ->where('figures.0.categories.1.category', Category::Groceries->value)
                     ->where('figures.0.categories.2.category', Category::Other->value)));
     });
 
@@ -661,14 +661,14 @@ describe('categories', function (): void {
         Transaction::factory()->transferOut()->for($origin)->for($peso)->for($transfer)->create(['amount' => '25', 'occurred_at' => $month]);
         Transaction::factory()->transferIn()->for($destination)->for($peso)->for($transfer)->create(['amount' => '25', 'occurred_at' => $month]);
         Transaction::factory()->openingBalance()->for($origin)->for($peso)->create(['amount' => '700', 'occurred_at' => $month]);
-        Transaction::factory()->expense()->for($origin)->for($peso)->for($transfer)->create(['amount' => '1.50', 'category' => Category::Financial, 'occurred_at' => $month]);
+        Transaction::factory()->expense()->for($origin)->for($peso)->for($transfer)->create(['amount' => '1.50', 'category' => Category::TaxesAndFees, 'occurred_at' => $month]);
 
         $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
             ->assertOk()
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('figures.0.categories', 1)
-                    ->where('figures.0.categories.0.category', Category::Financial->value)
+                    ->where('figures.0.categories.0.category', Category::TaxesAndFees->value)
                     ->where('figures.0.categories.0.expenses', fn (mixed $amount): bool => (float) $amount === 1.5)));
     });
 
@@ -679,7 +679,7 @@ describe('categories', function (): void {
         $inactive = Account::factory()->inactive()->for($team)->create();
         $month = CarbonImmutable::now()->startOfMonth()->addDays(3);
 
-        Transaction::factory()->expense()->for($active)->for($peso)->create(['amount' => '100', 'category' => Category::Food, 'occurred_at' => $month]);
+        Transaction::factory()->expense()->for($active)->for($peso)->create(['amount' => '100', 'category' => Category::Groceries, 'occurred_at' => $month]);
         Transaction::factory()->expense()->for($active)->for($peso)->create(['amount' => '500', 'category' => Category::Housing, 'occurred_at' => $month->subMonth()]);
         Transaction::factory()->expense()->for($inactive)->for($peso)->create(['amount' => '900', 'category' => Category::Transport, 'occurred_at' => $month]);
 
@@ -688,7 +688,7 @@ describe('categories', function (): void {
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                     ->has('figures.0.categories', 1)
-                    ->where('figures.0.categories.0.category', Category::Food->value)
+                    ->where('figures.0.categories.0.category', Category::Groceries->value)
                     ->where('figures.0.categories.0.expenses', fn (mixed $amount): bool => (float) $amount === 100.0)));
     });
 
@@ -699,7 +699,7 @@ describe('categories', function (): void {
         $account = Account::factory()->active()->for($team)->create();
         $month = CarbonImmutable::now()->startOfMonth()->addDays(3);
 
-        Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '100', 'category' => Category::Food, 'occurred_at' => $month]);
+        Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '100', 'category' => Category::Groceries, 'occurred_at' => $month]);
         Transaction::factory()->expense()->for($account)->for($dollar)->create(['amount' => '20', 'category' => Category::Transport, 'occurred_at' => $month]);
 
         $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
@@ -709,7 +709,7 @@ describe('categories', function (): void {
                     ->has('figures', 2)
                     ->where('figures.0.currency.code', 'ARS')
                     ->has('figures.0.categories', 1)
-                    ->where('figures.0.categories.0.category', Category::Food->value)
+                    ->where('figures.0.categories.0.category', Category::Groceries->value)
                     ->where('figures.1.currency.code', 'USD')
                     ->has('figures.1.categories', 1)
                     ->where('figures.1.categories.0.category', Category::Transport->value)));
@@ -996,11 +996,11 @@ describe('budgets', function (): void {
 
     it('reports what the month made of a budgeted category', function () use ($budgetingTeam): void {
         [$team, $currency, $account] = $budgetingTeam();
-        BudgetPeriod::factory()->running()->forCategory(Category::Food)->for($team)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->running()->forCategory(Category::Groceries)->for($team)->for($currency)->create(['amount' => '500']);
 
         Transaction::factory()->expense()->for($account)->for($currency)->create([
             'amount' => '120',
-            'category' => Category::Food,
+            'category' => Category::Groceries,
             'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
         ]);
 
@@ -1009,12 +1009,68 @@ describe('budgets', function (): void {
             ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
                 ->where('can_budget', true)
                 ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
-                    ->where('figures.0.categories.0.category', Category::Food->value)
+                    ->where('figures.0.categories.0.category', Category::Groceries->value)
                     ->where('figures.0.categories.0.budget.amount', fn (mixed $value): bool => (float) $value === 500.0)
                     ->where('figures.0.categories.0.budget.spent', fn (mixed $value): bool => (float) $value === 120.0)
                     ->where('figures.0.categories.0.budget.income', fn (mixed $value): bool => (float) $value === 0.0)
                     ->where('figures.0.categories.0.budget.remaining', fn (mixed $value): bool => (float) $value === 380.0)
                     ->where('figures.0.categories.0.budget.percentage', fn (mixed $value): bool => (float) $value === 24.0)));
+    });
+
+    it('lists the sub-budgets of a budgeted category under its row', function () use ($budgetingTeam): void {
+        [$team, $currency, $account, $tag] = $budgetingTeam();
+        $parent = BudgetPeriod::factory()->running()->forCategory(Category::Groceries)->for($team)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->within($parent)->running()->create(['amount' => '200', 'tag_id' => $tag->getKey()]);
+        $day = CarbonImmutable::now()->startOfMonth()->addDay();
+
+        Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '120',
+            'category' => Category::Groceries,
+            'occurred_at' => $day,
+        ])->attachTags([$tag->getKey()]);
+        Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '80',
+            'category' => Category::Transport,
+            'occurred_at' => $day,
+        ])->attachTags([$tag->getKey()]);
+
+        $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    ->where('figures.0.categories.0.category', Category::Groceries->value)
+                    ->has('figures.0.categories.0.parts', 1)
+                    ->where('figures.0.categories.0.parts.0.id', $tag->getKey())
+                    ->where('figures.0.categories.0.parts.0.name', 'Food')
+                    ->where('figures.0.categories.0.parts.0.budget.amount', fn (mixed $value): bool => (float) $value === 200.0)
+                    ->where('figures.0.categories.0.parts.0.budget.spent', fn (mixed $value): bool => (float) $value === 120.0)
+                    ->where('figures.0.categories.0.parts.0.budget.remaining', fn (mixed $value): bool => (float) $value === 80.0)
+                    ->where('figures.0.categories.1.category', Category::Transport->value)
+                    ->where('figures.0.categories.1.parts', [])
+                    // The tag breakdown keeps counting the tag across categories.
+                    ->where('figures.0.tags.0.expenses', fn (mixed $value): bool => (float) $value === 200.0)));
+    });
+
+    it('lists the sub-budgets of a budgeted category the month has no figures for', function () use ($budgetingTeam): void {
+        [$team, $currency, $account] = $budgetingTeam();
+        $parent = BudgetPeriod::factory()->running()->forCategory(Category::Groceries)->for($team)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->within($parent)->running()->create(['amount' => '200']);
+
+        // The month has movements, just none under the budgeted category.
+        Transaction::factory()->expense()->for($account)->for($currency)->create([
+            'amount' => '40',
+            'category' => Category::Housing,
+            'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
+        ]);
+
+        $this->get(route('finance.teams.monthly.index', ['team' => $team->getRouteKey()]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                ->loadDeferredProps(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
+                    // Housing reads first, so the quiet Food budget is the second row.
+                    ->where('figures.0.categories.1.category', Category::Groceries->value)
+                    ->has('figures.0.categories.1.parts', 1)
+                    ->where('figures.0.categories.1.parts.0.budget.spent', fn (mixed $value): bool => (float) $value === 0.0)));
     });
 
     it('leaves a category row without a budget the tag budget follows', function () use ($budgetingTeam): void {
@@ -1023,7 +1079,7 @@ describe('budgets', function (): void {
 
         $spent = Transaction::factory()->expense()->for($account)->for($currency)->create([
             'amount' => '120',
-            'category' => Category::Food,
+            'category' => Category::Groceries,
             'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
         ]);
         $spent->attachTags([$tag->getKey()]);
@@ -1059,11 +1115,11 @@ describe('budgets', function (): void {
 
     it('omits the category budget blocks for a free team', function () use ($budgetingTeam): void {
         [$team, $currency, $account] = $budgetingTeam(false);
-        BudgetPeriod::factory()->running()->forCategory(Category::Food)->for($team)->for($currency)->create(['amount' => '500']);
+        BudgetPeriod::factory()->running()->forCategory(Category::Groceries)->for($team)->for($currency)->create(['amount' => '500']);
 
         Transaction::factory()->expense()->for($account)->for($currency)->create([
             'amount' => '120',
-            'category' => Category::Food,
+            'category' => Category::Groceries,
             'occurred_at' => CarbonImmutable::now()->startOfMonth()->addDay(),
         ]);
 

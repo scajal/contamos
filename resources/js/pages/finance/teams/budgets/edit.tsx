@@ -16,16 +16,17 @@ import { Spinner } from "@/components/ui/spinner";
 import { trimTrailingZeros } from "@/lib/transactions";
 import budgets from "@/routes/finance/teams/budgets";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
-import { BudgetRow } from "@/types/app/modules/core/finance/models/team/budget-period";
+import { BudgetParentOption, BudgetRow } from "@/types/app/modules/core/finance/models/team/budget-period";
 
 import { Fields } from "./_components/fields";
 
 type PageProps = {
     budget: BudgetRow;
     currencies: Array<Currency>;
+    parents: Array<BudgetParentOption>;
 };
 
-export default function Edit({ budget, currencies }: PageProps) {
+export default function Edit({ budget, currencies, parents }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -67,9 +68,12 @@ export default function Edit({ budget, currencies }: PageProps) {
                                                 amount: trimTrailingZeros(budget.amount),
                                                 currency_id: budget.currency.id,
                                                 from_month: budget.from_month,
+                                                parent_id: budget.parent_id,
+                                                target_kind: budget.target.kind,
                                                 until_month: budget.until_month,
                                                 warning_threshold: budget.warning_threshold?.toString() ?? "",
                                             }}
+                                            parents={budget.target.kind === "tag" ? (parents ?? []) : undefined}
                                             {...formProps}
                                         />
                                     </div>

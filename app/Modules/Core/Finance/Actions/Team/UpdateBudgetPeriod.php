@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Core\Finance\Actions\Team;
 
 use App\Modules\Core\Finance\Actions\Team\Concerns\GuardsBudgetPeriodOverlap;
+use App\Modules\Core\Finance\Actions\Team\Concerns\NestsBudgetPeriods;
 use App\Modules\Core\Finance\Actions\Team\Concerns\ReadsBudgetMonths;
 use App\Modules\Core\Finance\Actions\Team\Concerns\RearmsBudgetAlerts;
 use App\Modules\Core\Finance\Models\Team\BudgetPeriod;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 class UpdateBudgetPeriod
 {
     use GuardsBudgetPeriodOverlap;
+    use NestsBudgetPeriods;
     use ReadsBudgetMonths;
     use RearmsBudgetAlerts;
 
@@ -52,11 +54,13 @@ class UpdateBudgetPeriod
     }
 
     /**
-     * Change the period's amount, currency, months or warning
-     * threshold, keeping the target's budget free of
-     * overlapping stretches. What the period follows is
+     * Change the period's amount, currency, months, warning
+     * threshold or parent, keeping the target's budget free
+     * of overlapping stretches. What the period follows is
      * fixed: a budget moved to another target is a new
-     * budget, not an edit.
+     * budget, not an edit. Which category budget a tag
+     * budget sits under is not, since nesting is only a
+     * way of reading it.
      *
      * @param  array<string, mixed>  $attributes
      */
@@ -70,6 +74,7 @@ class UpdateBudgetPeriod
         $team = $this->team;
         $target = $this->guardTarget($team, $period->target());
         $currencyKey = $period->currency()->getForeignKeyName();
+        $parentKey = $period->parent()->getForeignKeyName();
 
         $currencyId = $this->currencyId($attributes[$currencyKey] ?? $period->getAttribute($currencyKey));
 
@@ -85,16 +90,27 @@ class UpdateBudgetPeriod
             ? $this->warningThreshold($attributes['warning_threshold'])
             : $period->warning_threshold;
 
+        // The parent is read against the currency the period
+        // ends up in, since a currency change may move it out
+        // from under a parent in the old one.
+        $parent = $this->guardParent(
+            $team,
+            $target,
+            $currencyId,
+            array_key_exists($parentKey, $attributes) ? $attributes[$parentKey] : $period->getAttribute($parentKey),
+        );
+
         // The new months must stay clear of the target's other
         // periods in the same currency.
         $this->guardAgainstOverlap($team, $target, $currencyId, $from, $until, $period);
 
         // Everything the change writes reads as one entry in
         // the team's activity log.
-        return TeamActivity::within(fn (): BudgetPeriod => DB::transaction(function () use ($period, $attributes, $currencyKey, $currencyId, $from, $until, $threshold): BudgetPeriod {
+        return TeamActivity::within(fn (): BudgetPeriod => DB::transaction(function () use ($period, $parent, $attributes, $currencyKey, $currencyId, $from, $until, $threshold): BudgetPeriod {
             $previousAmount = (string) $period->amount;
 
             $period->update([
+                ...$this->parentAttributes($parent),
                 'amount' => $attributes['amount'] ?? $period->amount,
                 $currencyKey => $currencyId,
                 'from_month' => $from,

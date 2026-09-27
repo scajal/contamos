@@ -27,15 +27,15 @@ beforeEach(function (): void {
     $this->food = Tag::factory()->active()->for($this->team)->create(['name' => 'Food']);
     $this->day = CarbonImmutable::parse('2026-08-10 12:00:00');
 
-    $this->groceries = $groceries = Transaction::factory()->expense()->for($this->bank)->for($this->peso)->create(['amount' => '40', 'category' => Category::Food, 'occurred_at' => $this->day]);
+    $this->groceries = $groceries = Transaction::factory()->expense()->for($this->bank)->for($this->peso)->create(['amount' => '40', 'category' => Category::Groceries, 'occurred_at' => $this->day]);
     $groceries->attachTags([$this->food->getKey()]);
-    Transaction::factory()->expense()->for($this->cash)->for($this->peso)->create(['amount' => '60', 'category' => Category::Food, 'occurred_at' => $this->day]);
+    Transaction::factory()->expense()->for($this->cash)->for($this->peso)->create(['amount' => '60', 'category' => Category::Groceries, 'occurred_at' => $this->day]);
     Transaction::factory()->income()->for($this->bank)->for($this->peso)->create(['amount' => '1000', 'category' => Category::Salary, 'occurred_at' => $this->day]);
-    Transaction::factory()->expense()->for($this->bank)->for($this->dollar)->create(['amount' => '5', 'category' => Category::Food, 'occurred_at' => $this->day]);
+    Transaction::factory()->expense()->for($this->bank)->for($this->dollar)->create(['amount' => '5', 'category' => Category::Groceries, 'occurred_at' => $this->day]);
 
     // Outside the range, on an archived account and a transfer
     // leg: none of them counts.
-    Transaction::factory()->expense()->for($this->bank)->for($this->peso)->create(['amount' => '999', 'category' => Category::Food, 'occurred_at' => $this->day->addMonth()]);
+    Transaction::factory()->expense()->for($this->bank)->for($this->peso)->create(['amount' => '999', 'category' => Category::Groceries, 'occurred_at' => $this->day->addMonth()]);
     Transaction::factory()->expense()->for(Account::factory()->inactive()->for($this->team)->create())->for($this->peso)->create(['amount' => '999', 'occurred_at' => $this->day]);
     Transaction::factory()->transferOut()->for($this->bank)->for($this->peso)->create(['amount' => '999', 'occurred_at' => $this->day]);
 });
@@ -64,7 +64,7 @@ it('totals by category, keeping currencies apart', function (): void {
             ->has('currencies', 2)
             ->where('currencies.0.currency', 'ARS')
             ->has('currencies.0.groups', 2)
-            ->where('currencies.0.groups.0.category.value', Category::Food->value)
+            ->where('currencies.0.groups.0.category.value', Category::Groceries->value)
             ->where('currencies.0.groups.0.expenses', '100.00')
             ->where('currencies.0.groups.1.category.value', Category::Salary->value)
             ->where('currencies.0.groups.1.income', '1000.00')

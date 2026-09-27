@@ -29,7 +29,7 @@ it('reports the month\'s figures the way the monthly page does', function (): vo
 
     Transaction::factory()->income()->for($account)->for($peso)->create(['amount' => '50', 'category' => Category::Salary, 'occurred_at' => $month->subMonth()]);
     Transaction::factory()->income()->for($account)->for($peso)->create(['amount' => '100.50', 'category' => Category::Salary, 'occurred_at' => $month]);
-    $groceries = Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '30.25', 'category' => Category::Food, 'occurred_at' => $month]);
+    $groceries = Transaction::factory()->expense()->for($account)->for($peso)->create(['amount' => '30.25', 'category' => Category::Groceries, 'occurred_at' => $month]);
     $groceries->attachTags([$food->getKey()]);
 
     ContamosServer::actingAs($user)
@@ -56,7 +56,7 @@ it('reports the month\'s figures the way the monthly page does', function (): vo
             ->where('currencies.0.tags.0.budget.remaining', '469.75')
             ->where('currencies.0.tags.1.id', null)
             ->where('currencies.0.tags.1.income', '100.50')
-            ->where('currencies.0.categories', fn (Collection $rows): bool => $rows->firstWhere('category', Category::Food->value)['expenses'] === '30.25'
+            ->where('currencies.0.categories', fn (Collection $rows): bool => $rows->firstWhere('category', Category::Groceries->value)['expenses'] === '30.25'
                 && $rows->firstWhere('category', Category::Salary->value)['income'] === '100.50')
             ->etc());
 });

@@ -45,13 +45,52 @@ it('updates a category period without touching its target', function (): void {
         ->and($updated->until_month?->toDateString())->toBe('2026-12-01');
 });
 
+it('moves a tag period under a category period', function (): void {
+    $team = Team::factory()->create();
+    $parent = BudgetPeriod::factory()->forCategory(Category::Utilities)->for($team)->create();
+    $period = BudgetPeriod::factory()->forTag()->for($team)->create(['currency_id' => $parent->currency_id]);
+
+    $updated = new UpdateBudgetPeriod()->for($team)->using($period, ['parent_id' => $parent->getKey()]);
+
+    expect($updated->parent_id)->toBe($parent->getKey())
+        ->and($updated->scopedCategory())->toBe(Category::Utilities);
+});
+
+it('takes a sub-budget out from under its parent when the parent is cleared', function (): void {
+    $team = Team::factory()->create();
+    $parent = BudgetPeriod::factory()->forCategory(Category::Utilities)->for($team)->create();
+    $period = BudgetPeriod::factory()->within($parent)->create();
+
+    $updated = new UpdateBudgetPeriod()->for($team)->using($period, ['parent_id' => null]);
+
+    expect($updated->parent_id)->toBeNull();
+});
+
+it('keeps the parent when the change says nothing about it', function (): void {
+    $team = Team::factory()->create();
+    $parent = BudgetPeriod::factory()->forCategory(Category::Utilities)->for($team)->create();
+    $period = BudgetPeriod::factory()->within($parent)->create(['amount' => '100']);
+
+    $updated = new UpdateBudgetPeriod()->for($team)->using($period, ['amount' => '50']);
+
+    expect($updated->parent_id)->toBe($parent->getKey());
+});
+
+it('throws when a currency change leaves the parent behind', function (): void {
+    $team = Team::factory()->create();
+    $parent = BudgetPeriod::factory()->forCategory(Category::Utilities)->for($team)->create();
+    $period = BudgetPeriod::factory()->within($parent)->create();
+
+    new UpdateBudgetPeriod()->for($team)->using($period, ['currency_id' => Currency::factory()->create()->getKey()]);
+})->throws(Exception::class, 'A budget period cannot be nested under a budget in another currency.');
+
 it('throws when the new months overlap another period on the category', function (): void {
     $team = Team::factory()->create();
-    $running = BudgetPeriod::factory()->forCategory(Category::Food)->for($team)->create([
+    $running = BudgetPeriod::factory()->forCategory(Category::Groceries)->for($team)->create([
         'from_month' => '2026-01-01',
         'until_month' => '2026-03-01',
     ]);
-    BudgetPeriod::factory()->forCategory(Category::Food)->for($team)->create([
+    BudgetPeriod::factory()->forCategory(Category::Groceries)->for($team)->create([
         'currency_id' => $running->currency_id,
         'from_month' => '2026-04-01',
         'until_month' => null,
@@ -74,11 +113,11 @@ function alertedFoodBudget(array $sent): BudgetPeriod
     $account->currencies()->attach($currency);
     Transaction::factory()->expense()->for($account)->for($team)->create([
         'amount' => '90',
-        'category' => Category::Food,
+        'category' => Category::Groceries,
         'currency_id' => $currency->getKey(),
         'occurred_at' => CarbonImmutable::now(),
     ]);
-    $period = BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($team)->withWarningThreshold(80)->create([
+    $period = BudgetPeriod::factory()->forCategory(Category::Groceries)->running()->for($team)->withWarningThreshold(80)->create([
         'amount' => '100',
         'currency_id' => $currency->getKey(),
     ]);

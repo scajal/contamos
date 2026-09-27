@@ -73,7 +73,7 @@ it('emails the owner and admins of a team with activity last month', function ()
         'notification_preferences' => ['monthly_summary' => false],
     ]);
     [$account, $currency] = summaryAccount($team);
-    summaryMovement($account, $currency, 'expense', '40', Category::Food);
+    summaryMovement($account, $currency, 'expense', '40', Category::Groceries);
 
     $this->artisan('finance:send-monthly-summaries')
         ->expectsOutput('Sent the summary of 2026-08 to 1 teams.')
@@ -87,7 +87,7 @@ it('emails the owner and admins of a team with activity last month', function ()
 it('sends nothing to a team with no activity last month', function (string $occurredAt): void {
     [$owner, $team] = memberWithTeam();
     [$account, $currency] = summaryAccount($team);
-    summaryMovement($account, $currency, 'expense', '40', Category::Food, $occurredAt);
+    summaryMovement($account, $currency, 'expense', '40', Category::Groceries, $occurredAt);
 
     $this->artisan('finance:send-monthly-summaries')->assertSuccessful();
 
@@ -100,7 +100,7 @@ it('sends nothing to a team with no activity last month', function (string $occu
 it('sends nothing when last month only moved money on inactive accounts', function (): void {
     [$owner, $team] = memberWithTeam();
     [$account, $currency] = summaryAccount($team, isActive: false);
-    summaryMovement($account, $currency, 'expense', '40', Category::Food);
+    summaryMovement($account, $currency, 'expense', '40', Category::Groceries);
 
     $this->artisan('finance:send-monthly-summaries')
         ->expectsOutput('Sent the summary of 2026-08 to 0 teams.')
@@ -115,14 +115,14 @@ it('lists the five categories that spent the most per currency', function (): vo
     [$dollarAccount, $dollar] = summaryAccount($team, 'USD');
 
     foreach ([
-        [Category::Food, '10'], [Category::Housing, '60'], [Category::Health, '30'],
+        [Category::Groceries, '10'], [Category::Housing, '60'], [Category::Health, '30'],
         [Category::Transport, '50'], [Category::Utilities, '20'], [Category::Shopping, '40'],
     ] as [$category, $amount]) {
         summaryMovement($account, $peso, 'expense', $amount, $category);
     }
 
     summaryMovement($account, $peso, 'income', '500', Category::Salary);
-    summaryMovement($dollarAccount, $dollar, 'expense', '5', Category::Food);
+    summaryMovement($dollarAccount, $dollar, 'expense', '5', Category::Groceries);
     summaryMovement($dollarAccount, $dollar, 'income', '100', Category::Salary, '2026-07-10 12:00:00');
 
     $this->artisan('finance:send-monthly-summaries')->assertSuccessful();
@@ -131,7 +131,7 @@ it('lists the five categories that spent the most per currency', function (): vo
         [$pesos, $dollars] = $notification->currencies;
 
         return array_column($pesos['categories'], 'category') === ['housing', 'transport', 'shopping', 'health', 'utilities']
-            && array_column($dollars['categories'], 'category') === ['food']
+            && array_column($dollars['categories'], 'category') === ['groceries']
             && (float) $dollars['income'] === 0.0;
     });
 });
@@ -143,11 +143,11 @@ it('carries the figures the monthly report shows for the same month', function (
     [$dollarAccount, $dollar] = summaryAccount($team, 'USD');
     $tag = Tag::factory()->active()->for($team)->create(['name' => 'Trip']);
     $august = CarbonImmutable::parse('2026-08-01');
-    BudgetPeriod::factory()->singleMonth($august)->forCategory(Category::Food)->for($team)->for($peso)->create(['amount' => '100']);
+    BudgetPeriod::factory()->singleMonth($august)->forCategory(Category::Groceries)->for($team)->for($peso)->create(['amount' => '100']);
     BudgetPeriod::factory()->singleMonth($august)->forTag($tag)->for($team)->for($dollar)->create(['amount' => '50']);
 
     summaryMovement($account, $peso, 'income', '1000.50', Category::Salary);
-    summaryMovement($account, $peso, 'expense', '120.25', Category::Food);
+    summaryMovement($account, $peso, 'expense', '120.25', Category::Groceries);
     summaryMovement($account, $peso, 'expense', '30', Category::Transport);
     summaryMovement($dollarAccount, $dollar, 'expense', '20', Category::Shopping)->attachTags([$tag->getKey()]);
 
@@ -158,7 +158,7 @@ it('carries the figures the monthly report shows for the same month', function (
     [$pesos, $dollars] = $notification->currencies;
 
     expect($pesos['budgets'])->toHaveCount(1)
-        ->and($pesos['budgets'][0]['category'])->toBe('food')
+        ->and($pesos['budgets'][0]['category'])->toBe('groceries')
         ->and((float) $pesos['budgets'][0]['remaining'])->toBe(-20.25)
         ->and($dollars['budgets'][0]['tag'])->toBe('Trip');
 

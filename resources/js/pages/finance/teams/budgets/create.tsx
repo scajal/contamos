@@ -16,6 +16,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { type CategoryOption } from "@/lib/categories";
 import budgets from "@/routes/finance/teams/budgets";
 import { Currency } from "@/types/app/modules/core/catalog/models/currency";
+import { BudgetParentOption } from "@/types/app/modules/core/finance/models/team/budget-period";
 import { Tag } from "@/types/app/modules/core/finance/models/team/tag";
 
 import { Fields } from "./_components/fields";
@@ -24,10 +25,11 @@ type PageProps = {
     categories: Array<CategoryOption>;
     currencies: Array<Currency>;
     month: string;
+    parents: Array<BudgetParentOption>;
     tags: Array<Tag>;
 };
 
-export default function Create({ categories, currencies, month, tags }: PageProps) {
+export default function Create({ categories, currencies, month, parents, tags }: PageProps) {
     /**
      * Translate the provided string
      * to the current locale.
@@ -67,6 +69,7 @@ export default function Create({ categories, currencies, month, tags }: PageProp
                                             categories={categories ?? []}
                                             currencies={currencies ?? []}
                                             defaultValues={{ from_month: month, target_kind: "category" }}
+                                            parents={parents ?? []}
                                             tags={tags ?? []}
                                             {...formProps}
                                         />

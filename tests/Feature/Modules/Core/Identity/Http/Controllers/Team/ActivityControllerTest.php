@@ -441,7 +441,7 @@ describe('show', function (): void {
 
         $this->post(route('finance.teams.transactions.store', ['team' => $team->getRouteKey()]), [
             'amount' => '10.50',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'description' => 'Lunch',
             'occurred_at' => '2024-06-01 12:00:00',
             'quote' => '1',

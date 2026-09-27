@@ -62,6 +62,12 @@ trait ResolvesBudgetInputs
                 'date_format:'.self::MONTH_FORMAT,
                 $this->freeMonths($team, $input),
             ],
+            new BudgetPeriod()->parent()->getForeignKeyName() => [
+                'sometimes',
+                'nullable',
+                'string',
+                $this->nestableParent($team, $input),
+            ],
             'target_kind' => [
                 'required',
                 Rule::enum(BudgetTargetKind::class),
@@ -110,6 +116,12 @@ trait ResolvesBudgetInputs
                 'string',
                 'date_format:'.self::MONTH_FORMAT,
                 $this->freeMonths($team, $input, $budget),
+            ],
+            $budget->parent()->getForeignKeyName() => [
+                'sometimes',
+                'nullable',
+                'string',
+                $this->nestableParent($team, $input, $budget),
             ],
             'until_month' => [
                 'sometimes',
@@ -266,6 +278,50 @@ trait ResolvesBudgetInputs
 
                     return;
                 }
+            }
+        };
+    }
+
+    /**
+     * Reject a parent a budget cannot be nested under: one of
+     * another team, one that is not a category budget, one
+     * in another currency, or any parent at all on a
+     * category budget.
+     *
+     * @param  array<array-key, mixed>  $input
+     */
+    protected function nestableParent(Team $team, array $input, ?BudgetPeriod $except = null): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($team, $input, $except): void {
+            // Anything but a key has already been rejected by
+            // the rules that run before this one.
+            if (! is_string($value)) {
+                return;
+            }
+
+            // Only a tag budget can be a sub-budget.
+            if (! $this->budgetTarget($team, $input, $except) instanceof Tag) {
+                $fail(trans('Only a tag budget can be part of a category budget.'));
+
+                return;
+            }
+
+            /** @var \App\Modules\Core\Finance\Models\Team\BudgetPeriod|null $parent */
+            $parent = $team->budgets()->whereKey($value)->first();
+
+            // Only a category budget of the team can hold
+            // sub-budgets.
+            if (! $parent instanceof BudgetPeriod || ! $parent->category instanceof Category) {
+                $fail(trans('Choose one of the category budgets of your team.'));
+
+                return;
+            }
+
+            $currencyKey = $parent->currency()->getForeignKeyName();
+
+            // Both sides must count the same money.
+            if ($parent->getAttribute($currencyKey) !== ($input[$currencyKey] ?? null)) {
+                $fail(trans('The category budget must be in the same currency.'));
             }
         };
     }

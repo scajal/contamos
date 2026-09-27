@@ -90,7 +90,7 @@ it('records an expense and moves the balance down', function (): void {
             'type' => 'expense',
             'account' => $account->getKey(),
             'amount' => 40,
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => '2026-08-14',
             'quote' => '1',
         ])
@@ -113,7 +113,7 @@ it('infers the currency of a single-currency account and stores a date at noon',
             'type' => 'expense',
             'account' => $account->getKey(),
             'amount' => '10',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => '2026-08-14',
             'quote' => '1',
         ])
@@ -135,7 +135,7 @@ it('asks for the currency of an account holding several', function (): void {
             'type' => 'expense',
             'account' => $account->getKey(),
             'amount' => '10',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => '2026-08-14',
             'quote' => '1',
         ])
@@ -156,7 +156,7 @@ it('defaults the quote from the rate recorded for the date', function (): void {
             'type' => 'expense',
             'account' => $account->getKey(),
             'amount' => '10',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => '2026-08-14',
         ])
         ->assertOk();
@@ -284,7 +284,7 @@ it('requires the account and the date it happened', function (string $missing, s
         'type' => 'expense',
         'account' => $account->getKey(),
         'amount' => '10',
-        'category' => Category::Food->value,
+        'category' => Category::Groceries->value,
         'occurred_at' => '2026-08-14',
         'quote' => '1',
     ];
@@ -309,7 +309,7 @@ it('refuses an account of another team', function (): void {
             'type' => 'expense',
             'account' => $foreign->getKey(),
             'amount' => '10',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => '2026-08-14',
             'quote' => '1',
         ])
@@ -329,7 +329,7 @@ it('refuses an inactive account', function (): void {
             'type' => 'expense',
             'account' => $account->getKey(),
             'amount' => '10',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => '2026-08-14',
             'quote' => '1',
         ])
@@ -343,7 +343,7 @@ it('alerts when the expense pushes a budget past its warning threshold', functio
     [$user, $team] = mcpMember();
     $account = createTransactionToolAccount($team);
     $currency = $account->currencies()->sole();
-    $budget = BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($team)->withWarningThreshold(80)->create([
+    $budget = BudgetPeriod::factory()->forCategory(Category::Groceries)->running()->for($team)->withWarningThreshold(80)->create([
         'amount' => '100',
         $currency->getForeignKey() => $currency->getKey(),
     ]);
@@ -355,7 +355,7 @@ it('alerts when the expense pushes a budget past its warning threshold', functio
             'type' => 'expense',
             'account' => $account->getKey(),
             'amount' => '90',
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'occurred_at' => '2026-09-15',
             'quote' => '1',
         ])

@@ -9,34 +9,26 @@ use Filament\Support\Contracts\HasLabel;
 enum Category: string implements HasLabel
 {
     /**
-     * Represents schooling, courses and training.
+     * Represents going out, hobbies, streaming and the
+     * things done for fun.
+     */
+    case Entertainment = 'entertainment';
+
+    /**
+     * Represents restaurants, delivery and bars.
+     */
+    case EatingOut = 'eating_out';
+
+    /**
+     * Represents schooling, courses, books and training.
      */
     case Education = 'education';
 
     /**
-     * Represents what a family and the pets in it cost.
-     */
-    case FamilyAndPets = 'family_and_pets';
-
-    /**
-     * Represents insurance, taxes, interest and bank fees.
-     */
-    case Financial = 'financial';
-
-    /**
-     * Represents groceries and eating out.
-     */
-    case Food = 'food';
-
-    /**
-     * Represents money earned working for oneself.
+     * Represents invoices, side work and a business
+     * one runs.
      */
     case Freelance = 'freelance';
-
-    /**
-     * Represents money received as a present.
-     */
-    case Gift = 'gift';
 
     /**
      * Represents presents given and money donated.
@@ -44,24 +36,43 @@ enum Category: string implements HasLabel
     case GiftsAndDonations = 'gifts_and_donations';
 
     /**
-     * Represents doctors, medicines and health insurance.
+     * Represents money received as a present.
+     */
+    case GiftsReceived = 'gifts_received';
+
+    /**
+     * Represents the supermarket, the corner shop and
+     * the bakery.
+     */
+    case Groceries = 'groceries';
+
+    /**
+     * Represents doctors, pharmacy and therapy.
      */
     case Health = 'health';
 
     /**
-     * Represents rent, mortgage and home maintenance.
+     * Represents rent, mortgage, building fees, repairs
+     * and household help.
      */
     case Housing = 'housing';
 
     /**
-     * Represents returns on invested money.
+     * Represents health plans and the insurance on the
+     * car, the home and the rest.
      */
-    case Investments = 'investments';
+    case Insurance = 'insurance';
 
     /**
-     * Represents going out, hobbies and holidays.
+     * Represents interest, dividends and fund yields.
      */
-    case LeisureAndTravel = 'leisure_and_travel';
+    case InvestmentReturns = 'investment_returns';
+
+    /**
+     * Represents childcare, school fees and support to
+     * relatives.
+     */
+    case KidsAndFamily = 'kids_and_family';
 
     /**
      * Represents a movement that fits none of the
@@ -70,10 +81,20 @@ enum Category: string implements HasLabel
     case Other = 'other';
 
     /**
-     * Represents money paid back for something
-     * advanced earlier.
+     * Represents hair, cosmetics and the gym.
      */
-    case Reimbursement = 'reimbursement';
+    case PersonalCare = 'personal_care';
+
+    /**
+     * Represents what the pets eat and the vet.
+     */
+    case Pets = 'pets';
+
+    /**
+     * Represents returns, insurance payouts and money
+     * paid back for something advanced earlier.
+     */
+    case Refunds = 'refunds';
 
     /**
      * Represents money earned as an employee.
@@ -81,22 +102,33 @@ enum Category: string implements HasLabel
     case Salary = 'salary';
 
     /**
-     * Represents clothes, devices and everything else
-     * bought for oneself.
+     * Represents clothes, devices and home goods.
      */
     case Shopping = 'shopping';
 
     /**
-     * Represents recurring services billed
-     * month after month.
+     * Represents software and the services billed month
+     * after month.
      */
-    case SubscriptionsAndServices = 'subscriptions_and_services';
+    case Subscriptions = 'subscriptions';
 
     /**
-     * Represents fuel, tickets and keeping a
-     * vehicle on the road.
+     * Represents taxes, professional dues, bank fees
+     * and interest paid.
+     */
+    case TaxesAndFees = 'taxes_and_fees';
+
+    /**
+     * Represents fuel, transit, taxis, parking and
+     * keeping a vehicle on the road.
      */
     case Transport = 'transport';
+
+    /**
+     * Represents trips, lodging and tickets away
+     * from home.
+     */
+    case Travel = 'travel';
 
     /**
      * Represents electricity, water, gas, internet
@@ -110,31 +142,39 @@ enum Category: string implements HasLabel
     public function getLabel(): string
     {
         return match ($this) {
+            self::Entertainment => trans('Entertainment'),
+            self::EatingOut => trans('Eating out'),
             self::Education => trans('Education'),
-            self::FamilyAndPets => trans('Family & pets'),
-            self::Financial => trans('Financial'),
-            self::Food => trans('Food'),
-            self::Freelance => trans('Freelance'),
-            self::Gift => trans('Gift'),
+            self::Freelance => trans('Freelance & business'),
             self::GiftsAndDonations => trans('Gifts & donations'),
+            self::GiftsReceived => trans('Gifts received'),
+            self::Groceries => trans('Groceries'),
             self::Health => trans('Health'),
             self::Housing => trans('Housing'),
-            self::Investments => trans('Investments'),
-            self::LeisureAndTravel => trans('Leisure & travel'),
+            self::Insurance => trans('Insurance'),
+            self::InvestmentReturns => trans('Investment returns'),
+            self::KidsAndFamily => trans('Kids & family'),
             self::Other => trans('Other'),
-            self::Reimbursement => trans('Reimbursement'),
+            self::PersonalCare => trans('Personal care'),
+            self::Pets => trans('Pets'),
+            self::Refunds => trans('Refunds & reimbursements'),
             self::Salary => trans('Salary'),
             self::Shopping => trans('Shopping'),
-            self::SubscriptionsAndServices => trans('Subscriptions & services'),
+            self::Subscriptions => trans('Subscriptions'),
+            self::TaxesAndFees => trans('Taxes & fees'),
             self::Transport => trans('Transport'),
+            self::Travel => trans('Travel'),
             self::Utilities => trans('Utilities'),
         };
     }
 
     /**
      * Get the categories a movement of the given type can carry, in
-     * the order the picker shows them. Types that are not recorded
-     * by hand, such as the legs of a transfer, carry none.
+     * the order the picker shows them: the roof and the bills
+     * first, then the everyday, then the occasional, with the
+     * money-about-money areas before the residue. Types that
+     * are not recorded by hand, such as the legs of a
+     * transfer, carry none.
      *
      * @return array<int, self>
      */
@@ -144,24 +184,29 @@ enum Category: string implements HasLabel
             TransactionType::Expense => [
                 self::Housing,
                 self::Utilities,
-                self::SubscriptionsAndServices,
-                self::Food,
+                self::Groceries,
+                self::EatingOut,
                 self::Transport,
                 self::Health,
+                self::PersonalCare,
+                self::Pets,
+                self::KidsAndFamily,
                 self::Education,
-                self::LeisureAndTravel,
                 self::Shopping,
+                self::Entertainment,
+                self::Travel,
+                self::Subscriptions,
+                self::Insurance,
+                self::TaxesAndFees,
                 self::GiftsAndDonations,
-                self::Financial,
-                self::FamilyAndPets,
                 self::Other,
             ],
             TransactionType::Income => [
                 self::Salary,
                 self::Freelance,
-                self::Investments,
-                self::Reimbursement,
-                self::Gift,
+                self::InvestmentReturns,
+                self::Refunds,
+                self::GiftsReceived,
                 self::Other,
             ],
             default => [],
@@ -203,23 +248,28 @@ enum Category: string implements HasLabel
     public function icon(): string
     {
         return match ($this) {
+            self::Entertainment => 'ticket',
+            self::EatingOut => 'utensils',
             self::Education => 'graduation-cap',
-            self::FamilyAndPets => 'paw-print',
-            self::Financial => 'landmark',
-            self::Food => 'utensils',
             self::Freelance => 'briefcase',
-            self::Gift => 'gift',
             self::GiftsAndDonations => 'heart-handshake',
+            self::GiftsReceived => 'gift',
+            self::Groceries => 'shopping-cart',
             self::Health => 'heart-pulse',
             self::Housing => 'house',
-            self::Investments => 'trending-up',
-            self::LeisureAndTravel => 'plane',
+            self::Insurance => 'shield-check',
+            self::InvestmentReturns => 'trending-up',
+            self::KidsAndFamily => 'baby',
             self::Other => 'ellipsis',
-            self::Reimbursement => 'rotate-ccw',
+            self::PersonalCare => 'sparkles',
+            self::Pets => 'paw-print',
+            self::Refunds => 'rotate-ccw',
             self::Salary => 'wallet',
             self::Shopping => 'shopping-bag',
-            self::SubscriptionsAndServices => 'repeat',
+            self::Subscriptions => 'repeat',
+            self::TaxesAndFees => 'landmark',
             self::Transport => 'bus',
+            self::Travel => 'plane',
             self::Utilities => 'plug',
         };
     }

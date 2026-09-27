@@ -25,15 +25,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * One dated stretch of a budget in a single currency: how much
  * the target it follows is allowed each month, from which
  * month, and until which month if it ever stops. The
- * target is a category or a tag, never both. A period may
- * also name the share of the month's pot at which the team
- * wants to be warned.
+ * target is a category or a tag, never both. A tag period
+ * may sit under a category period as one of its sub-budgets,
+ * in which case it only counts the tag's movements filed
+ * under that category. A period may also name the share of
+ * the month's pot at which the team wants to be warned.
  *
  * @property string $id
  * @property numeric $amount
  * @property \App\Modules\Core\Finance\Enums\Transaction\Category|null $category
  * @property string $currency_id
  * @property \Carbon\CarbonImmutable $from_month
+ * @property string|null $parent_id
  * @property string $team_id
  * @property string|null $tag_id
  * @property \Carbon\CarbonImmutable|null $until_month
@@ -41,7 +44,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\BudgetAlert> $alerts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\Core\Finance\Models\Team\BudgetPeriod> $children
  * @property-read \App\Modules\Core\Catalog\Models\Currency $currency
+ * @property-read \App\Modules\Core\Finance\Models\Team\BudgetPeriod|null $parent
  * @property-read \App\Modules\Core\Finance\Models\Team\Tag|null $tag
  * @property-read \App\Modules\Core\Identity\Models\Team $team
  *
@@ -132,6 +137,17 @@ class BudgetPeriod extends Model
     }
 
     /**
+     * Get the sub-budgets nested under the period, which only
+     * a category period has.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Modules\Core\Finance\Models\Team\BudgetPeriod, $this>
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
+    /**
      * Get the currency the budget is expressed in.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Catalog\Models\Currency, $this>
@@ -139,6 +155,17 @@ class BudgetPeriod extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    /**
+     * Get the category period the budget is nested under,
+     * when it is a sub-budget.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Modules\Core\Finance\Models\Team\BudgetPeriod, $this>
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     /**
@@ -179,6 +206,37 @@ class BudgetPeriod extends Model
         return $this->category instanceof Category
             ? BudgetTargetKind::Category
             : BudgetTargetKind::Tag;
+    }
+
+    /**
+     * Whether the period is a sub-budget: a tag period nested
+     * under a category period.
+     */
+    public function isNested(): bool
+    {
+        return $this->getAttribute($this->parent()->getForeignKeyName()) !== null;
+    }
+
+    /**
+     * Get the category the period's figures are confined to:
+     * its own for a category period, its parent's for a
+     * sub-budget, and none for a plain tag period.
+     */
+    public function scopedCategory(): ?Category
+    {
+        if ($this->category instanceof Category) {
+            return $this->category;
+        }
+
+        // A sub-budget only counts the tag's movements filed
+        // under the category of the budget it sits in.
+        if ($this->isNested()) {
+            $this->loadMissing('parent');
+
+            return $this->parent?->category;
+        }
+
+        return null;
     }
 
     /**

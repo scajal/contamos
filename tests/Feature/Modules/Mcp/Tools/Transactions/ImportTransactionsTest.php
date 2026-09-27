@@ -199,7 +199,7 @@ it('alerts once per budget after the whole import', function (): void {
     [$user, $team] = mcpMember();
     $account = importToolAccount($team);
     $currency = $account->currencies()->sole();
-    $food = BudgetPeriod::factory()->forCategory(Category::Food)->running()->for($team)->withWarningThreshold(50)->create([
+    $food = BudgetPeriod::factory()->forCategory(Category::Groceries)->running()->for($team)->withWarningThreshold(50)->create([
         'amount' => '100',
         $currency->getForeignKey() => $currency->getKey(),
     ]);
@@ -215,7 +215,7 @@ it('alerts once per budget after the whole import', function (): void {
             'account' => $account->getKey(),
             'allow_duplicates' => true,
             'rows' => [
-                ...array_fill(0, 6, importRow(['amount' => '20.00', 'category' => Category::Food->value, 'occurred_at' => '2026-09-14'])),
+                ...array_fill(0, 6, importRow(['amount' => '20.00', 'category' => Category::Groceries->value, 'occurred_at' => '2026-09-14'])),
                 importRow(['amount' => '15.00', 'category' => Category::Transport->value, 'occurred_at' => '2026-09-14']),
             ],
         ])

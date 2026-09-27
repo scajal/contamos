@@ -84,7 +84,7 @@ it('filters like the web listing', function (): void {
     [$otherAccount, $otherCurrency] = listTransactionsToolAccount($team, 'ZZB');
     $tag = Tag::factory()->for($team)->create(['name' => 'Trip', 'is_active' => false]);
 
-    $food = Transaction::factory()->expense()->for($account)->create(['category' => Category::Food, 'currency_id' => $currency->getKey(), 'description' => 'Pizza night', 'occurred_at' => '2026-08-10 12:00:00']);
+    $food = Transaction::factory()->expense()->for($account)->create(['category' => Category::Groceries, 'currency_id' => $currency->getKey(), 'description' => 'Pizza night', 'occurred_at' => '2026-08-10 12:00:00']);
     $food->attachTags([$tag->getKey()]);
     $salary = Transaction::factory()->income()->for($otherAccount)->create(['category' => Category::Salary, 'currency_id' => $otherCurrency->getKey(), 'occurred_at' => '2026-07-10 12:00:00']);
     $leg = Transaction::factory()->transferOut()->for($account)->create(['currency_id' => $currency->getKey(), 'transfer_id' => Transfer::factory()->for($team)->create()->getKey(), 'occurred_at' => '2026-08-11 12:00:00']);
@@ -96,7 +96,7 @@ it('filters like the web listing', function (): void {
     expect($ids(['type' => 'transfer']))->toBe([$leg->getKey()])
         ->and($ids(['type' => 'income']))->toBe([$salary->getKey()])
         ->and($ids(['account' => $otherAccount->getKey()]))->toBe([$salary->getKey()])
-        ->and($ids(['category' => 'food']))->toBe([$food->getKey()])
+        ->and($ids(['category' => 'groceries']))->toBe([$food->getKey()])
         ->and($ids(['currency' => 'zzb']))->toBe([$salary->getKey()])
         ->and($ids(['tags' => ['trip']]))->toBe([$food->getKey()])
         ->and($ids(['from' => '2026-08-01', 'to' => '2026-08-10']))->toBe([$food->getKey()])

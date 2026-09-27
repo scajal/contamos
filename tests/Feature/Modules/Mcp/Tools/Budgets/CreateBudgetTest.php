@@ -40,7 +40,7 @@ it('budgets a category', function (): void {
     ContamosServer::actingAs($user)
         ->tool(CreateBudget::class, [
             'team' => $team->slug,
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'amount' => '800',
             'currency' => 'usd',
             'from_month' => $month,
@@ -50,7 +50,7 @@ it('budgets a category', function (): void {
 
     $period = $team->budgets()->sole();
 
-    expect($period->category)->toBe(Category::Food)
+    expect($period->category)->toBe(Category::Groceries)
         ->and($period->tag_id)->toBeNull()
         ->and((float) $period->amount)->toBe(800.0)
         ->and($period->currency_id)->toBe($currency->getKey())
@@ -97,7 +97,7 @@ it('refuses a budget on both a category and a tag, or on neither', function (arr
 
     expect($team->budgets()->count())->toBe(0);
 })->with([
-    'both' => [['category' => Category::Food->value, 'tag' => 'Vacation']],
+    'both' => [['category' => Category::Groceries->value, 'tag' => 'Vacation']],
     'neither' => [[]],
 ]);
 
@@ -107,7 +107,7 @@ it('refuses a currency code that names no currency', function (mixed $code, stri
     ContamosServer::actingAs($user)
         ->tool(CreateBudget::class, [
             'team' => $team->slug,
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'amount' => '800',
             'currency' => $code,
             'from_month' => CarbonImmutable::now()->format('Y-m'),
@@ -127,7 +127,7 @@ it('stores the warning threshold', function (): void {
     ContamosServer::actingAs($user)
         ->tool(CreateBudget::class, [
             'team' => $team->slug,
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'amount' => '800',
             'currency' => 'USD',
             'from_month' => CarbonImmutable::now()->format('Y-m'),
@@ -145,7 +145,7 @@ it('refuses a warning threshold outside 1 to 99', function (mixed $threshold): v
     ContamosServer::actingAs($user)
         ->tool(CreateBudget::class, [
             'team' => $team->slug,
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'amount' => '800',
             'currency' => 'USD',
             'from_month' => CarbonImmutable::now()->format('Y-m'),
@@ -162,12 +162,12 @@ it('refuses a warning threshold outside 1 to 99', function (mixed $threshold): v
 
 it('refuses months another budget on the target already covers', function (): void {
     [$user, $team, $currency] = createBudgetTeam();
-    BudgetPeriod::factory()->running()->forCategory(Category::Food)->for($team)->for($currency)->create();
+    BudgetPeriod::factory()->running()->forCategory(Category::Groceries)->for($team)->for($currency)->create();
 
     ContamosServer::actingAs($user)
         ->tool(CreateBudget::class, [
             'team' => $team->slug,
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'amount' => '800',
             'currency' => 'USD',
             'from_month' => CarbonImmutable::now()->format('Y-m'),
@@ -201,7 +201,7 @@ it('refuses a plan without budgets', function (): void {
     ContamosServer::actingAs($user)
         ->tool(CreateBudget::class, [
             'team' => $team->slug,
-            'category' => Category::Food->value,
+            'category' => Category::Groceries->value,
             'amount' => '800',
             'currency' => 'USD',
             'from_month' => CarbonImmutable::now()->format('Y-m'),
@@ -209,4 +209,46 @@ it('refuses a plan without budgets', function (): void {
         ->assertHasErrors(['Budgets']);
 
     expect($team->budgets()->count())->toBe(0);
+});
+
+it('nests a tag budget under a category budget', function (): void {
+    [$user, $team, $currency] = createBudgetTeam();
+    $parent = BudgetPeriod::factory()->running()->forCategory(Category::Utilities)->for($team)->for($currency)->create();
+    $tag = Tag::factory()->active()->for($team)->create(['name' => 'Electricity']);
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateBudget::class, [
+            'team' => $team->slug,
+            'tag' => 'Electricity',
+            'parent' => $parent->getKey(),
+            'amount' => '200',
+            'currency' => 'USD',
+            'from_month' => CarbonImmutable::now()->format('Y-m'),
+        ])
+        ->assertOk()
+        ->assertSee('"parent":"'.$parent->getKey().'"');
+
+    $period = $team->budgets()->whereKeyNot($parent)->sole();
+
+    expect($period->parent_id)->toBe($parent->getKey())
+        ->and($period->tag_id)->toBe($tag->getKey());
+});
+
+it('refuses a parent on a category budget', function (): void {
+    [$user, $team, $currency] = createBudgetTeam();
+    $parent = BudgetPeriod::factory()->running()->forCategory(Category::Utilities)->for($team)->for($currency)->create();
+
+    ContamosServer::actingAs($user)
+        ->tool(CreateBudget::class, [
+            'team' => $team->slug,
+            'category' => Category::Groceries->value,
+            'parent' => $parent->getKey(),
+            'amount' => '200',
+            'currency' => 'USD',
+            'from_month' => CarbonImmutable::now()->format('Y-m'),
+        ])
+        ->assertHasErrors()
+        ->assertSee('Only a tag budget can be part of a category budget.');
+
+    expect($team->budgets()->count())->toBe(1);
 });
