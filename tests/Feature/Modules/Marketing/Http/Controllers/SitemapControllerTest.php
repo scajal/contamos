@@ -18,6 +18,12 @@ describe('index', function (): void {
             ->assertHeader('Content-Type', 'application/xml');
     });
 
+    it('keeps the sitemap itself out of search results', function (): void {
+        get(route('sitemap'))
+            ->assertOk()
+            ->assertHeader('X-Robots-Tag', 'noindex');
+    });
+
     it('lists every public page in every installed locale', function (string $route): void {
         $response = get(route('sitemap'))->assertOk();
 
@@ -139,7 +145,8 @@ describe('stylesheet', function (): void {
     it('serves the sitemap stylesheet as xsl', function (): void {
         $response = get(route('sitemap.stylesheet'))
             ->assertOk()
-            ->assertHeader('Content-Type', 'text/xsl; charset=UTF-8');
+            ->assertHeader('Content-Type', 'text/xsl; charset=UTF-8')
+            ->assertHeader('X-Robots-Tag', 'noindex');
 
         $document = new DOMDocument;
 

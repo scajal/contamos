@@ -69,7 +69,8 @@ class SitemapController
             ->map(fn (Post $post): string => $this->post($post));
 
         // The stylesheet turns the sitemap into a readable table
-        // for a person who opens it; crawlers ignore it.
+        // for a person who opens it; crawlers ignore it. The
+        // sitemap is read by crawlers but never a search result.
         return response(
             '<?xml version="1.0" encoding="UTF-8"?>'."\n".
             '<?xml-stylesheet type="text/xsl" href="'.e(route('sitemap.stylesheet', absolute: false)).'"?>'."\n".
@@ -77,7 +78,7 @@ class SitemapController
             collect([$urls, ...$posts])->filter()->implode("\n")."\n".
             '</urlset>'."\n",
             Response::HTTP_OK,
-            ['Content-Type' => 'application/xml'],
+            ['Content-Type' => 'application/xml', 'X-Robots-Tag' => 'noindex'],
         );
     }
 
@@ -91,7 +92,7 @@ class SitemapController
         return response(
             File::get(resource_path('xml/sitemap.xsl')),
             Response::HTTP_OK,
-            ['Content-Type' => 'text/xsl; charset=UTF-8'],
+            ['Content-Type' => 'text/xsl; charset=UTF-8', 'X-Robots-Tag' => 'noindex'],
         );
     }
 
