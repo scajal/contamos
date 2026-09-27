@@ -113,17 +113,21 @@
             "pnpm run build"
         ],
         "test": [
+            "Composer\\Config::disableProcessTimeout",
             "@php artisan config:clear --ansi",
             "@lint:check",
             "@php artisan test --parallel"
         ],
         "test:coverage": [
+            "Composer\\Config::disableProcessTimeout",
             "@php vendor/bin/pest --coverage --min=100 --parallel"
         ],
         "test:types": [
+            "Composer\\Config::disableProcessTimeout",
             "@php vendor/bin/pest --type-coverage --min=100 --parallel"
         ],
         "types": [
+            "Composer\\Config::disableProcessTimeout",
             "phpstan analyse --memory-limit=1G"
         ]
     },
