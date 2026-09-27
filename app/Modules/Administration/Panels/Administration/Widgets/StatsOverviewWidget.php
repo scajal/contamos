@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Number;
+use Illuminate\Support\Str;
 use Laravel\Paddle\Subscription as PaddleSubscription;
 use Money\Currencies\ISOCurrencies;
 use Money\Currency;
@@ -298,12 +299,23 @@ class StatsOverviewWidget extends \Filament\Widgets\StatsOverviewWidget
      */
     protected function majorUnits(string $currency, string $amount): string
     {
-        return (new DecimalMoneyFormatter(new ISOCurrencies))->format(new Money($this->wholeMinorUnits($amount), new Currency(strtoupper($currency))));
+        $code = Str::upper($currency);
+
+        // Money needs a currency code. An empty one falls back
+        // to the same code used when nothing was collected.
+        if ($code === '') {
+            $code = 'USD';
+        }
+
+        return new DecimalMoneyFormatter(new ISOCurrencies)
+            ->format(new Money($this->wholeMinorUnits($amount), new Currency($code)));
     }
 
     /**
      * The minor-unit total as a whole number. A summed column
      * can come back with a trailing fraction of zeros.
+     *
+     * @return numeric-string
      */
     protected function wholeMinorUnits(string $amount): string
     {
@@ -319,10 +331,10 @@ class StatsOverviewWidget extends \Filament\Widgets\StatsOverviewWidget
 
         // Only a fraction of zeros is safe to drop. Anything else
         // is not a minor-unit total.
-        if (rtrim($fraction, '0') !== '') {
+        if (rtrim($fraction, '0') !== '' || ! is_numeric($whole)) {
             return '0';
         }
 
-        return $whole === '' || $whole === '-' ? '0' : $whole;
+        return $whole;
     }
 }
