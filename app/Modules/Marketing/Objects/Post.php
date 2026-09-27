@@ -73,7 +73,7 @@ class Post implements Arrayable
     {
         $post = self::lookup($locale, $slug);
 
-        abort_if($post === null, Response::HTTP_NOT_FOUND);
+        abort_if(! $post instanceof \App\Modules\Marketing\Objects\Post, Response::HTTP_NOT_FOUND);
 
         return $post;
     }

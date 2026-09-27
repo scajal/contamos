@@ -1,14 +1,14 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "xyz.contamos/contamos",
-  "title": "Contamos",
-  "description": "Shared ledger for groups that share money: balances, expenses, transfers, budgets and reports.",
-  "websiteUrl": "https://contamos.xyz/en/docs/ai-assistants",
-  "version": "1.0.0",
-  "remotes": [
-    {
-      "type": "streamable-http",
-      "url": "https://contamos.xyz/mcp"
-    }
-  ]
+    "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+    "name": "xyz.contamos/contamos",
+    "title": "Contamos",
+    "description": "Shared ledger for groups that share money: balances, expenses, transfers, budgets and reports.",
+    "websiteUrl": "https://contamos.xyz/en/docs/ai-assistants",
+    "version": "1.0.0",
+    "remotes": [
+        {
+            "type": "streamable-http",
+            "url": "https://contamos.xyz/mcp"
+        }
+    ]
 }

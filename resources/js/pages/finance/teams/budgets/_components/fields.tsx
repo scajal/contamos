@@ -1,7 +1,7 @@
 import { type FormComponentSlotProps } from "@inertiajs/core";
 import { format, parse, startOfMonth } from "date-fns";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { BellIcon, CalendarIcon, CoinsIcon, FolderTreeIcon } from "lucide-react";
+import { BellIcon, CalendarIcon, CoinsIcon } from "lucide-react";
 import { useState } from "react";
 
 import { CategoryIcon } from "@/components/category-icon";

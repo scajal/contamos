@@ -35,7 +35,7 @@ const readTag = (field: "client_id" | "session_id", timeout: number): Promise<st
 
         gtag("get", measurementId, field, (value: unknown) => {
             window.clearTimeout(timer);
-            resolve(value === undefined || value === null ? undefined : String(value));
+            resolve(typeof value === "string" || typeof value === "number" ? String(value) : undefined);
         });
     });
 
