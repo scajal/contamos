@@ -1,6 +1,14 @@
 import { Link, usePage } from "@inertiajs/react";
 import { useLaravelReactI18n } from "laravel-react-i18n";
-import { BookOpenIcon, LifeBuoyIcon, LogOutIcon, ShieldCheckIcon, UserIcon } from "lucide-react";
+import {
+    BookOpenIcon,
+    LanguagesIcon,
+    LifeBuoyIcon,
+    LogOutIcon,
+    ShieldCheckIcon,
+    SunIcon,
+    UserIcon,
+} from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
 import { AppearanceMenu } from "@/components/appearance-menu";
@@ -8,8 +16,10 @@ import { LanguageMenu } from "@/components/language-menu";
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/routes";
 import docs from "@/routes/docs";
@@ -19,7 +29,8 @@ import account from "@/routes/identity/users/account";
 /**
  * The items of the signed-in user's menu: administration for those
  * who may enter it, the account, the docs, support, the colour scheme, the
- * language and the way out. Layouts wrap them in their own trigger and content, so the
+ * language and the way out. The scheme and the language each open their own
+ * submenu. Layouts wrap these items in their own trigger and content, so the
  * same menu opens from the sidebar footer and from the wizard header.
  */
 export const UserMenuItems = () => {
@@ -63,13 +74,28 @@ export const UserMenuItems = () => {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-                <DropdownMenuLabel>{t("Theme")}</DropdownMenuLabel>
-                <AppearanceMenu />
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-                <DropdownMenuLabel>{t("Language")}</DropdownMenuLabel>
-                <LanguageMenu />
+                <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="gap-2.5">
+                        <SunIcon />
+                        <span>{t("Appearance")}</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent sideOffset={4}>
+                        <DropdownMenuGroup>
+                            <AppearanceMenu />
+                        </DropdownMenuGroup>
+                    </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="gap-2.5">
+                        <LanguagesIcon />
+                        <span>{t("Language")}</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent sideOffset={4}>
+                        <DropdownMenuGroup>
+                            <LanguageMenu />
+                        </DropdownMenuGroup>
+                    </DropdownMenuSubContent>
+                </DropdownMenuSub>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
