@@ -45,7 +45,7 @@ Contamos está construido alrededor de esa pregunta. El grupo tiene cuentas, cad
 
 ## Usar los dos
 
-Muchos grupos lo hacen. El viaje es un tricount; el piso es un libro en Contamos. Si el viaje se paga desde un fondo común y no del bolsillo de cada uno, encaja mejor como una cuenta en Contamos, que es lo que cuenta [un viaje en grupo en varias monedas](/es/blog/viaje-en-grupo-varias-monedas).
+Muchos grupos lo hacen. El viaje es un tricount; el piso es un libro en Contamos. Si el viaje se paga desde un fondo común y no del bolsillo de cada uno, encaja mejor como una cuenta en Contamos, que es lo que cuenta [dinero compartido en pesos y dólares](/es/blog/dinero-compartido-en-dos-monedas).
 
 ## Para quién es Contamos
 
