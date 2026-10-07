@@ -30,6 +30,13 @@ Every page is also available in Spanish at the same path under /es.
 - [Notifications](https://contamos.xyz/en/docs/notifications.md): the emails a team's Owner and Admins receive (member changes, budget alerts, recurring failures, the monthly summary), and how to turn each off or unsubscribe.
 - [AI assistants](https://contamos.xyz/en/docs/ai-assistants.md): connecting Claude or ChatGPT, with example prompts.
 
+## Comparisons
+
+How Contamos differs from the bill-splitting apps a group may already use, each also available in Spanish under /es.
+
+- [Contamos vs Splitwise](https://contamos.xyz/en/compare/splitwise.md): a shared ledger instead of a list of IOUs.
+- [Contamos vs Tricount](https://contamos.xyz/en/compare/tricount.md): beyond splitting the trip.
+
 ## Legal
 
 - [Terms of service](https://contamos.xyz/en/terms)

@@ -1133,5 +1133,12 @@
     "Currency added": "Moneda agregada",
     "Currency removed": "Moneda quitada",
     "Member added": "Miembro agregado",
-    "Role changed": "Rol cambiado"
+    "Role changed": "Rol cambiado",
+    "Contamos compared with :name": "Contamos comparado con :name",
+    "Last checked :date": "Última revisión: :date",
+    "Try the shared ledger": "Prueba el libro compartido",
+    "One ledger for everyone you share money with, in every currency it lives in.": "Un libro para todas las personas con las que compartes dinero, en cada moneda en la que vive.",
+    "Other comparisons": "Otras comparativas",
+    "Contamos vs :name": "Contamos vs :name",
+    "Compare": "Comparar"
 }

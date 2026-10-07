@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Marketing\Http\Controllers;
 
+use App\Modules\Marketing\Enums\Compare\Competitor;
 use App\Modules\Marketing\Enums\Docs\Page;
 use App\Modules\Marketing\Objects\Post;
 use Illuminate\Http\Response;
@@ -39,6 +40,16 @@ class SitemapController
     protected const array DOCS = ['changefreq' => 'monthly', 'priority' => '0.6'];
 
     /**
+     * How often a comparison page changes and how it ranks.
+     * It is what a reader searching for an alternative to
+     * what they use lands on, so it ranks just under the
+     * homepage.
+     *
+     * @var array{changefreq: string, priority: string}
+     */
+    protected const array COMPARISONS = ['changefreq' => 'monthly', 'priority' => '0.8'];
+
+    /**
      * How often a blog post changes and how it ranks.
      *
      * @var array{changefreq: string, priority: string}
@@ -69,8 +80,10 @@ class SitemapController
             ->map(fn (Post $post): string => $this->post($post));
 
         // The stylesheet turns the sitemap into a readable table
-        // for a person who opens it; crawlers ignore it. The
-        // sitemap is read by crawlers but never a search result.
+        // for a person who opens it; crawlers ignore it. No
+        // robots header is sent: a sitemap is never a search
+        // result anyway, and a noindex on it gives Search
+        // Console a reason to refuse the file.
         return response(
             '<?xml version="1.0" encoding="UTF-8"?>'."\n".
             '<?xml-stylesheet type="text/xsl" href="'.e(route('sitemap.stylesheet', absolute: false)).'"?>'."\n".
@@ -78,7 +91,7 @@ class SitemapController
             collect([$urls, ...$posts])->filter()->implode("\n")."\n".
             '</urlset>'."\n",
             Response::HTTP_OK,
-            ['Content-Type' => 'application/xml', 'X-Robots-Tag' => 'noindex'],
+            ['Content-Type' => 'application/xml'],
         );
     }
 
@@ -131,7 +144,7 @@ class SitemapController
      * Every public page, each as the URL it has in a given
      * locale and the URL a reader of no language of ours is
      * sent to: the named pages first, then the docs in the
-     * order of their sidebar.
+     * order of their sidebar, then the comparisons.
      *
      * @return array<int, array{url: \Closure(string): string, default: string, changefreq: string, priority: string}>
      */
@@ -153,6 +166,11 @@ class SitemapController
                 'default' => $page->url($first),
                 ...self::DOCS,
             ], Page::cases()),
+            ...array_map(fn (Competitor $competitor): array => [
+                'url' => $competitor->url(...),
+                'default' => $competitor->url($first),
+                ...self::COMPARISONS,
+            ], Competitor::cases()),
         ];
     }
 

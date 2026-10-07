@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Modules\Marketing\Enums\Compare\Competitor;
 use App\Modules\Marketing\Enums\Docs\Page;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
@@ -18,10 +19,10 @@ describe('index', function (): void {
             ->assertHeader('Content-Type', 'application/xml');
     });
 
-    it('keeps the sitemap itself out of search results', function (): void {
+    it('sends no robots header, which search console refuses a sitemap for', function (): void {
         get(route('sitemap'))
             ->assertOk()
-            ->assertHeader('X-Robots-Tag', 'noindex');
+            ->assertHeaderMissing('X-Robots-Tag');
     });
 
     it('lists every public page in every installed locale', function (string $route): void {
@@ -44,6 +45,18 @@ describe('index', function (): void {
         $response->assertSee('hreflang="x-default" href="'.$page->url('en').'"', false);
     })->with(Page::cases());
 
+    it('lists every comparison in both locales with its alternates', function (Competitor $competitor): void {
+        $response = get(route('sitemap'))->assertOk();
+
+        foreach (['en', 'es'] as $locale) {
+            $response
+                ->assertSee('<loc>'.$competitor->url($locale).'</loc>', false)
+                ->assertSee('hreflang="'.$locale.'" href="'.$competitor->url($locale).'"', false);
+        }
+
+        $response->assertSee('hreflang="x-default" href="'.$competitor->url('en').'"', false);
+    })->with(Competitor::cases());
+
     it('carries both locales of a page as its alternates', function (): void {
         get(route('sitemap'))
             ->assertOk()
@@ -63,7 +76,7 @@ describe('index', function (): void {
         $document = new DOMDocument;
         $document->loadXML(get(route('sitemap'))->assertOk()->getContent() ?: '');
 
-        expect($document->getElementsByTagName('url'))->toHaveCount(2 * (5 + count(Page::cases())));
+        expect($document->getElementsByTagName('url'))->toHaveCount(2 * (5 + count(Page::cases()) + count(Competitor::cases())));
     });
 
     it('lists a published post with the translations it has and when it last changed', function (): void {
@@ -134,6 +147,7 @@ describe('index', function (): void {
         'the homepage' => fn (): array => [route('home', ['locale' => 'en']), 'weekly', '1.0'],
         'a legal page' => fn (): array => [route('legal.terms', ['locale' => 'es']), 'yearly', '0.3'],
         'a docs page' => fn (): array => [Page::cases()[0]->url('en'), 'monthly', '0.6'],
+        'a comparison' => fn (): array => [Competitor::Splitwise->url('es'), 'monthly', '0.8'],
     ]);
 
     it('needs no file in public to serve it', function (): void {

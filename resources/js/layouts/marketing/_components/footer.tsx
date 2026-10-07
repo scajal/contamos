@@ -5,6 +5,7 @@ import { BrandMark } from "@/components/brand-mark";
 import { cn } from "@/lib/utils";
 import { login } from "@/routes";
 import blog from "@/routes/blog";
+import compare from "@/routes/compare";
 import docs from "@/routes/docs";
 import legal from "@/routes/legal";
 import type { Alternates } from "@/types/app/modules/marketing/alternates";
@@ -19,6 +20,12 @@ const SECTIONS = [
     { hash: "features", label: "Features" },
     { hash: "how-it-works", label: "How it works" },
     { hash: "pricing", label: "Pricing" },
+] as const;
+
+/** The products a group may already use, each compared with Contamos. */
+const COMPARISONS = [
+    { competitor: "splitwise", name: "Splitwise" },
+    { competitor: "tricount", name: "Tricount" },
 ] as const;
 
 /** The documents that say what we do with your data and your money. */
@@ -125,7 +132,7 @@ export const Footer = ({ alternates, homeUrl, dashboardUrl, appearance, onAppear
                     {/** One column per kind of link, each under the heading
                      * that says what the column is for, so a reader scans
                      * the headings rather than a run of loose links. */}
-                    <nav aria-label={t("Footer")} className="grid grid-cols-2 gap-8 sm:grid-cols-3 sm:gap-16">
+                    <nav aria-label={t("Footer")} className="grid grid-cols-2 gap-8 sm:grid-cols-4 sm:gap-12">
                         <FooterColumn title={t("Product")}>
                             {SECTIONS.map(({ hash, label }) => (
                                 <FooterLink href={isHome ? `#${hash}` : `${homeUrl}#${hash}`} key={hash}>
@@ -159,6 +166,19 @@ export const Footer = ({ alternates, homeUrl, dashboardUrl, appearance, onAppear
                             </li>
                             <FooterLink href={isHome ? "#faq" : `${homeUrl}#faq`}>{t("Questions")}</FooterLink>
                             <FooterLink href={"mailto:hello@contamos.xyz"}>{t("Contact")}</FooterLink>
+                        </FooterColumn>
+
+                        <FooterColumn title={t("Compare")}>
+                            {COMPARISONS.map(({ competitor, name }) => (
+                                <li key={competitor}>
+                                    <Link
+                                        className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+                                        href={compare.show.url({ locale, competitor })}
+                                    >
+                                        {t("Contamos vs :name", { name })}
+                                    </Link>
+                                </li>
+                            ))}
                         </FooterColumn>
 
                         <FooterColumn title={t("Legal")}>

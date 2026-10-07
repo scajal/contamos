@@ -1133,5 +1133,12 @@
     "Currency added": "Currency added",
     "Currency removed": "Currency removed",
     "Member added": "Member added",
-    "Role changed": "Role changed"
+    "Role changed": "Role changed",
+    "Contamos compared with :name": "Contamos compared with :name",
+    "Last checked :date": "Last checked :date",
+    "Try the shared ledger": "Try the shared ledger",
+    "One ledger for everyone you share money with, in every currency it lives in.": "One ledger for everyone you share money with, in every currency it lives in.",
+    "Other comparisons": "Other comparisons",
+    "Contamos vs :name": "Contamos vs :name",
+    "Compare": "Compare"
 }

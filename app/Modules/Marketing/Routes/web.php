@@ -100,6 +100,27 @@ Route::whereIn('locale', Locales::installed()->pluck('code')->toArray())->group(
 
 /*
 |--------------------------------------------------------------------------
+| Comparison routes
+|--------------------------------------------------------------------------
+|
+| These routes correspond to the public comparison pages, one per product
+| Contamos is compared with, under the locale segment, each also served
+| as Markdown at its URL plus .md.
+|
+*/
+
+Route::whereIn('locale', Locales::installed()->pluck('code')->toArray())->group(function (): void {
+    Route::get('{locale}/compare/{competitor}.md', [\App\Modules\Marketing\Http\Controllers\CompareController::class, 'markdown'])
+        ->whereIn('competitor', array_column(\App\Modules\Marketing\Enums\Compare\Competitor::cases(), 'value'))
+        ->name('compare.markdown');
+
+    Route::get('{locale}/compare/{competitor}', [\App\Modules\Marketing\Http\Controllers\CompareController::class, 'show'])
+        ->whereIn('competitor', array_column(\App\Modules\Marketing\Enums\Compare\Competitor::cases(), 'value'))
+        ->name('compare.show');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Crawler routes
 |--------------------------------------------------------------------------
 |
