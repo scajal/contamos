@@ -3,7 +3,7 @@
     "name": "qube/contamos",
     "type": "project",
     "description": "Contamos, one shared ledger for everyone you share money with.",
-    "license": "UNLICENSED",
+    "license": "MIT",
     "require": {
         "php": "^8.3",
         "bezhansalleh/filament-language-switch": "^5.0",

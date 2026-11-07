@@ -33,6 +33,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="ADMINISTRATION_OPERATORS" value="operator@example.com"/>
         <env name="WORKOS_AUTHKIT_DOMAIN" value="authkit.test"/>
         <env name="WORKOS_CLIENT_ID" value="client_test"/>
         <env name="WORKOS_CLIENT_SECRET" value="sk_test"/>

@@ -216,7 +216,7 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 
 ### Issue tracker
 
-Issues are tracked as GitHub Issues on `scajal/hormiga` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues are tracked as GitHub Issues on `scajal/contamos` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Domain docs
 

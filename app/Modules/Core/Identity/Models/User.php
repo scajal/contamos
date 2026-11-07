@@ -96,8 +96,8 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        // @todo: Add security validation.
-        return in_array($this->email, ['operator@example.com', 'operator@example.com']);
+        // Operators are an allowlist of addresses in configuration.
+        return in_array($this->email, config()->array('administration.operators'), true);
     }
 
     /**
