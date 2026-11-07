@@ -2,8 +2,8 @@
     "$schema": "https://www.schemastore.org/package.json",
     "name": "@qube/contamos",
     "private": true,
-    "license": "MIT",
     "description": "Contamos, one shared ledger for everyone you share money with.",
+    "license": "MIT",
     "type": "module",
     "scripts": {
         "build": "vp build",
